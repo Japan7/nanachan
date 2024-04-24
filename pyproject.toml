@@ -2,11 +2,15 @@
 name = "nanachan"
 version = "0.1.0" # do not change that
 description = "Japan7 Discord bot"
-authors = ["mistiru <dev@mistiru.me>",
-           "Pierre Jeanjean <jeanjep@bde.enseeiht.fr>",
-           "odrling <florianbadie@odrling.xyz>",
-           "Nam Vu <git@yuru.moe>"]
+authors = [
+    "mistiru <dev@mistiru.me>",
+    "Pierre Jeanjean <rhiobet@gmail.com>",
+    "odrling <florianbadie@odrling.xyz>",
+    "NextFire <git@yuru.moe>",
+]
+license = "MIT"
 readme = "README.md"
+repository = "https://github.com/Japan7/nanachan"
 
 [tool.poetry.scripts]
 nanachan = "nanachan.__main__:main"
