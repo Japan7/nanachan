@@ -1,0 +1,173 @@
+name: CI
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  # schedule:
+  #   - cron: "34 10 * * *"
+  push:
+    branches: ["master", "renovate/*"]
+    tags: ["*"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+  MAIN_BRANCH: master
+
+jobs:
+  check:
+    if: startsWith(github.ref, 'refs/tags/') != true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml', '**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: poetry install
+        run: |
+          pip3 install poetry
+          poetry install
+          cp nanachan/example.local_settings.py nanachan/local_settings.py
+      - run: poetry run pyright
+      - run: poetry run ruff check nanachan/
+        if: always()
+      - uses: sarisia/actions-status-discord@v1
+        if: failure()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install the cosign tool except on PR
+      # https://github.com/sigstore/cosign-installer
+      - name: Install cosign
+        if: (github.event_name != 'pull_request') && !startsWith(github.ref, 'refs/heads/renovate')
+        uses: sigstore/cosign-installer@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: (github.event_name != 'pull_request') && !startsWith(github.ref, 'refs/heads/renovate')
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=sha
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ (github.event_name != 'pull_request') && !startsWith(github.ref, 'refs/heads/renovate') }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Sign the resulting Docker image digest except on PRs.
+      # This will only write to the public Rekor transparency log when the Docker
+      # repository is public to avoid leaking data.  If you would like to publish
+      # transparency data even for private images, pass --force to cosign below.
+      # https://github.com/sigstore/cosign
+      - name: Sign the published Docker image
+        if: ${{ (github.event_name != 'pull_request') && !startsWith(github.ref, 'refs/heads/renovate') }}
+        env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        # This step uses the identity token to provision an ephemeral certificate
+        # against the sigstore community Fulcio instance.
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      - uses: sarisia/actions-status-discord@v1
+        if: failure()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+
+  deploy:
+    if: (github.event_name != 'pull_request') && !startsWith(github.ref, 'refs/heads/renovate')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout nanak8s
+        uses: actions/checkout@v4
+        with:
+          repository: Japan7/nanak8s
+          token: ${{ secrets.NANAK8S_PAT }}
+      - name: Set deploy environment
+        id: deploy_env
+        run: |
+          if [[ "$GITHUB_REF" == "refs/tags/"* ]]; then
+            echo "::set-output name=name::nana"
+            echo "::set-output name=tag::${GITHUB_REF#refs/tags/}"
+          elif [[ "$GITHUB_REF" == "refs/heads/${MAIN_BRANCH}" ]]; then
+            echo "::set-output name=name::hachi"
+            echo "::set-output name=tag::sha-${GITHUB_SHA::7}"
+          else
+            echo "::set-output name=name::snow"
+            echo "::set-output name=tag::sha-${GITHUB_SHA::7}"
+          fi
+      - name: Update nanak8s
+        run: |
+          yq e -i '(.environments.${{ steps.deploy_env.outputs.name }}.values[] | select(has("tag"))).tag = "${{ steps.deploy_env.outputs.tag }}"' apps/nanachan/environments.yaml
+          git add apps/nanachan/environments.yaml
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -m "[CI] Update nanachan-${{ steps.deploy_env.outputs.name }} to ${{ steps.deploy_env.outputs.tag }}" -m "https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+          git push
+      - uses: sarisia/actions-status-discord@v1
+        if: failure()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
