@@ -1,0 +1,14 @@
+#!/bin/sh
+branch=$(git rev-parse --abbrev-ref HEAD)
+[ "$branch" != master ] && echo "Tagging commit on $branch branch"
+git pull > /dev/null || exit 1
+basetagname=$(date "+%Y.%m.%d")
+tagname=$basetagname
+i=0
+
+while ! git tag -a "$tagname" -m '' 2> /dev/null; do
+    i=$(( $i + 1 ))
+    tagname=$basetagname-$i
+done
+
+echo Tagged $tagname

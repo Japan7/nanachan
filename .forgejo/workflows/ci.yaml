@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  SERVER_URL: https://git.japan7.bde.enseeiht.fr
+  REGISTRY: git.japan7.bde.enseeiht.fr
+  IMAGE_NAME: japan7/nanachan
+  MAIN_BRANCH: master
+
+jobs:
+  check:
+    if: startsWith(github.ref, 'refs/tags/') != true
+    runs-on: docker
+    container:
+      image: ghcr.io/japan7/forgejo-runner-image:3.12
+    steps:
+      - run: git config --global --add url.http://forgejo-http:3000.insteadOf ssh://git@git.japan7.bde.enseeiht.fr:8022
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.FJ_TOKEN }}
+      - id: cache_env
+        run: echo "::set-output name=hash::$(cat pyproject.toml poetry.lock | sha256sum | cut -d' ' -f1)"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ steps.cache_env.outputs.hash }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+      - name: poetry install
+        run: |
+          poetry install
+          cp nanachan/example.local_settings.py nanachan/local_settings.py
+      - run: poetry run pyright
+      - run: poetry run ruff check nanachan/
+        if: always()
+      - uses: Japan7/forgejo-actions-status-discord@main
+        if: failure()
+        with:
+          server_url: ${{ env.SERVER_URL }}
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+
+  docker-deploy:
+    if: startsWith(github.ref, 'refs/heads/renovate/') != true
+    runs-on: docker
+    container:
+      image: ghcr.io/japan7/forgejo-runner-image:latest
+    steps:
+      - run: git config --global --add url.http://forgejo-http:3000.insteadOf ssh://git@git.japan7.bde.enseeiht.fr:8022
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.FJ_TOKEN }}
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.FJ_USERNAME }}
+          password: ${{ secrets.FJ_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        run: .forgejo/workflows/meta.py
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: |
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.branch }}
+          cache-to: type=inline
+      - name: Set deploy environment
+        id: deploy_env
+        run: .forgejo/workflows/deploy_env.py ${{ steps.build-and-push.outputs.digest }}
+      - name: Update nanak8s
+        run: |
+          git clone --depth 1 "https://${{ secrets.GH_USERNAME }}:${{ secrets.GH_TOKEN }}@github.com/Japan7/nanak8s.git" nanak8s
+          cd nanak8s/
+          yq e -i '(.environments.${{ steps.deploy_env.outputs.name }}.values[] | select(has("tag"))).tag = "${{ steps.deploy_env.outputs.tag }}"' apps/nanachan/environments.yaml
+          git add apps/nanachan/environments.yaml
+          git config user.email "forgejo@japan7.bde.enseeiht.fr"
+          git config user.name "forgejo-japan7[bot]"
+          git commit -m "[CI] Update nanachan-${{ steps.deploy_env.outputs.name }} to ${{ steps.deploy_env.outputs.pretty }}" -m "${{ env.SERVER_URL }}/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+          git push
+      - uses: Japan7/forgejo-actions-status-discord@main
+        if: failure()
+        with:
+          server_url: ${{ env.SERVER_URL }}
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}

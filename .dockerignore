@@ -1,0 +1,16 @@
+# VCS
+.git/
+
+# Editor
+.idea/
+**/*.swp
+
+# Python
+**/__pycache__/
+
+# Misc
+deploy.py
+.gitlab-ci.yml
+.venv/
+
+**/*local_settings.py

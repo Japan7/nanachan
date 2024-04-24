@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ -n "$HOOKS_PYRIGHT_CHECK" ]; then
+    poetry run pyright || exit 1
+fi
+poetry run ruff check nanachan/ || exit 1

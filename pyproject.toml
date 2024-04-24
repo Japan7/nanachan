@@ -1,0 +1,90 @@
+[tool.poetry]
+name = "nanachan"
+version = "0.1.0" # do not change that
+description = "Japan7 Discord bot"
+authors = ["mistiru <dev@mistiru.me>",
+           "Pierre Jeanjean <jeanjep@bde.enseeiht.fr>",
+           "odrling <florianbadie@odrling.xyz>",
+           "Nam Vu <git@yuru.moe>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+nanachan = "nanachan.__main__:main"
+
+[tool.poetry.dependencies]
+python = "~3.12"
+"discord.py" = { git = "https://github.com/Japan7/discord.py.git", rev = "3465e2a24b2006db77b5f08c36d3170c0cae9400", extras = ["voice"] }
+karaneko = { git = "https://karaneko_deploy:excitable-tarantula-citizen@git.japan7.bde.enseeiht.fr/Japan7/karaneko.git", rev = "d780d6fb837328852bcc1b434982be823abea5e3" }
+matplotlib = "3.8.4"
+vobject = "0.9.7"
+python-socketio = { version = "5.11.2", extras = ["asyncio_client"] }
+aiohttp = { version = "3.9.5", extras = ["speedups"] }
+aiofiles = "23.2.1"
+uvloop = "0.19.0"
+pysaucenao = "1.6.2"
+asyncpraw = { git = "https://github.com/praw-dev/asyncpraw.git", rev = "5b0113cb10d51c30ee51e289ac48a64ad385cde2" }
+Pillow = "10.3.0"
+html2text = "2024.2.26"
+# https://github.com/PyYoshi/cChardet/issues/81
+faust-cchardet = "2.1.19"
+toolz = "0.12.1"
+yarl = "1.9.4"
+rich = "13.7.1"
+pydantic = "2.7.1"
+numpy = "1.26.4"
+tldr = "3.2.0"
+watchgod = "0.8.2"
+backoff = "2.2.1"
+yappi = "1.6.0"
+orjson = "3.10.1"
+redis = { version = "5.0.4", extras = ["hiredis"] }
+parsedatetime = "2.6"
+yt-dlp = "2024.4.9"
+ics = "0.7.2"
+aiojobs = "1.2.1"
+tzdata = "2024.1"
+ollama = "0.1.8"
+
+[tool.poetry.group.dev.dependencies]
+pyright = "1.1.360"
+ruff = "0.4.1"
+mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "ef83b417cd858b0f6fc59364f20523e37ab90fc8" }
+requests = "2.31.0"
+# FIXME: https://pypi.org/project/types-redis/#description
+# Note: Redis-py 5.0.0 added a py.typed file, but the inline annotations are incomplete.
+# Continuing to use types-redis for the time being may lead to superior results.
+types-redis = "4.6.0.20240423"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.masonry.api"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "SIM", "I"]
+ignore = [
+    # lambda expressions
+    "E731",
+    # ambiguous variable name
+    "E741",
+    # Do not perform function calls in argument defaults
+    "B008",
+    # Within an except clause, raise exceptions with `raise ... from err` or `raise ... from None`
+    "B904",
+    # `zip()` without an explicit `strict=` parameter
+    "B905",
+    # Use `contextlib.suppress(asyncio.CancelledError)` instead of try-except-pass
+    "SIM105",
+    # Use ternary operator `{contents}` instead of if-else-block
+    "SIM108",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"nanachan/changelog.py" = ["E501"]
+"nanachan/nanapi/model.py" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "single"

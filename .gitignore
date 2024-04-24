@@ -1,0 +1,19 @@
+.venv/
+nanachan/nanachan.egg-info/
+__pycache__/
+local_settings.py
+
+# for macOS pleb
+.DS_Store
+
+.envrc
+.autoenv.zsh
+.vim
+.vim-arsync
+
+# VS Code things
+.devcontainer/pypoetry/
+redis-stack-server.out
+
+# ruff
+.ruff_cache/

@@ -1,0 +1,9 @@
+# ignore file for fd, rg...
+.git
+.venv/
+nanachan/nanachan.egg-info/
+__pycache__/
+.ruff_cache/
+
+# for macOS pleb
+.DS_Store
