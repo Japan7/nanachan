@@ -17,7 +17,6 @@ import aiojobs
 from discord import FFmpegPCMAudio, File, app_commands
 from discord.abc import Messageable
 from discord.ext.commands import BadArgument, CommandError, group
-from karaneko import nekoparse
 from matplotlib import axes, dates, pyplot, ticker
 from toolz.curried import compose, first, get, map
 
@@ -177,27 +176,6 @@ class Karaoke(Cog):
             else:
                 view = ChoiceView(self.bot, karaokes, add_to_playlist)
                 await ctx.reply('**Which kara do you want to sing?**', view=view)
-
-    @kara.command(help='Check if your file name is correct\n'
-                       '<convention> must be one of the followings: `anime`, `music`, `cartoon`')
-    async def check(self, ctx, convention: str, *, filename: str):
-        if convention == 'anime':
-            parser = nekoparse.NekoParseAnime(filename)
-        elif convention == 'music':
-            parser = nekoparse.NekoParseMusic(filename)
-        elif convention == 'cartoon':
-            parser = nekoparse.NekoParseCartoon(filename)
-        else:
-            await ctx.send(
-                f'{convention} is not a valid convention name.\nExpected: anime, music or cartoon!'
-            )
-            return
-
-        try:
-            parser.parse()
-            await ctx.send("All green! :3")
-        except nekoparse.ConventionError as error:
-            await ctx.send(f"Error: {str(error)} :confounded:")
 
     @kara.command(help='Display the karaoke leaderboard')
     async def board(self, ctx):

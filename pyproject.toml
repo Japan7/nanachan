@@ -18,7 +18,6 @@ nanachan = "nanachan.__main__:main"
 [tool.poetry.dependencies]
 python = "~3.12"
 "discord.py" = { git = "https://github.com/Japan7/discord.py.git", rev = "3465e2a24b2006db77b5f08c36d3170c0cae9400", extras = ["voice"] }
-karaneko = { git = "https://karaneko_deploy:excitable-tarantula-citizen@git.japan7.bde.enseeiht.fr/Japan7/karaneko.git", rev = "d780d6fb837328852bcc1b434982be823abea5e3" }
 matplotlib = "3.8.4"
 vobject = "0.9.7"
 python-socketio = { version = "5.11.2", extras = ["asyncio_client"] }
