@@ -1722,13 +1722,13 @@ files = [
 
 [[package]]
 name = "ollama"
-version = "0.1.8"
+version = "0.1.9"
 description = "The official Python client for Ollama."
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "ollama-0.1.8-py3-none-any.whl", hash = "sha256:45916aaf99c6e41a73197e9be8a17ea90290938894ac29d2fa855f55cb70d2e3"},
-    {file = "ollama-0.1.8.tar.gz", hash = "sha256:148a0ff1ce87c904ad8d137f14dda6919f833e83c61457e5e2d449507c43a1bd"},
+    {file = "ollama-0.1.9-py3-none-any.whl", hash = "sha256:46d4b4028ac5cbb30a8128ba60967171fbb523c25c832c0f3f090989e5441033"},
+    {file = "ollama-0.1.9.tar.gz", hash = "sha256:f64484b280db0fa03fb899580d8a3a85af3787fd2a85b67669b743e313b3faf1"},
 ]
 
 [package.dependencies]
@@ -2968,4 +2968,4 @@ secretstorage = ["cffi", "secretstorage"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "4410254aae1ac07112869c449bf3d39386d427a8d66517bbb97028f4154d2911"
+content-hash = "fa683688726bbf57e88e242e1be6feb022739b8b3716911a1cf323236b8fdb91"
