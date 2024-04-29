@@ -20,6 +20,7 @@ from discord import (
     Message,
     NotFound,
     PartialEmoji,
+    PrivacyLevel,
     TextChannel,
     Thread,
     User,
@@ -440,7 +441,8 @@ class BasicCommands(Cog, name='Basic Commands'):
             name=name,
             channel=voice_ch,
             start_time=discord.utils.utcnow() + timedelta(hours=1),
-            description=description or ""
+            description=description or "",
+            privacy_level=PrivacyLevel.guild_only,
         )
 
         try:
