@@ -25,7 +25,7 @@ aiohttp = { version = "3.9.5", extras = ["speedups"] }
 aiofiles = "23.2.1"
 uvloop = "0.19.0"
 pysaucenao = "1.6.2"
-asyncpraw = { git = "https://github.com/praw-dev/asyncpraw.git", rev = "5b0113cb10d51c30ee51e289ac48a64ad385cde2" }
+asyncpraw = { git = "https://github.com/praw-dev/asyncpraw.git", rev = "66af7fbecdb3168e8a7a2c66b2c84b58a2a7f7ac" }
 Pillow = "10.3.0"
 html2text = "2024.2.26"
 # https://github.com/PyYoshi/cChardet/issues/81

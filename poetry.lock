@@ -256,8 +256,8 @@ test = ["mock (==4.*)", "pytest (==7.*)", "pytest-asyncio (==0.18.*)", "pytest-v
 [package.source]
 type = "git"
 url = "https://github.com/praw-dev/asyncpraw.git"
-reference = "5b0113cb10d51c30ee51e289ac48a64ad385cde2"
-resolved_reference = "5b0113cb10d51c30ee51e289ac48a64ad385cde2"
+reference = "66af7fbecdb3168e8a7a2c66b2c84b58a2a7f7ac"
+resolved_reference = "66af7fbecdb3168e8a7a2c66b2c84b58a2a7f7ac"
 
 [[package]]
 name = "asyncprawcore"
@@ -2962,4 +2962,4 @@ secretstorage = ["cffi", "secretstorage"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "d6171815974294925e53fea4800f384ff3b78b3e4d58917c011516ed96f3210f"
+content-hash = "1d68681ccb81abc74f2345a64dfabc6ec85d71adecd90f03e9697e44e897ab80"
