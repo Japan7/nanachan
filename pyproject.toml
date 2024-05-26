@@ -42,7 +42,7 @@ yappi = "1.6.0"
 orjson = "3.10.3"
 redis = { version = "5.0.4", extras = ["hiredis"] }
 parsedatetime = "2.6"
-yt-dlp = "2024.4.9"
+yt-dlp = "2024.5.26"
 ics = "0.7.2"
 aiojobs = "1.2.1"
 tzdata = "2024.1"
