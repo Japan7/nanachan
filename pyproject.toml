@@ -51,7 +51,7 @@ ollama = "0.2.0"
 [tool.poetry.group.dev.dependencies]
 pyright = "1.1.365"
 ruff = "0.4.7"
-mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "b8ad452410f44936b90383d9a06f829e827f96ec" }
+mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "3b69467d55c779ac7f7dd2daa3250459efeceb09" }
 requests = "2.32.3"
 # FIXME: https://pypi.org/project/types-redis/#description
 # Note: Redis-py 5.0.0 added a py.typed file, but the inline annotations are incomplete.
