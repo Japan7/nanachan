@@ -46,7 +46,7 @@ yt-dlp = "2024.5.27"
 ics = "0.7.2"
 aiojobs = "1.2.1"
 tzdata = "2024.1"
-ollama = "0.2.0"
+ollama = "0.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pyright = "1.1.365"
