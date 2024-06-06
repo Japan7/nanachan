@@ -1396,8 +1396,8 @@ ruff = ">=0.1.2,<1"
 [package.source]
 type = "git"
 url = "https://github.com/Japan7/mahou.py.git"
-reference = "dab0ae98a34ab9c164f61b1d940130bac50c9300"
-resolved_reference = "dab0ae98a34ab9c164f61b1d940130bac50c9300"
+reference = "a6c92c97e51bf5380f5311ee091dda0ad4b1140e"
+resolved_reference = "a6c92c97e51bf5380f5311ee091dda0ad4b1140e"
 
 [[package]]
 name = "markdown-it-py"
@@ -2949,4 +2949,4 @@ test = ["pytest (>=8.1,<9.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "0191b799e0a4e7c4554b5d639e1b5a5f887243a0168c23ec4f02b364bbe3858a"
+content-hash = "6859004fda5772238c6f2b5202fb70d7c732c56e2f0f1dcda68ccaf186440210"
