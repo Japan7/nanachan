@@ -39,7 +39,7 @@ tldr = "3.2.0"
 watchgod = "0.8.2"
 backoff = "2.2.1"
 yappi = "1.6.0"
-orjson = "3.10.3"
+orjson = "3.10.4"
 redis = { version = "5.0.5", extras = ["hiredis"] }
 parsedatetime = "2.6"
 yt-dlp = "2024.5.27"
