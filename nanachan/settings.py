@@ -91,11 +91,6 @@ PROJO_LEADER_ROLE_ID = 0000
 # SauceNAO
 SAUCENAO_API_KEY = None
 
-# Reddit
-REDDIT_CLIENT_ID = None
-REDDIT_SECRET = None
-REDDIT_USER_AGENT = None
-
 # Twitch
 TWITCH_CLIENT_ID: str | None = None
 TWITCH_CLIENT_SECRET: str | None = None
@@ -163,8 +158,6 @@ except ImportError:
 
 from nanachan.utils.settings import RequiredSettings  # noqa: E402
 
-RequiresReddit = RequiredSettings(
-    REDDIT_CLIENT_ID, REDDIT_SECRET, REDDIT_USER_AGENT)
 RequiresAMQ = RequiredSettings(AMQ_DEFAULT_SETTINGS, AMQ_ROOM_PASSWORD,
                                AMQ_ROOM_NAME, AMQ_PASSWORD, AMQ_USERNAME,
                                AMQ_ROOM)

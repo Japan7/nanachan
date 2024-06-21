@@ -1,6 +1,5 @@
 import asyncio
 import contextlib as ctxlib
-import datetime
 import functools
 import logging
 import re
@@ -16,10 +15,8 @@ from discord.utils import escape_markdown
 from yarl import URL
 
 from nanachan.discord.helpers import Colour, Embed
-from nanachan.settings import RequiresReddit, RequiresTwitch
-from nanachan.utils.mime import is_image
+from nanachan.settings import RequiresTwitch
 from nanachan.utils.misc import get_session, print_exc, to_hikari
-from nanachan.utils.reddit import get_reddit
 from nanachan.utils.twitch import TwitchAPI
 
 logger = logging.getLogger(__name__)
@@ -175,84 +172,6 @@ class Embeds(commands.Cog):
 
             if found_custom_embeds or force:
                 return asyncio.gather(*[em() for em in embedders.values()])
-
-
-async def reddit_post_embedder(post, force_image=False):
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(post.subreddit.load())
-        if post.author is not None:
-            tg.create_task(post.author.load())
-        _is_image = await tg.create_task(is_image(post.url))
-
-    if force_image and not _is_image:
-        return
-
-    if post.over_18 and post.spoiler:
-        description = '`[NSFW][SPOILER]`'
-    elif post.over_18:
-        description = '`[NSFW]`'
-    elif post.spoiler:
-        description = '`[SPOILER]`'
-    else:
-        if len(post.selftext) > 2048:
-            description = post.selftext[:(2048-20)] + '\n\n`[TRUNCATED POST]`'
-        else:
-            description = post.selftext
-
-    def embed_creator():
-        embed = Embed(colour=0xFF4500,
-                      title=escape_markdown(post.title),
-                      description=description,
-                      timestamp=datetime.datetime.fromtimestamp(
-                          post.created_utc),
-                      url=f'https://www.reddit.com{post.permalink}')
-
-        embed.set_author(name=f'r/{post.subreddit}',
-                         url=f'https://www.reddit.com/r/{post.subreddit}',
-                         icon_url=getattr(post.subreddit, 'icon_img', None))
-        embed.set_footer(
-            text=f'u/{"[deleted]" if post.author is None else post.author.name} on reddit',
-            icon_url=getattr(post.author, 'icon_img', None)
-        )
-        embed.add_field(name='🔺 Upvotes', value=post.score)
-        embed.add_field(name='💬 Comments', value=post.num_comments)
-        return embed
-
-    if hasattr(post, "is_gallery") and post.is_gallery:
-        embeds = []
-        for item in post.gallery_data["items"]:
-            embed = embed_creator()
-            embed.set_image(
-                url=post.media_metadata[item['media_id']]['s']['u'])
-            embeds.append(embed)
-
-        return embeds
-
-    else:
-        embed = embed_creator()
-        if post.over_18 or post.spoiler:
-            embed.set_image(url=post.preview['images'][0]['variants']
-                            ['obfuscated']['source']['url'])
-        elif _is_image:
-            embed.set_image(url=post.url)
-        elif (hasattr(post, 'media') and post.media and 'oembed' in post.media
-                and 'thumbnail_url' in post.media['oembed']):
-            # There might still be a gif in thumbnail
-            embed.set_image(url=post.media['oembed']['thumbnail_url'])
-        elif hasattr(post, 'preview'):
-            embed.set_image(url=post.preview['images'][0]['source']['url'])
-
-        return [embed]
-
-
-@Embeds.embedder(r"\breddit.com/r/[^/]+/comments")
-@RequiresReddit
-async def reddit_post_embedder_from_url(ctx, url: URL):
-    reddit = get_reddit()
-    assert reddit is not None
-
-    post = await reddit.submission(url=str(url))
-    return await reddit_post_embedder(post)
 
 
 @Embeds.embedder(r"//(?:www\.)?twitch\.tv/([^/]+)$")
