@@ -16,7 +16,6 @@ from discord.ui import Button, Select
 from toolz.curried import concat, first, partition_all, second
 from yarl import URL
 
-from nanachan.discord.application_commands import LegacyCommandContext
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import Embed, UserType
 from nanachan.discord.reactions import Pages, ReactionHandler, ReactionListener
