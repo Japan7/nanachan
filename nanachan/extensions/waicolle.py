@@ -493,7 +493,6 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
                 await RollResultsView.create(self.bot,
                                              resp.reply,
                                              pages=pages,
-                                             lock=user,
                                              static_content=user.mention,
                                              prefetch_min_batch_size=25)
 
