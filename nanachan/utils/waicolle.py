@@ -227,20 +227,17 @@ class RollSelectorView(CompositeView):
 
 class RollResultsView(CompositeNavigatorView):
 
-    def __init__(self, bot: Bot, pages: Pages, lock: discord.User):
-        pages.pages.insert(0, self._page_zero(lock))
+    def __init__(self, bot: Bot, pages: Pages, user: discord.User):
+        pages.pages.insert(0, self._page_zero(user))
         pages.start_at = 0
-        components = [
-            LockedView(bot, lock=lock),
-        ]
-        super().__init__(bot, *components, pages=pages, hide_jumper=True)
+        super().__init__(bot, pages=pages, hide_jumper=True)
 
     @classmethod
-    async def _page_zero(cls, player):
+    async def _page_zero(cls, user: discord.User):
         embed = Embed(title=f"{WC_EMOJI} Waifu Collection",
                       description=f"Click {cls.NEXT_EMOJI} to reveal",
                       color=WC_COLOR)
-        embed.set_author(name=player, icon_url=player.display_avatar.url)
+        embed.set_author(name=user, icon_url=user.display_avatar.url)
         return {'embed': embed}
 
 
