@@ -12,6 +12,7 @@ import discord
 import numpy as np
 from discord.app_commands import Choice
 from discord.components import SelectOption
+from discord.ext import commands
 from discord.ui import Button, Select
 from toolz.curried import concat, first, partition_all, second
 from yarl import URL
@@ -260,48 +261,51 @@ class RollResultsView(CompositeNavigatorView):
         return {'embed': embed}
 
     async def _trade_callback(self, interaction: discord.Interaction):
-        async with self.cog.trade_lock_context(interaction.user, self.user):
-            await interaction.response.send_message(f'**{interaction.user}** wants to trade')
+        await interaction.response.defer()
+        try:
+            async with self.cog.trade_lock_context(interaction.user, self.user):
+                await interaction.followup.send(f'**{interaction.user}** wants to trade')
 
-            resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=interaction.user.id, locked=0, trade_locked=0, blooded=0
-            )
-            if not success(resp1):
-                match resp1.code:
-                    case 404:
-                        await interaction.followup.send(
-                            f"**{interaction.user}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
-                        )
-                        return
-                    case _:
-                        raise RuntimeError(resp1.result)
-            player_waifus = resp1.result
+                resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
+                    discord_id=interaction.user.id, locked=0, trade_locked=0, blooded=0
+                )
+                if not success(resp1):
+                    match resp1.code:
+                        case 404:
+                            raise commands.CommandError(
+                                f"**{interaction.user}** is not a player "
+                                f"{self.bot.get_emoji_str('saladedefruits')}"
+                            )
+                        case _:
+                            raise RuntimeError(resp1.result)
+                player_waifus = resp1.result
 
-            chousen_player_coro = self._waifus_selector(
-                interaction, player_waifus, 'give', interaction.user
-            )
-            chousen_other_coro = self._waifus_selector(
-                interaction, self.waifus, 'receive', self.user
-            )
-            chousen_player, chousen_other = await asyncio.gather(
-                chousen_player_coro, chousen_other_coro
-            )
-            if chousen_player is None or chousen_other is None:
-                return
+                chousen_player_coro = self._waifus_selector(
+                    interaction, player_waifus, 'give', interaction.user
+                )
+                chousen_other_coro = self._waifus_selector(
+                    interaction, self.waifus, 'receive', self.user
+                )
+                chousen_player, chousen_other = await asyncio.gather(
+                    chousen_player_coro, chousen_other_coro
+                )
+                if chousen_player is None or chousen_other is None:
+                    return
 
-            trade_waifus = OrderedDict(
-                [
-                    (interaction.user.id, [w.id for w in chousen_player]),
-                    (self.user.id, [w.id for w in chousen_other]),
-                ]
-            )
-            trade = await TradeHelper.create(self.cog, trade_waifus)
-            try:
-                await trade.send(interaction.followup.send)
-            except Exception:
-                await trade.release()
-                raise
+                trade_waifus = OrderedDict(
+                    [
+                        (interaction.user.id, [w.id for w in chousen_player]),
+                        (self.user.id, [w.id for w in chousen_other]),
+                    ]
+                )
+                trade = await TradeHelper.create(self.cog, trade_waifus)
+                try:
+                    await trade.send(interaction.followup.send)
+                except Exception:
+                    await trade.release()
+                    raise
+        except commands.CommandError as e:
+            await interaction.followup.send(str(e))
 
     async def _waifus_selector(
         self,
@@ -332,8 +336,7 @@ class RollResultsView(CompositeNavigatorView):
         )
 
         if not await view.confirmation:
-            await interaction.followup.send('Trade aborted')
-            return
+            raise commands.CommandError('Trade aborted')
 
         return view.selected
 
