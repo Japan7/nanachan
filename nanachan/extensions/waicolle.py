@@ -4,7 +4,7 @@ import logging
 import math
 import re
 from collections import OrderedDict, defaultdict
-from contextlib import suppress
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from enum import Enum
 from functools import partial
@@ -492,7 +492,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             if nb > 0:
                 await RollResultsView.create(self.bot,
                                              resp.reply,
+                                             cog=self,
                                              user=user,
+                                             waifus=waifus,
                                              pages=pages,
                                              static_content=user.mention,
                                              prefetch_min_batch_size=25)
@@ -1029,27 +1031,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
 
     @slash_waifu.command()
     @legacy_command()
-    async def trade(self, ctx: LegacyCommandContext,
-                    other_member: discord.User):
+    async def trade(self, ctx: LegacyCommandContext, other_member: discord.User):
         """Trade your characters with other players"""
         return await self._trade(ctx, other_member)
 
-    async def _trade(self, ctx, other_member):
-        if self.trade_lock[ctx.author.id].locked():
-            raise commands.CommandError(
-                f"{ctx.author} has a pending trade/reroll/lock/unlock/ascend.")
-        if self.trade_lock[other_member.id].locked():
-            raise commands.CommandError(
-                f"{other_member} has a pending trade/reroll/lock/unlock/ascend."
-            )
-
-        if other_member == ctx.author:
-            raise commands.CommandError("You can't trade by yourself.")
-
-        await self.trade_lock[ctx.author.id].acquire()
-        await self.trade_lock[other_member.id].acquire()
-
-        try:
+    async def _trade(self, ctx: LegacyCommandContext, other_member: discord.User | discord.Member):
+        async with self.trade_lock_context(ctx.author, other_member):
             await ctx.reply(f"Trading with **{other_member}**...")
 
             resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
@@ -1096,9 +1083,32 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             except Exception:
                 await trade.release()
                 raise
+
+    @asynccontextmanager
+    async def trade_lock_context(
+        self,
+        self_member: discord.User | discord.Member,
+        other_member: discord.User | discord.Member,
+    ):
+        if self.trade_lock[self_member.id].locked():
+            raise commands.CommandError(
+                f"{self_member} has a pending trade/reroll/lock/unlock/ascend.")
+        if self.trade_lock[other_member.id].locked():
+            raise commands.CommandError(
+                f"{other_member} has a pending trade/reroll/lock/unlock/ascend."
+            )
+
+        if other_member == self_member:
+            raise commands.CommandError("You can't trade by yourself.")
+
+        await self.trade_lock[self_member.id].acquire()
+        await self.trade_lock[other_member.id].acquire()
+
+        try:
+            yield
         finally:
-            if self.trade_lock[ctx.author.id].locked():
-                self.trade_lock[ctx.author.id].release()
+            if self.trade_lock[self_member.id].locked():
+                self.trade_lock[self_member.id].release()
             if self.trade_lock[other_member.id].locked():
                 self.trade_lock[other_member.id].release()
 

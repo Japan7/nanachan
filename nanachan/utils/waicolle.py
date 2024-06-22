@@ -16,6 +16,7 @@ from discord.ui import Button, Select
 from toolz.curried import concat, first, partition_all, second
 from yarl import URL
 
+from nanachan.discord.application_commands import LegacyCommandContext
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import Embed, UserType
 from nanachan.discord.reactions import Pages, ReactionHandler, ReactionListener
@@ -226,19 +227,116 @@ class RollSelectorView(CompositeView):
 
 
 class RollResultsView(CompositeNavigatorView):
-
-    def __init__(self, bot: Bot, pages: Pages, user: discord.User):
-        pages.pages.insert(0, self._page_zero(user))
+    def __init__(
+        self,
+        bot: Bot,
+        pages: Pages,
+        cog: 'WaifuCollection',
+        user: discord.User,
+        waifus: list[WaifuSelectResult],
+    ):
+        self.cog = cog
+        self.user = user
+        self.waifus = waifus
+        pages.pages.insert(0, self._page_zero())
         pages.start_at = 0
         super().__init__(bot, pages=pages, hide_jumper=True)
+        if len(self.pages) > 1:
+            self.trade_button = Button(
+                emoji='🔀',
+                label='Trade',
+                style=discord.ButtonStyle.green,
+                row=0,
+            )
+            self.trade_button.callback = self._trade_callback
+            self.add_item(self.trade_button)
 
-    @classmethod
-    async def _page_zero(cls, user: discord.User):
-        embed = Embed(title=f"{WC_EMOJI} Waifu Collection",
-                      description=f"Click {cls.NEXT_EMOJI} to reveal",
-                      color=WC_COLOR)
-        embed.set_author(name=user, icon_url=user.display_avatar.url)
+    async def _page_zero(self):
+        embed = Embed(
+            title=f'{WC_EMOJI} Waifu Collection',
+            description=f'Click {self.NEXT_EMOJI} to reveal',
+            color=WC_COLOR,
+        )
+        embed.set_author(name=self.user, icon_url=self.user.display_avatar.url)
         return {'embed': embed}
+
+    async def _trade_callback(self, interaction: discord.Interaction):
+        async with self.cog.trade_lock_context(interaction.user, self.user):
+            await interaction.response.send_message(f'**{interaction.user}** wants to trade')
+
+            resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
+                discord_id=interaction.user.id, locked=0, trade_locked=0, blooded=0
+            )
+            if not success(resp1):
+                match resp1.code:
+                    case 404:
+                        await interaction.followup.send(
+                            f"**{interaction.user}** is not a player "
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
+                        return
+                    case _:
+                        raise RuntimeError(resp1.result)
+            player_waifus = resp1.result
+
+            chousen_player_coro = self._waifus_selector(
+                interaction, player_waifus, 'give', interaction.user
+            )
+            chousen_other_coro = self._waifus_selector(
+                interaction, self.waifus, 'receive', self.user
+            )
+            chousen_player, chousen_other = await asyncio.gather(
+                chousen_player_coro, chousen_other_coro
+            )
+            if chousen_player is None or chousen_other is None:
+                return
+
+            trade_waifus = OrderedDict(
+                [
+                    (interaction.user.id, [w.id for w in chousen_player]),
+                    (self.user.id, [w.id for w in chousen_other]),
+                ]
+            )
+            trade = await TradeHelper.create(self.cog, trade_waifus)
+            try:
+                await trade.send(interaction.followup.send)
+            except Exception:
+                await trade.release()
+                raise
+
+    async def _waifus_selector(
+        self,
+        interaction: discord.Interaction,
+        waifus: list[WaifuSelectResult],
+        action: str,
+        owner: discord.User | discord.Member,
+        skip_empty: bool = True,
+    ) -> list[WaifuSelectResult] | None:
+        if skip_empty and len(waifus) == 0:
+            await interaction.followup.send('*Empty list, skipping selection*', ephemeral=True)
+            return []
+
+        pages = [
+            self.cog._waifu_selector_page(owner, group, len(waifus))
+            for group in partition_all(PER_PAGE_SELECTOR, waifus)  # type: ignore
+        ]
+
+        content = f'{interaction.user.mention}\nSelect the characters you want to **{action}**.'
+
+        _, view = await WaifuSelectorView.create(
+            self.bot,
+            partial(interaction.followup.send, ephemeral=True),
+            pages=pages,
+            waifus=waifus,
+            lock=interaction.user,
+            static_content=content,
+        )
+
+        if not await view.confirmation:
+            await interaction.followup.send('Trade aborted')
+            return
+
+        return view.selected
 
 
 class TradeConfirmationView(BaseConfirmationView):
