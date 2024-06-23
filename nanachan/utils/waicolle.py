@@ -244,7 +244,6 @@ class RollResultsView(CompositeNavigatorView):
         self.cog = cog
         self.user = user
         self.waifus = waifus
-        self.locked = [False] + [w.locked for w in waifus]
 
         self.lock_button = RefreshableButton(emoji='🔒', style=discord.ButtonStyle.green, row=0)
         self.lock_button.callback = self._lock_callback
@@ -255,10 +254,6 @@ class RollResultsView(CompositeNavigatorView):
 
         self.add_item(self.lock_button)
         self.add_item(self.trade_button)
-
-    @property
-    def unlocked_waifus(self):
-        return [w for i, w in enumerate(self.waifus) if not self.locked[i + 1]]
 
     async def _page_zero(self):
         embed = Embed(
@@ -271,18 +266,25 @@ class RollResultsView(CompositeNavigatorView):
 
     async def _lock_refresh(self, page: int):
         self.lock_button.disabled = page == 0
-        if self.locked[page]:
-            self.lock_button.emoji = '🔓'
-            self.lock_button.style = discord.ButtonStyle.red
-        else:
-            self.lock_button.emoji = '🔒'
-            self.lock_button.style = discord.ButtonStyle.green
 
     async def _lock_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        if interaction.user != self.user:
+
+        waifu_id = self.waifus[self.displayed_page - 1].id
+        resp = await get_nanapi().waicolle.waicolle_get_waifus(str(waifu_id))
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        waifu = resp.result[0]
+
+        if any(
+            [
+                interaction.user.id != waifu.owner.user.discord_id,
+                waifu.trade_locked,
+                waifu.blooded,
+            ]
+        ):
             await interaction.followup.send(
-                f'**{interaction.user}** is not the owner of this waifu',
+                'Cannot lock this waifu (not yours, in trade, or blooded)',
                 ephemeral=True,
             )
             return
@@ -297,21 +299,13 @@ class RollResultsView(CompositeNavigatorView):
         async with self.cog.trade_lock[interaction.user.id]:
             resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
                 str(self.waifus[self.displayed_page - 1].id),
-                BulkUpdateWaifusBody(locked=not self.locked[self.displayed_page]),
+                BulkUpdateWaifusBody(locked=True),
             )
             if not success(resp):
                 raise RuntimeError(resp.result)
 
-            self.locked[self.displayed_page] = not self.locked[self.displayed_page]
-
-            await self._lock_refresh(self.displayed_page)
-            msg = await interaction.original_response()
-            await msg.edit(view=self)
-
             await interaction.followup.send(
-                f"{'Locked' if self.locked[self.displayed_page] else 'Unlocked'} "
-                f"{self.bot.get_emoji_str('FubukiGO')}",
-                ephemeral=True,
+                f"Locked {self.bot.get_emoji_str('FubukiGO')}", ephemeral=True
             )
 
     async def _trade_callback(self, interaction: discord.Interaction):
@@ -321,24 +315,42 @@ class RollResultsView(CompositeNavigatorView):
                 await interaction.followup.send(f'**{interaction.user}** wants to trade')
 
                 resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-                    discord_id=interaction.user.id, locked=0, trade_locked=0, blooded=0
+                    ','.join(str(w.id) for w in self.waifus)
                 )
                 if not success(resp1):
-                    match resp1.code:
+                    raise RuntimeError(resp1.result)
+                available = [
+                    w
+                    for w in resp1.result
+                    if all(
+                        [
+                            w.owner.user.discord_id == self.user.id,
+                            not w.locked,
+                            not w.trade_locked,
+                            not w.blooded,
+                        ]
+                    )
+                ]
+
+                resp2 = await get_nanapi().waicolle.waicolle_get_waifus(
+                    discord_id=interaction.user.id, locked=0, trade_locked=0, blooded=0
+                )
+                if not success(resp2):
+                    match resp2.code:
                         case 404:
                             raise commands.CommandError(
                                 f"**{interaction.user}** is not a player "
                                 f"{self.bot.get_emoji_str('saladedefruits')}"
                             )
                         case _:
-                            raise RuntimeError(resp1.result)
-                player_waifus = resp1.result
+                            raise RuntimeError(resp2.result)
+                player_waifus = resp2.result
 
                 chousen_player_coro = self._waifus_selector(
                     interaction, player_waifus, 'give', interaction.user
                 )
                 chousen_other_coro = self._waifus_selector(
-                    interaction, self.unlocked_waifus, 'receive', self.user
+                    interaction, available, 'receive', self.user
                 )
                 chousen_player, chousen_other = await asyncio.gather(
                     chousen_player_coro, chousen_other_coro
