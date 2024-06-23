@@ -244,7 +244,7 @@ class RollResultsView(CompositeNavigatorView):
         self.cog = cog
         self.user = user
         self.waifus = waifus
-        self.locked = [False] * (1 + len(waifus))
+        self.locked = [False] + [w.locked for w in waifus]
 
         self.lock_button = RefreshableButton(emoji='🔒', style=discord.ButtonStyle.green, row=0)
         self.lock_button.callback = self._lock_callback
