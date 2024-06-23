@@ -256,6 +256,10 @@ class RollResultsView(CompositeNavigatorView):
         self.add_item(self.lock_button)
         self.add_item(self.trade_button)
 
+    @property
+    def unlocked_waifus(self):
+        return [w for i, w in enumerate(self.waifus) if not self.locked[i + 1]]
+
     async def _page_zero(self):
         embed = Embed(
             title=f'{WC_EMOJI} Waifu Collection',
@@ -334,7 +338,7 @@ class RollResultsView(CompositeNavigatorView):
                     interaction, player_waifus, 'give', interaction.user
                 )
                 chousen_other_coro = self._waifus_selector(
-                    interaction, self.waifus, 'receive', self.user
+                    interaction, self.unlocked_waifus, 'receive', self.user
                 )
                 chousen_player, chousen_other = await asyncio.gather(
                     chousen_player_coro, chousen_other_coro
