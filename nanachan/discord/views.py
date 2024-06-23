@@ -148,7 +148,6 @@ class RefreshableSelect(Select, Refreshable):
 class NavigatorView(BaseView):
     """View replacement for PaginatedMessage"""
     PREV_EMOJI = '⬅️'
-    THIS_EMOJI = '⬆️'
     NEXT_EMOJI = '➡️'
 
     def __init__(self,
@@ -165,15 +164,12 @@ class NavigatorView(BaseView):
         self.hide_jumper = hide_jumper
 
         self.prev_page_bt = RefreshableButton(emoji=self.PREV_EMOJI,
-                                              style=ButtonStyle.blurple,
+                                              style=ButtonStyle.grey,
                                               row=0)
         self.prev_page_bt.refresh = partial(self._nav_bt_refresh, self.prev_page_bt, -1)
 
-        self.displayed_page_bt = RefreshableButton(emoji=self.THIS_EMOJI, disabled=True, row=0)
-        self.displayed_page_bt.refresh = partial(self._nav_bt_refresh, self.displayed_page_bt, 0)
-
         self.next_page_bt = RefreshableButton(emoji=self.NEXT_EMOJI,
-                                              style=ButtonStyle.blurple,
+                                              style=ButtonStyle.grey,
                                               row=0)
         self.next_page_bt.refresh = partial(self._nav_bt_refresh, self.next_page_bt, +1)
 
@@ -183,7 +179,6 @@ class NavigatorView(BaseView):
 
         if len(self.pages) > 1:
             self.add_item(self.prev_page_bt)
-            self.add_item(self.displayed_page_bt)
             self.add_item(self.next_page_bt)
 
             if not self.hide_jumper:
@@ -210,11 +205,10 @@ class NavigatorView(BaseView):
 
     async def _nav_bt_refresh(self, button: Button, inc: int, displayed_page: int):
         new_page = (displayed_page + inc) % len(self.pages)
-        button.label = f"#{(new_page + self.pages.start_at)}"
         if self.named_buttons:
             next_name = await self.pages.get_name(new_page)
-            button.label += f" – {next_name}"
-            button.label = button.label[:80]
+            if next_name is not None:
+                button.label = next_name[:80]
         button.callback = partial(self.update_page, new_page)
 
     async def _jumper_refresh(self, displayed_page: int):

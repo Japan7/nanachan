@@ -724,7 +724,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         """Lock your characters to avoid accidentally killing them"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"{ctx.author} has a pending trade/reroll/lock/unlock/ascend.")
+                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
 
         async with self.trade_lock[ctx.author.id]:
             resp = await get_nanapi().waicolle.waicolle_get_waifus(
@@ -760,7 +760,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         """Unlock your accidentally locked characters in order to kill them"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"{ctx.author} has a pending trade/reroll/lock/unlock/ascend.")
+                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
 
         async with self.trade_lock[ctx.author.id]:
             resp = await get_nanapi().waicolle.waicolle_get_waifus(
@@ -803,7 +803,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         """Ascend your characters to a higher level"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"{ctx.author} has a pending trade/reroll/lock/unlock/ascend.")
+                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
 
         async with self.trade_lock[ctx.author.id]:
             notice = await ctx.reply('Ascending characters...')
@@ -867,7 +867,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         """Extract blood from your characters"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"{ctx.author} has a pending trade/reroll/lock/unlock/ascend.")
+                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
 
         async with self.trade_lock[ctx.author.id]:
             notice = await ctx.reply('Blooding characters...')
@@ -921,7 +921,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         """Offer blood in exchange for characters"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"{ctx.author} has a pending trade/reroll/lock/unlock/ascend.")
+                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
 
         assert self.bot.user is not None
         if self.trade_lock[self.bot.user.id].locked():

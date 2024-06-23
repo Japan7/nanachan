@@ -28,10 +28,12 @@ from nanachan.discord.views import (
     CompositeView,
     ConfirmationView,
     LockedView,
+    RefreshableButton,
     RefreshableSelect,
 )
 from nanachan.nanapi.client import Error, get_nanapi, success
 from nanachan.nanapi.model import (
+    BulkUpdateWaifusBody,
     CEdgeSelectFilterCharaResult,
     CharaSelectResult,
     MediaType,
@@ -235,21 +237,24 @@ class RollResultsView(CompositeNavigatorView):
         user: discord.User,
         waifus: list[WaifuSelectResult],
     ):
-        self.cog = cog
-        self.user = user
-        self.waifus = waifus
         pages.pages.insert(0, self._page_zero())
         pages.start_at = 0
         super().__init__(bot, pages=pages, hide_jumper=True)
-        if len(self.pages) > 1:
-            self.trade_button = Button(
-                emoji='🔀',
-                label='Trade',
-                style=discord.ButtonStyle.green,
-                row=0,
-            )
-            self.trade_button.callback = self._trade_callback
-            self.add_item(self.trade_button)
+
+        self.cog = cog
+        self.user = user
+        self.waifus = waifus
+        self.locked = [False] * (1 + len(waifus))
+
+        self.lock_button = RefreshableButton(emoji='🔒', style=discord.ButtonStyle.green, row=0)
+        self.lock_button.callback = self._lock_callback
+        self.lock_button.refresh = self._lock_refresh
+
+        self.trade_button = Button(emoji='🔀', style=discord.ButtonStyle.blurple, row=0)
+        self.trade_button.callback = self._trade_callback
+
+        self.add_item(self.lock_button)
+        self.add_item(self.trade_button)
 
     async def _page_zero(self):
         embed = Embed(
@@ -259,6 +264,51 @@ class RollResultsView(CompositeNavigatorView):
         )
         embed.set_author(name=self.user, icon_url=self.user.display_avatar.url)
         return {'embed': embed}
+
+    async def _lock_refresh(self, page: int):
+        self.lock_button.disabled = page == 0
+        if self.locked[page]:
+            self.lock_button.emoji = '🔓'
+            self.lock_button.style = discord.ButtonStyle.red
+        else:
+            self.lock_button.emoji = '🔒'
+            self.lock_button.style = discord.ButtonStyle.green
+
+    async def _lock_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if interaction.user != self.user:
+            await interaction.followup.send(
+                f'**{interaction.user}** is not the owner of this waifu',
+                ephemeral=True,
+            )
+            return
+
+        if self.cog.trade_lock[interaction.user.id].locked():
+            await interaction.followup.send(
+                f'**{interaction.user}** has a pending trade/reroll/lock/unlock/ascend.',
+                ephemeral=True,
+            )
+            return
+
+        async with self.cog.trade_lock[interaction.user.id]:
+            resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
+                str(self.waifus[self.displayed_page - 1].id),
+                BulkUpdateWaifusBody(locked=not self.locked[self.displayed_page]),
+            )
+            if not success(resp):
+                raise RuntimeError(resp.result)
+
+            self.locked[self.displayed_page] = not self.locked[self.displayed_page]
+
+            await self._lock_refresh(self.displayed_page)
+            msg = await interaction.original_response()
+            await msg.edit(view=self)
+
+            await interaction.followup.send(
+                f"{'Locked' if self.locked[self.displayed_page] else 'Unlocked'} "
+                f"{self.bot.get_emoji_str('FubukiGO')}",
+                ephemeral=True,
+            )
 
     async def _trade_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()

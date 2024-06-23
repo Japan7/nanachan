@@ -359,7 +359,7 @@ class StringCondition(Condition):
     async def send_reward(self, ctx: MultiplexingContext, nb: int):
         bot_room = self.waifu_cog.bot.get_bot_room()
         bot_room = cast(Messageable, bot_room)
-        await bot_room.send(f"{ctx.author} {self.word.action}",
+        await bot_room.send(f"**{ctx.author}** {self.word.action}",
                             embed=ctx.message.quote_embed)
         await self.waifu_cog._drop(
             self.user,

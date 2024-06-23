@@ -147,7 +147,7 @@ class ProjectionView(BaseView):
 
         self.join_bt = Button(emoji=self.JOIN_EMOTE,
                               label="Join thread",
-                              style=discord.ButtonStyle.grey,
+                              style=discord.ButtonStyle.green,
                               custom_id=f"projo-join-{self.projo_id}")
         self.join_bt.callback = self.join
         self.add_item(self.join_bt)

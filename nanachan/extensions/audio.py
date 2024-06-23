@@ -36,13 +36,13 @@ class AudioControlsView(BaseView):
         self.cog.muted = not self.cog.muted
         await self._manage_volume()
 
-    @button(emoji=DECREASE_EMOJI, style=ButtonStyle.blurple)
+    @button(emoji=DECREASE_EMOJI, style=ButtonStyle.grey)
     async def decrease(self, interaction: discord.Interaction, button: Button):
         await interaction.response.defer()
         self.cog.volume = max(0., self.cog.volume - 0.1)
         await self._manage_volume()
 
-    @button(emoji=INCREASE_EMOJI, style=ButtonStyle.blurple)
+    @button(emoji=INCREASE_EMOJI, style=ButtonStyle.grey)
     async def increase(self, interaction: discord.Interaction, button: Button):
         await interaction.response.defer()
         self.cog.volume = min(1., self.cog.volume + 0.1)
