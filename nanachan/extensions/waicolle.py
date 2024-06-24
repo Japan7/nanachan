@@ -926,7 +926,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         assert self.bot.user is not None
         if self.trade_lock[self.bot.user.id].locked():
             raise commands.CommandError(
-                f"{self.bot.user} has a pending trade/reroll/lock/unlock/ascend."
+                f"**{self.bot.user}** has a pending trade/reroll/lock/unlock/ascend."
             )
 
         await self.trade_lock[ctx.author.id].acquire()
@@ -1092,10 +1092,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
     ):
         if self.trade_lock[self_member.id].locked():
             raise commands.CommandError(
-                f"{self_member} has a pending trade/reroll/lock/unlock/ascend.")
+                f"**{self_member}** has a pending trade/reroll/lock/unlock/ascend.")
         if self.trade_lock[other_member.id].locked():
             raise commands.CommandError(
-                f"{other_member} has a pending trade/reroll/lock/unlock/ascend."
+                f"**{other_member}** has a pending trade/reroll/lock/unlock/ascend."
             )
 
         if other_member == self_member:

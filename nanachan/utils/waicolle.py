@@ -252,8 +252,10 @@ class RollResultsView(CompositeNavigatorView):
         self.trade_button = Button(emoji='🔀', style=discord.ButtonStyle.blurple, row=0)
         self.trade_button.callback = self._trade_callback
 
+        self.remove_item(self.next_page_bt)
         self.add_item(self.lock_button)
         self.add_item(self.trade_button)
+        self.add_item(self.next_page_bt)
 
     async def _page_zero(self):
         embed = Embed(
