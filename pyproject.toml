@@ -48,7 +48,7 @@ tzdata = "2024.1"
 ollama = "0.2.1"
 
 [tool.poetry.group.dev.dependencies]
-pyright = "1.1.368"
+pyright = "1.1.369"
 ruff = "0.4.10"
 mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "dc1889e41cd7808f9afb4d1f64f2b2740c606bee" }
 requests = "2.32.3"
