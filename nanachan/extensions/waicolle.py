@@ -2310,11 +2310,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
     def is_dbl_zn():
         now = datetime.now(tz=TZ)
         weekday = now.weekday()
-        if weekday >= 5:
-            return True
-        if weekday == 4 and now.hour >= 18:
-            return True
-        return False
+        return weekday >= 5 or (weekday == 4 and now.hour >= 18)
 
     def log_user_messages(self, user: discord.User | discord.Member):
         total = self.ignored_messages[user.id] + \
