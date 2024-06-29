@@ -2380,13 +2380,13 @@ tests = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "tldr"
-version = "3.2.0"
+version = "3.3.0"
 description = "command line client for tldr"
 optional = false
-python-versions = "~=3.6"
+python-versions = "~=3.8"
 files = [
-    {file = "tldr-3.2.0-py3-none-any.whl", hash = "sha256:41a271e31eaf57a6da6d35adbbec7a5051f8781c3afb8fcca6140f03a2186636"},
-    {file = "tldr-3.2.0.tar.gz", hash = "sha256:d04f71c7f0a28c940e18a1dc6c8c911c1388661674ad83e909853dacbe5fa0c1"},
+    {file = "tldr-3.3.0-py3-none-any.whl", hash = "sha256:584258182f492e62d7e7dd29787a6febdc9b653a10f346f179c013ea172c286c"},
+    {file = "tldr-3.3.0.tar.gz", hash = "sha256:8e243c20add63e8923d7b968b6854d8d41d443af5e8622880192d64e30208ba7"},
 ]
 
 [package.dependencies]
@@ -2876,4 +2876,4 @@ test = ["pytest (>=8.1,<9.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "353c00d379410115d18f92032ccee37a6e6602c964a5f86c1bb80d2ba4c52236"
+content-hash = "a2f4c6d34eb73e1dbe70fe3ee330e151c76f214125dedd6ae8c176b45a3fba0d"
