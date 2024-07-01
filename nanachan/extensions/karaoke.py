@@ -16,13 +16,13 @@ import aiofiles.os
 import aiojobs
 from discord import FFmpegPCMAudio, File, app_commands
 from discord.abc import Messageable
-from discord.ext.commands import BadArgument, CommandError, group
+from discord.ext.commands import BadArgument, CommandError
 from matplotlib import axes, dates, pyplot, ticker
 from toolz.curried import compose, first, get, map
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
-from nanachan.discord.cog import Cog, NanaGroupCog
+from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed
 from nanachan.discord.views import ChoiceView, CompositeNavigatorView, ConfirmationView
 from nanachan.extensions.audio import Audio, PlaylistEntry, TrackInfo
@@ -137,21 +137,13 @@ class Date(date):
 
 
 @RequiresKaraoke
-class Karaoke(Cog):
+class Karaoke(NanaGroupCog, group_name="kara"):
     emoji = '🎤'
 
-    @group(invoke_without_command=True, recursive_help=True,
-           help='Play a karaoke or display information about karaoke base')
-    async def kara(self, ctx):
-        subcommand = ctx.subcommand_passed
-        if subcommand is not None:
-            raise BadArgument(f'Invalid kara command `{subcommand}`')
-        else:
-            raise BadArgument('Subcommand needed')
-
-    @kara.command(help='Play a karaoke (with lyrics!)')
+    @app_commands.command(description="Play a karaoke (with lyrics!)")
+    @legacy_command()
     async def play(self, ctx, *, search_tags: str):
-        audio = Audio.get_cog(self.bot)
+        audio = Audio.get_cog(ctx.bot)
         assert audio is not None
 
         async def send_karaoke(kara: KaraSong):
@@ -174,10 +166,11 @@ class Karaoke(Cog):
             elif len(karaokes) == 1:
                 await add_to_playlist(karaokes[0])
             else:
-                view = ChoiceView(self.bot, karaokes, add_to_playlist)
+                view = ChoiceView(ctx.bot, karaokes, add_to_playlist)
                 await ctx.reply('**Which kara do you want to sing?**', view=view)
 
-    @kara.command(help='Display the karaoke leaderboard')
+    @app_commands.command(description='Display the karaoke leaderboard')
+    @legacy_command()
     async def board(self, ctx):
         async with ctx.typing():
             tmp = await ctx.send('Calculating ...')
@@ -186,9 +179,30 @@ class Karaoke(Cog):
             for page in pages:
                 await ctx.send(page)
 
-    @kara.command(help='Display the evolution of someone’s timing across time\n'
-                       '[begin] & [end] should be `YYYY`, `YYYY-MM` or `YYYY-MM-DD`')
-    async def graph(self, ctx, username: str, begin: Date | None = None, end: Date | None = None):
+    @app_commands.command(description='Display the evolution of someone’s timing across time')
+    @app_commands.describe(begin_str="YYYY-MM-DD")
+    @app_commands.rename(begin_str="begin")
+    @legacy_command()
+    async def graph(
+        self, ctx, username: str, begin_str: str | None = None, end_str: str | None = None
+    ):
+        begin: datetime | None = None
+        end: datetime | None = None
+
+        if begin_str is not None:
+            try:
+                begin = datetime.fromisoformat(begin_str)
+            except ValueError:
+                await ctx.send("begin format should be YYYY-MM-DD")
+                return
+
+        if end_str is not None:
+            try:
+                end = datetime.fromisoformat(end_str)
+            except ValueError:
+                await ctx.send("end format should be YYYY-MM-DD")
+                return
+
         if begin is not None and begin >= (end or date.today()):
             await ctx.send('The begin date should be lower than the end date')
             return
@@ -607,5 +621,5 @@ class Mugen(NanaGroupCog, group_name="mugen"):
 
 
 async def setup(bot: Bot):
-    await bot.add_cog(Karaoke(bot))
+    await bot.add_cog(Karaoke())
     await bot.add_cog(Mugen())
