@@ -192,36 +192,6 @@ class Anilist(Cog):
         await NavigatorView.create(self.bot, ctx.reply,
                                    pages=[staff_page(s) for s in results])
 
-    @slash_anilist.command(name='recommendations')
-    @legacy_command()
-    async def user_reco(self,
-                        ctx: LegacyCommandContext,
-                        user: discord.User | discord.Member | None = None):
-        """Get your recommendations."""
-        if not user:
-            user = ctx.author
-        resp = await get_nanapi().anilist.anilist_get_account_recommendations(
-            user.id)
-        if not success(resp):
-            raise RuntimeError(resp.result)
-        results = resp.result
-        if not results:
-            raise commands.CommandError("No recommendations found")
-        desc = []
-        for i, r in enumerate(results):
-            desc.append(
-                f"`{i + 1}.` "
-                f"**{r.score:.2f}** – "
-                f"[{r.media.type.value[:1]}] [{r.media.title_user_preferred}]({r.media.site_url})"
-            )
-        await AutoNavigatorView.create(self.bot,
-                                       ctx.reply,
-                                       title='Top recommendations',
-                                       description='\n'.join(desc),
-                                       color=AL_COLOR,
-                                       author_name=str(user),
-                                       author_icon_url=user.display_avatar.url)
-
 
 async def setup(bot: Bot):
     await bot.add_cog(Anilist(bot))

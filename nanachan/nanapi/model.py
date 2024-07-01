@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import Field
@@ -879,14 +879,6 @@ class NewOfferingBody:
 
 
 @dataclass
-class NewPollBody:
-    message_id: int
-    channel_id: int
-    question: str
-    options: Any | None = None
-
-
-@dataclass
 class NewPresenceBody:
     type: Literal['PLAYING', 'LISTENING', 'WATCHING']
     name: str
@@ -1155,44 +1147,6 @@ class PlayerTrackedItemsResultTrackedStaffs:
 
 
 @dataclass
-class PollDeleteByMessageIdResult:
-    id: UUID
-
-
-@dataclass
-class PollGetByMessageIdResult:
-    message_id: int
-    message_id_str: str
-    channel_id: int
-    channel_id_str: str
-    question: str
-    options: list['PollGetByMessageIdResultOptions']
-
-
-@dataclass
-class PollGetByMessageIdResultOptions:
-    rank: int
-    text: str
-    votes: list['PollGetByMessageIdResultOptionsVotes']
-
-
-@dataclass
-class PollGetByMessageIdResultOptionsVotes:
-    user: 'PollGetByMessageIdResultOptionsVotesUser'
-
-
-@dataclass
-class PollGetByMessageIdResultOptionsVotesUser:
-    discord_id: int
-    discord_id_str: str
-
-
-@dataclass
-class PollInsertResult:
-    id: UUID
-
-
-@dataclass
 class PotAddResult:
     amount: float
     count: int
@@ -1399,12 +1353,6 @@ class Rank:
 
 
 @dataclass
-class RecommendationResult:
-    media: 'MediaSelectResult'
-    score: float
-
-
-@dataclass
 class ReminderDeleteByIdResult:
     id: UUID
 
@@ -1510,12 +1458,6 @@ class SetProjectionStatusBody:
 class SetQuizzAnswerBody:
     answer: str | None = None
     answer_source: str | None = None
-
-
-@dataclass
-class SetVoteBody:
-    discord_username: str
-    rank: int
 
 
 @dataclass
@@ -1762,16 +1704,6 @@ class ValidationError:
     loc: list[str | int]
     msg: str
     type: str
-
-
-@dataclass
-class VoteDeleteResult:
-    id: UUID
-
-
-@dataclass
-class VoteMergeResult:
-    id: UUID
 
 
 @dataclass

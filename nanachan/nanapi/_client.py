@@ -63,7 +63,6 @@ from .model import (
     NewGameBody,
     NewHistoireBody,
     NewOfferingBody,
-    NewPollBody,
     NewPresenceBody,
     NewProjectionBody,
     NewProjectionEventBody,
@@ -86,9 +85,6 @@ from .model import (
     PlayerStaffStatsResult,
     PlayerTrackedItemsResult,
     PlayerTrackReversedResult,
-    PollDeleteByMessageIdResult,
-    PollGetByMessageIdResult,
-    PollInsertResult,
     PotAddResult,
     PotGetByUserResult,
     PresenceDeleteByIdResult,
@@ -114,7 +110,6 @@ from .model import (
     QuizzInsertResult,
     QuizzSetAnswerResult,
     Rank,
-    RecommendationResult,
     ReminderDeleteByIdResult,
     ReminderInsertSelectResult,
     ReminderSelectAllResult,
@@ -132,7 +127,6 @@ from .model import (
     SetQuizzAnswerBody,
     SettingsMergeResult,
     SettingsSelectAllResult,
-    SetVoteBody,
     StaffAlbumResult,
     StaffNameAutocompleteResult,
     StaffSelectResult,
@@ -146,8 +140,6 @@ from .model import (
     UpsertProfileBody,
     UserBulkMergeResult,
     UserSelectResult,
-    VoteDeleteResult,
-    VoteMergeResult,
     WaifuBulkUpdateResult,
     WaifuExportResult,
     WaifuReplaceCustomPositionResult,
@@ -466,38 +458,6 @@ class AnilistModule:
             if resp.status == 200:
                 return Success[Literal[200], list[EntrySelectAllResult]](
                     code=200, result=[EntrySelectAllResult(**e) for e in (await resp.json())]
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def anilist_get_account_recommendations(
-        self, discord_id: int
-    ) -> (
-        Success[Literal[200], list[RecommendationResult]]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        url = f'{self.server_url}/anilist/accounts/{discord_id}/recommendations'
-
-        async with self.session.get(
-            url,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], list[RecommendationResult]](
-                    code=200, result=[RecommendationResult(**e) for e in (await resp.json())]
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
@@ -1369,250 +1329,6 @@ class HistoireModule:
             if resp.status == 200:
                 return Success[Literal[200], HistoireDeleteByIdResult](
                     code=200, result=HistoireDeleteByIdResult(**(await resp.json()))
-                )
-            if resp.status == 204:
-                return Success[Literal[204], None](code=204, result=None)
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-
-class PollModule:
-    def __init__(self, session: 'ClientSession', server_url: str):
-        self.session: ClientSession = session
-        self.server_url: str = server_url
-
-    async def poll_new_poll(
-        self, body: NewPollBody, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[201], list[PollInsertResult]]
-        | Error[Literal[409], HTTPExceptionModel]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        url = f'{self.server_url}/polls/'
-        params = dict(
-            client_id=client_id,
-        )
-        params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
-        }
-
-        async with self.session.post(
-            url,
-            params=params,
-            json=body,
-        ) as resp:
-            if resp.status == 201:
-                return Success[Literal[201], list[PollInsertResult]](
-                    code=201, result=[PollInsertResult(**e) for e in (await resp.json())]
-                )
-            if resp.status == 409:
-                return Error[Literal[409], HTTPExceptionModel](
-                    code=409, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def poll_get_poll(
-        self, message_id: int, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], PollGetByMessageIdResult]
-        | Error[Literal[404], HTTPExceptionModel]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        url = f'{self.server_url}/polls/{message_id}'
-        params = dict(
-            client_id=client_id,
-        )
-        params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
-        }
-
-        async with self.session.get(
-            url,
-            params=params,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], PollGetByMessageIdResult](
-                    code=200, result=PollGetByMessageIdResult(**(await resp.json()))
-                )
-            if resp.status == 404:
-                return Error[Literal[404], HTTPExceptionModel](
-                    code=404, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def poll_delete_poll(
-        self, message_id: int, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], PollDeleteByMessageIdResult]
-        | Success[Literal[204], None]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        url = f'{self.server_url}/polls/{message_id}'
-        params = dict(
-            client_id=client_id,
-        )
-        params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
-        }
-
-        async with self.session.delete(
-            url,
-            params=params,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], PollDeleteByMessageIdResult](
-                    code=200, result=PollDeleteByMessageIdResult(**(await resp.json()))
-                )
-            if resp.status == 204:
-                return Success[Literal[204], None](code=204, result=None)
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def poll_set_vote(
-        self, message_id: int, discord_id: int, body: SetVoteBody, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], VoteMergeResult]
-        | Error[Literal[404], HTTPExceptionModel]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        url = f'{self.server_url}/polls/{message_id}/votes/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
-        params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
-        }
-
-        async with self.session.put(
-            url,
-            params=params,
-            json=body,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], VoteMergeResult](
-                    code=200, result=VoteMergeResult(**(await resp.json()))
-                )
-            if resp.status == 404:
-                return Error[Literal[404], HTTPExceptionModel](
-                    code=404, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def poll_delete_vote(
-        self, message_id: int, discord_id: int, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], VoteDeleteResult]
-        | Success[Literal[204], None]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        url = f'{self.server_url}/polls/{message_id}/votes/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
-        params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
-        }
-
-        async with self.session.delete(
-            url,
-            params=params,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], VoteDeleteResult](
-                    code=200, result=VoteDeleteResult(**(await resp.json()))
                 )
             if resp.status == 204:
                 return Success[Literal[204], None](code=204, result=None)
@@ -5935,7 +5651,6 @@ class ClientSession(aiohttp.ClientSession):
         self.anilist: AnilistModule = AnilistModule(self, server_url)
         self.client: ClientModule = ClientModule(self, server_url)
         self.histoire: HistoireModule = HistoireModule(self, server_url)
-        self.poll: PollModule = PollModule(self, server_url)
         self.pot: PotModule = PotModule(self, server_url)
         self.presence: PresenceModule = PresenceModule(self, server_url)
         self.projection: ProjectionModule = ProjectionModule(self, server_url)
