@@ -17,7 +17,6 @@ JAPAN7_AUTH: BasicAuth | None = None
 IGNORED_TIMERS = ['Toyunda Epitanime', '???',
                   'Extérieur', 'Joysound Exporter Japan7', 'Pititi-N']
 KARA_BASE: str | None = None
-MUGEN_IMPORT_API = "https://dakara.japan7.bde.enseeiht.fr/mugen"
 
 # YoutubeDL
 YOUTUBE_DL_CONFIG = {
