@@ -126,6 +126,10 @@ CHURROS_REFRESH_INTERVAL = 15     # in minutes
 OLLAMA_HOST = ''
 OLLAMA_MODEL = ''
 
+# producer
+PRODUCER_UPLOAD_ENDPOINT = "https://producer.japan7.bde.enseeiht.fr"
+PRODUCER_TOKEN = ""
+
 _spamers = {}
 _start_time = utcnow()
 

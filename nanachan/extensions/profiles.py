@@ -37,7 +37,7 @@ from nanachan.nanapi.model import (
     UpsertProfileBody,
 )
 from nanachan.settings import YEAR_ROLES
-from nanachan.utils.misc import list_display, to_hikari
+from nanachan.utils.misc import list_display, to_producer
 
 
 class RegistrarProtocol(Protocol):
@@ -314,7 +314,7 @@ class Profiles(Cog):
 
         if profile.photo:
             image = io.BytesIO(base64.b64decode(profile.photo))
-            hikari = await to_hikari(image, filename='profile.jpg')
+            hikari = await to_producer(image, filename='profile.jpg')
             embed.set_thumbnail(url=hikari['url'])
 
         await send_func(embed=embed)
