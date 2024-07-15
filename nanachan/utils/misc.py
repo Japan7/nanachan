@@ -5,7 +5,7 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import suppress
 from functools import cache, lru_cache, singledispatch, update_wrapper
-from typing import Any, AsyncIterable, Coroutine, Optional, Type, Union, cast
+from typing import Any, AsyncIterable, Coroutine, Optional, Type, TypedDict, Union, cast
 
 import aiohttp
 import backoff
@@ -16,6 +16,8 @@ from rich import traceback
 from rich.console import Console
 from yarl import URL
 
+from nanachan.settings import PRODUCER_TOKEN, PRODUCER_UPLOAD_ENDPOINT
+
 __all__ = ('framed_header',
            'list_display',
            'run_coro',
@@ -23,7 +25,7 @@ __all__ = ('framed_header',
            'dummy',
            'async_dummy',
            'get_session',
-           'to_hikari',
+           'to_producer',
            'ignore',
            'get_console',
            'get_traceback',
@@ -127,25 +129,42 @@ def get_session() -> aiohttp.ClientSession:
     return aiohttp.ClientSession(timeout=timeout, json_serialize=json_serialize)
 
 
-HIKARI_UPLOAD_ENDPOINT = "https://hikari.butaishoujo.moe/upload"
+class ProducerResponse(TypedDict):
+    url: str
 
 
 @singledispatch
 @default_backoff
-async def to_hikari(file: Union[str, URL], **kwargs):
-    async with get_session().get(HIKARI_UPLOAD_ENDPOINT,
-                                 params=dict(url=str(file), **kwargs)) as req:
-        return await req.json()
+async def to_producer(file: Union[str, URL]) -> ProducerResponse:
+    url = URL(file) if isinstance(file, str) else file
+
+    async with get_session().get(url) as req:
+        filename = url.name
+        data = aiohttp.FormData()
+        data.add_field("file", req.content, filename=filename)
+        headers = {
+            "Authorization": PRODUCER_TOKEN,
+            "Expires": 0,
+        }
+
+        async with get_session().post(PRODUCER_UPLOAD_ENDPOINT,
+                                      headers=headers, data=data) as req:
+            return await req.json()
 
 
-@to_hikari.register
+@to_producer.register
 @default_backoff
-async def _(file: io.IOBase, filename=None, **kwargs):
+async def _(file: io.IOBase, filename=None) -> ProducerResponse:
     if filename is not None:
         file.name = filename  # type: ignore
 
-    async with get_session().post(HIKARI_UPLOAD_ENDPOINT,
-                                  data=dict(file=file, **kwargs)) as req:
+    headers = {
+        "Authorization": PRODUCER_TOKEN,
+        "Expires": 0,
+    }
+
+    async with get_session().post(PRODUCER_UPLOAD_ENDPOINT,
+                                  headers=headers, data=dict(file=file)) as req:
         return await req.json()
 
 

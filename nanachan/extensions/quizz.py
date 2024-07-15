@@ -52,7 +52,7 @@ from nanachan.settings import (
     RequiresQuizz,
 )
 from nanachan.utils.mime import is_image
-from nanachan.utils.misc import get_session, to_hikari
+from nanachan.utils.misc import get_session, to_producer
 
 if TYPE_CHECKING:
     from discord.abc import MessageableChannel
@@ -118,7 +118,7 @@ class QuizzBase(ABC):
 
         if len(message.attachments) > 0:
             url = message.attachments[0].url
-            url = (await to_hikari(url))['url']
+            url = (await to_producer(url))['url']
             image_check = await is_image(url)
         elif content is not None:
             url_match = re.search(r'https://[^ ]+', content)

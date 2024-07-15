@@ -16,7 +16,7 @@ from yarl import URL
 
 from nanachan.discord.helpers import Colour, Embed
 from nanachan.settings import RequiresTwitch
-from nanachan.utils.misc import get_session, print_exc, to_hikari
+from nanachan.utils.misc import get_session, print_exc, to_producer
 from nanachan.utils.twitch import TwitchAPI
 
 logger = logging.getLogger(__name__)
@@ -197,7 +197,7 @@ async def twitch_channel_embed(ctx, url: URL, username: str):
                       url=user_url,
                       colour=Colour(0x9244ff))
 
-        thumb = await to_hikari(stream['thumbnail_url'].format(width=1280, height=720))
+        thumb = await to_producer(stream['thumbnail_url'].format(width=1280, height=720))
         footer = escape_markdown(
             f"Twitch • {stream['game_name']} ⋅ {stream['viewer_count']} viewers"
         )

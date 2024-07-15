@@ -115,3 +115,7 @@ BOT_VOICE_ID = 0000
 # ollama
 # OLLAMA_HOST = 'http://localhost:11434'
 # OLLAMA_MODEL = 'llama3'
+
+# producer
+#PRODUCER_UPLOAD_ENDPOINT = "https://producer.japan7.bde.enseeiht.fr"
+#PRODUCER_TOKEN = ""
