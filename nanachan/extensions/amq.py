@@ -206,6 +206,7 @@ class AMQBot(metaclass=MetaAMQBot):
         self.connected_event = asyncio.Event()
         self.room_created = asyncio.Event()
         self.join_future = None
+        self.default_settings: asyncio.Future[Settings] = self.loop.create_future()
 
         self.room_id: int | None = None
         self.password: str | None = AMQ_PASSWORD
@@ -418,8 +419,20 @@ class AMQBot(metaclass=MetaAMQBot):
         if data['canReconnectGame']:
             self.join_future = self.loop.create_future()
             await self.send_command('roombrowser', 'rejoin game')
+        else:
+            await self.send_command('roombrowser', 'get rooms')
 
         self.connected_event.set()
+
+    @amq_command('amq_events', 'New Rooms')
+    async def on_new_rooms(self, data):
+        if self.default_settings.done():
+            return
+
+        if len(data):
+            settings = Settings(data[0]["settings"])
+            settings.pre_load()
+            self.default_settings.set_result(settings)
 
     async def send_request(self, name):
         if name not in self.friends:
@@ -832,6 +845,7 @@ class Settings(dict):
     def pre_load(self):
         self['roomName'] = AMQ_ROOM_NAME
         self['password'] = AMQ_ROOM_PASSWORD
+        self['privateRoom'] = True
         return self
 
     @property
