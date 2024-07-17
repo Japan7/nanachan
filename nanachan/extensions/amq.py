@@ -335,8 +335,6 @@ class AMQBot(metaclass=MetaAMQBot):
         while await self.connect(**socket_info):
             logger.debug('reconnecting')
 
-        await self.disconnect()
-
     async def join_room(self, room_name: int, password: Optional[str] = None):
         await self.connected_event.wait()
         return await self._join_room(room_name, password)
@@ -380,10 +378,10 @@ class AMQBot(metaclass=MetaAMQBot):
 
     @amq_command('amq_events', 'force logoff')
     @amq_command('amq_events', 'game closed')
-    async def disconnect(self, *_):
+    def disconnect(self, *_):
         logger.debug('disconnecting')
         self.connection_state = AMQBot.DISCONNECTED
-        await self.sio.disconnect()
+        self.loop.create_task(self.sio.disconnect())
 
     @amq_command('amq_events', 'Host Game')
     async def on_host(self, data):
@@ -1068,7 +1066,7 @@ class AMQ(Cog):
     async def disconnect(self, ctx):
         """Disconnect the bot from AMQ"""
         if self.amq is not None:
-            await self.amq.disconnect()
+            self.amq.disconnect()
         await ctx.send(self.bot.get_emoji_str("FubukiGO"))
 
     ############
