@@ -142,9 +142,9 @@ async def to_producer(file: Union[str, URL]) -> ProducerResponse:
         filename = url.name
         data = aiohttp.FormData()
         data.add_field("file", req.content, filename=filename)
-        headers = {
+        headers: dict[str, str] = {
             "Authorization": PRODUCER_TOKEN,
-            "Expires": 0,
+            "Expires": "0",
         }
 
         async with get_session().post(PRODUCER_UPLOAD_ENDPOINT,
@@ -158,9 +158,9 @@ async def _(file: io.IOBase, filename=None) -> ProducerResponse:
     if filename is not None:
         file.name = filename  # type: ignore
 
-    headers = {
+    headers: dict[str, str] = {
         "Authorization": PRODUCER_TOKEN,
-        "Expires": 0,
+        "Expires": "0",
     }
 
     async with get_session().post(PRODUCER_UPLOAD_ENDPOINT,
