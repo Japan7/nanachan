@@ -343,24 +343,24 @@ class AMQBot(metaclass=MetaAMQBot):
     async def load(self, settings_name: str | None = None):
         await self.connected_event.wait()
 
+        assert AMQ_DEFAULT_SETTINGS is not None
         if settings_name is None:
             settings_name = AMQ_DEFAULT_SETTINGS
 
         if self.bot_settings is None:
             self.bot_settings = await load_settings()
 
-        if settings_name not in self.bot_settings:
-            return False
-
         if self.join_future is not None:
             await self.join_future
 
         if self.room_created.is_set():
+            if settings_name not in self.bot_settings:
+                return False
             return await self.change_settings(settings_name)
         else:
             await self.create_room()
-            if AMQ_DEFAULT_SETTINGS is not None:
-                await self.change_settings(AMQ_DEFAULT_SETTINGS)
+            if settings_name in self.bot_settings:
+                await self.change_settings(settings_name)
             await self.room_created.wait()
 
         return self.settings
