@@ -290,8 +290,9 @@ class AMQBot(metaclass=MetaAMQBot):
         logger.log(PANIC_LEVEL, f'sending: {request}')
         await self.sio.emit('command', request)
 
-    async def create_room(self, room_settings):
-        await self.send_command('roombrowser', 'host room', **room_settings)
+    async def create_room(self):
+        settings = await self.default_settings
+        await self.send_command('roombrowser', 'host room', **settings)
 
     async def invite(self, name):
         logger.info('inviting ' + name)
@@ -357,8 +358,9 @@ class AMQBot(metaclass=MetaAMQBot):
         if self.room_created.is_set():
             return await self.change_settings(settings_name)
         else:
-            room_settings = self.bot_settings[settings_name]
-            await self.create_room(room_settings)
+            await self.create_room()
+            if AMQ_DEFAULT_SETTINGS is not None:
+                await self.change_settings(AMQ_DEFAULT_SETTINGS)
             await self.room_created.wait()
 
         return self.settings
