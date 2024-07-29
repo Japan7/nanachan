@@ -2427,13 +2427,13 @@ types-setuptools = "*"
 
 [[package]]
 name = "types-pyopenssl"
-version = "24.1.0.20240425"
+version = "24.1.0.20240722"
 description = "Typing stubs for pyOpenSSL"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-pyOpenSSL-24.1.0.20240425.tar.gz", hash = "sha256:0a7e82626c1983dc8dc59292bf20654a51c3c3881bcbb9b337c1da6e32f0204e"},
-    {file = "types_pyOpenSSL-24.1.0.20240425-py3-none-any.whl", hash = "sha256:f51a156835555dd2a1f025621e8c4fbe7493470331afeef96884d1d29bf3a473"},
+    {file = "types-pyOpenSSL-24.1.0.20240722.tar.gz", hash = "sha256:47913b4678a01d879f503a12044468221ed8576263c1540dcb0484ca21b08c39"},
+    {file = "types_pyOpenSSL-24.1.0.20240722-py3-none-any.whl", hash = "sha256:6a7a5d2ec042537934cfb4c9d4deb0e16c4c6250b09358df1f083682fe6fda54"},
 ]
 
 [package.dependencies]
@@ -2468,13 +2468,13 @@ types-pyOpenSSL = "*"
 
 [[package]]
 name = "types-setuptools"
-version = "70.3.0.20240710"
+version = "71.1.0.20240726"
 description = "Typing stubs for setuptools"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-setuptools-70.3.0.20240710.tar.gz", hash = "sha256:842cbf399812d2b65042c9d6ff35113bbf282dee38794779aa1f94e597bafc35"},
-    {file = "types_setuptools-70.3.0.20240710-py3-none-any.whl", hash = "sha256:bd0db2a4b9f2c49ac5564be4e0fb3125c4c46b1f73eafdcbceffa5b005cceca4"},
+    {file = "types-setuptools-71.1.0.20240726.tar.gz", hash = "sha256:85ba28e9461bb1be86ebba4db0f1c2408f2b11115b1966334ea9dc464e29303e"},
+    {file = "types_setuptools-71.1.0.20240726-py3-none-any.whl", hash = "sha256:a7775376f36e0ff09bcad236bf265777590a66b11623e48c20bfc30f1444ea36"},
 ]
 
 [[package]]
