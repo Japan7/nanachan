@@ -126,6 +126,7 @@ class QuizzBase(ABC):
                 url = url_match.group(0)
                 image_check = await is_image(url)
                 if image_check:
+                    url = (await to_producer(url))['url']
                     content = re.sub(r'(https://[^ ]+) ?', '', content)
 
         if force_image and not image_check:
