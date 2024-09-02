@@ -20,7 +20,7 @@ python = "~3.12"
 "discord.py" = { git = "https://github.com/Japan7/discord.py.git", rev = "0888b3e2278e23c7e1d7a2a7a341fec8d47138e7", extras = ["voice"] }
 matplotlib = "3.9.2"
 vobject = "0.9.7"
-python-socketio = { version = "5.11.3", extras = ["asyncio_client"] }
+python-socketio = { version = "5.11.4", extras = ["asyncio_client"] }
 aiohttp = { version = "3.9.5", extras = ["speedups"] }
 aiofiles = "24.1.0"
 uvloop = "0.20.0"
