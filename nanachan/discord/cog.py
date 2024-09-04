@@ -29,7 +29,7 @@ class CogGetCogMixin:
 
     @classmethod
     def get_cog(cls, bot: Bot) -> Self | None:
-        return cast(cls | None, bot.get_cog(cls.__cog_name__))
+        return cast(Self | None, bot.get_cog(cls.__cog_name__))
 
 
 class Cog(cmd.Cog, CogDescriptionMixin, CogGetCogMixin, metaclass=CogMeta):
