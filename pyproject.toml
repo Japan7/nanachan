@@ -49,7 +49,7 @@ ollama = "0.3.2"
 
 [tool.poetry.group.dev.dependencies]
 pyright = "1.1.379"
-ruff = "0.6.3"
+ruff = "0.6.4"
 mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "40f5988b94c74909fd1ca289169bab691eeacf61" }
 requests = "2.32.3"
 # FIXME: https://pypi.org/project/types-redis/#description
