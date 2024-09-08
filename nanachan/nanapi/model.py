@@ -1787,8 +1787,24 @@ class UserCalendarSelectAllResult:
 
 @dataclass
 class UserCalendarSelectAllResultUser:
+    id: UUID
     discord_id: int
     discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class UserCalendarSelectResult:
+    ics: str
+    user: 'UserCalendarSelectResultUser'
+
+
+@dataclass
+class UserCalendarSelectResultUser:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
 
 
 @dataclass

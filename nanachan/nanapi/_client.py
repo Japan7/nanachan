@@ -150,6 +150,7 @@ from .model import (
     UserCalendarDeleteResult,
     UserCalendarMergeResult,
     UserCalendarSelectAllResult,
+    UserCalendarSelectResult,
     UserSelectResult,
     WaifuBulkUpdateResult,
     WaifuExportResult,
@@ -1085,6 +1086,41 @@ class CalendarModule:
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_get_user_calendar(
+        self, discord_id: int
+    ) -> (
+        Success[Literal[200], UserCalendarSelectResult]
+        | Error[Literal[404], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/user_calendars/{discord_id}'
+
+        async with self.session.get(
+            url,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], UserCalendarSelectResult](
+                    code=200, result=UserCalendarSelectResult(**(await resp.json()))
+                )
+            if resp.status == 404:
+                return Error[Literal[404], None](code=404, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
                 )
             raise aiohttp.ClientResponseError(
                 resp.request_info,
