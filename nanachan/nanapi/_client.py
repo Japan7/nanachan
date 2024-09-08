@@ -12,9 +12,6 @@ from .model import (
     AddPlayerCoinsBody,
     Body_client_login,
     BulkUpdateWaifusBody,
-    CalendarDeleteResult,
-    CalendarMergeResult,
-    CalendarSelectAllResult,
     CEdgeSelectFilterCharaResult,
     CEdgeSelectFilterMediaResult,
     CEdgeSelectFilterStaffResult,
@@ -49,6 +46,11 @@ from .model import (
     GameNewResult,
     GameSelectResult,
     GameUpdateBananedResult,
+    GuildEventDeleteResult,
+    GuildEventMergeResult,
+    GuildEventParticipantAddResult,
+    GuildEventParticipantRemoveResult,
+    GuildEventSelectAllResult,
     HistoireDeleteByIdResult,
     HistoireGetByIdResult,
     HistoireInsertResult,
@@ -73,6 +75,7 @@ from .model import (
     NewReminderBody,
     NewRoleBody,
     NewTradeBody,
+    ParticipantAddBody,
     PlayerAddCoinsResult,
     PlayerAddCollectionResult,
     PlayerAddMediaResult,
@@ -138,11 +141,15 @@ from .model import (
     UpdateAMQSettingsBody,
     UpsertAMQAccountBody,
     UpsertAnilistAccountBody,
-    UpsertCalendarBody,
     UpsertDiscordAccountBodyItem,
+    UpsertGuildEventBody,
     UpsertPlayerBody,
     UpsertProfileBody,
+    UpsertUserCalendarBody,
     UserBulkMergeResult,
+    UserCalendarDeleteResult,
+    UserCalendarMergeResult,
+    UserCalendarSelectAllResult,
     UserSelectResult,
     WaifuBulkUpdateResult,
     WaifuExportResult,
@@ -1037,6 +1044,375 @@ class AnilistModule:
                 return Error[Literal[404], HTTPExceptionModel](
                     code=404, result=HTTPExceptionModel(**(await resp.json()))
                 )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+
+class CalendarModule:
+    def __init__(self, session: 'ClientSession', server_url: str):
+        self.session: ClientSession = session
+        self.server_url: str = server_url
+
+    async def calendar_get_user_calendars(
+        self,
+    ) -> (
+        Success[Literal[200], list[UserCalendarSelectAllResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+    ):
+        url = f'{self.server_url}/calendar/user_calendars'
+
+        async with self.session.get(
+            url,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[UserCalendarSelectAllResult]](
+                    code=200,
+                    result=[UserCalendarSelectAllResult(**e) for e in (await resp.json())],
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_upsert_user_calendar(
+        self, discord_id: int, body: UpsertUserCalendarBody
+    ) -> (
+        Success[Literal[200], UserCalendarMergeResult]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/user_calendars/{discord_id}'
+
+        async with self.session.patch(
+            url,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], UserCalendarMergeResult](
+                    code=200, result=UserCalendarMergeResult(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_delete_user_calendar(
+        self, discord_id: int
+    ) -> (
+        Success[Literal[200], UserCalendarDeleteResult]
+        | Success[Literal[204], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/user_calendars/{discord_id}'
+
+        async with self.session.delete(
+            url,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], UserCalendarDeleteResult](
+                    code=200, result=UserCalendarDeleteResult(**(await resp.json()))
+                )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_get_guild_events(
+        self, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], list[GuildEventSelectAllResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/guild_events'
+        params = dict(
+            client_id=client_id,
+        )
+        params = {
+            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+        }
+
+        async with self.session.get(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[GuildEventSelectAllResult]](
+                    code=200, result=[GuildEventSelectAllResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_upsert_guild_event(
+        self, discord_id: int, body: UpsertGuildEventBody, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], GuildEventMergeResult]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/guild_events/{discord_id}'
+        params = dict(
+            client_id=client_id,
+        )
+        params = {
+            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+        }
+
+        async with self.session.put(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], GuildEventMergeResult](
+                    code=200, result=GuildEventMergeResult(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_delete_guild_event(
+        self, discord_id: int, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], GuildEventDeleteResult]
+        | Success[Literal[204], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/guild_events/{discord_id}'
+        params = dict(
+            client_id=client_id,
+        )
+        params = {
+            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+        }
+
+        async with self.session.delete(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], GuildEventDeleteResult](
+                    code=200, result=GuildEventDeleteResult(**(await resp.json()))
+                )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_add_participant_to_guild_event(
+        self, discord_id: int, body: ParticipantAddBody, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], GuildEventParticipantAddResult]
+        | Success[Literal[204], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/guild_events/{discord_id}/participants'
+        params = dict(
+            client_id=client_id,
+        )
+        params = {
+            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+        }
+
+        async with self.session.post(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], GuildEventParticipantAddResult](
+                    code=200, result=GuildEventParticipantAddResult(**(await resp.json()))
+                )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_remove_participant_from_guild_event(
+        self, discord_id: int, participant_id: int, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], GuildEventParticipantRemoveResult]
+        | Success[Literal[204], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/guild_events/{discord_id}/participants/{participant_id}'
+        params = dict(
+            client_id=client_id,
+        )
+        params = {
+            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+        }
+
+        async with self.session.delete(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], GuildEventParticipantRemoveResult](
+                    code=200, result=GuildEventParticipantRemoveResult(**(await resp.json()))
+                )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def calendar_get_ics(
+        self, client: str, discord_id: int
+    ) -> (
+        Success[Literal[200], None]
+        | Error[Literal[404], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/calendar/ics'
+        params = dict(
+            client=client,
+            discord_id=discord_id,
+        )
+        params = {
+            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+        }
+
+        async with self.session.get(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], None](code=200, result=None)
+            if resp.status == 404:
+                return Error[Literal[404], None](code=404, result=None)
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
@@ -3264,101 +3640,6 @@ class UserModule:
                 return Success[Literal[200], ProfileSearchResult](
                     code=200, result=ProfileSearchResult(**(await resp.json()))
                 )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def user_get_calendars(
-        self,
-    ) -> (
-        Success[Literal[200], list[CalendarSelectAllResult]]
-        | Error[Literal[401], HTTPExceptionModel]
-    ):
-        url = f'{self.server_url}/user/calendars'
-
-        async with self.session.get(
-            url,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], list[CalendarSelectAllResult]](
-                    code=200, result=[CalendarSelectAllResult(**e) for e in (await resp.json())]
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def user_upsert_calendar(
-        self, discord_id: int, body: UpsertCalendarBody
-    ) -> (
-        Success[Literal[200], CalendarMergeResult]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        url = f'{self.server_url}/user/calendars/{discord_id}'
-
-        async with self.session.put(
-            url,
-            json=body,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], CalendarMergeResult](
-                    code=200, result=CalendarMergeResult(**(await resp.json()))
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def user_delete_calendar(
-        self, discord_id: int
-    ) -> (
-        Success[Literal[200], CalendarDeleteResult]
-        | Success[Literal[204], None]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        url = f'{self.server_url}/user/calendars/{discord_id}'
-
-        async with self.session.delete(
-            url,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], CalendarDeleteResult](
-                    code=200, result=CalendarDeleteResult(**(await resp.json()))
-                )
-            if resp.status == 204:
-                return Success[Literal[204], None](code=204, result=None)
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
@@ -5748,6 +6029,7 @@ class ClientSession(aiohttp.ClientSession):
         super().__init__(*args, **kwargs)
         self.amq: AmqModule = AmqModule(self, server_url)
         self.anilist: AnilistModule = AnilistModule(self, server_url)
+        self.calendar: CalendarModule = CalendarModule(self, server_url)
         self.client: ClientModule = ClientModule(self, server_url)
         self.histoire: HistoireModule = HistoireModule(self, server_url)
         self.pot: PotModule = PotModule(self, server_url)

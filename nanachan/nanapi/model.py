@@ -295,28 +295,6 @@ class CEdgeSelectFilterStaffResultMedia:
 
 
 @dataclass
-class CalendarDeleteResult:
-    id: UUID
-
-
-@dataclass
-class CalendarMergeResult:
-    id: UUID
-
-
-@dataclass
-class CalendarSelectAllResult:
-    ics: str
-    user: 'CalendarSelectAllResultUser'
-
-
-@dataclass
-class CalendarSelectAllResultUser:
-    discord_id: int
-    discord_id_str: str
-
-
-@dataclass
 class CharaNameAutocompleteResult:
     id_al: int
     name_user_preferred: str
@@ -777,6 +755,58 @@ class GameUpdateBananedResult:
 
 
 @dataclass
+class GuildEventDeleteResult:
+    id: UUID
+
+
+@dataclass
+class GuildEventMergeResult:
+    id: UUID
+
+
+@dataclass
+class GuildEventParticipantAddResult:
+    id: UUID
+
+
+@dataclass
+class GuildEventParticipantRemoveResult:
+    id: UUID
+
+
+@dataclass
+class GuildEventSelectAllResult:
+    organizer: 'GuildEventSelectAllResultOrganizer'
+    participants: list['GuildEventSelectAllResultParticipants']
+    id: UUID
+    discord_id: int
+    description: str | None
+    discord_id_str: str
+    end_time: datetime
+    image: str | None
+    location: str | None
+    name: str
+    start_time: datetime
+    url: str | None
+
+
+@dataclass
+class GuildEventSelectAllResultOrganizer:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventSelectAllResultParticipants:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
 class HTTPExceptionModel:
     detail: str
 
@@ -953,6 +983,12 @@ class NewTradeBody:
     blood_shards_a: int | None = None
     moecoins_b: int | None = None
     blood_shards_b: int | None = None
+
+
+@dataclass
+class ParticipantAddBody:
+    participant_id: int
+    participant_username: str
 
 
 @dataclass
@@ -1689,15 +1725,22 @@ class UpsertAnilistAccountBody:
 
 
 @dataclass
-class UpsertCalendarBody:
-    discord_username: str
-    ics: str
-
-
-@dataclass
 class UpsertDiscordAccountBodyItem:
     discord_id: int
     discord_username: str
+
+
+@dataclass
+class UpsertGuildEventBody:
+    name: str
+    start_time: datetime
+    end_time: datetime
+    organizer_id: int
+    organizer_username: str
+    description: str | None = None
+    location: str | None = None
+    image: str | None = None
+    url: str | None = None
 
 
 @dataclass
@@ -1716,8 +1759,36 @@ class UpsertProfileBody:
 
 
 @dataclass
+class UpsertUserCalendarBody:
+    discord_username: str
+    ics: str
+
+
+@dataclass
 class UserBulkMergeResult:
     id: UUID
+
+
+@dataclass
+class UserCalendarDeleteResult:
+    id: UUID
+
+
+@dataclass
+class UserCalendarMergeResult:
+    id: UUID
+
+
+@dataclass
+class UserCalendarSelectAllResult:
+    ics: str
+    user: 'UserCalendarSelectAllResultUser'
+
+
+@dataclass
+class UserCalendarSelectAllResultUser:
+    discord_id: int
+    discord_id_str: str
 
 
 @dataclass

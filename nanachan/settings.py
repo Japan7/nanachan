@@ -114,10 +114,6 @@ ANIME_QUIZZ_CHANNEL = 0000
 MANGA_QUIZZ_CHANNEL = 0000
 LOUIS_QUIZZ_CHANNEL = 0000
 
-# Calendar
-ICS_PATH = None
-REFRESH_FREQ = 6
-
 # Churros
 CHURROS_TOKEN = None
 CHURROS_REFRESH_INTERVAL = 15     # in minutes
@@ -171,6 +167,5 @@ RequiresWaicolle = RequiredSettings(WC_ROLE, WC_CHANNEL)
 RequiresProjo = RequiredSettings(PROJO_THREADS_ROOM, PROJO_ROOM, PROJO_VOICE, PROJO_LEADER_ROLE_ID)
 RequiresQuizz = RequiredSettings(
     ANIME_QUIZZ_CHANNEL, MANGA_QUIZZ_CHANNEL, LOUIS_QUIZZ_CHANNEL)
-RequiresCalendar = RequiredSettings(ICS_PATH)
 RequiresChurros = RequiredSettings(CHURROS_TOKEN)
 RequiresAI = RequiredSettings(OLLAMA_HOST, OLLAMA_MODEL)

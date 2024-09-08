@@ -42,7 +42,6 @@ orjson = "3.10.7"
 redis = { version = "5.0.8", extras = ["hiredis"] }
 parsedatetime = "2.6"
 yt-dlp = "2024.8.6"
-ics = "0.7.2"
 aiojobs = "1.3.0"
 tzdata = "2024.1"
 ollama = "0.3.3"
