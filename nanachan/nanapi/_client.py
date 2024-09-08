@@ -104,6 +104,8 @@ from .model import (
     ProjoDeleteResult,
     ProjoDeleteUpcomingEventsResult,
     ProjoInsertResult,
+    ProjoParticipantAddResult,
+    ProjoParticipantRemoveResult,
     ProjoRemoveExternalMediaResult,
     ProjoRemoveMediaResult,
     ProjoSelectResult,
@@ -1329,7 +1331,7 @@ class CalendarModule:
                 headers=resp.headers,
             )
 
-    async def calendar_add_participant_to_guild_event(
+    async def calendar_add_guild_event_participant(
         self, discord_id: int, body: ParticipantAddBody, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GuildEventParticipantAddResult]
@@ -1377,7 +1379,7 @@ class CalendarModule:
                 headers=resp.headers,
             )
 
-    async def calendar_remove_participant_from_guild_event(
+    async def calendar_remove_guild_event_participant(
         self, discord_id: int, participant_id: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GuildEventParticipantRemoveResult]
@@ -2513,6 +2515,101 @@ class ProjectionModule:
             if resp.status == 200:
                 return Success[Literal[200], ProjoRemoveExternalMediaResult](
                     code=200, result=ProjoRemoveExternalMediaResult(**(await resp.json()))
+                )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def projection_add_projection_participant(
+        self, id: UUID, body: ParticipantAddBody, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], ProjoParticipantAddResult]
+        | Success[Literal[204], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/projections/{id}/participants'
+        params = dict(
+            client_id=client_id,
+        )
+        params = {
+            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+        }
+
+        async with self.session.post(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], ProjoParticipantAddResult](
+                    code=200, result=ProjoParticipantAddResult(**(await resp.json()))
+                )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def projection_remove_projection_participant(
+        self, id: UUID, participant_id: int, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], ProjoParticipantRemoveResult]
+        | Success[Literal[204], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/projections/{id}/participants/{participant_id}'
+        params = dict(
+            client_id=client_id,
+        )
+        params = {
+            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+        }
+
+        async with self.session.delete(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], ProjoParticipantRemoveResult](
+                    code=200, result=ProjoParticipantRemoveResult(**(await resp.json()))
                 )
             if resp.status == 204:
                 return Success[Literal[204], None](code=204, result=None)

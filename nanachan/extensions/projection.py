@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import re
 from contextlib import suppress
 from datetime import datetime, timedelta
@@ -31,6 +33,7 @@ from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
     NewProjectionBody,
     NewProjectionEventBody,
+    ParticipantAddBody,
     ProjectionStatus,
     ProjoAddExternalMediaBody,
     ProjoSelectResult,
@@ -51,6 +54,8 @@ from nanachan.settings import (
 from nanachan.utils.anilist import MediaType, media_autocomplete
 from nanachan.utils.misc import autocomplete_truncate, get_session
 from nanachan.utils.projection import ProjectionView, get_active_projo, get_projo_embed_view
+
+logger = logging.getLogger(__name__)
 
 
 @RequiresProjo
@@ -73,6 +78,42 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
             return
         for projo in projos:
             self.bot.add_view(ProjectionView(self.bot, projo.id))
+
+        asyncio.create_task(self.sync_participants(projos))
+
+    async def sync_participants(self, projos: list[ProjoSelectResult]):
+        logger.info('Start syncing projo participants')
+        for projo in projos:
+            projo_chan = self.bot.get_channel(projo.channel_id)
+            if not isinstance(projo_chan, Thread):
+                continue
+
+            db_participants = {p.discord_id for p in projo.participants}
+
+            members = await projo_chan.fetch_members()
+            discord_participants = {m.id: self.bot.get_user(m.id) for m in members}
+
+            for discord_id, user in discord_participants.items():
+                if discord_id not in db_participants:
+                    body = ParticipantAddBody(
+                        participant_id=discord_id, participant_username=str(user)
+                    )
+                    resp = await get_nanapi().projection.projection_add_projection_participant(
+                        projo.id, body
+                    )
+                    if not success(resp):
+                        raise RuntimeError(resp.result)
+                else:
+                    db_participants.remove(discord_id)
+
+            for discord_id in db_participants:
+                resp = await get_nanapi().projection.projection_remove_projection_participant(
+                    projo.id, discord_id
+                )
+                if not success(resp):
+                    raise RuntimeError(resp.result)
+
+        logger.info('Done syncing projo participants')
 
     async def add_projo_leader_role(self, user: discord.Member | discord.User,
                                     reason: str = "Created a projection"):
@@ -595,6 +636,13 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
             message = await self.fetch_message(projo.message_id)
             await message.edit(embed=embed, view=view)
 
+            body = ParticipantAddBody(participant_id=user.id, participant_username=str(user))
+            resp = await get_nanapi().projection.projection_add_projection_participant(
+                projo.id, body
+            )
+            if not success(resp):
+                raise RuntimeError(resp.result)
+
     @Cog.listener()
     async def on_thread_member_remove(self, member: discord.ThreadMember):
         user = self.bot.get_user(member.id)
@@ -608,6 +656,12 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
             assert projo.message_id
             message = await self.fetch_message(projo.message_id)
             await message.edit(embed=embed, view=view)
+
+            resp = await get_nanapi().projection.projection_remove_projection_participant(
+                projo.id, user.id
+            )
+            if not success(resp):
+                raise RuntimeError(resp.result)
 
 
 async def setup(bot: Bot):

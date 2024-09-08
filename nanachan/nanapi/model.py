@@ -1284,6 +1284,16 @@ class ProjoInsertResult:
 
 
 @dataclass
+class ProjoParticipantAddResult:
+    id: UUID
+
+
+@dataclass
+class ProjoParticipantRemoveResult:
+    id: UUID
+
+
+@dataclass
 class ProjoRemoveExternalMediaResult:
     id: UUID
 
@@ -1304,6 +1314,7 @@ class ProjoSelectResult:
     channel_id_str: str
     medias: list['ProjoSelectResultMedias']
     external_medias: list['ProjoSelectResultExternalMedias']
+    participants: list['ProjoSelectResultParticipants']
     events: list['ProjoSelectResultEvents']
 
 
@@ -1325,6 +1336,14 @@ class ProjoSelectResultMedias:
     id_al: int
     title_user_preferred: str
     added_alias: datetime | None = Field(alias='@added')
+
+
+@dataclass
+class ProjoSelectResultParticipants:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
 
 
 @dataclass

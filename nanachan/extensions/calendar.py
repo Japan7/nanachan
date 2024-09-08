@@ -94,13 +94,13 @@ class Calendar_Generator(Cog, name='Calendar'):
     @Cog.listener()
     async def on_scheduled_event_user_add(self, event: ScheduledEvent, user: User):
         body = ParticipantAddBody(participant_id=user.id, participant_username=str(user))
-        resp = await get_nanapi().calendar.calendar_add_participant_to_guild_event(event.id, body)
+        resp = await get_nanapi().calendar.calendar_add_guild_event_participant(event.id, body)
         if not success(resp):
             raise RuntimeError(resp.result)
 
     @Cog.listener()
     async def on_scheduled_event_user_remove(self, event: ScheduledEvent, user: User):
-        resp = await get_nanapi().calendar.calendar_remove_participant_from_guild_event(
+        resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
             event.id, user.id
         )
         if not success(resp):
@@ -135,21 +135,21 @@ class Calendar_Generator(Cog, name='Calendar'):
         db_event: GuildEventSelectAllResult | None,
     ):
         logger.debug(f'Reconciling participants for {event.name} ({event.id})')
-        db_participants = {p.discord_id: p for p in db_event.participants} if db_event else {}
+        db_participants = {p.discord_id for p in db_event.participants} if db_event else set()
         async for participant in event.users():
             if participant.id not in db_participants:
                 body = ParticipantAddBody(
                     participant_id=participant.id, participant_username=str(participant)
                 )
-                resp = await get_nanapi().calendar.calendar_add_participant_to_guild_event(
+                resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
                     event.id, body
                 )
                 if not success(resp):
                     raise RuntimeError(resp.result)
             else:
-                db_participants.pop(participant.id)
+                db_participants.remove(participant.id)
         for discord_id in db_participants:
-            resp = await get_nanapi().calendar.calendar_remove_participant_from_guild_event(
+            resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
                 event.id, discord_id
             )
             if not success(resp):
