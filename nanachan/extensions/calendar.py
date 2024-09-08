@@ -3,8 +3,10 @@ import logging
 from datetime import timedelta
 
 import discord.utils
-from discord import ScheduledEvent, User
+from discord import Interaction, ScheduledEvent, User
+from yarl import URL
 
+from nanachan.discord.application_commands import nana_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import MultiplexingContext
@@ -15,6 +17,7 @@ from nanachan.nanapi.model import (
     UpsertGuildEventBody,
     UpsertUserCalendarBody,
 )
+from nanachan.settings import JAPAN7_AUTH, NANAPI_CLIENT_USERNAME, NANAPI_URL
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +154,15 @@ class Calendar_Generator(Cog, name='Calendar'):
             )
             if not success(resp):
                 raise RuntimeError(resp.result)
+
+    @nana_command(description='Get my calendar ics link')
+    async def ics(self, interaction: Interaction):
+        url = URL(NANAPI_URL) / 'calendar' / 'ics'
+        if JAPAN7_AUTH:
+            url = url.with_user(JAPAN7_AUTH.login)
+            url = url.with_password(JAPAN7_AUTH.password)
+        url = url.with_query(client=NANAPI_CLIENT_USERNAME, discord_id=interaction.user.id)
+        await interaction.response.send_message(content=f'`{url}`')
 
 
 async def setup(bot: Bot):
