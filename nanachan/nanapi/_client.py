@@ -12,6 +12,9 @@ from .model import (
     AddPlayerCoinsBody,
     Body_client_login,
     BulkUpdateWaifusBody,
+    CalendarDeleteResult,
+    CalendarMergeResult,
+    CalendarSelectAllResult,
     CEdgeSelectFilterCharaResult,
     CEdgeSelectFilterMediaResult,
     CEdgeSelectFilterStaffResult,
@@ -135,6 +138,7 @@ from .model import (
     UpdateAMQSettingsBody,
     UpsertAMQAccountBody,
     UpsertAnilistAccountBody,
+    UpsertCalendarBody,
     UpsertDiscordAccountBodyItem,
     UpsertPlayerBody,
     UpsertProfileBody,
@@ -3260,6 +3264,101 @@ class UserModule:
                 return Success[Literal[200], ProfileSearchResult](
                     code=200, result=ProfileSearchResult(**(await resp.json()))
                 )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def user_get_calendars(
+        self,
+    ) -> (
+        Success[Literal[200], list[CalendarSelectAllResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+    ):
+        url = f'{self.server_url}/user/calendars'
+
+        async with self.session.get(
+            url,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[CalendarSelectAllResult]](
+                    code=200, result=[CalendarSelectAllResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def user_upsert_calendar(
+        self, discord_id: int, body: UpsertCalendarBody
+    ) -> (
+        Success[Literal[200], CalendarMergeResult]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/user/calendars/{discord_id}'
+
+        async with self.session.put(
+            url,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], CalendarMergeResult](
+                    code=200, result=CalendarMergeResult(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def user_delete_calendar(
+        self, discord_id: int
+    ) -> (
+        Success[Literal[200], CalendarDeleteResult]
+        | Success[Literal[204], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/user/calendars/{discord_id}'
+
+        async with self.session.delete(
+            url,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], CalendarDeleteResult](
+                    code=200, result=CalendarDeleteResult(**(await resp.json()))
+                )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))

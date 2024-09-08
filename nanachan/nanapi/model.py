@@ -295,6 +295,28 @@ class CEdgeSelectFilterStaffResultMedia:
 
 
 @dataclass
+class CalendarDeleteResult:
+    id: UUID
+
+
+@dataclass
+class CalendarMergeResult:
+    id: UUID
+
+
+@dataclass
+class CalendarSelectAllResult:
+    ics: str
+    user: 'CalendarSelectAllResultUser'
+
+
+@dataclass
+class CalendarSelectAllResultUser:
+    discord_id: int
+    discord_id_str: str
+
+
+@dataclass
 class CharaNameAutocompleteResult:
     id_al: int
     name_user_preferred: str
@@ -1664,6 +1686,12 @@ class UpsertAnilistAccountBody:
     discord_username: str
     service: Literal['ANILIST', 'MYANIMELIST']
     username: str
+
+
+@dataclass
+class UpsertCalendarBody:
+    discord_username: str
+    ics: str
 
 
 @dataclass

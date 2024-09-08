@@ -8,6 +8,9 @@ from discord.scheduled_event import ScheduledEvent
 
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
+from nanachan.discord.helpers import MultiplexingContext
+from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.model import UpsertCalendarBody
 from nanachan.settings import ICS_PATH, VERIFIED_ROLE, RequiresCalendar
 
 logger = logging.getLogger(__name__)
@@ -15,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 @RequiresCalendar
 class Calendar_Generator(Cog, name="Calendar"):
+    emoji = '📅'
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -63,8 +67,38 @@ class Calendar_Generator(Cog, name="Calendar"):
 
     @Cog.listener()
     async def on_ready(self):
+        from .profiles import Profiles
+
+        profiles_cog = Profiles.get_cog(self.bot)
+        if profiles_cog is not None:
+            profiles_cog.registrars['Calendar'] = self.register
+
         await self.fetch_calendar()
         await self.update_ics()
+
+    async def register(self, interaction: discord.Interaction):
+        """Register or change a member calendar"""
+
+        def check(ctx: MultiplexingContext) -> bool:
+            return ctx.author == interaction.user
+
+        await interaction.response.edit_message(view=None)
+
+        await interaction.followup.send(
+            content=f'{interaction.user.mention}\nWhat is your calendar ics link?'
+        )
+
+        resp = await MultiplexingContext.set_will_delete(check=check)
+        answer = resp.message
+        ics = answer.content
+
+        resp1 = await get_nanapi().user.user_upsert_calendar(
+            interaction.user.id,
+            UpsertCalendarBody(discord_username=str(interaction.user), ics=ics),
+        )
+        if not success(resp1):
+            raise RuntimeError(resp1.result)
+        await interaction.followup.send(content=self.bot.get_emoji_str('FubukiGO'))
 
     @Cog.listener()
     async def on_scheduled_event_create(self, event: ScheduledEvent):
