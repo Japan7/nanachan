@@ -84,9 +84,6 @@ class Calendar_Generator(Cog, name='Calendar'):
     @nana_command(description='Get my calendar ics link')
     async def ics(self, interaction: Interaction):
         url = URL(NANAPI_PUBLIC_URL) / 'calendar' / 'ics'
-        if JAPAN7_AUTH:
-            url = url.with_user(JAPAN7_AUTH.login)
-            url = url.with_password(JAPAN7_AUTH.password)
         url = url.with_query(client=NANAPI_CLIENT_USERNAME, user=interaction.user.id)
         await interaction.response.send_message(content=f'`{url}`')
 
