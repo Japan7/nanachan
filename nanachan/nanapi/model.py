@@ -756,7 +756,54 @@ class GameUpdateBananedResult:
 
 @dataclass
 class GuildEventDeleteResult:
+    url: str | None
+    start_time: datetime
+    name: str
+    location: str | None
+    image: str | None
+    end_time: datetime
+    discord_id_str: str
+    description: str | None
+    discord_id: int
     id: UUID
+    projection: 'GuildEventDeleteResultProjection | None'
+    organizer: 'GuildEventDeleteResultOrganizer'
+    participants: list['GuildEventDeleteResultParticipants']
+    client: 'GuildEventDeleteResultClient'
+
+
+@dataclass
+class GuildEventDeleteResultClient:
+    id: UUID
+    password_hash: str
+    username: str
+
+
+@dataclass
+class GuildEventDeleteResultOrganizer:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventDeleteResultParticipants:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventDeleteResultProjection:
+    id: UUID
+    channel_id: int
+    channel_id_str: str
+    message_id: int | None
+    message_id_str: str | None
+    name: str
+    status: 'ProjectionStatus'
 
 
 @dataclass
@@ -822,7 +869,7 @@ class GuildEventParticipantRemoveResult:
 
 
 @dataclass
-class GuildEventSelectAllResult:
+class GuildEventSelectResult:
     id: UUID
     discord_id: int
     description: str | None
@@ -833,21 +880,21 @@ class GuildEventSelectAllResult:
     name: str
     start_time: datetime
     url: str | None
-    client: 'GuildEventSelectAllResultClient'
-    participants: list['GuildEventSelectAllResultParticipants']
-    organizer: 'GuildEventSelectAllResultOrganizer'
-    projection: 'GuildEventSelectAllResultProjection | None'
+    client: 'GuildEventSelectResultClient'
+    participants: list['GuildEventSelectResultParticipants']
+    organizer: 'GuildEventSelectResultOrganizer'
+    projection: 'GuildEventSelectResultProjection | None'
 
 
 @dataclass
-class GuildEventSelectAllResultClient:
+class GuildEventSelectResultClient:
     id: UUID
     password_hash: str
     username: str
 
 
 @dataclass
-class GuildEventSelectAllResultOrganizer:
+class GuildEventSelectResultOrganizer:
     id: UUID
     discord_id: int
     discord_id_str: str
@@ -855,7 +902,7 @@ class GuildEventSelectAllResultOrganizer:
 
 
 @dataclass
-class GuildEventSelectAllResultParticipants:
+class GuildEventSelectResultParticipants:
     id: UUID
     discord_id: int
     discord_id_str: str
@@ -863,7 +910,7 @@ class GuildEventSelectAllResultParticipants:
 
 
 @dataclass
-class GuildEventSelectAllResultProjection:
+class GuildEventSelectResultProjection:
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -1048,7 +1095,6 @@ class NewTradeBody:
 
 @dataclass
 class ParticipantAddBody:
-    participant_id: int
     participant_username: str
 
 

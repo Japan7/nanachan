@@ -54,11 +54,14 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
     for media in sorted(all_medias,
                         key=lambda m: m.added_alias if m.added_alias is not None else 0):
         if isinstance(media, ProjoSelectResultMedias):
-            description.append(
-                f"{media.title_user_preferred} "
-                f"([{media.id_al}](https://anilist.co/anime/{media.id_al}))")
-
             anime = al_medias_dict[media.id_al]
+
+            description.append(
+                f"{anime.title_user_preferred} "
+                f"({anime.episodes or '??'} eps, "
+                f"[{anime.id_al}](https://anilist.co/anime/{anime.id_al}))"
+            )
+
             if duration != -1:
                 if anime.episodes is not None and anime.duration is not None:
                     duration += anime.episodes * anime.duration

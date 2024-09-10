@@ -95,6 +95,11 @@ class Calendar_Generator(Cog, name='Calendar'):
         resp = await get_nanapi().calendar.calendar_delete_guild_event(event.id)
         if not success(resp):
             raise RuntimeError(resp.result)
+        db_event = resp.result
+        if db_event.projection:
+            projo_cog = ProjectionCog.get_cog(self.bot)
+            if projo_cog is not None:
+                asyncio.create_task(projo_cog.update_projo_embed(db_event.projection))
 
     @Cog.listener()
     async def on_scheduled_event_update(self, before: ScheduledEvent, after: ScheduledEvent):
@@ -106,8 +111,10 @@ class Calendar_Generator(Cog, name='Calendar'):
 
     @Cog.listener()
     async def on_scheduled_event_user_add(self, event: ScheduledEvent, user: User):
-        body = ParticipantAddBody(participant_id=user.id, participant_username=str(user))
-        resp = await get_nanapi().calendar.calendar_add_guild_event_participant(event.id, body)
+        body = ParticipantAddBody(participant_username=str(user))
+        resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
+            event.id, user.id, body
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
 

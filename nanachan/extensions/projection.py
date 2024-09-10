@@ -29,6 +29,7 @@ from nanachan.discord.helpers import get_option
 from nanachan.discord.views import AutoNavigatorView
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
+    GuildEventDeleteResultProjection,
     GuildEventMergeResultProjection,
     NewProjectionBody,
     ParticipantAddBody,
@@ -94,11 +95,9 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
 
             for discord_id, user in discord_participants.items():
                 if discord_id not in db_participants:
-                    body = ParticipantAddBody(
-                        participant_id=discord_id, participant_username=str(user)
-                    )
+                    body = ParticipantAddBody(participant_username=str(user))
                     resp = await get_nanapi().projection.projection_add_projection_participant(
-                        projo.id, body
+                        projo.id, discord_id, body
                     )
                     if not success(resp):
                         raise RuntimeError(resp.result)
@@ -582,7 +581,9 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
 
     async def update_projo_embed(
         self,
-        projection: ProjoSelectResult | GuildEventMergeResultProjection,
+        projection: ProjoSelectResult
+        | GuildEventMergeResultProjection
+        | GuildEventDeleteResultProjection,
     ):
         embed, view = await get_projo_embed_view(self.bot, projection.id)
         assert projection.message_id
@@ -622,9 +623,9 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
         projo = await get_active_projo(member.thread_id)
         if projo is not None:
             await self.update_projo_embed(projo)
-            body = ParticipantAddBody(participant_id=user.id, participant_username=str(user))
+            body = ParticipantAddBody(participant_username=str(user))
             resp = await get_nanapi().projection.projection_add_projection_participant(
-                projo.id, body
+                projo.id, user.id, body
             )
             if not success(resp):
                 raise RuntimeError(resp.result)

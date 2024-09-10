@@ -7,7 +7,7 @@ from nanachan.discord.bot import Bot
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
     GuildEventMergeResult,
-    GuildEventSelectAllResult,
+    GuildEventSelectResult,
     ParticipantAddBody,
     UpsertGuildEventBody,
 )
@@ -46,16 +46,16 @@ async def upsert_event(bot: Bot, event: ScheduledEvent) -> GuildEventMergeResult
 
 async def reconcile_participants(
     event: ScheduledEvent,
-    db_event: GuildEventSelectAllResult | None,
+    db_event: GuildEventSelectResult | None,
 ):
     logger.debug(f'Reconciling participants for {event.name} ({event.id})')
     db_participants = {p.discord_id for p in db_event.participants} if db_event else set()
     async for participant in event.users():
         if participant.id not in db_participants:
-            body = ParticipantAddBody(
-                participant_id=participant.id, participant_username=str(participant)
+            body = ParticipantAddBody(participant_username=str(participant))
+            resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
+                event.id, participant.id, body
             )
-            resp = await get_nanapi().calendar.calendar_add_guild_event_participant(event.id, body)
             if not success(resp):
                 raise RuntimeError(resp.result)
         else:

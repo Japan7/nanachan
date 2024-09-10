@@ -51,7 +51,7 @@ from .model import (
     GuildEventMergeResult,
     GuildEventParticipantAddResult,
     GuildEventParticipantRemoveResult,
-    GuildEventSelectAllResult,
+    GuildEventSelectResult,
     HistoireDeleteByIdResult,
     HistoireGetByIdResult,
     HistoireInsertResult,
@@ -1169,7 +1169,7 @@ class CalendarModule:
         self, discord_id: int
     ) -> (
         Success[Literal[200], UserCalendarDeleteResult]
-        | Success[Literal[204], None]
+        | Error[Literal[404], None]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
@@ -1182,8 +1182,8 @@ class CalendarModule:
                 return Success[Literal[200], UserCalendarDeleteResult](
                     code=200, result=UserCalendarDeleteResult(**(await resp.json()))
                 )
-            if resp.status == 204:
-                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 404:
+                return Error[Literal[404], None](code=404, result=None)
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
@@ -1203,7 +1203,7 @@ class CalendarModule:
     async def calendar_get_guild_events(
         self, start_after: datetime | None = None, client_id: UUID | None = None
     ) -> (
-        Success[Literal[200], list[GuildEventSelectAllResult]]
+        Success[Literal[200], list[GuildEventSelectResult]]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
@@ -1221,8 +1221,8 @@ class CalendarModule:
             params=params,
         ) as resp:
             if resp.status == 200:
-                return Success[Literal[200], list[GuildEventSelectAllResult]](
-                    code=200, result=[GuildEventSelectAllResult(**e) for e in (await resp.json())]
+                return Success[Literal[200], list[GuildEventSelectResult]](
+                    code=200, result=[GuildEventSelectResult(**e) for e in (await resp.json())]
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
@@ -1289,7 +1289,7 @@ class CalendarModule:
         self, discord_id: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GuildEventDeleteResult]
-        | Success[Literal[204], None]
+        | Error[Literal[404], None]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
@@ -1310,8 +1310,8 @@ class CalendarModule:
                 return Success[Literal[200], GuildEventDeleteResult](
                     code=200, result=GuildEventDeleteResult(**(await resp.json()))
                 )
-            if resp.status == 204:
-                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 404:
+                return Error[Literal[404], None](code=404, result=None)
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
@@ -1333,15 +1333,19 @@ class CalendarModule:
             )
 
     async def calendar_add_guild_event_participant(
-        self, discord_id: int, body: ParticipantAddBody, client_id: UUID | None = None
+        self,
+        discord_id: int,
+        participant_id: int,
+        body: ParticipantAddBody,
+        client_id: UUID | None = None,
     ) -> (
         Success[Literal[200], GuildEventParticipantAddResult]
-        | Success[Literal[204], None]
+        | Error[Literal[404], None]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        url = f'{self.server_url}/calendar/guild_events/{discord_id}/participants'
+        url = f'{self.server_url}/calendar/guild_events/{discord_id}/participants/{participant_id}'
         params = dict(
             client_id=client_id,
         )
@@ -1349,7 +1353,7 @@ class CalendarModule:
             k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
         }
 
-        async with self.session.post(
+        async with self.session.put(
             url,
             params=params,
             json=body,
@@ -1358,8 +1362,8 @@ class CalendarModule:
                 return Success[Literal[200], GuildEventParticipantAddResult](
                     code=200, result=GuildEventParticipantAddResult(**(await resp.json()))
                 )
-            if resp.status == 204:
-                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 404:
+                return Error[Literal[404], None](code=404, result=None)
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
@@ -1384,7 +1388,7 @@ class CalendarModule:
         self, discord_id: int, participant_id: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GuildEventParticipantRemoveResult]
-        | Success[Literal[204], None]
+        | Error[Literal[404], None]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
@@ -1405,8 +1409,8 @@ class CalendarModule:
                 return Success[Literal[200], GuildEventParticipantRemoveResult](
                     code=200, result=GuildEventParticipantRemoveResult(**(await resp.json()))
                 )
-            if resp.status == 204:
-                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 404:
+                return Error[Literal[404], None](code=404, result=None)
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
@@ -1428,7 +1432,7 @@ class CalendarModule:
             )
 
     async def calendar_get_ics(
-        self, client: str, discord_id: int
+        self, client: str, discord_id: int | None = None
     ) -> (
         Success[Literal[200], None]
         | Error[Literal[404], None]
@@ -2540,7 +2544,11 @@ class ProjectionModule:
             )
 
     async def projection_add_projection_participant(
-        self, id: UUID, body: ParticipantAddBody, client_id: UUID | None = None
+        self,
+        id: UUID,
+        participant_id: int,
+        body: ParticipantAddBody,
+        client_id: UUID | None = None,
     ) -> (
         Success[Literal[200], ProjoParticipantAddResult]
         | Success[Literal[204], None]
@@ -2548,7 +2556,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        url = f'{self.server_url}/projections/{id}/participants'
+        url = f'{self.server_url}/projections/{id}/participants/{participant_id}'
         params = dict(
             client_id=client_id,
         )
@@ -2556,7 +2564,7 @@ class ProjectionModule:
             k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
         }
 
-        async with self.session.post(
+        async with self.session.put(
             url,
             params=params,
             json=body,
