@@ -87,7 +87,7 @@ class Calendar_Generator(Cog, name='Calendar'):
         if JAPAN7_AUTH:
             url = url.with_user(JAPAN7_AUTH.login)
             url = url.with_password(JAPAN7_AUTH.password)
-        url = url.with_query(client=NANAPI_CLIENT_USERNAME, discord_id=interaction.user.id)
+        url = url.with_query(client=NANAPI_CLIENT_USERNAME, user=interaction.user.id)
         await interaction.response.send_message(content=f'`{url}`')
 
     @Cog.listener()
