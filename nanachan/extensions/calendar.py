@@ -14,7 +14,12 @@ from nanachan.discord.helpers import MultiplexingContext
 from nanachan.extensions.projection import ProjectionCog
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import ParticipantAddBody, UpsertUserCalendarBody
-from nanachan.settings import JAPAN7_AUTH, NANAPI_CLIENT_USERNAME, NANAPI_URL, TZ
+from nanachan.settings import (
+    JAPAN7_AUTH,
+    NANAPI_CLIENT_USERNAME,
+    NANAPI_PUBLIC_URL,
+    TZ,
+)
 from nanachan.utils.calendar import reconcile_participants, upsert_event
 
 logger = logging.getLogger(__name__)
@@ -78,7 +83,7 @@ class Calendar_Generator(Cog, name='Calendar'):
 
     @nana_command(description='Get my calendar ics link')
     async def ics(self, interaction: Interaction):
-        url = URL(NANAPI_URL) / 'calendar' / 'ics'
+        url = URL(NANAPI_PUBLIC_URL) / 'calendar' / 'ics'
         if JAPAN7_AUTH:
             url = url.with_user(JAPAN7_AUTH.login)
             url = url.with_password(JAPAN7_AUTH.password)
