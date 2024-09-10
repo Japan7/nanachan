@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import discord.utils
 from discord import Interaction, ScheduledEvent, User
@@ -17,7 +17,7 @@ from nanachan.nanapi.model import (
     UpsertGuildEventBody,
     UpsertUserCalendarBody,
 )
-from nanachan.settings import JAPAN7_AUTH, NANAPI_CLIENT_USERNAME, NANAPI_URL
+from nanachan.settings import JAPAN7_AUTH, NANAPI_CLIENT_USERNAME, NANAPI_URL, TZ
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,9 @@ class Calendar_Generator(Cog, name='Calendar'):
 
     async def sync_all_events(self):
         logger.info('Start syncing all events')
-        resp = await get_nanapi().calendar.calendar_get_guild_events()
+        resp = await get_nanapi().calendar.calendar_get_guild_events(
+            start_after=datetime.now(TZ).isoformat() # type: ignore - FIXME: fix mahou.py
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         db_events = {e.discord_id: e for e in resp.result}

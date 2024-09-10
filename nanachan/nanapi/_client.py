@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Literal, TypeGuard
 from uuid import UUID
@@ -1201,7 +1202,7 @@ class CalendarModule:
             )
 
     async def calendar_get_guild_events(
-        self, client_id: UUID | None = None
+        self, start_after: datetime | None = None, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], list[GuildEventSelectAllResult]]
         | Error[Literal[401], HTTPExceptionModel]
@@ -1209,6 +1210,7 @@ class CalendarModule:
     ):
         url = f'{self.server_url}/calendar/guild_events'
         params = dict(
+            start_after=start_after,
             client_id=client_id,
         )
         params = {
