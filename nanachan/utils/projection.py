@@ -92,12 +92,13 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
         embed.add_field(name="Duration",
                         value=f"{duration//60:02}h{duration%60:02}")
 
-    if len(projection.events) > 0:
-        today = datetime.today()
-        today = today.replace(tzinfo=TZ)
-        value = "\n".join(
-            f"**{e.date}** • {e.description}" for e in projection.events
-            if e.date >= today)
+    if len(projection.guild_events) > 0:
+        now = datetime.now(tz=TZ)
+        value = '\n'.join(
+            f'**{e.start_time.astimezone(TZ)}** • {e.description}'
+            for e in projection.guild_events
+            if e.start_time >= now
+        )
         if value:
             embed.add_field(name="Events", value=value, inline=False)
 

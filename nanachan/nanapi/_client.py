@@ -71,7 +71,6 @@ from .model import (
     NewOfferingBody,
     NewPresenceBody,
     NewProjectionBody,
-    NewProjectionEventBody,
     NewQuizzBody,
     NewReminderBody,
     NewRoleBody,
@@ -2635,8 +2634,8 @@ class ProjectionModule:
                 headers=resp.headers,
             )
 
-    async def projection_new_projection_event(
-        self, id: UUID, body: NewProjectionEventBody, client_id: UUID | None = None
+    async def projection_add_projection_guild_event(
+        self, id: UUID, discord_id: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[201], ProjoAddEventResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -2644,7 +2643,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        url = f'{self.server_url}/projections/{id}/events'
+        url = f'{self.server_url}/projections/{id}/guild_events/{discord_id}'
         params = dict(
             client_id=client_id,
         )
@@ -2652,10 +2651,9 @@ class ProjectionModule:
             k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
         }
 
-        async with self.session.post(
+        async with self.session.put(
             url,
             params=params,
-            json=body,
         ) as resp:
             if resp.status == 201:
                 return Success[Literal[201], ProjoAddEventResult](
@@ -2688,12 +2686,12 @@ class ProjectionModule:
     async def projection_delete_upcoming_projection_events(
         self, id: UUID, client_id: UUID | None = None
     ) -> (
-        Success[Literal[200], list[ProjoDeleteUpcomingEventsResult]]
+        Success[Literal[200], ProjoDeleteUpcomingEventsResult]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        url = f'{self.server_url}/projections/{id}/events'
+        url = f'{self.server_url}/projections/{id}/guild_events/upcoming'
         params = dict(
             client_id=client_id,
         )
@@ -2706,9 +2704,8 @@ class ProjectionModule:
             params=params,
         ) as resp:
             if resp.status == 200:
-                return Success[Literal[200], list[ProjoDeleteUpcomingEventsResult]](
-                    code=200,
-                    result=[ProjoDeleteUpcomingEventsResult(**e) for e in (await resp.json())],
+                return Success[Literal[200], ProjoDeleteUpcomingEventsResult](
+                    code=200, result=ProjoDeleteUpcomingEventsResult(**(await resp.json()))
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](

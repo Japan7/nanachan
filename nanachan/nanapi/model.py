@@ -762,6 +762,53 @@ class GuildEventDeleteResult:
 @dataclass
 class GuildEventMergeResult:
     id: UUID
+    discord_id: int
+    description: str | None
+    discord_id_str: str
+    end_time: datetime
+    image: str | None
+    location: str | None
+    name: str
+    start_time: datetime
+    url: str | None
+    client: 'GuildEventMergeResultClient'
+    participants: list['GuildEventMergeResultParticipants']
+    organizer: 'GuildEventMergeResultOrganizer'
+    projection: 'GuildEventMergeResultProjection | None'
+
+
+@dataclass
+class GuildEventMergeResultClient:
+    id: UUID
+    password_hash: str
+    username: str
+
+
+@dataclass
+class GuildEventMergeResultOrganizer:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventMergeResultParticipants:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventMergeResultProjection:
+    id: UUID
+    channel_id: int
+    channel_id_str: str
+    message_id: int | None
+    message_id_str: str | None
+    name: str
+    status: 'ProjectionStatus'
 
 
 @dataclass
@@ -776,8 +823,6 @@ class GuildEventParticipantRemoveResult:
 
 @dataclass
 class GuildEventSelectAllResult:
-    organizer: 'GuildEventSelectAllResultOrganizer'
-    participants: list['GuildEventSelectAllResultParticipants']
     id: UUID
     discord_id: int
     description: str | None
@@ -788,6 +833,17 @@ class GuildEventSelectAllResult:
     name: str
     start_time: datetime
     url: str | None
+    client: 'GuildEventSelectAllResultClient'
+    participants: list['GuildEventSelectAllResultParticipants']
+    organizer: 'GuildEventSelectAllResultOrganizer'
+    projection: 'GuildEventSelectAllResultProjection | None'
+
+
+@dataclass
+class GuildEventSelectAllResultClient:
+    id: UUID
+    password_hash: str
+    username: str
 
 
 @dataclass
@@ -804,6 +860,17 @@ class GuildEventSelectAllResultParticipants:
     discord_id: int
     discord_id_str: str
     discord_username: str
+
+
+@dataclass
+class GuildEventSelectAllResultProjection:
+    id: UUID
+    channel_id: int
+    channel_id_str: str
+    message_id: int | None
+    message_id_str: str | None
+    name: str
+    status: 'ProjectionStatus'
 
 
 @dataclass
@@ -940,12 +1007,6 @@ class NewPresenceBody:
 class NewProjectionBody:
     name: str
     channel_id: int
-
-
-@dataclass
-class NewProjectionEventBody:
-    description: str
-    date: datetime
 
 
 @dataclass
@@ -1305,23 +1366,17 @@ class ProjoRemoveMediaResult:
 
 @dataclass
 class ProjoSelectResult:
-    id: UUID
-    name: str
-    status: 'ProjectionStatus'
-    message_id: int | None
-    message_id_str: str | None
-    channel_id: int
-    channel_id_str: str
     medias: list['ProjoSelectResultMedias']
     external_medias: list['ProjoSelectResultExternalMedias']
     participants: list['ProjoSelectResultParticipants']
-    events: list['ProjoSelectResultEvents']
-
-
-@dataclass
-class ProjoSelectResultEvents:
-    date: datetime
-    description: str
+    guild_events: list['ProjoSelectResultGuildEvents']
+    status: 'ProjectionStatus'
+    name: str
+    message_id_str: str | None
+    message_id: int | None
+    channel_id_str: str
+    channel_id: int
+    id: UUID
 
 
 @dataclass
@@ -1329,6 +1384,20 @@ class ProjoSelectResultExternalMedias:
     id: UUID
     title: str
     added_alias: datetime | None = Field(alias='@added')
+
+
+@dataclass
+class ProjoSelectResultGuildEvents:
+    id: UUID
+    discord_id: int
+    description: str | None
+    discord_id_str: str
+    end_time: datetime
+    image: str | None
+    location: str | None
+    name: str
+    start_time: datetime
+    url: str | None
 
 
 @dataclass
@@ -1800,6 +1869,7 @@ class UserCalendarMergeResult:
 
 @dataclass
 class UserCalendarSelectAllResult:
+    id: UUID
     ics: str
     user: 'UserCalendarSelectAllResultUser'
 
@@ -1814,6 +1884,7 @@ class UserCalendarSelectAllResultUser:
 
 @dataclass
 class UserCalendarSelectResult:
+    id: UUID
     ics: str
     user: 'UserCalendarSelectResultUser'
 

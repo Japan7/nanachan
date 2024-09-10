@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import discord.utils
 from discord import Interaction, ScheduledEvent, User
@@ -10,14 +10,11 @@ from nanachan.discord.application_commands import nana_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import MultiplexingContext
+from nanachan.extensions.projection import ProjectionCog
 from nanachan.nanapi.client import get_nanapi, success
-from nanachan.nanapi.model import (
-    GuildEventSelectAllResult,
-    ParticipantAddBody,
-    UpsertGuildEventBody,
-    UpsertUserCalendarBody,
-)
+from nanachan.nanapi.model import ParticipantAddBody, UpsertUserCalendarBody
 from nanachan.settings import JAPAN7_AUTH, NANAPI_CLIENT_USERNAME, NANAPI_URL, TZ
+from nanachan.utils.calendar import reconcile_participants, upsert_event
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +60,7 @@ class Calendar_Generator(Cog, name='Calendar'):
     async def sync_all_events(self):
         logger.info('Start syncing all events')
         resp = await get_nanapi().calendar.calendar_get_guild_events(
-            start_after=datetime.now(TZ).isoformat() # type: ignore - FIXME: fix mahou.py
+            start_after=datetime.now(TZ).isoformat()  # type: ignore - FIXME: fix mahou.py
         )
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -74,13 +71,22 @@ class Calendar_Generator(Cog, name='Calendar'):
                 logger.debug(f'Deleting event {event.name} ({discord_id})')
                 await get_nanapi().calendar.calendar_delete_guild_event(discord_id)
         for discord_id, event in all_events.items():
-            await self.upsert_event(event)
-            await self.reconcile_participants(event, db_events.get(discord_id))
+            await upsert_event(self.bot, event)
+            await reconcile_participants(event, db_events.get(discord_id))
         logger.info('Done syncing all events')
+
+    @nana_command(description='Get my calendar ics link')
+    async def ics(self, interaction: Interaction):
+        url = URL(NANAPI_URL) / 'calendar' / 'ics'
+        if JAPAN7_AUTH:
+            url = url.with_user(JAPAN7_AUTH.login)
+            url = url.with_password(JAPAN7_AUTH.password)
+        url = url.with_query(client=NANAPI_CLIENT_USERNAME, discord_id=interaction.user.id)
+        await interaction.response.send_message(content=f'`{url}`')
 
     @Cog.listener()
     async def on_scheduled_event_create(self, event: ScheduledEvent):
-        await self.upsert_event(event)
+        await upsert_event(self.bot, event)
 
     @Cog.listener()
     async def on_scheduled_event_delete(self, event: ScheduledEvent):
@@ -90,8 +96,12 @@ class Calendar_Generator(Cog, name='Calendar'):
             raise RuntimeError(resp.result)
 
     @Cog.listener()
-    async def on_scheduled_event_update(self, _: ScheduledEvent, after: ScheduledEvent):
-        await self.upsert_event(after)
+    async def on_scheduled_event_update(self, before: ScheduledEvent, after: ScheduledEvent):
+        db_event = await upsert_event(self.bot, after)
+        if db_event.projection:
+            projo_cog = ProjectionCog.get_cog(self.bot)
+            if projo_cog is not None:
+                asyncio.create_task(projo_cog.update_projo_embed(db_event.projection))
 
     @Cog.listener()
     async def on_scheduled_event_user_add(self, event: ScheduledEvent, user: User):
@@ -107,64 +117,6 @@ class Calendar_Generator(Cog, name='Calendar'):
         )
         if not success(resp):
             raise RuntimeError(resp.result)
-
-    async def upsert_event(self, event: ScheduledEvent):
-        # creator_id will be null and creator will not be included
-        # for events created before October 25th, 2021
-        if event.creator_id is None:
-            return
-        if event.creator is None:
-            event.creator = await self.bot.fetch_user(event.creator_id)
-        logger.debug(f'Creating event {event.name} ({event.id})')
-        body = UpsertGuildEventBody(
-            name=event.name,
-            description=event.description,
-            location=event.location or f'#{event.channel}',
-            start_time=event.start_time,
-            end_time=event.end_time or (event.start_time + timedelta(hours=2)),
-            image=event.cover_image.url if event.cover_image else None,
-            url=event.url,
-            organizer_id=event.creator.id,
-            organizer_username=str(event.creator),
-        )
-        resp = await get_nanapi().calendar.calendar_upsert_guild_event(event.id, body)
-        if not success(resp):
-            raise RuntimeError(resp.result)
-
-    async def reconcile_participants(
-        self,
-        event: ScheduledEvent,
-        db_event: GuildEventSelectAllResult | None,
-    ):
-        logger.debug(f'Reconciling participants for {event.name} ({event.id})')
-        db_participants = {p.discord_id for p in db_event.participants} if db_event else set()
-        async for participant in event.users():
-            if participant.id not in db_participants:
-                body = ParticipantAddBody(
-                    participant_id=participant.id, participant_username=str(participant)
-                )
-                resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
-                    event.id, body
-                )
-                if not success(resp):
-                    raise RuntimeError(resp.result)
-            else:
-                db_participants.remove(participant.id)
-        for discord_id in db_participants:
-            resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
-                event.id, discord_id
-            )
-            if not success(resp):
-                raise RuntimeError(resp.result)
-
-    @nana_command(description='Get my calendar ics link')
-    async def ics(self, interaction: Interaction):
-        url = URL(NANAPI_URL) / 'calendar' / 'ics'
-        if JAPAN7_AUTH:
-            url = url.with_user(JAPAN7_AUTH.login)
-            url = url.with_password(JAPAN7_AUTH.password)
-        url = url.with_query(client=NANAPI_CLIENT_USERNAME, discord_id=interaction.user.id)
-        await interaction.response.send_message(content=f'`{url}`')
 
 
 async def setup(bot: Bot):
