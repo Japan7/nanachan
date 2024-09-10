@@ -54,11 +54,14 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
     for media in sorted(all_medias,
                         key=lambda m: m.added_alias if m.added_alias is not None else 0):
         if isinstance(media, ProjoSelectResultMedias):
-            description.append(
-                f"{media.title_user_preferred} "
-                f"([{media.id_al}](https://anilist.co/anime/{media.id_al}))")
-
             anime = al_medias_dict[media.id_al]
+
+            description.append(
+                f"{anime.title_user_preferred} "
+                f"({anime.episodes or '??'} eps, "
+                f"[{anime.id_al}](https://anilist.co/anime/{anime.id_al}))"
+            )
+
             if duration != -1:
                 if anime.episodes is not None and anime.duration is not None:
                     duration += anime.episodes * anime.duration
@@ -92,12 +95,13 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
         embed.add_field(name="Duration",
                         value=f"{duration//60:02}h{duration%60:02}")
 
-    if len(projection.events) > 0:
-        today = datetime.today()
-        today = today.replace(tzinfo=TZ)
-        value = "\n".join(
-            f"**{e.date}** • {e.description}" for e in projection.events
-            if e.date >= today)
+    if len(projection.guild_events) > 0:
+        now = datetime.now(tz=TZ)
+        value = '\n'.join(
+            f'**{e.start_time.astimezone(TZ)}** • {e.description}'
+            for e in projection.guild_events
+            if e.start_time >= now
+        )
         if value:
             embed.add_field(name="Events", value=value, inline=False)
 

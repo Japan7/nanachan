@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import re
 from contextlib import suppress
 from datetime import datetime, timedelta
@@ -10,7 +12,6 @@ from uuid import UUID
 import discord
 from discord import (
     EntityType,
-    EventStatus,
     Interaction,
     PrivacyLevel,
     Thread,
@@ -26,11 +27,12 @@ from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.helpers import get_option
 from nanachan.discord.views import AutoNavigatorView
-from nanachan.extensions.calendar import Calendar_Generator
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
+    GuildEventDeleteResultProjection,
+    GuildEventMergeResultProjection,
     NewProjectionBody,
-    NewProjectionEventBody,
+    ParticipantAddBody,
     ProjectionStatus,
     ProjoAddExternalMediaBody,
     ProjoSelectResult,
@@ -49,8 +51,11 @@ from nanachan.settings import (
     RequiresProjo,
 )
 from nanachan.utils.anilist import MediaType, media_autocomplete
+from nanachan.utils.calendar import upsert_event
 from nanachan.utils.misc import autocomplete_truncate, get_session
 from nanachan.utils.projection import ProjectionView, get_active_projo, get_projo_embed_view
+
+logger = logging.getLogger(__name__)
 
 
 @RequiresProjo
@@ -73,6 +78,40 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
             return
         for projo in projos:
             self.bot.add_view(ProjectionView(self.bot, projo.id))
+
+        asyncio.create_task(self.sync_participants(projos))
+
+    async def sync_participants(self, projos: list[ProjoSelectResult]):
+        logger.info('Start syncing projo participants')
+        for projo in projos:
+            projo_chan = self.bot.get_channel(projo.channel_id)
+            if not isinstance(projo_chan, Thread):
+                continue
+
+            db_participants = {p.discord_id for p in projo.participants}
+
+            members = await projo_chan.fetch_members()
+            discord_participants = {m.id: self.bot.get_user(m.id) for m in members}
+
+            for discord_id, user in discord_participants.items():
+                if discord_id not in db_participants:
+                    body = ParticipantAddBody(participant_username=str(user))
+                    resp = await get_nanapi().projection.projection_add_projection_participant(
+                        projo.id, discord_id, body
+                    )
+                    if not success(resp):
+                        raise RuntimeError(resp.result)
+                else:
+                    db_participants.remove(discord_id)
+
+            for discord_id in db_participants:
+                resp = await get_nanapi().projection.projection_remove_projection_participant(
+                    projo.id, discord_id
+                )
+                if not success(resp):
+                    raise RuntimeError(resp.result)
+
+        logger.info('Done syncing projo participants')
 
     async def add_projo_leader_role(self, user: discord.Member | discord.User,
                                     reason: str = "Created a projection"):
@@ -151,10 +190,7 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
                 case _:
                     raise RuntimeError(resp.result)
 
-        embed, view = await get_projo_embed_view(self.bot, projo.id)
-        assert projo.message_id is not None
-        info_msg = await self.fetch_message(projo.message_id)
-        await info_msg.edit(embed=embed, view=view)
+        embed = await self.update_projo_embed(projo)
         await ctx.reply(
             f"Projection renamed. {self.bot.get_emoji_str('FubukiGO')}",
             embed=embed)
@@ -224,12 +260,7 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
             if not success(resp):
                 raise RuntimeError(resp.result)
 
-        embed, view = await get_projo_embed_view(self.bot, projo.id)
-
-        assert projo.message_id is not None
-        info_msg = await self.fetch_message(projo.message_id)
-
-        await info_msg.edit(embed=embed, view=view)
+        embed = await self.update_projo_embed(projo)
         await ctx.reply(
             f"**{name}** added to the projection. {self.bot.get_emoji_str('FubukiGO')}",
             embed=embed)
@@ -242,40 +273,34 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
         oshii = "oshii"
         shinbou = "shinbou"
 
-    async def get_projo_events(self, channel: Thread):
-        calcog = Calendar_Generator.get_cog(self.bot)
-        if calcog is None:
-            return
-
-        assert channel is not None
-        for discord_event_id, event in calcog.events.items():
-            if event.description is None:
-                continue
-
-            if channel.mention in event.description:
-                assert channel.guild is not None
-                with suppress(NotFound):
-                    d_event = await channel.guild.fetch_scheduled_event(discord_event_id)
-                    if d_event.status == EventStatus.scheduled:
-                        yield d_event
-
     dans_regexp = re.compile(r"^\[📽️(\/?[^\[\]]*)\]")
 
     @app_commands.command(name="dans")
     async def projo_dans(self, interaction: Interaction, folder: ProjectionFolder):
-        if not isinstance(interaction.channel, Thread):
-            await interaction.response.send_message(
-                "This command should only be used in a thread"
-            )
-            return
         await interaction.response.defer()
 
+        if not isinstance(interaction.channel, discord.Thread):
+            raise commands.CommandError('This command should be used inside a thread.')
+
+        projo = await get_active_projo(interaction.channel.id)
+        if projo is None:
+            raise commands.CommandError(
+                'This command should be used inside an active projection thread'
+            )
+
         discord_event = None
-        async for discord_event in self.get_projo_events(interaction.channel):
-            new_name = self.dans_regexp.sub(f"[📽️/{folder.value}]", discord_event.name)
-            await discord_event.edit(name=new_name)
-            await interaction.followup.send(f"[projo]({discord_event.url}) dans {folder.value}")
-            break # only set the first event
+        for event in sorted(projo.guild_events, key=lambda e: e.start_time):
+            if event.start_time < datetime.now(TZ):
+                continue
+            assert interaction.guild
+            with suppress(NotFound):
+                discord_event = await interaction.guild.fetch_scheduled_event(event.discord_id)
+                new_name = self.dans_regexp.sub(f'[📽️/{folder.value}]', discord_event.name)
+                await discord_event.edit(name=new_name)
+                await interaction.followup.send(
+                    f'[projo]({discord_event.url}) dans {folder.value}'
+                )
+                break  # only set the first event
 
         if discord_event is None:
             await interaction.followup.send("Event not found")
@@ -330,11 +355,8 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
                 raise RuntimeError(resp.result)
         else:
             raise RuntimeError('How did you get here?')
-        embed, view = await get_projo_embed_view(self.bot, projo.id)
 
-        assert projo.message_id is not None
-        info_msg = await self.fetch_message(projo.message_id)
-        await info_msg.edit(embed=embed, view=view)
+        embed = await self.update_projo_embed(projo)
         await ctx.reply(
             f"Media removed from the projection. "
             f"{self.bot.get_emoji_str('FubukiGO')}",
@@ -400,22 +422,21 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
                 'This command should be used inside an active projection thread'
             )
 
-        resp = await get_nanapi().projection.projection_new_projection_event(
-            projection.id, NewProjectionEventBody(description=name, date=date))
+        # discord guild event
+        event = await self.create_guild_event(projection, event_type, name, date)
+
+        db_event = await upsert_event(self.bot, event)  # make sure the event is in the db
+        resp = await get_nanapi().projection.projection_add_projection_guild_event(
+            projection.id, db_event.discord_id
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
 
-        assert projection.message_id is not None
-        message = await self.fetch_message(projection.message_id)
-        embed, view = await get_projo_embed_view(self.bot, projection.id)
-        await message.edit(embed=embed, view=view)
+        await self.update_projo_embed(projection)
 
-        # discord guild event
-        event = await self.create_guild_event(projection, event_type, name,
-                                              date)
-
-        await ctx.reply(f"[New event]({event.url}) added. "
-                        f"{self.bot.get_emoji_str('FubukiGO')}")
+        await ctx.reply(
+            f"[New event]({event.url}) added. " f"{self.bot.get_emoji_str('FubukiGO')}"
+        )
         await self.add_projo_leader_role(ctx.author)
 
     async def create_guild_event(self, projection: ProjoSelectResult,
@@ -489,15 +510,14 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
         resp = await nanapi.projection.projection_delete_upcoming_projection_events(projection.id)
         if not success(resp):
             raise RuntimeError(resp.result)
-        embed, view = await get_projo_embed_view(self.bot, projection.id)
 
-        assert projection.message_id is not None
-        info_msg = await self.fetch_message(projection.message_id)
-        await info_msg.edit(embed=embed, view=view)
+        embed = await self.update_projo_embed(projection)
 
-        assert isinstance(ctx.channel, Thread)
-        async for discord_event in self.get_projo_events(ctx.channel):
-            await discord_event.delete()
+        assert ctx.guild
+        for event in projection.guild_events:
+            with suppress(NotFound):
+                discord_event = await ctx.guild.fetch_scheduled_event(event.discord_id)
+                await discord_event.delete()
 
         await ctx.reply(
             f"Upcoming events cleared. {self.bot.get_emoji_str('FubukiGO')}",
@@ -518,10 +538,10 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
         content: list[str] = []
         last_events: MutableSequence[datetime | None] = []
         for projo in projos:
-            events = projo.events
+            events = projo.guild_events
             if events:
-                last_events.append(events[-1].date)
-                date = f"`[{events[-1].date}]` "
+                last_events.append(events[-1].start_time)
+                date = f"`[{events[-1].start_time}]` "
             else:
                 last_events.append(None)
                 date = ''
@@ -559,6 +579,18 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
                                        description='\n'.join(content_iter),
                                        color=0x9966cc)
 
+    async def update_projo_embed(
+        self,
+        projection: ProjoSelectResult
+        | GuildEventMergeResultProjection
+        | GuildEventDeleteResultProjection,
+    ):
+        embed, view = await get_projo_embed_view(self.bot, projection.id)
+        assert projection.message_id
+        message = await self.fetch_message(projection.message_id)
+        await message.edit(embed=embed, view=view)
+        return embed
+
     #############
     # Listeners #
     #############
@@ -590,10 +622,13 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
 
         projo = await get_active_projo(member.thread_id)
         if projo is not None:
-            embed, view = await get_projo_embed_view(self.bot, projo.id)
-            assert projo.message_id is not None
-            message = await self.fetch_message(projo.message_id)
-            await message.edit(embed=embed, view=view)
+            await self.update_projo_embed(projo)
+            body = ParticipantAddBody(participant_username=str(user))
+            resp = await get_nanapi().projection.projection_add_projection_participant(
+                projo.id, user.id, body
+            )
+            if not success(resp):
+                raise RuntimeError(resp.result)
 
     @Cog.listener()
     async def on_thread_member_remove(self, member: discord.ThreadMember):
@@ -604,10 +639,12 @@ class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
 
         projo = await get_active_projo(member.thread_id)
         if projo is not None:
-            embed, view = await get_projo_embed_view(self.bot, projo.id)
-            assert projo.message_id
-            message = await self.fetch_message(projo.message_id)
-            await message.edit(embed=embed, view=view)
+            await self.update_projo_embed(projo)
+            resp = await get_nanapi().projection.projection_remove_projection_participant(
+                projo.id, user.id
+            )
+            if not success(resp):
+                raise RuntimeError(resp.result)
 
 
 async def setup(bot: Bot):

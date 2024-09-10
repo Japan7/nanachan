@@ -104,10 +104,6 @@ BOT_VOICE_ID = 0000
 # MANGA_QUIZZ_CHANNEL = 0000
 # LOUIS_QUIZZ_CHANNEL = 0000
 
-# Calendar
-# ICS_PATH = 'path/to/ics/calendar/file/output'
-# REFRESH_FREQ = 6
-
 # Churros
 # CHURROS_TOKEN = None
 # CHURROS_REFRESH_INTERVAL = 0     # in minutes

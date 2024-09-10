@@ -755,6 +755,172 @@ class GameUpdateBananedResult:
 
 
 @dataclass
+class GuildEventDeleteResult:
+    url: str | None
+    start_time: datetime
+    name: str
+    location: str | None
+    image: str | None
+    end_time: datetime
+    discord_id_str: str
+    description: str | None
+    discord_id: int
+    id: UUID
+    projection: 'GuildEventDeleteResultProjection | None'
+    organizer: 'GuildEventDeleteResultOrganizer'
+    participants: list['GuildEventDeleteResultParticipants']
+    client: 'GuildEventDeleteResultClient'
+
+
+@dataclass
+class GuildEventDeleteResultClient:
+    id: UUID
+    password_hash: str
+    username: str
+
+
+@dataclass
+class GuildEventDeleteResultOrganizer:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventDeleteResultParticipants:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventDeleteResultProjection:
+    id: UUID
+    channel_id: int
+    channel_id_str: str
+    message_id: int | None
+    message_id_str: str | None
+    name: str
+    status: 'ProjectionStatus'
+
+
+@dataclass
+class GuildEventMergeResult:
+    id: UUID
+    discord_id: int
+    description: str | None
+    discord_id_str: str
+    end_time: datetime
+    image: str | None
+    location: str | None
+    name: str
+    start_time: datetime
+    url: str | None
+    client: 'GuildEventMergeResultClient'
+    participants: list['GuildEventMergeResultParticipants']
+    organizer: 'GuildEventMergeResultOrganizer'
+    projection: 'GuildEventMergeResultProjection | None'
+
+
+@dataclass
+class GuildEventMergeResultClient:
+    id: UUID
+    password_hash: str
+    username: str
+
+
+@dataclass
+class GuildEventMergeResultOrganizer:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventMergeResultParticipants:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventMergeResultProjection:
+    id: UUID
+    channel_id: int
+    channel_id_str: str
+    message_id: int | None
+    message_id_str: str | None
+    name: str
+    status: 'ProjectionStatus'
+
+
+@dataclass
+class GuildEventParticipantAddResult:
+    id: UUID
+
+
+@dataclass
+class GuildEventParticipantRemoveResult:
+    id: UUID
+
+
+@dataclass
+class GuildEventSelectResult:
+    id: UUID
+    discord_id: int
+    description: str | None
+    discord_id_str: str
+    end_time: datetime
+    image: str | None
+    location: str | None
+    name: str
+    start_time: datetime
+    url: str | None
+    client: 'GuildEventSelectResultClient'
+    participants: list['GuildEventSelectResultParticipants']
+    organizer: 'GuildEventSelectResultOrganizer'
+    projection: 'GuildEventSelectResultProjection | None'
+
+
+@dataclass
+class GuildEventSelectResultClient:
+    id: UUID
+    password_hash: str
+    username: str
+
+
+@dataclass
+class GuildEventSelectResultOrganizer:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventSelectResultParticipants:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class GuildEventSelectResultProjection:
+    id: UUID
+    channel_id: int
+    channel_id_str: str
+    message_id: int | None
+    message_id_str: str | None
+    name: str
+    status: 'ProjectionStatus'
+
+
+@dataclass
 class HTTPExceptionModel:
     detail: str
 
@@ -891,12 +1057,6 @@ class NewProjectionBody:
 
 
 @dataclass
-class NewProjectionEventBody:
-    description: str
-    date: datetime
-
-
-@dataclass
 class NewQuizzBody:
     channel_id: int
     description: str
@@ -931,6 +1091,11 @@ class NewTradeBody:
     blood_shards_a: int | None = None
     moecoins_b: int | None = None
     blood_shards_b: int | None = None
+
+
+@dataclass
+class ParticipantAddBody:
+    participant_username: str
 
 
 @dataclass
@@ -1226,6 +1391,16 @@ class ProjoInsertResult:
 
 
 @dataclass
+class ProjoParticipantAddResult:
+    id: UUID
+
+
+@dataclass
+class ProjoParticipantRemoveResult:
+    id: UUID
+
+
+@dataclass
 class ProjoRemoveExternalMediaResult:
     id: UUID
 
@@ -1237,22 +1412,17 @@ class ProjoRemoveMediaResult:
 
 @dataclass
 class ProjoSelectResult:
-    id: UUID
-    name: str
-    status: 'ProjectionStatus'
-    message_id: int | None
-    message_id_str: str | None
-    channel_id: int
-    channel_id_str: str
     medias: list['ProjoSelectResultMedias']
     external_medias: list['ProjoSelectResultExternalMedias']
-    events: list['ProjoSelectResultEvents']
-
-
-@dataclass
-class ProjoSelectResultEvents:
-    date: datetime
-    description: str
+    participants: list['ProjoSelectResultParticipants']
+    guild_events: list['ProjoSelectResultGuildEvents']
+    status: 'ProjectionStatus'
+    name: str
+    message_id_str: str | None
+    message_id: int | None
+    channel_id_str: str
+    channel_id: int
+    id: UUID
 
 
 @dataclass
@@ -1263,10 +1433,32 @@ class ProjoSelectResultExternalMedias:
 
 
 @dataclass
+class ProjoSelectResultGuildEvents:
+    id: UUID
+    discord_id: int
+    description: str | None
+    discord_id_str: str
+    end_time: datetime
+    image: str | None
+    location: str | None
+    name: str
+    start_time: datetime
+    url: str | None
+
+
+@dataclass
 class ProjoSelectResultMedias:
     id_al: int
     title_user_preferred: str
     added_alias: datetime | None = Field(alias='@added')
+
+
+@dataclass
+class ProjoSelectResultParticipants:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
 
 
 @dataclass
@@ -1673,6 +1865,19 @@ class UpsertDiscordAccountBodyItem:
 
 
 @dataclass
+class UpsertGuildEventBody:
+    name: str
+    start_time: datetime
+    end_time: datetime
+    organizer_id: int
+    organizer_username: str
+    description: str | None = None
+    location: str | None = None
+    image: str | None = None
+    url: str | None = None
+
+
+@dataclass
 class UpsertPlayerBody:
     discord_username: str
     game_mode: Literal['WAIFU', 'HUSBANDO', 'ALL']
@@ -1688,8 +1893,54 @@ class UpsertProfileBody:
 
 
 @dataclass
+class UpsertUserCalendarBody:
+    discord_username: str
+    ics: str
+
+
+@dataclass
 class UserBulkMergeResult:
     id: UUID
+
+
+@dataclass
+class UserCalendarDeleteResult:
+    id: UUID
+
+
+@dataclass
+class UserCalendarMergeResult:
+    id: UUID
+
+
+@dataclass
+class UserCalendarSelectAllResult:
+    id: UUID
+    ics: str
+    user: 'UserCalendarSelectAllResultUser'
+
+
+@dataclass
+class UserCalendarSelectAllResultUser:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
+
+
+@dataclass
+class UserCalendarSelectResult:
+    id: UUID
+    ics: str
+    user: 'UserCalendarSelectResultUser'
+
+
+@dataclass
+class UserCalendarSelectResultUser:
+    id: UUID
+    discord_id: int
+    discord_id_str: str
+    discord_username: str
 
 
 @dataclass

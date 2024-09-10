@@ -1,101 +1,146 @@
+import asyncio
 import logging
+from contextlib import suppress
+from datetime import datetime
 
-import aiofiles
-import arrow
 import discord.utils
-import ics
-from discord.scheduled_event import ScheduledEvent
+from discord import EventStatus, Forbidden, Interaction, Member, ScheduledEvent, User, VoiceState
+from yarl import URL
 
+from nanachan.discord.application_commands import nana_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
-from nanachan.settings import ICS_PATH, VERIFIED_ROLE, RequiresCalendar
+from nanachan.discord.helpers import MultiplexingContext
+from nanachan.extensions.projection import ProjectionCog
+from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.model import ParticipantAddBody, UpsertUserCalendarBody
+from nanachan.settings import JAPAN7_AUTH, NANAPI_CLIENT_USERNAME, NANAPI_URL, TZ
+from nanachan.utils.calendar import reconcile_participants, upsert_event
 
 logger = logging.getLogger(__name__)
 
 
-@RequiresCalendar
-class Calendar_Generator(Cog, name="Calendar"):
-
-    def __init__(self, bot: Bot):
-        self.bot = bot
-        self.events: dict[int, ics.Event] = {}
-
-    def generate_ics_event(self, event: ScheduledEvent):
-        e = ics.Event()
-
-        guild = event.guild
-        assert guild is not None
-        if event.channel is not None:
-            loc = "#" + event.channel.name
-            role = discord.utils.get(guild.roles, name="@everyone")
-            if VERIFIED_ROLE is not None and (role := guild.get_role(VERIFIED_ROLE)) is not None:
-                perms = event.channel.permissions_for(role)
-                if not perms.read_messages:
-                    return
-        else:
-            assert event.location is not None
-            loc = event.location
-
-        e.name = event.name
-        e.location = loc
-        e.begin = arrow.get(event.start_time)
-
-        if event.end_time is not None:
-            e.end = arrow.get(event.end_time)
-        else:
-            e.end = arrow.get(event.start_time).shift(hours=2, minutes=30)
-
-        description = ""
-        if event.description is not None:
-            description += event.description + "\n"
-        description += event.url
-        e.description = description
-        return e
-
-    def add_or_ignore(self, event: ScheduledEvent):
-        if (e := self.generate_ics_event(event)) is not None:
-            self.events[event.id] = e
-
-    async def fetch_calendar(self):
-        for guild in self.bot.guilds:
-            for event in await guild.fetch_scheduled_events():
-                self.add_or_ignore(event)
+class Calendar_Generator(Cog, name='Calendar'):
+    emoji = '📅'
 
     @Cog.listener()
     async def on_ready(self):
-        await self.fetch_calendar()
-        await self.update_ics()
+        from .profiles import Profiles
+
+        profiles_cog = Profiles.get_cog(self.bot)
+        if profiles_cog is not None:
+            profiles_cog.registrars['Calendar'] = self.register
+
+        asyncio.create_task(self.sync_all_events())
+
+    async def register(self, interaction: discord.Interaction):
+        """Register or change a member calendar"""
+
+        def check(ctx: MultiplexingContext) -> bool:
+            return ctx.author == interaction.user
+
+        await interaction.response.edit_message(view=None)
+
+        await interaction.followup.send(
+            content=f'{interaction.user.mention}\nWhat is your calendar ics link?'
+        )
+
+        resp = await MultiplexingContext.set_will_delete(check=check)
+        answer = resp.message
+        ics = answer.content
+
+        resp1 = await get_nanapi().calendar.calendar_upsert_user_calendar(
+            interaction.user.id,
+            UpsertUserCalendarBody(discord_username=str(interaction.user), ics=ics),
+        )
+        if not success(resp1):
+            raise RuntimeError(resp1.result)
+
+        await interaction.followup.send(content=self.bot.get_emoji_str('FubukiGO'))
+
+    async def sync_all_events(self):
+        logger.info('Start syncing all events')
+        resp = await get_nanapi().calendar.calendar_get_guild_events(
+            start_after=datetime.now(TZ).isoformat()  # type: ignore - FIXME: fix mahou.py
+        )
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        db_events = {e.discord_id: e for e in resp.result}
+        all_events = {e.id: e for guild in self.bot.guilds for e in guild.scheduled_events}
+        for discord_id, event in db_events.items():
+            if discord_id not in all_events:
+                logger.debug(f'Deleting event {event.name} ({discord_id})')
+                await get_nanapi().calendar.calendar_delete_guild_event(discord_id)
+        for discord_id, event in all_events.items():
+            await upsert_event(self.bot, event)
+            await reconcile_participants(event, db_events.get(discord_id))
+        logger.info('Done syncing all events')
+
+    @nana_command(description='Get my calendar ics link')
+    async def ics(self, interaction: Interaction):
+        url = URL(NANAPI_URL) / 'calendar' / 'ics'
+        if JAPAN7_AUTH:
+            url = url.with_user(JAPAN7_AUTH.login)
+            url = url.with_password(JAPAN7_AUTH.password)
+        url = url.with_query(client=NANAPI_CLIENT_USERNAME, discord_id=interaction.user.id)
+        await interaction.response.send_message(content=f'`{url}`')
 
     @Cog.listener()
     async def on_scheduled_event_create(self, event: ScheduledEvent):
-        self.add_or_ignore(event)
-        await self.update_ics()
+        await upsert_event(self.bot, event)
 
     @Cog.listener()
     async def on_scheduled_event_delete(self, event: ScheduledEvent):
-        await self.fetch_calendar()
-        if event.id in self.events:
-            del self.events[event.id]
-            await self.update_ics()
+        logger.debug(f'Deleting event {event.name} ({event.id})')
+        resp = await get_nanapi().calendar.calendar_delete_guild_event(event.id)
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        db_event = resp.result
+        if db_event.projection:
+            projo_cog = ProjectionCog.get_cog(self.bot)
+            if projo_cog is not None:
+                asyncio.create_task(projo_cog.update_projo_embed(db_event.projection))
 
     @Cog.listener()
-    async def on_scheduled_event_update(self, _: ScheduledEvent, after: ScheduledEvent):
-        await self.fetch_calendar()
-        if after.id in self.events:
-            if (e := self.generate_ics_event(after)) is not None:
-                self.events[after.id] = e
-            else:  # event turned private or something
-                del self.events[after.id]
+    async def on_scheduled_event_update(self, before: ScheduledEvent, after: ScheduledEvent):
+        db_event = await upsert_event(self.bot, after)
+        if db_event.projection:
+            projo_cog = ProjectionCog.get_cog(self.bot)
+            if projo_cog is not None:
+                asyncio.create_task(projo_cog.update_projo_embed(db_event.projection))
 
-            await self.update_ics()
+    @Cog.listener()
+    async def on_scheduled_event_user_add(self, event: ScheduledEvent, user: User):
+        body = ParticipantAddBody(participant_username=str(user))
+        resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
+            event.id, user.id, body
+        )
+        if not success(resp):
+            raise RuntimeError(resp.result)
 
-    async def update_ics(self):
-        calendar = ics.Calendar(events=self.events.values())
-        assert ICS_PATH is not None
-        async with aiofiles.open(ICS_PATH, 'w') as f:
-            await f.writelines(calendar.serialize_iter())
+    @Cog.listener()
+    async def on_scheduled_event_user_remove(self, event: ScheduledEvent, user: User):
+        resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
+            event.id, user.id
+        )
+        if not success(resp):
+            raise RuntimeError(resp.result)
 
-        logger.info(f"updated calendar {ICS_PATH}")
+    @Cog.listener()
+    async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
+        if before.channel is None:
+            return  # joining channel
+
+        chan = before.channel
+
+        if len(chan.voice_states) > 0:
+            # there are still users in the voice channel
+            return
+
+        for event in chan.scheduled_events:
+            if event.status is EventStatus.active:
+                with suppress(Forbidden):
+                    await event.end()
 
 
 async def setup(bot: Bot):
