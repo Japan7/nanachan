@@ -14,12 +14,7 @@ from nanachan.discord.helpers import MultiplexingContext
 from nanachan.extensions.projection import ProjectionCog
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import ParticipantAddBody, UpsertUserCalendarBody
-from nanachan.settings import (
-    JAPAN7_AUTH,
-    NANAPI_CLIENT_USERNAME,
-    NANAPI_PUBLIC_URL,
-    TZ,
-)
+from nanachan.settings import NANAPI_CLIENT_USERNAME, NANAPI_PUBLIC_URL, TZ
 from nanachan.utils.calendar import reconcile_participants, upsert_event
 
 logger = logging.getLogger(__name__)
