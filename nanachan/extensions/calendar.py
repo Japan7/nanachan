@@ -1,9 +1,10 @@
 import asyncio
 import logging
+from contextlib import suppress
 from datetime import datetime
 
 import discord.utils
-from discord import Interaction, ScheduledEvent, User
+from discord import EventStatus, Forbidden, Interaction, Member, ScheduledEvent, User, VoiceState
 from yarl import URL
 
 from nanachan.discord.application_commands import nana_command
@@ -117,6 +118,22 @@ class Calendar_Generator(Cog, name='Calendar'):
         )
         if not success(resp):
             raise RuntimeError(resp.result)
+
+    @Cog.listener()
+    async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
+        if before.channel is None:
+            return  # joining channel
+
+        chan = before.channel
+
+        if len(chan.voice_states) > 0:
+            # there are still users in the voice channel
+            return
+
+        for event in chan.scheduled_events:
+            if event.status is EventStatus.active:
+                with suppress(Forbidden):
+                    await event.end()
 
 
 async def setup(bot: Bot):
