@@ -98,12 +98,12 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
     if len(projection.guild_events) > 0:
         now = datetime.now(tz=TZ)
         value = '\n'.join(
-            f'**{e.start_time.astimezone(TZ)}** • {e.description}'
+            f'**{e.start_time.astimezone(TZ)}** • {e.name}'
             for e in projection.guild_events
             if e.start_time >= now
         )
         if value:
-            embed.add_field(name="Events", value=value, inline=False)
+            embed.add_field(name="Upcoming Events", value=value, inline=False)
 
     view = ProjectionView(bot, projection.id)
     view.infos_bt.disabled = len(projection.medias) == 0
