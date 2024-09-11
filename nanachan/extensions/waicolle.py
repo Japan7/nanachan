@@ -21,7 +21,8 @@ from discord.enums import ButtonStyle
 from discord.ext import commands, tasks
 from discord.ui import Button
 from discord.utils import utcnow
-from toolz.curried import first, partition_all, second
+from toolz import partition_all
+from toolz.curried import first, second
 from yarl import URL
 
 from nanachan.discord.application_commands import (
@@ -571,7 +572,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             custom_lines = []
 
         pages = []
-        partition = partition_all(PER_PAGE)
+        partition = partial(partition_all, PER_PAGE)
         iterator = zip_longest(
             cast(Iterable[Iterable[WaifuSelectResult]], partition(waifus)),
             cast(Iterable[Iterable[str]], partition(custom_lines)))
