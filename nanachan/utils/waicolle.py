@@ -46,7 +46,7 @@ from nanachan.nanapi.model import (
 from nanachan.nanapi.model import Rank as _Rank
 from nanachan.settings import NANAPI_PUBLIC_URL
 from nanachan.utils.anilist import STAFF_GARBAGE
-from nanachan.utils.misc import autocomplete_truncate, to_producer
+from nanachan.utils.misc import autocomplete_truncate
 
 if TYPE_CHECKING:
     from nanachan.extensions.waicolle import WaifuCollection
@@ -897,9 +897,7 @@ class TradeHelper:
             ids_al_str = ','.join(map(str, tot_ids_al))
             url = URL(f"{NANAPI_PUBLIC_URL}/anilist/charas/collages").with_query(
                 ids_al=ids_al_str)
-            if len(str(url)) > 2048:
-                thumbnail_url = (await to_producer(url))['url']
-            else:
+            if len(str(url)) <= 2048:
                 thumbnail_url = str(url)
 
         offer, _ = await TradeOfferView.create(
