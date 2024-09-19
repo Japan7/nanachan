@@ -80,7 +80,7 @@ class Calendar_Generator(Cog, name='Calendar'):
     async def ics(self, interaction: Interaction):
         url = URL(NANAPI_PUBLIC_URL) / 'calendar' / 'ics'
         url = url.with_query(client=NANAPI_CLIENT_USERNAME, user=interaction.user.id)
-        await interaction.response.send_message(content=f'`{url}`')
+        await interaction.response.send_message(content=url, ephemeral=True)
 
     @Cog.listener()
     async def on_scheduled_event_create(self, event: ScheduledEvent):
@@ -108,6 +108,7 @@ class Calendar_Generator(Cog, name='Calendar'):
 
     @Cog.listener()
     async def on_scheduled_event_user_add(self, event: ScheduledEvent, user: User):
+        await upsert_event(self.bot, event)
         body = ParticipantAddBody(participant_username=str(user))
         resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
             event.id, user.id, body
