@@ -43,7 +43,7 @@ redis = { version = "5.0.8", extras = ["hiredis"] }
 parsedatetime = "2.6"
 yt-dlp = "2024.8.6"
 aiojobs = "1.3.0"
-tzdata = "2024.1"
+tzdata = "2024.2"
 ollama = "0.3.3"
 
 [tool.poetry.group.dev.dependencies]
