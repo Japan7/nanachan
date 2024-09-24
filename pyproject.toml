@@ -30,7 +30,7 @@ html2text = "2024.2.26"
 # https://github.com/PyYoshi/cChardet/issues/81
 faust-cchardet = "2.1.19"
 toolz = "0.12.1"
-yarl = "1.12.0"
+yarl = "1.12.1"
 rich = "13.8.1"
 pydantic = "2.9.2"
 numpy = "2.1.1"
