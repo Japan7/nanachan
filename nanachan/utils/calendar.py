@@ -26,12 +26,16 @@ async def upsert_event(bot: Bot, event: ScheduledEvent) -> GuildEventMergeResult
 
     logger.debug(f'Creating event {event.name} ({event.id})')
 
+    end_time = event.end_time
+    if end_time is None or end_time <= event.start_time:
+        end_time = event.start_time + timedelta(hours=2)
+
     body = UpsertGuildEventBody(
         name=event.name,
         description=event.description,
         location=event.location or f'#{event.channel}',
         start_time=event.start_time,
-        end_time=event.end_time or (event.start_time + timedelta(hours=2)),
+        end_time=end_time,
         image=event.cover_image.url if event.cover_image else None,
         url=event.url,
         organizer_id=event.creator.id,
