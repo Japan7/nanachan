@@ -1,11 +1,5 @@
 {
   "editor.rulers": [99],
-  "python.analysis.typeCheckingMode": "basic",
-  "yaml.schemas": {
-    "https://json.schemastore.org/github-workflow.json": [
-      ".forgejo/workflows/*"
-    ]
-  },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
   }

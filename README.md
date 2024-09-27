@@ -44,7 +44,7 @@ A few minutes later your container will be ready and _Dev Container: nanachan_ w
 
 ### Run and Debug
 
-To simplify these operations in VS Code, `launch.json` and `task.json` are provided in the `.vscode` folder.
+To simplify these operations in VS Code, `launch.json` and `tasks.json` are provided in the `.vscode` folder.
 So just go to in the _Run_ section of the Side Bar or press _F5_ to start debugging nanachan.
 
 ### Git hooks
