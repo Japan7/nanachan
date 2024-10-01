@@ -2268,6 +2268,17 @@ client = ["requests (>=2.21.0)", "websocket-client (>=0.54.0)"]
 docs = ["sphinx"]
 
 [[package]]
+name = "pytz"
+version = "2024.2"
+description = "World timezone definitions, modern and historical"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytz-2024.2-py2.py3-none-any.whl", hash = "sha256:31c7c1817eb7fae7ca4b8c7ee50c72f93aa2dd863de768e1ef4245d426aa0725"},
+    {file = "pytz-2024.2.tar.gz", hash = "sha256:2aa355083c50a0f93fa581709deac0c9ad65cca8a9e9beac660adcbd493c798a"},
+]
+
+[[package]]
 name = "redis"
 version = "5.1.0"
 description = "Python client for Redis database and key-value store"
@@ -2541,17 +2552,19 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "vobject"
-version = "0.9.7"
+version = "0.9.8"
 description = "A full-featured Python package for parsing and creating iCalendar and vCard files"
 optional = false
 python-versions = "*"
 files = [
-    {file = "vobject-0.9.7-py2.py3-none-any.whl", hash = "sha256:67ebec81ee39fc60b7355ce077f850d5f13d99d08b110fa1abcfdbb516205e20"},
-    {file = "vobject-0.9.7.tar.gz", hash = "sha256:ab727bf81de88984ada5c11f066f1e1649903d3e3d7ec91f1ce968172afd5256"},
+    {file = "vobject-0.9.8-py2.py3-none-any.whl", hash = "sha256:e6d8369b84462ddacef467fa667f25ba1e5f732d28f43f36fbd0079b2f8cb3b3"},
+    {file = "vobject-0.9.8.tar.gz", hash = "sha256:db00a7f4db49397155dd8a6871e8a2a0175a6eba5a654c30e910f82b29514b58"},
 ]
 
 [package.dependencies]
-python-dateutil = ">=2.4.0"
+python-dateutil = {version = ">=2.7.0", markers = "python_version >= \"3.10\""}
+pytz = "*"
+six = "*"
 
 [[package]]
 name = "watchgod"
@@ -2877,4 +2890,4 @@ test = ["pytest (>=8.1,<9.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "83af2e27b986fd045d16fa0e5dd0a51849691a39007d808ba4a75e21b4ec03d2"
+content-hash = "8b9de57dd09087431c7d539d36a44b58d6e9afa464a5de0807f83d89e2d039d9"
