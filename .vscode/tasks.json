@@ -7,7 +7,11 @@
       "label": "nanapi-codegen",
       "type": "shell",
       "command": "poetry run ./nanapi-codegen.py",
-      "group": "build"
+      "problemMatcher": "$python",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     }
   ]
 }
