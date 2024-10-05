@@ -17,7 +17,7 @@ nanachan = "nanachan.__main__:main"
 
 [tool.poetry.dependencies]
 python = "~3.12"
-"discord.py" = { git = "https://github.com/Japan7/discord.py.git", rev = "7f80910cac5f4ecc6ddb9605ccdc1bcf482063c3", extras = ["voice"] }
+"discord.py" = { git = "https://github.com/Japan7/discord.py.git", rev = "de39725b2a3c2fc582c1e049a17a3ef555723d91", extras = ["voice"] }
 matplotlib = "3.9.2"
 vobject = "0.9.8"
 python-socketio = { version = "5.11.4", extras = ["asyncio_client"] }
