@@ -205,13 +205,7 @@ def prep_val_serialization(v: Any) -> QueryVariable:
 
 
 def prep_serialization(d: dict[str, Any]) -> Query:
-    for k, v in d.items():
-        if v is None:
-            del d[k]
-        else:
-            d[k] = prep_val_serialization(v)
-
-    return d
+    return {k: prep_val_serialization(v) for k, v in d.items() if v is not None}
 
 
 class AmqModule:
