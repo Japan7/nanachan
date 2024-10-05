@@ -1,10 +1,13 @@
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Literal, TypeGuard
+from typing import Any, Literal, TypeGuard
 from uuid import UUID
 
 import aiohttp
+from aiohttp.typedefs import Query
+from yarl import QueryVariable, SimpleQuery
 
 from .model import (
     AccountMergeResult,
@@ -175,8 +178,40 @@ class Error[TCode, TError]:
     result: TError
 
 
-def success[S: Success](maybe: S | Error) -> TypeGuard[S]:
+def success[S: Success[Any, Any]](maybe: S | Error[Any, Any]) -> TypeGuard[S]:
     return isinstance(maybe, Success)
+
+
+def prep_scalar_serializationion(v: Any) -> SimpleQuery:
+    # SimpleQuery is str, int, float at time of writing
+    if isinstance(v, SimpleQuery):
+        return v
+    else:
+        # FIXME: breaks things, maybe
+        return str(v)
+
+
+def prep_seq_serialization(v: Sequence[Any]) -> Sequence[SimpleQuery]:
+    return tuple(prep_scalar_serializationion(lv) for lv in v)
+
+
+def prep_val_serialization(v: Any) -> QueryVariable:
+    if isinstance(v, Enum):
+        return prep_val_serialization(v.value)
+    elif isinstance(v, Sequence):
+        return prep_seq_serialization(v)
+    else:
+        return prep_scalar_serializationion(v)
+
+
+def prep_serialization(d: dict[str, Any]) -> Query:
+    for k, v in d.items():
+        if v is None:
+            del d[k]
+        else:
+            d[k] = prep_val_serialization(v)
+
+    return d
 
 
 class AmqModule:
@@ -192,12 +227,10 @@ class AmqModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/amq/accounts'
-        params = dict(
-            username=username,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'username': username,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -264,12 +297,10 @@ class AmqModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/amq/settings'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -304,12 +335,10 @@ class AmqModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/amq/settings'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.patch(
             url,
@@ -419,12 +448,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/accounts/all/entries'
-        params = dict(
-            type=type,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'type': type,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -458,12 +485,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/accounts/{discord_id}/entries'
-        params = dict(
-            type=type,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'type': type,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -497,12 +522,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/medias'
-        params = dict(
-            ids_al=ids_al,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'ids_al': ids_al,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -536,13 +559,11 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/medias/search'
-        params = dict(
-            type=type,
-            search=search,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'type': type,
+            'search': search,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -576,13 +597,11 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/medias/autocomplete'
-        params = dict(
-            search=search,
-            type=type,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'search': search,
+            'type': type,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -617,12 +636,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/medias/collages'
-        params = dict(
-            ids_al=ids_al,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'ids_al': ids_al,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -720,12 +737,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/charas'
-        params = dict(
-            ids_al=ids_al,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'ids_al': ids_al,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -759,12 +774,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/charas/search'
-        params = dict(
-            search=search,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'search': search,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -798,12 +811,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/charas/autocomplete'
-        params = dict(
-            search=search,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'search': search,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -838,14 +849,12 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/charas/collages'
-        params = dict(
-            ids_al=ids_al,
-            hide_no_images=hide_no_images,
-            blooded=blooded,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'ids_al': ids_al,
+            'hide_no_images': hide_no_images,
+            'blooded': blooded,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -915,12 +924,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/staffs'
-        params = dict(
-            ids_al=ids_al,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'ids_al': ids_al,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -954,12 +961,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/staffs/search'
-        params = dict(
-            search=search,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'search': search,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -993,12 +998,10 @@ class AnilistModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/anilist/staffs/autocomplete'
-        params = dict(
-            search=search,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'search': search,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -1208,13 +1211,11 @@ class CalendarModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/calendar/guild_events'
-        params = dict(
-            start_after=start_after,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'start_after': start_after,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -1249,12 +1250,10 @@ class CalendarModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/calendar/guild_events/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -1295,12 +1294,10 @@ class CalendarModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/calendar/guild_events/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -1346,12 +1343,10 @@ class CalendarModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/calendar/guild_events/{discord_id}/participants/{participant_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -1394,12 +1389,10 @@ class CalendarModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/calendar/guild_events/{discord_id}/participants/{participant_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -1432,21 +1425,19 @@ class CalendarModule:
             )
 
     async def calendar_get_ics(
-        self, client: str, discord_id: int | None = None
+        self, client: str, user: int | None = None, aggregate: bool | None = None
     ) -> (
         Success[Literal[200], None]
         | Error[Literal[404], None]
-        | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/calendar/ics'
-        params = dict(
-            client=client,
-            discord_id=discord_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client': client,
+            'user': user,
+            'aggregate': aggregate,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -1456,10 +1447,6 @@ class CalendarModule:
                 return Success[Literal[200], None](code=200, result=None)
             if resp.status == 404:
                 return Error[Literal[404], None](code=404, result=None)
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
             if resp.status == 422:
                 return Error[Literal[422], HTTPValidationError](
                     code=422, result=HTTPValidationError(**(await resp.json()))
@@ -1486,12 +1473,10 @@ class ClientModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/clients/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -1602,12 +1587,10 @@ class HistoireModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/histoires/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -1644,12 +1627,10 @@ class HistoireModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/histoires/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -1693,12 +1674,10 @@ class HistoireModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/histoires/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -1738,12 +1717,10 @@ class HistoireModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/histoires/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -1790,12 +1767,10 @@ class PotModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/pots/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -1834,12 +1809,10 @@ class PotModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/pots/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -1884,12 +1857,10 @@ class PresenceModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/presences/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -1925,12 +1896,10 @@ class PresenceModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/presences/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -1975,12 +1944,10 @@ class PresenceModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/presences/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -2030,15 +1997,13 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/'
-        params = dict(
-            status=status,
-            message_id=message_id,
-            channel_id=channel_id,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'status': status,
+            'message_id': message_id,
+            'channel_id': channel_id,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -2073,12 +2038,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -2118,12 +2081,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -2163,12 +2124,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -2210,12 +2169,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/name'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -2260,12 +2217,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/status'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -2310,12 +2265,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/message_id'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -2360,12 +2313,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/medias/anilist/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -2409,12 +2360,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/medias/anilist/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -2456,12 +2405,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/medias/external'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -2506,12 +2453,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/medias/external/{external_media_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -2557,12 +2502,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/participants/{participant_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -2605,12 +2548,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/participants/{participant_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -2652,12 +2593,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/guild_events/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -2700,12 +2639,10 @@ class ProjectionModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/projections/{id}/guild_events/upcoming'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -2750,12 +2687,10 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/quizzes'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -2795,13 +2730,11 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/quizzes/oldest'
-        params = dict(
-            channel_id=channel_id,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'channel_id': channel_id,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -2840,12 +2773,10 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/quizzes/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -2885,12 +2816,10 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/quizzes/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -2932,12 +2861,10 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/quizzes/{id}/answer'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -2980,13 +2907,11 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/games'
-        params = dict(
-            status=status,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'status': status,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3022,12 +2947,10 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/games'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -3072,13 +2995,11 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/games'
-        params = dict(
-            message_id=message_id,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'message_id': message_id,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -3119,13 +3040,11 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/games/current'
-        params = dict(
-            channel_id=channel_id,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'channel_id': channel_id,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3164,13 +3083,11 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/games/last'
-        params = dict(
-            channel_id=channel_id,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'channel_id': channel_id,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3209,12 +3126,10 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/games/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3254,12 +3169,10 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/games/{id}/bananed'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -3304,12 +3217,10 @@ class QuizzModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/quizz/games/{id}/end'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -3358,12 +3269,10 @@ class ReminderModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/reminders/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3398,12 +3307,10 @@ class ReminderModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/reminders/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -3444,12 +3351,10 @@ class ReminderModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/reminders/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -3495,12 +3400,10 @@ class RoleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/roles/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3536,12 +3439,10 @@ class RoleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/roles/'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -3586,12 +3487,10 @@ class RoleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/roles/{role_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -3694,13 +3593,11 @@ class UserModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/user/profiles/search'
-        params = dict(
-            discord_ids=discord_ids,
-            pattern=pattern,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'discord_ids': discord_ids,
+            'pattern': pattern,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3810,13 +3707,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players'
-        params = dict(
-            chara_id_al=chara_id_al,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'chara_id_al': chara_id_al,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3851,12 +3746,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.patch(
             url,
@@ -3896,12 +3789,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -3942,12 +3833,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/coins/add'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -4002,13 +3891,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/coins/donate'
-        params = dict(
-            to_discord_id=to_discord_id,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'to_discord_id': to_discord_id,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -4069,16 +3956,14 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/roll'
-        params = dict(
-            roll_id=roll_id,
-            coupon_code=coupon_code,
-            nb=nb,
-            pool_discord_id=pool_discord_id,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'roll_id': roll_id,
+            'coupon_code': coupon_code,
+            'nb': nb,
+            'pool_discord_id': pool_discord_id,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -4129,12 +4014,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4173,13 +4056,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/unlocked'
-        params = dict(
-            hide_singles=hide_singles,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'hide_singles': hide_singles,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4218,13 +4099,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/reversed'
-        params = dict(
-            hide_singles=hide_singles,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'hide_singles': hide_singles,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4263,12 +4142,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4308,12 +4185,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -4357,12 +4232,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -4403,12 +4276,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4448,12 +4319,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -4497,12 +4366,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -4543,12 +4410,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4588,12 +4453,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -4637,12 +4500,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -4686,13 +4547,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/collages/waifus'
-        params = dict(
-            filter=filter,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'filter': filter,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4735,13 +4594,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/collages/medias/{id_al}'
-        params = dict(
-            owned_only=owned_only,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'owned_only': owned_only,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4784,13 +4641,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/collages/staffs/{id_al}'
-        params = dict(
-            owned_only=owned_only,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'owned_only': owned_only,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4833,13 +4688,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/players/{discord_id}/collages/collections/{id}'
-        params = dict(
-            owned_only=owned_only,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'owned_only': owned_only,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4893,25 +4746,23 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/waifus'
-        params = dict(
-            ids=ids,
-            discord_id=discord_id,
-            level=level,
-            locked=locked,
-            trade_locked=trade_locked,
-            blooded=blooded,
-            nanaed=nanaed,
-            custom_collage=custom_collage,
-            as_og=as_og,
-            ascended=ascended,
-            edged=edged,
-            ascendable=ascendable,
-            chara_id_al=chara_id_al,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'ids': ids,
+            'discord_id': discord_id,
+            'level': level,
+            'locked': locked,
+            'trade_locked': trade_locked,
+            'blooded': blooded,
+            'nanaed': nanaed,
+            'custom_collage': custom_collage,
+            'as_og': as_og,
+            'ascended': ascended,
+            'edged': edged,
+            'ascendable': ascendable,
+            'chara_id_al': chara_id_al,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -4954,13 +4805,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/waifus'
-        params = dict(
-            ids=ids,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'ids': ids,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.patch(
             url,
@@ -5000,12 +4849,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/waifus/reroll'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -5045,13 +4892,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/waifus/expired'
-        params = dict(
-            discord_id=discord_id,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'discord_id': discord_id,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -5091,12 +4936,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/waifus/{id}/customs'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.patch(
             url,
@@ -5141,12 +4984,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/waifus/{id}/reorder'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.patch(
             url,
@@ -5192,12 +5033,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/waifus/{id}/ascend'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -5246,12 +5085,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/waifus/{id}/blood'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -5297,12 +5134,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/trades'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -5337,12 +5172,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/trades'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -5383,12 +5216,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/trades/offerings'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -5433,12 +5264,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/trades/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -5481,12 +5310,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/trades/{id}/commit'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -5534,12 +5361,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/collections'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -5582,13 +5407,11 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/collections/autocomplete'
-        params = dict(
-            search=search,
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'search': search,
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -5624,12 +5447,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/collections/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -5669,12 +5490,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/collections/{id}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -5716,12 +5535,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/collections/{id}/medias/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -5765,12 +5582,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/collections/{id}/medias/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -5812,12 +5627,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/collections/{id}/staffs/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.put(
             url,
@@ -5861,12 +5674,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/collections/{id}/staffs/{id_al}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -5906,12 +5717,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/coupons'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -5947,12 +5756,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/coupons'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.post(
             url,
@@ -5997,12 +5804,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/coupons/{code}'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.delete(
             url,
@@ -6066,12 +5871,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/settings/rolls'
-        params = dict(
-            discord_id=discord_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'discord_id': discord_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
@@ -6105,12 +5908,10 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/exports/waifus'
-        params = dict(
-            client_id=client_id,
-        )
         params = {
-            k: v.value if isinstance(v, Enum) else v for k, v in params.items() if v is not None
+            'client_id': client_id,
         }
+        params = prep_serialization(params)
 
         async with self.session.get(
             url,
