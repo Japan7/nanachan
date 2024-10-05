@@ -2,6 +2,7 @@ import asyncio
 import calendar
 import re
 from dataclasses import asdict
+from itertools import batched
 from operator import attrgetter
 from typing import Any, Callable
 
@@ -9,7 +10,6 @@ import discord
 from discord.app_commands import Choice
 from discord.ui import Button
 from html2text import HTML2Text as HTML2md
-from toolz import partition_all
 from toolz.curried import compose_left
 from yarl import URL
 
@@ -47,7 +47,7 @@ class MediaScoreButton(Button):
         self.og_embed = og_embed
 
         fields = await get_score_fields(self.bot, media)
-        self.fields_partitions = list(partition_all(15, fields))
+        self.fields_partitions = list(batched(fields, 15))
 
         self.disabled = len(self.fields_partitions) == 0
         self.curr_ind = 0

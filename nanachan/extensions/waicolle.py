@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from enum import Enum
 from functools import partial
-from itertools import zip_longest
+from itertools import batched, zip_longest
 from operator import getitem
 from typing import TYPE_CHECKING, Any, Coroutine, Iterable, Literal, cast
 from uuid import UUID
@@ -21,7 +21,6 @@ from discord.enums import ButtonStyle
 from discord.ext import commands, tasks
 from discord.ui import Button
 from discord.utils import utcnow
-from toolz import partition_all
 from toolz.curried import first, second
 from yarl import URL
 
@@ -572,7 +571,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             custom_lines = []
 
         pages = []
-        partition = partial(partition_all, PER_PAGE)
+        partition = partial(batched, n=PER_PAGE)
         iterator = zip_longest(
             cast(Iterable[Iterable[WaifuSelectResult]], partition(waifus)),
             cast(Iterable[Iterable[str]], partition(custom_lines)))
@@ -672,8 +671,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             return []
 
         pages = [
-            self._waifu_selector_page(owner, group, len(waifus)) for group in
-            partition_all(PER_PAGE_SELECTOR, waifus)  # type: ignore
+            self._waifu_selector_page(owner, group, len(waifus))
+            for group in batched(waifus, PER_PAGE_SELECTOR)
         ]
 
         content = f"{ctx.author.mention}\nSelect the characters you want to **{action}**."
@@ -693,7 +692,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         return selected
 
     async def _waifu_selector_page(self, owner: discord.User | discord.Member,
-                                   waifus: list[WaifuSelectResult], total: int):
+                                   waifus: Iterable[WaifuSelectResult], total: int):
         embed = Embed(title='Character list', color=WC_COLOR)
         embed.set_author(name=owner, icon_url=owner.display_avatar.url)
         embed.set_footer(text=f"{total} character{'s' if total > 1 else ''}")

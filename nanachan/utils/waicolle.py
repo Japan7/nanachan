@@ -5,6 +5,7 @@ import math
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass, field
 from functools import partial
+from itertools import batched
 from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
@@ -14,7 +15,7 @@ from discord.app_commands import Choice
 from discord.components import SelectOption
 from discord.ext import commands
 from discord.ui import Button, Select
-from toolz.curried import concat, first, partition_all, second
+from toolz.curried import concat, first, second
 from yarl import URL
 
 from nanachan.discord.bot import Bot
@@ -162,9 +163,7 @@ class WaifuSelectorView(CompositeNavigatorView):
 
     async def star_callback(self, interaction: discord.Interaction):
         if not self.stared:
-            for i, part in enumerate(
-                    partition_all(PER_PAGE_SELECTOR,
-                                  self.waifus)):  # type: ignore
+            for i, part in enumerate(batched(self.waifus, PER_PAGE_SELECTOR)):
                 self.selected_per_page[i] = [
                     str(i * PER_PAGE_SELECTOR + j) for j in range(len(part))
                 ]
@@ -389,7 +388,7 @@ class RollResultsView(CompositeNavigatorView):
 
         pages = [
             self.cog._waifu_selector_page(owner, group, len(waifus))
-            for group in partition_all(PER_PAGE_SELECTOR, waifus)  # type: ignore
+            for group in batched(waifus, PER_PAGE_SELECTOR)
         ]
 
         content = f'{interaction.user.mention}\nSelect the characters you want to **{action}**.'

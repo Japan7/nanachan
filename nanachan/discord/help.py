@@ -1,10 +1,9 @@
 import logging
-from itertools import chain
+from itertools import batched, chain
 from operator import attrgetter
 from typing import TYPE_CHECKING, List, Mapping, Optional, cast
 
 from discord.ext.commands import Cog, Command, Group, HelpCommand
-from toolz import partition_all
 
 from nanachan.discord.helpers import Embed
 from nanachan.discord.views import NavigatorView
@@ -56,7 +55,7 @@ class CustomHelpCommand(HelpCommand):
         else:
             n = 5
 
-        for parts in partition_all(n, commands_help_parts):
+        for parts in batched(commands_help_parts, n):
             yield ''.join(parts)
 
     def get_embeds_for_cog(self, cog: Cog):
@@ -77,8 +76,8 @@ class CustomHelpCommand(HelpCommand):
         assert user is not None
         return user.display_name
 
-    def get_cog_description(self, cog: Cog):
-        desc = getattr(cog, '_cog_description', None)
+    def get_cog_description(self, cog: Cog) -> str:
+        desc: str | None = getattr(cog, '_cog_description', None)
         if desc:
             desc = desc.strip()
         else:

@@ -6,7 +6,7 @@ import unicodedata
 from dataclasses import asdict
 from functools import partial
 from inspect import signature
-from itertools import zip_longest
+from itertools import batched, zip_longest
 from math import ceil
 from typing import (
     TYPE_CHECKING,
@@ -21,7 +21,6 @@ import discord
 from discord.components import SelectOption
 from discord.enums import ButtonStyle
 from discord.ui import Button, Item, Select, View
-from toolz import partition_all
 from toolz.curried import concat
 
 from nanachan.discord.helpers import Embed, EmbedField, UserType
@@ -317,7 +316,7 @@ class AutoNavigatorView(NavigatorView):
 
         pages = []
         for page_desc, page_fields in zip_longest(cls._split_pages(description),
-                                                  partition_all(24, fields)):
+                                                  batched(fields, 24)):
             embed = Embed(title=title, description=page_desc, colour=colour, color=color, url=url)
             if author_name:
                 embed.set_author(name=author_name, url=author_url, icon_url=author_icon_url)
