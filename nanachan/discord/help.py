@@ -94,11 +94,9 @@ class CustomHelpCommand(HelpCommand):
         first_embed = Embed(title=f'{self.bot_name} commands manual',
                             description='')
         embeds = []
+        cogs = (cog for cog in mapping if cog is not None)
 
-        for cog in sorted(mapping, key=attrgetter('qualified_name')):
-            if cog is None:
-                continue
-
+        for cog in sorted(cogs, key=attrgetter('qualified_name')):
             cog_embeds = list(self.get_embeds_for_cog(cog))
 
             if cog_embeds:
