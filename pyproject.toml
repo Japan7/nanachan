@@ -1,69 +1,59 @@
-[tool.poetry]
+[project]
 name = "nanachan"
-version = "0.1.0" # do not change that
+version = "0.1.0"
 description = "Japan7 Discord bot"
-authors = [
-    "mistiru <dev@mistiru.me>",
-    "Pierre Jeanjean <rhiobet@gmail.com>",
-    "odrling <florianbadie@odrling.xyz>",
-    "NextFire <git@yuru.moe>",
-]
-license = "MIT"
 readme = "README.md"
-repository = "https://github.com/Japan7/nanachan"
+license = { file = "LICENSE" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "discord-py[voice]",
+    "matplotlib==3.9.2",
+    "vobject==0.9.8",
+    "python-socketio[asyncio_client]==5.11.4",
+    "aiohttp[speedups]==3.10.9",
+    "aiofiles==24.1.0",
+    "pysaucenao==1.6.2",
+    "Pillow==10.4.0",
+    "html2text==2024.2.26",
+    "faust-cchardet==2.1.19",                  # https://github.com/PyYoshi/cChardet/issues/81
+    "toolz==1.0.0",
+    "yarl==1.13.1",
+    "rich==13.9.2",
+    "pydantic==2.9.2",
+    "numpy==2.1.2",
+    "tldr==3.3.0",
+    "watchgod==0.8.2",
+    "backoff==2.2.1",
+    "yappi==1.6.0",
+    "orjson==3.10.7",
+    "redis[hiredis]==5.1.1",
+    "parsedatetime==2.6",
+    "yt-dlp==2024.9.27",
+    "aiojobs==1.3.0",
+    "tzdata==2024.2",
+    "ollama==0.3.3",
+]
 
-[tool.poetry.scripts]
-nanachan = "nanachan.__main__:main"
+[tool.uv]
+dev-dependencies = [
+    "pyright==1.1.383",
+    "ruff==0.6.9",
+    "mahou",
+    "requests==2.32.3",
+    # FIXME: https://pypi.org/project/types-redis/#description
+    # Note: Redis-py 5.0.0 added a py.typed file, but the inline annotations are incomplete.
+    # Continuing to use types-redis for the time being may lead to superior results.
+    "types-redis==4.6.0.20241004",
+]
 
-[tool.poetry.dependencies]
-python = "~3.12"
-"discord.py" = { git = "https://github.com/Japan7/discord.py.git", rev = "de39725b2a3c2fc582c1e049a17a3ef555723d91", extras = ["voice"] }
-matplotlib = "3.9.2"
-vobject = "0.9.8"
-python-socketio = { version = "5.11.4", extras = ["asyncio_client"] }
-aiohttp = { version = "3.10.9", extras = ["speedups"] }
-aiofiles = "24.1.0"
-pysaucenao = "1.6.2"
-Pillow = "10.4.0"
-html2text = "2024.2.26"
-# https://github.com/PyYoshi/cChardet/issues/81
-faust-cchardet = "2.1.19"
-toolz = "1.0.0"
-yarl = "1.13.1"
-rich = "13.9.2"
-pydantic = "2.9.2"
-numpy = "2.1.2"
-tldr = "3.3.0"
-watchgod = "0.8.2"
-backoff = "2.2.1"
-yappi = "1.6.0"
-orjson = "3.10.7"
-redis = { version = "5.1.1", extras = ["hiredis"] }
-parsedatetime = "2.6"
-yt-dlp = "2024.9.27"
-aiojobs = "1.3.0"
-tzdata = "2024.2"
-ollama = "0.3.3"
-
-[tool.poetry.group.dev.dependencies]
-pyright = "1.1.383"
-ruff = "0.6.9"
+[tool.uv.sources]
+discord-py = { git = "https://github.com/Japan7/discord.py.git", rev = "de39725b2a3c2fc582c1e049a17a3ef555723d91" }
 mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "edbc799ef71c8409f970fee75c788e5475a430e1" }
-requests = "2.32.3"
-# FIXME: https://pypi.org/project/types-redis/#description
-# Note: Redis-py 5.0.0 added a py.typed file, but the inline annotations are incomplete.
-# Continuing to use types-redis for the time being may lead to superior results.
-types-redis = "4.6.0.20241004"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.masonry.api"
 
 [tool.pyright]
 reportDeprecated = true
 
 [tool.ruff]
-target-version = "py312"
 line-length = 99
 
 [tool.ruff.lint]

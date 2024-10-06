@@ -1,16 +1,3 @@
-# VCS
-.git/
-
-# Editor
-.idea/
-**/*.swp
-
-# Python
+.venv
 **/__pycache__/
-
-# Misc
-deploy.py
-.gitlab-ci.yml
-.venv/
-
 **/*local_settings.py

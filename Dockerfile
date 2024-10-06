@@ -1,23 +1,29 @@
-FROM cgr.dev/chainguard/wolfi-base:latest
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# renovate: datasource=docker depName=python
-ARG PYTHON_VERSION=3.12
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV POETRY_VIRTUALENVS_IN_PROJECT=1
+RUN apt update && \
+    apt install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    ln -s /usr/lib/x86_64-linux-gnu/libopus.so.0 /usr/lib/
 
-RUN apk add --no-cache python-${PYTHON_VERSION} py${PYTHON_VERSION}-pip ffmpeg opus
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock ./
-RUN apk add --no-cache --virtual .build-deps build-base python-${PYTHON_VERSION}-dev && \
-    pip install poetry && \
-    poetry install --without dev --no-root && \
-    apk del --purge .build-deps && \
-    rm -rf ~/.cache/
+RUN --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
 COPY nanachan nanachan
-COPY README.md .
-RUN poetry install --only-root
 
-ENTRYPOINT [ "poetry", "run", "nanachan" ]
+RUN --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+ENTRYPOINT [ "uv", "run", "-m", "nanachan" ]
