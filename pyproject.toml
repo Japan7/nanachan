@@ -28,7 +28,7 @@ dependencies = [
     "orjson==3.10.7",
     "redis[hiredis]==5.1.1",
     "parsedatetime==2.6",
-    "yt-dlp==2024.9.27",
+    "yt-dlp==2024.10.7",
     "aiojobs==1.3.0",
     "tzdata==2024.2",
     "ollama==0.3.3",
