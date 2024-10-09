@@ -36,7 +36,7 @@ dependencies = [
 
 [tool.uv]
 dev-dependencies = [
-    "pyright==1.1.383",
+    "pyright==1.1.384",
     "ruff==0.6.9",
     "mahou",
     "requests==2.32.3",
