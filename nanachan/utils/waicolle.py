@@ -937,33 +937,30 @@ class TradeHelper:
             await self.release()
 
     async def complete(self, interaction: discord.Interaction):
-        try:
-            await self.unregister(interaction)
-            resp = await get_nanapi().waicolle.waicolle_commit_trade(self.id)
-            match resp:
-                case Error(code=409):
-                    await interaction.followup.send(
-                        f"{self.player_a.mention} {self.player_b.mention}\n"
-                        "Trade aborted: resources unavailable"
-                    )
-                    return
-                case Error():
-                    raise RuntimeError(str(resp))
+        await self.unregister(interaction)
+        resp = await get_nanapi().waicolle.waicolle_commit_trade(self.id)
+        match resp:
+            case Error(code=409):
+                await interaction.followup.send(
+                    f"{self.player_a.mention} {self.player_b.mention}\n"
+                    "Trade aborted: resources unavailable"
+                )
+                return
+            case Error():
+                raise RuntimeError(str(resp))
 
-            result = resp.result
+        result = resp.result
 
-            await self.cog.drop_alert(self.player_a,
-                                      result.waifus_a,
-                                      'Trade',
-                                      interaction.followup,
-                                      spoiler=False)
-            await self.cog.drop_alert(self.player_b,
-                                      result.waifus_b,
-                                      'Trade',
-                                      interaction.followup,
-                                      spoiler=False)
-        finally:
-            await self.release()
+        await self.cog.drop_alert(self.player_a,
+                                  result.waifus_a,
+                                  'Trade',
+                                  interaction.followup,
+                                  spoiler=False)
+        await self.cog.drop_alert(self.player_b,
+                                  result.waifus_b,
+                                  'Trade',
+                                  interaction.followup,
+                                  spoiler=False)
 
     async def release(self):
         resp = await get_nanapi().waicolle.waicolle_cancel_trade(self.id)
