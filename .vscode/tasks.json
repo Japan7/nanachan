@@ -6,7 +6,7 @@
     {
       "label": "nanapi-codegen",
       "type": "shell",
-      "command": "poetry run ./nanapi-codegen.py",
+      "command": "uv run ./nanapi-codegen.py",
       "problemMatcher": "$python",
       "group": {
         "kind": "build",
