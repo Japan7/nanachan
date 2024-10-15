@@ -9,7 +9,6 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union, cast
 
 import discord
-import numpy as np
 from discord.abc import PrivateChannel
 
 from nanachan.discord.helpers import WebhookMessage
@@ -296,17 +295,12 @@ class Pages:
     def prefetch(self, around: int):
         upto = around + self.prefetch_pages
         from_ = around - self.prefetch_pages
-        prefetched_upto = upto + (-upto % self.prefetch_min_batch_size)
-        prefetched_from = from_ - (from_ % self.prefetch_min_batch_size)
-        prefetchable = np.arange(len(self.pages))
-        prefetchable = prefetchable[(prefetchable <= prefetched_upto)
-                                  & (prefetchable >= prefetched_from)]  # noqa: E128
 
-        for i in prefetchable:
+        for i in (i % len(self.pages) for i in range(from_, upto+1)):
             if i not in self.page_cache:
                 asyncio.create_task(self.get_page(i, prefetch=False))
 
-    async def get_page(self, i, prefetch=True):
+    async def get_page(self, i: int, prefetch=True):
         if prefetch:
             self.prefetch(i)
 
