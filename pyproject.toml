@@ -4,6 +4,12 @@ version = "0.1.0"
 description = "Japan7 Discord bot"
 readme = "README.md"
 license = { file = "LICENSE" }
+authors = [
+    { name = "mistiru", email = "dev@mistiru.me" },
+    { name = "Pierre Jeanjean", email = "rhiobet@gmail.com" },
+    { name = "odrling", email = "florianbadie@odrling.xyz" },
+    { name = "NextFire", email = "git@yuru.moe" },
+]
 requires-python = ">=3.13"
 dependencies = [
     "discord-py[voice]",
@@ -49,6 +55,9 @@ dev-dependencies = [
 discord-py = { git = "https://github.com/Japan7/discord.py.git", rev = "de39725b2a3c2fc582c1e049a17a3ef555723d91" }
 mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "a42f235baca4e04b1ed0b22dd0925dd423b1fe6" }
 yappi = { git = "https://github.com/sumerc/yappi.git", rev = "b69ae6c54f38cfba0412a43dbd8f8eaea064cc74" }
+
+[project.urls]
+Homepage = "https://github.com/Japan7/nanachan"
 
 [tool.pyright]
 pythonVersion = "3.13"
