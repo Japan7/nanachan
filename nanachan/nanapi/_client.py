@@ -1,3 +1,5 @@
+import dataclasses
+import json
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -206,6 +208,17 @@ def prep_val_serialization(v: Any) -> QueryVariable:
 
 def prep_serialization(d: dict[str, Any]) -> Query:
     return {k: prep_val_serialization(v) for k, v in d.items() if v is not None}
+
+
+class JsonDataclassEncoder(json.JSONEncoder):
+    def default(self, o: Any):
+        if dataclasses.is_dataclass(o):
+            return dataclasses.asdict(o)
+        return super().default(o)
+
+
+def default_json_serializer(o: Any) -> str:
+    return json.dumps(o, cls=JsonDataclassEncoder)
 
 
 class AmqModule:
@@ -5977,5 +5990,7 @@ class ClientSession(aiohttp.ClientSession):
         self.waicolle: WaicolleModule = WaicolleModule(self, server_url)
 
 
-def get_session(server_url: str, *args, **kwargs) -> ClientSession:
-    return ClientSession(server_url, *args, **kwargs)
+def get_session(
+    server_url: str, *args, json_serialize=default_json_serializer, **kwargs
+) -> ClientSession:
+    return ClientSession(server_url, *args, json_serialize=json_serialize, **kwargs)

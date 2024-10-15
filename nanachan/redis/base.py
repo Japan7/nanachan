@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import json
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -7,11 +8,10 @@ from datetime import datetime
 from typing import Any, cast
 
 import backoff
-import orjson
 from redis import asyncio as aioredis
 
 from nanachan.settings import REDIS_HOST, REDIS_KWARGS, REDIS_PORT, TOKEN
-from nanachan.utils.misc import print_exc
+from nanachan.utils.misc import json_dumps, print_exc
 
 logger = logging.getLogger(__name__)
 
@@ -230,12 +230,8 @@ class BooleanValue(BaseRedis[bool]):
 
 class JSONValue(BaseRedis[Any]):
 
-    def __init__(self, key: str, global_key: bool = False, **orjson_kwargs):
-        super().__init__(key, global_key)
-        self.orjson_kwargs = orjson_kwargs
-
     def encode(self, value: Any) -> bytes:
-        return orjson.dumps(value, **self.orjson_kwargs)
+        return json_dumps(value).encode()
 
     def decode(self, value: bytes) -> Any:
-        return orjson.loads(value)
+        return json.loads(value)

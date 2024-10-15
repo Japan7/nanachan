@@ -11,12 +11,12 @@ from enum import Enum, auto
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Type, cast
 
-import orjson
 from discord.abc import Messageable
 from discord.member import Member
 from discord.user import User
 
 from nanachan.redis.base import get_redis, make_redis_key
+from nanachan.utils.misc import json_dumps
 
 if TYPE_CHECKING:
     from nanachan.discord.helpers import MultiplexingContext
@@ -68,7 +68,7 @@ class Conditions:
                     elif cond_status is ConditionStatus.FAIL:
                         await condition.fail(ctx)
 
-                member = orjson.dumps(condition.serialize())
+                member = json_dumps(condition.serialize()).encode()
                 redis = await get_redis()
                 if redis is not None:
                     await redis.srem(REDIS_KEY, member)
@@ -82,7 +82,7 @@ class Conditions:
                     cond = await cls.instanciate(ctx, waifu_cog)
                     self.active_conditions.append(cond)
 
-                    member = orjson.dumps(cond.serialize())
+                    member = json_dumps(cond.serialize()).encode()
                     redis = await get_redis()
                     if redis is not None:
                         await redis.sadd(REDIS_KEY, member)
@@ -98,7 +98,7 @@ class Conditions:
 
         for condition_arguments in await redis.smembers(REDIS_KEY):
             try:
-                args = orjson.loads(condition_arguments)
+                args = json_dumps(condition_arguments).encode()
                 cond_cls = self.condition_classes[args['condition_name']]
                 condition = await cond_cls.deserialize(waifu_cog=waifu_cog, **args)
                 self.active_conditions.append(condition)

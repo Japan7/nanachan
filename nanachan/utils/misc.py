@@ -1,5 +1,6 @@
 import asyncio
 import io
+import json
 import re
 import sys
 from concurrent.futures import ProcessPoolExecutor
@@ -9,7 +10,6 @@ from typing import Any, AsyncIterable, Coroutine, Optional, Type, TypedDict, Uni
 
 import aiohttp
 import backoff
-import orjson
 import tldr
 from discord.ext.commands import Paginator
 from rich import traceback
@@ -19,7 +19,6 @@ from yarl import URL
 from nanachan.settings import PRODUCER_TOKEN, PRODUCER_UPLOAD_ENDPOINT
 
 __all__ = ('framed_header',
-           'json_serialize',
            'list_display',
            'run_coro',
            'fake_method',
@@ -122,15 +121,15 @@ async def async_dummy(*args, **kwargs):
     pass
 
 
-def json_serialize(d: Any):
-    return orjson.dumps(d).decode()
+def json_dumps(d: Any) -> str:
+    return json.dumps(d, separators=(',', ':'))
 
 
 @cache
 def get_session() -> aiohttp.ClientSession:
     timeout = aiohttp.ClientTimeout(total=30, connect=5, sock_connect=5)
     # until they fix https://github.com/aio-libs/aiohttp/issues/5975
-    return aiohttp.ClientSession(timeout=timeout, json_serialize=json_serialize)
+    return aiohttp.ClientSession(timeout=timeout)
 
 
 class ProducerResponse(TypedDict):

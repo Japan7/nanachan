@@ -10,7 +10,6 @@ from nanachan.nanapi._client import get_session
 from nanachan.nanapi._client import success as success
 from nanachan.nanapi.model import Body_client_login
 from nanachan.settings import NANAPI_CLIENT_PASSWORD, NANAPI_CLIENT_USERNAME, NANAPI_URL
-from nanachan.utils.misc import json_serialize
 
 bearer_token: str | None = None
 bearer_ready = asyncio.Event()
@@ -30,7 +29,7 @@ async def load_bearer_token():
     async with load_lock:
         bearer_ready.clear()
 
-        session = get_session(NANAPI_URL, json_serialize=json_serialize)
+        session = get_session(NANAPI_URL)
         session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
         session._request = session_backoff(session._request)
 
@@ -47,7 +46,7 @@ async def load_bearer_token():
 
 @cache
 def get_nanapi():
-    session = get_session(NANAPI_URL, json_serialize=json_serialize)
+    session = get_session(NANAPI_URL)
 
     session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
 
