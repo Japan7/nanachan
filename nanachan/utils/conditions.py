@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import asyncio
+import json
 import logging
 import random
 import re
@@ -98,7 +99,7 @@ class Conditions:
 
         for condition_arguments in await redis.smembers(REDIS_KEY):
             try:
-                args = json_dumps(condition_arguments).encode()
+                args = json.loads(condition_arguments)
                 cond_cls = self.condition_classes[args['condition_name']]
                 condition = await cond_cls.deserialize(waifu_cog=waifu_cog, **args)
                 self.active_conditions.append(condition)
