@@ -19,6 +19,7 @@ from yarl import URL
 from nanachan.settings import PRODUCER_TOKEN, PRODUCER_UPLOAD_ENDPOINT
 
 __all__ = ('framed_header',
+           'json_serialize',
            'list_display',
            'run_coro',
            'fake_method',
@@ -121,11 +122,14 @@ async def async_dummy(*args, **kwargs):
     pass
 
 
+def json_serialize(d: Any):
+    return orjson.dumps(d).decode()
+
+
 @cache
 def get_session() -> aiohttp.ClientSession:
     timeout = aiohttp.ClientTimeout(total=30, connect=5, sock_connect=5)
     # until they fix https://github.com/aio-libs/aiohttp/issues/5975
-    json_serialize = lambda d: orjson.dumps(d, option=orjson.OPT_SERIALIZE_NUMPY).decode()
     return aiohttp.ClientSession(timeout=timeout, json_serialize=json_serialize)
 
 

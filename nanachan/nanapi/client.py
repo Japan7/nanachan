@@ -2,7 +2,6 @@ import asyncio
 from functools import cache
 
 import backoff
-import orjson
 from aiohttp import ClientResponse
 
 from nanachan.nanapi._client import Error as Error  # noqa: F401
@@ -11,14 +10,11 @@ from nanachan.nanapi._client import get_session
 from nanachan.nanapi._client import success as success
 from nanachan.nanapi.model import Body_client_login
 from nanachan.settings import NANAPI_CLIENT_PASSWORD, NANAPI_CLIENT_USERNAME, NANAPI_URL
+from nanachan.utils.misc import json_serialize
 
 bearer_token: str | None = None
 bearer_ready = asyncio.Event()
 load_lock = asyncio.Lock()
-
-
-def json_serialize(d):
-    return orjson.dumps(d, option=orjson.OPT_SERIALIZE_NUMPY).decode()
 
 
 def check_invalid(r: ClientResponse):
