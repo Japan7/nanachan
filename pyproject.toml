@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Japan7 Discord bot"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.13"
 dependencies = [
     "discord-py[voice]",
     "matplotlib==3.9.2",
@@ -24,7 +24,7 @@ dependencies = [
     "tldr==3.3.0",
     "watchgod==0.8.2",
     "backoff==2.2.1",
-    "yappi==1.6.0",
+    "yappi",
     "redis[hiredis]==5.1.1",
     "parsedatetime==2.6",
     "yt-dlp==2024.10.7",
@@ -51,6 +51,7 @@ mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "a42f235baca4
 yappi = { git = "https://github.com/sumerc/yappi.git", rev = "b69ae6c54f38cfba0412a43dbd8f8eaea064cc74" }
 
 [tool.pyright]
+pythonVersion = "3.13"
 reportDeprecated = true
 
 [tool.ruff]
