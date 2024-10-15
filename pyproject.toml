@@ -48,7 +48,7 @@ dev-dependencies = [
 
 [tool.uv.sources]
 discord-py = { git = "https://github.com/Japan7/discord.py.git", rev = "de39725b2a3c2fc582c1e049a17a3ef555723d91" }
-mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "edbc799ef71c8409f970fee75c788e5475a430e1" }
+mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "ec11e35fceec6ab499518c7f09d3593a7154a66c" }
 
 [tool.pyright]
 reportDeprecated = true
