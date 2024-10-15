@@ -38,7 +38,7 @@ dependencies = [
 dev-dependencies = [
     "pyright==1.1.384",
     "ruff==0.6.9",
-    "mahou",
+    "mahou-py",
     "requests==2.32.3",
     # FIXME: https://pypi.org/project/types-redis/#description
     # Note: Redis-py 5.0.0 added a py.typed file, but the inline annotations are incomplete.
@@ -48,7 +48,7 @@ dev-dependencies = [
 
 [tool.uv.sources]
 discord-py = { git = "https://github.com/Japan7/discord.py.git", rev = "de39725b2a3c2fc582c1e049a17a3ef555723d91" }
-mahou = { git = "https://github.com/Japan7/mahou.py.git", rev = "ec11e35fceec6ab499518c7f09d3593a7154a66c" }
+mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "ec11e35fceec6ab499518c7f09d3593a7154a66c" }
 
 [tool.pyright]
 reportDeprecated = true
