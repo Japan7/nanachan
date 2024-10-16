@@ -3,8 +3,7 @@ from enum import Enum
 from typing import Literal
 from uuid import UUID
 
-from pydantic import Field
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AnilistCharacterRole(str, Enum):
@@ -89,44 +88,44 @@ class WaicolleRank(str, Enum):
     E = 'E'
 
 
-@dataclass
-class AccountMergeResult:
+class AccountMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class AccountSelectAllResult:
+class AccountSelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     service: 'AnilistService'
     username: str
     user: 'AccountSelectAllResultUser'
 
 
-@dataclass
-class AccountSelectAllResultUser:
+class AccountSelectAllResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class AccountSelectResult:
+class AccountSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     username: str
     user: 'AccountSelectResultUser'
 
 
-@dataclass
-class AccountSelectResultUser:
+class AccountSelectResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class AddPlayerCoinsBody:
+class AddPlayerCoinsBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     moecoins: int | None = None
     blood_shards: int | None = None
 
 
-@dataclass
-class Body_client_login:
+class Body_client_login(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     username: str
     password: str
     grant_type: str | None = None
@@ -135,23 +134,23 @@ class Body_client_login:
     client_secret: str | None = None
 
 
-@dataclass
-class BulkUpdateWaifusBody:
+class BulkUpdateWaifusBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     locked: bool | None = None
     blooded: bool | None = None
     nanaed: bool | None = None
     custom_collage: bool | None = None
 
 
-@dataclass
-class CEdgeSelectFilterCharaResult:
+class CEdgeSelectFilterCharaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     character_role: 'AnilistCharacterRole'
     media: 'CEdgeSelectFilterCharaResultMedia'
     voice_actors: list['CEdgeSelectFilterCharaResultVoiceActors']
 
 
-@dataclass
-class CEdgeSelectFilterCharaResultMedia:
+class CEdgeSelectFilterCharaResultMedia(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -175,8 +174,8 @@ class CEdgeSelectFilterCharaResultMedia:
     genres: list[str]
 
 
-@dataclass
-class CEdgeSelectFilterCharaResultVoiceActors:
+class CEdgeSelectFilterCharaResultVoiceActors(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -195,15 +194,15 @@ class CEdgeSelectFilterCharaResultVoiceActors:
     date_of_death_day: int | None
 
 
-@dataclass
-class CEdgeSelectFilterMediaResult:
+class CEdgeSelectFilterMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     character_role: 'AnilistCharacterRole'
     character: 'CEdgeSelectFilterMediaResultCharacter'
     voice_actors: list['CEdgeSelectFilterMediaResultVoiceActors']
 
 
-@dataclass
-class CEdgeSelectFilterMediaResultCharacter:
+class CEdgeSelectFilterMediaResultCharacter(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -222,8 +221,8 @@ class CEdgeSelectFilterMediaResultCharacter:
     fuzzy_gender: str | None
 
 
-@dataclass
-class CEdgeSelectFilterMediaResultVoiceActors:
+class CEdgeSelectFilterMediaResultVoiceActors(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -242,15 +241,15 @@ class CEdgeSelectFilterMediaResultVoiceActors:
     date_of_death_day: int | None
 
 
-@dataclass
-class CEdgeSelectFilterStaffResult:
+class CEdgeSelectFilterStaffResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     character_role: 'AnilistCharacterRole'
     media: 'CEdgeSelectFilterStaffResultMedia'
     character: 'CEdgeSelectFilterStaffResultCharacter'
 
 
-@dataclass
-class CEdgeSelectFilterStaffResultCharacter:
+class CEdgeSelectFilterStaffResultCharacter(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -269,8 +268,8 @@ class CEdgeSelectFilterStaffResultCharacter:
     fuzzy_gender: str | None
 
 
-@dataclass
-class CEdgeSelectFilterStaffResultMedia:
+class CEdgeSelectFilterStaffResultMedia(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -294,15 +293,15 @@ class CEdgeSelectFilterStaffResultMedia:
     genres: list[str]
 
 
-@dataclass
-class CharaNameAutocompleteResult:
+class CharaNameAutocompleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     name_user_preferred: str
     name_native: str | None = None
 
 
-@dataclass
-class CharaSelectResult:
+class CharaSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -321,76 +320,76 @@ class CharaSelectResult:
     fuzzy_gender: str | None
 
 
-@dataclass
-class ClientInsertResult:
+class ClientInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class CollageResult:
+class CollageResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     total: int
     url: str | None = None
 
 
-@dataclass
-class CollectPotBody:
+class CollectPotBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_username: str
     amount: float
 
 
-@dataclass
-class CollectionAddMediaResult:
+class CollectionAddMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     collection: 'CollectionAddMediaResultCollection'
     media: 'CollectionAddMediaResultMedia'
 
 
-@dataclass
-class CollectionAddMediaResultCollection:
+class CollectionAddMediaResultCollection(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     name: str
 
 
-@dataclass
-class CollectionAddMediaResultMedia:
+class CollectionAddMediaResultMedia(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     type: 'AnilistMediaType'
     title_user_preferred: str
 
 
-@dataclass
-class CollectionAddStaffResult:
+class CollectionAddStaffResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     collection: 'CollectionAddStaffResultCollection'
     staff: 'CollectionAddStaffResultStaff'
 
 
-@dataclass
-class CollectionAddStaffResultCollection:
+class CollectionAddStaffResultCollection(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     name: str
 
 
-@dataclass
-class CollectionAddStaffResultStaff:
+class CollectionAddStaffResultStaff(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     name_user_preferred: str
     name_native: str | None
 
 
-@dataclass
-class CollectionAlbumResult:
+class CollectionAlbumResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     total: int
     owned: int
     collection: 'CollectionGetByIdResult'
     url: str | None = None
 
 
-@dataclass
-class CollectionDeleteResult:
+class CollectionDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class CollectionGetByIdResult:
+class CollectionGetByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     name: str
     author: 'CollectionGetByIdResultAuthor'
@@ -399,104 +398,104 @@ class CollectionGetByIdResult:
     characters_ids_al: list[int]
 
 
-@dataclass
-class CollectionGetByIdResultAuthor:
+class CollectionGetByIdResultAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'CollectionGetByIdResultAuthorUser'
 
 
-@dataclass
-class CollectionGetByIdResultAuthorUser:
+class CollectionGetByIdResultAuthorUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class CollectionInsertResult:
+class CollectionInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     name: str
     author: 'CollectionInsertResultAuthor'
 
 
-@dataclass
-class CollectionInsertResultAuthor:
+class CollectionInsertResultAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'CollectionInsertResultAuthorUser'
 
 
-@dataclass
-class CollectionInsertResultAuthorUser:
+class CollectionInsertResultAuthorUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class CollectionNameAutocompleteResult:
+class CollectionNameAutocompleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     name: str
     author_discord_id: int
 
 
-@dataclass
-class CollectionRemoveMediaResult:
+class CollectionRemoveMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class CollectionRemoveStaffResult:
+class CollectionRemoveStaffResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class CommitTradeResponse:
+class CommitTradeResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     waifus_a: list['WaifuSelectResult']
     waifus_b: list['WaifuSelectResult']
 
 
-@dataclass
-class CouponDeleteResult:
+class CouponDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class CouponInsertResult:
+class CouponInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     code: str
 
 
-@dataclass
-class CouponSelectAllResult:
+class CouponSelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     code: str
     claimed_by: list['CouponSelectAllResultClaimedBy']
 
 
-@dataclass
-class CouponSelectAllResultClaimedBy:
+class CouponSelectAllResultClaimedBy(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'CouponSelectAllResultClaimedByUser'
 
 
-@dataclass
-class CouponSelectAllResultClaimedByUser:
+class CouponSelectAllResultClaimedByUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class CustomizeWaifuBody:
+class CustomizeWaifuBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     custom_image: str | None = None
     custom_name: str | None = None
 
 
-@dataclass
-class DonatePlayerCoinsBody:
+class DonatePlayerCoinsBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     moecoins: int
 
 
-@dataclass
-class EndGameBody:
+class EndGameBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     winner_discord_id: int
     winner_discord_username: str
 
 
-@dataclass
-class EntrySelectAllResult:
+class EntrySelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     status: 'AnilistEntryStatus'
     progress: int
     score: float
@@ -504,48 +503,48 @@ class EntrySelectAllResult:
     account: 'EntrySelectAllResultAccount'
 
 
-@dataclass
-class EntrySelectAllResultAccount:
+class EntrySelectAllResultAccount(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'EntrySelectAllResultAccountUser'
 
 
-@dataclass
-class EntrySelectAllResultAccountUser:
+class EntrySelectAllResultAccountUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class EntrySelectAllResultMedia:
+class EntrySelectAllResultMedia(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-@dataclass
-class EntrySelectFilterMediaResult:
+class EntrySelectFilterMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     status: 'AnilistEntryStatus'
     progress: int
     score: float
     account: 'EntrySelectFilterMediaResultAccount'
 
 
-@dataclass
-class EntrySelectFilterMediaResultAccount:
+class EntrySelectFilterMediaResultAccount(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'EntrySelectFilterMediaResultAccountUser'
 
 
-@dataclass
-class EntrySelectFilterMediaResultAccountUser:
+class EntrySelectFilterMediaResultAccountUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameDeleteByMessageIdResult:
+class GameDeleteByMessageIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class GameEndResult:
+class GameEndResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
     message_id: int
@@ -557,8 +556,8 @@ class GameEndResult:
     quizz: 'GameEndResultQuizz'
 
 
-@dataclass
-class GameEndResultQuizz:
+class GameEndResultQuizz(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -572,20 +571,20 @@ class GameEndResultQuizz:
     author: 'GameEndResultQuizzAuthor'
 
 
-@dataclass
-class GameEndResultQuizzAuthor:
+class GameEndResultQuizzAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameEndResultWinner:
+class GameEndResultWinner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameGetByIdResult:
+class GameGetByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
     message_id: int
@@ -597,8 +596,8 @@ class GameGetByIdResult:
     quizz: 'GameGetByIdResultQuizz'
 
 
-@dataclass
-class GameGetByIdResultQuizz:
+class GameGetByIdResultQuizz(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -612,20 +611,20 @@ class GameGetByIdResultQuizz:
     author: 'GameGetByIdResultQuizzAuthor'
 
 
-@dataclass
-class GameGetByIdResultQuizzAuthor:
+class GameGetByIdResultQuizzAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameGetByIdResultWinner:
+class GameGetByIdResultWinner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameGetCurrentResult:
+class GameGetCurrentResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
     message_id: int
@@ -637,8 +636,8 @@ class GameGetCurrentResult:
     quizz: 'GameGetCurrentResultQuizz'
 
 
-@dataclass
-class GameGetCurrentResultQuizz:
+class GameGetCurrentResultQuizz(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -652,20 +651,20 @@ class GameGetCurrentResultQuizz:
     author: 'GameGetCurrentResultQuizzAuthor'
 
 
-@dataclass
-class GameGetCurrentResultQuizzAuthor:
+class GameGetCurrentResultQuizzAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameGetCurrentResultWinner:
+class GameGetCurrentResultWinner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameGetLastResult:
+class GameGetLastResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
     message_id: int
@@ -677,8 +676,8 @@ class GameGetLastResult:
     quizz: 'GameGetLastResultQuizz'
 
 
-@dataclass
-class GameGetLastResultQuizz:
+class GameGetLastResultQuizz(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -692,25 +691,25 @@ class GameGetLastResultQuizz:
     author: 'GameGetLastResultQuizzAuthor'
 
 
-@dataclass
-class GameGetLastResultQuizzAuthor:
+class GameGetLastResultQuizzAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameGetLastResultWinner:
+class GameGetLastResultWinner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameNewResult:
+class GameNewResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class GameSelectResult:
+class GameSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
     message_id: int
@@ -722,8 +721,8 @@ class GameSelectResult:
     quizz: 'GameSelectResultQuizz'
 
 
-@dataclass
-class GameSelectResultQuizz:
+class GameSelectResultQuizz(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -737,25 +736,25 @@ class GameSelectResultQuizz:
     author: 'GameSelectResultQuizzAuthor'
 
 
-@dataclass
-class GameSelectResultQuizzAuthor:
+class GameSelectResultQuizzAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameSelectResultWinner:
+class GameSelectResultWinner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class GameUpdateBananedResult:
+class GameUpdateBananedResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class GuildEventDeleteResult:
+class GuildEventDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     url: str | None
     start_time: datetime
     name: str
@@ -772,31 +771,31 @@ class GuildEventDeleteResult:
     client: 'GuildEventDeleteResultClient'
 
 
-@dataclass
-class GuildEventDeleteResultClient:
+class GuildEventDeleteResultClient(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     password_hash: str
     username: str
 
 
-@dataclass
-class GuildEventDeleteResultOrganizer:
+class GuildEventDeleteResultOrganizer(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class GuildEventDeleteResultParticipants:
+class GuildEventDeleteResultParticipants(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class GuildEventDeleteResultProjection:
+class GuildEventDeleteResultProjection(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -806,8 +805,8 @@ class GuildEventDeleteResultProjection:
     status: 'ProjectionStatus'
 
 
-@dataclass
-class GuildEventMergeResult:
+class GuildEventMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     description: str | None
@@ -824,31 +823,31 @@ class GuildEventMergeResult:
     projection: 'GuildEventMergeResultProjection | None'
 
 
-@dataclass
-class GuildEventMergeResultClient:
+class GuildEventMergeResultClient(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     password_hash: str
     username: str
 
 
-@dataclass
-class GuildEventMergeResultOrganizer:
+class GuildEventMergeResultOrganizer(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class GuildEventMergeResultParticipants:
+class GuildEventMergeResultParticipants(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class GuildEventMergeResultProjection:
+class GuildEventMergeResultProjection(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -858,18 +857,18 @@ class GuildEventMergeResultProjection:
     status: 'ProjectionStatus'
 
 
-@dataclass
-class GuildEventParticipantAddResult:
+class GuildEventParticipantAddResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class GuildEventParticipantRemoveResult:
+class GuildEventParticipantRemoveResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class GuildEventSelectResult:
+class GuildEventSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     description: str | None
@@ -886,31 +885,31 @@ class GuildEventSelectResult:
     projection: 'GuildEventSelectResultProjection | None'
 
 
-@dataclass
-class GuildEventSelectResultClient:
+class GuildEventSelectResultClient(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     password_hash: str
     username: str
 
 
-@dataclass
-class GuildEventSelectResultOrganizer:
+class GuildEventSelectResultOrganizer(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class GuildEventSelectResultParticipants:
+class GuildEventSelectResultParticipants(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class GuildEventSelectResultProjection:
+class GuildEventSelectResultProjection(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -920,56 +919,56 @@ class GuildEventSelectResultProjection:
     status: 'ProjectionStatus'
 
 
-@dataclass
-class HTTPExceptionModel:
+class HTTPExceptionModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     detail: str
 
 
-@dataclass
-class HTTPValidationError:
+class HTTPValidationError(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     detail: list['ValidationError'] | None = None
 
 
-@dataclass
-class HistoireDeleteByIdResult:
+class HistoireDeleteByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class HistoireGetByIdResult:
+class HistoireGetByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     title: str
     text: str
     formatted: bool
 
 
-@dataclass
-class HistoireInsertResult:
+class HistoireInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class HistoireSelectIdTitleResult:
+class HistoireSelectIdTitleResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     title: str
 
 
-@dataclass
-class LoginResponse:
+class LoginResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     access_token: str
     token_type: str
 
 
-@dataclass
-class MediaAlbumResult:
+class MediaAlbumResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     total: int
     owned: int
     media: 'MediaSelectResult'
     url: str | None = None
 
 
-@dataclass
-class MediaSelectResult:
+class MediaSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -993,71 +992,71 @@ class MediaSelectResult:
     genres: list[str]
 
 
-@dataclass
-class MediaTitleAutocompleteResult:
+class MediaTitleAutocompleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     title_user_preferred: str
     type: 'MediaType'
 
 
-@dataclass
-class MediasPoolExportResult:
+class MediasPoolExportResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     image: str
     favourites: int
 
 
-@dataclass
-class NewClientBody:
+class NewClientBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     username: str
     password: str
 
 
-@dataclass
-class NewCollectionBody:
+class NewCollectionBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     name: str
 
 
-@dataclass
-class NewCouponBody:
+class NewCouponBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     code: str | None = None
 
 
-@dataclass
-class NewGameBody:
+class NewGameBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     message_id: int
     quizz_id: UUID
     answer_bananed: str | None = None
 
 
-@dataclass
-class NewHistoireBody:
+class NewHistoireBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     title: str
     text: str
 
 
-@dataclass
-class NewOfferingBody:
+class NewOfferingBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     player_discord_id: int
     chara_id_al: int
     bot_discord_id: int
 
 
-@dataclass
-class NewPresenceBody:
+class NewPresenceBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     type: Literal['PLAYING', 'LISTENING', 'WATCHING']
     name: str
 
 
-@dataclass
-class NewProjectionBody:
+class NewProjectionBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     name: str
     channel_id: int
 
 
-@dataclass
-class NewQuizzBody:
+class NewQuizzBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     channel_id: int
     description: str
     is_image: bool
@@ -1066,8 +1065,8 @@ class NewQuizzBody:
     url: str | None = None
 
 
-@dataclass
-class NewReminderBody:
+class NewReminderBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_username: str
     channel_id: int
@@ -1075,14 +1074,14 @@ class NewReminderBody:
     timestamp: datetime
 
 
-@dataclass
-class NewRoleBody:
+class NewRoleBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     role_id: int
     emoji: str
 
 
-@dataclass
-class NewTradeBody:
+class NewTradeBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     player_a_discord_id: int
     waifus_a_ids: list[str]
     player_b_discord_id: int
@@ -1093,87 +1092,87 @@ class NewTradeBody:
     blood_shards_b: int | None = None
 
 
-@dataclass
-class ParticipantAddBody:
+class ParticipantAddBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     participant_username: str
 
 
-@dataclass
-class PlayerAddCoinsResult:
+class PlayerAddCoinsResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     game_mode: 'WaicolleGameMode'
     moecoins: int
     blood_shards: int
     user: 'PlayerAddCoinsResultUser'
 
 
-@dataclass
-class PlayerAddCoinsResultUser:
+class PlayerAddCoinsResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class PlayerAddCollectionResult:
+class PlayerAddCollectionResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     player: 'PlayerAddCollectionResultPlayer'
     collection: 'PlayerAddCollectionResultCollection'
 
 
-@dataclass
-class PlayerAddCollectionResultCollection:
+class PlayerAddCollectionResultCollection(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     name: str
 
 
-@dataclass
-class PlayerAddCollectionResultPlayer:
+class PlayerAddCollectionResultPlayer(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PlayerAddMediaResult:
+class PlayerAddMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     player: 'PlayerAddMediaResultPlayer'
     media: 'PlayerAddMediaResultMedia'
 
 
-@dataclass
-class PlayerAddMediaResultMedia:
+class PlayerAddMediaResultMedia(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     type: 'AnilistMediaType'
     title_user_preferred: str
 
 
-@dataclass
-class PlayerAddMediaResultPlayer:
+class PlayerAddMediaResultPlayer(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PlayerAddStaffResult:
+class PlayerAddStaffResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     player: 'PlayerAddStaffResultPlayer'
     staff: 'PlayerAddStaffResultStaff'
 
 
-@dataclass
-class PlayerAddStaffResultPlayer:
+class PlayerAddStaffResultPlayer(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PlayerAddStaffResultStaff:
+class PlayerAddStaffResultStaff(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     name_user_preferred: str
     name_native: str | None
 
 
-@dataclass
-class PlayerCollectionStatsResult:
+class PlayerCollectionStatsResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     collection: 'PlayerCollectionStatsResultCollection'
     nb_charas: int
     nb_owned: int
 
 
-@dataclass
-class PlayerCollectionStatsResultCollection:
+class PlayerCollectionStatsResultCollection(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     name: str
     author: 'PlayerCollectionStatsResultCollectionAuthor'
@@ -1181,173 +1180,173 @@ class PlayerCollectionStatsResultCollection:
     staffs: list['PlayerCollectionStatsResultCollectionStaffs']
 
 
-@dataclass
-class PlayerCollectionStatsResultCollectionAuthor:
+class PlayerCollectionStatsResultCollectionAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'PlayerCollectionStatsResultCollectionAuthorUser'
 
 
-@dataclass
-class PlayerCollectionStatsResultCollectionAuthorUser:
+class PlayerCollectionStatsResultCollectionAuthorUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class PlayerCollectionStatsResultCollectionMedias:
+class PlayerCollectionStatsResultCollectionMedias(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     type: 'AnilistMediaType'
     id_al: int
     title_user_preferred: str
 
 
-@dataclass
-class PlayerCollectionStatsResultCollectionStaffs:
+class PlayerCollectionStatsResultCollectionStaffs(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     name_user_preferred: str
     name_native: str | None
 
 
-@dataclass
-class PlayerGetByUserResult:
+class PlayerGetByUserResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     game_mode: 'WaicolleGameMode'
     moecoins: int
     blood_shards: int
     user: 'PlayerGetByUserResultUser'
 
 
-@dataclass
-class PlayerGetByUserResultUser:
+class PlayerGetByUserResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class PlayerMediaStatsResult:
+class PlayerMediaStatsResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     media: 'PlayerMediaStatsResultMedia'
     nb_charas: int
     nb_owned: int
 
 
-@dataclass
-class PlayerMediaStatsResultMedia:
+class PlayerMediaStatsResultMedia(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     type: 'AnilistMediaType'
     id_al: int
     title_user_preferred: str
 
 
-@dataclass
-class PlayerMergeResult:
+class PlayerMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PlayerRemoveCollectionResult:
+class PlayerRemoveCollectionResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PlayerRemoveMediaResult:
+class PlayerRemoveMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PlayerRemoveStaffResult:
+class PlayerRemoveStaffResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PlayerSelectAllResultUser:
+class PlayerSelectAllResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class PlayerSelectResult:
+class PlayerSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     game_mode: 'WaicolleGameMode'
     moecoins: int
     blood_shards: int
     user: 'PlayerSelectAllResultUser'
 
 
-@dataclass
-class PlayerStaffStatsResult:
+class PlayerStaffStatsResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     staff: 'PlayerStaffStatsResultStaff'
     nb_charas: int
     nb_owned: int
 
 
-@dataclass
-class PlayerStaffStatsResultStaff:
+class PlayerStaffStatsResultStaff(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     name_user_preferred: str
     name_native: str | None
 
 
-@dataclass
-class PlayerTrackReversedResult:
+class PlayerTrackReversedResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     waifu: 'WaifuSelectResult'
     trackers_not_owners: list['PlayerSelectResult']
     locked: list['WaifuSelectResult']
 
 
-@dataclass
-class PlayerTrackedItemsResult:
+class PlayerTrackedItemsResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     tracked_medias: list['PlayerTrackedItemsResultTrackedMedias']
     tracked_staffs: list['PlayerTrackedItemsResultTrackedStaffs']
     tracked_collections: list['PlayerTrackedItemsResultTrackedCollections']
 
 
-@dataclass
-class PlayerTrackedItemsResultTrackedCollections:
+class PlayerTrackedItemsResultTrackedCollections(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PlayerTrackedItemsResultTrackedMedias:
+class PlayerTrackedItemsResultTrackedMedias(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-@dataclass
-class PlayerTrackedItemsResultTrackedStaffs:
+class PlayerTrackedItemsResultTrackedStaffs(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-@dataclass
-class PotAddResult:
+class PotAddResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     amount: float
     count: int
 
 
-@dataclass
-class PotGetByUserResult:
+class PotGetByUserResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     amount: float
     count: int
 
 
-@dataclass
-class PresenceDeleteByIdResult:
+class PresenceDeleteByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PresenceInsertResult:
+class PresenceInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class PresenceSelectAllResult:
+class PresenceSelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     type: 'PresencePresenceType'
     name: str
 
 
-@dataclass
-class ProfileGetByDiscordIdResultUser:
+class ProfileGetByDiscordIdResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class ProfileSearchResult:
+class ProfileSearchResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     full_name: str | None
     photo: str | None
     promotion: str | None
@@ -1355,63 +1354,63 @@ class ProfileSearchResult:
     user: 'ProfileGetByDiscordIdResultUser'
 
 
-@dataclass
-class ProjoAddEventResult:
+class ProjoAddEventResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoAddExternalMediaBody:
+class ProjoAddExternalMediaBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     title: str
 
 
-@dataclass
-class ProjoAddExternalMediaResult:
+class ProjoAddExternalMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoAddMediaResult:
+class ProjoAddMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoDeleteResult:
+class ProjoDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoDeleteUpcomingEventsResult:
+class ProjoDeleteUpcomingEventsResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoInsertResult:
+class ProjoInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoParticipantAddResult:
+class ProjoParticipantAddResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoParticipantRemoveResult:
+class ProjoParticipantRemoveResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoRemoveExternalMediaResult:
+class ProjoRemoveExternalMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoRemoveMediaResult:
+class ProjoRemoveMediaResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoSelectResult:
+class ProjoSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     medias: list['ProjoSelectResultMedias']
     external_medias: list['ProjoSelectResultExternalMedias']
     participants: list['ProjoSelectResultParticipants']
@@ -1425,15 +1424,15 @@ class ProjoSelectResult:
     id: UUID
 
 
-@dataclass
-class ProjoSelectResultExternalMedias:
+class ProjoSelectResultExternalMedias(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     title: str
-    added_alias: datetime | None = Field(alias='@added')
+    added_alias: datetime | None = Field(validation_alias='@added', serialization_alias='@added')
 
 
-@dataclass
-class ProjoSelectResultGuildEvents:
+class ProjoSelectResultGuildEvents(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     description: str | None
@@ -1446,43 +1445,43 @@ class ProjoSelectResultGuildEvents:
     url: str | None
 
 
-@dataclass
-class ProjoSelectResultMedias:
+class ProjoSelectResultMedias(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     title_user_preferred: str
-    added_alias: datetime | None = Field(alias='@added')
+    added_alias: datetime | None = Field(validation_alias='@added', serialization_alias='@added')
 
 
-@dataclass
-class ProjoSelectResultParticipants:
+class ProjoSelectResultParticipants(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class ProjoUpdateMessageIdResult:
+class ProjoUpdateMessageIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoUpdateNameResult:
+class ProjoUpdateNameResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ProjoUpdateStatusResult:
+class ProjoUpdateStatusResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class QuizzDeleteByIdResult:
+class QuizzDeleteByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class QuizzGetByIdResult:
+class QuizzGetByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -1496,14 +1495,14 @@ class QuizzGetByIdResult:
     author: 'QuizzGetByIdResultAuthor'
 
 
-@dataclass
-class QuizzGetByIdResultAuthor:
+class QuizzGetByIdResultAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class QuizzGetOldestResult:
+class QuizzGetOldestResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -1517,24 +1516,24 @@ class QuizzGetOldestResult:
     author: 'QuizzGetOldestResultAuthor'
 
 
-@dataclass
-class QuizzGetOldestResultAuthor:
+class QuizzGetOldestResultAuthor(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class QuizzInsertResult:
+class QuizzInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class QuizzSetAnswerResult:
+class QuizzSetAnswerResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class Rank:
+class Rank(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     tier: int
     wc_rank: str
     min_favourites: int
@@ -1544,13 +1543,13 @@ class Rank:
     emoji: str
 
 
-@dataclass
-class ReminderDeleteByIdResult:
+class ReminderDeleteByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class ReminderInsertSelectResult:
+class ReminderInsertSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -1559,14 +1558,14 @@ class ReminderInsertSelectResult:
     user: 'ReminderInsertSelectResultUser'
 
 
-@dataclass
-class ReminderInsertSelectResultUser:
+class ReminderInsertSelectResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class ReminderSelectAllResult:
+class ReminderSelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
     channel_id_str: str
@@ -1575,111 +1574,111 @@ class ReminderSelectAllResult:
     user: 'ReminderSelectAllResultUser'
 
 
-@dataclass
-class ReminderSelectAllResultUser:
+class ReminderSelectAllResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class ReorderWaifuBody:
+class ReorderWaifuBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     custom_position: Literal['DEFAULT', 'LEFT_OF', 'RIGHT_OF'] | None = None
     other_waifu_id: UUID | None = None
 
 
-@dataclass
-class RerollBody:
+class RerollBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     player_discord_id: int
     waifus_ids: list[str]
     bot_discord_id: int
 
 
-@dataclass
-class RerollResponse:
+class RerollResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     obtained: list['WaifuSelectResult']
     nanascends: list['WaifuSelectResult']
 
 
-@dataclass
-class RoleDeleteByRoleIdResult:
+class RoleDeleteByRoleIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class RoleInsertSelectResult:
+class RoleInsertSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     role_id: int
     role_id_str: str
     emoji: str
 
 
-@dataclass
-class RoleSelectAllResult:
+class RoleSelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     role_id: int
     role_id_str: str
     emoji: str
 
 
-@dataclass
-class RollData:
+class RollData(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: str
     name: str
     price: int
 
 
-@dataclass
-class SetGameBananedAnswerBody:
+class SetGameBananedAnswerBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     answer_bananed: str | None = None
 
 
-@dataclass
-class SetProjectionMessageIdBody:
+class SetProjectionMessageIdBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     message_id: int
 
 
-@dataclass
-class SetProjectionNameBody:
+class SetProjectionNameBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     name: str
 
 
-@dataclass
-class SetProjectionStatusBody:
+class SetProjectionStatusBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     status: Literal['ONGOING', 'COMPLETED']
 
 
-@dataclass
-class SetQuizzAnswerBody:
+class SetQuizzAnswerBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     answer: str | None = None
     answer_source: str | None = None
 
 
-@dataclass
-class SettingsMergeResult:
+class SettingsMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class SettingsSelectAllResult:
+class SettingsSelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     key: str
     value: str
 
 
-@dataclass
-class StaffAlbumResult:
+class StaffAlbumResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     total: int
     owned: int
     staff: 'StaffSelectResult'
     url: str | None = None
 
 
-@dataclass
-class StaffNameAutocompleteResult:
+class StaffNameAutocompleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     name_user_preferred: str
     name_native: str | None = None
 
 
-@dataclass
-class StaffSelectResult:
+class StaffSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     favourites: int
     site_url: str
@@ -1698,13 +1697,13 @@ class StaffSelectResult:
     date_of_death_day: int | None
 
 
-@dataclass
-class TradeDeleteResult:
+class TradeDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class TradeSelectResult:
+class TradeSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     player_a: 'TradeSelectResultPlayerA'
     waifus_a: list['TradeSelectResultWaifusA']
@@ -1716,30 +1715,30 @@ class TradeSelectResult:
     blood_shards_b: int
 
 
-@dataclass
-class TradeSelectResultPlayerA:
+class TradeSelectResultPlayerA(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'TradeSelectResultPlayerAUser'
 
 
-@dataclass
-class TradeSelectResultPlayerAUser:
+class TradeSelectResultPlayerAUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class TradeSelectResultPlayerB:
+class TradeSelectResultPlayerB(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'TradeSelectResultPlayerBUser'
 
 
-@dataclass
-class TradeSelectResultPlayerBUser:
+class TradeSelectResultPlayerBUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class TradeSelectResultWaifusA:
+class TradeSelectResultWaifusA(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     timestamp: datetime
     level: int
@@ -1757,40 +1756,40 @@ class TradeSelectResultWaifusA:
     custom_position_waifu: 'TradeSelectResultWaifusACustomPositionWaifu | None'
 
 
-@dataclass
-class TradeSelectResultWaifusACharacter:
+class TradeSelectResultWaifusACharacter(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-@dataclass
-class TradeSelectResultWaifusACustomPositionWaifu:
+class TradeSelectResultWaifusACustomPositionWaifu(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class TradeSelectResultWaifusAOriginalOwner:
+class TradeSelectResultWaifusAOriginalOwner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'TradeSelectResultWaifusAOriginalOwnerUser'
 
 
-@dataclass
-class TradeSelectResultWaifusAOriginalOwnerUser:
+class TradeSelectResultWaifusAOriginalOwnerUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class TradeSelectResultWaifusAOwner:
+class TradeSelectResultWaifusAOwner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'TradeSelectResultWaifusAOwnerUser'
 
 
-@dataclass
-class TradeSelectResultWaifusAOwnerUser:
+class TradeSelectResultWaifusAOwnerUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class TradeSelectResultWaifusB:
+class TradeSelectResultWaifusB(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     timestamp: datetime
     level: int
@@ -1808,64 +1807,64 @@ class TradeSelectResultWaifusB:
     custom_position_waifu: 'TradeSelectResultWaifusBCustomPositionWaifu | None'
 
 
-@dataclass
-class TradeSelectResultWaifusBCharacter:
+class TradeSelectResultWaifusBCharacter(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-@dataclass
-class TradeSelectResultWaifusBCustomPositionWaifu:
+class TradeSelectResultWaifusBCustomPositionWaifu(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class TradeSelectResultWaifusBOriginalOwner:
+class TradeSelectResultWaifusBOriginalOwner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'TradeSelectResultWaifusBOriginalOwnerUser'
 
 
-@dataclass
-class TradeSelectResultWaifusBOriginalOwnerUser:
+class TradeSelectResultWaifusBOriginalOwnerUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class TradeSelectResultWaifusBOwner:
+class TradeSelectResultWaifusBOwner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'TradeSelectResultWaifusBOwnerUser'
 
 
-@dataclass
-class TradeSelectResultWaifusBOwnerUser:
+class TradeSelectResultWaifusBOwnerUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class UpdateAMQSettingsBody:
+class UpdateAMQSettingsBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     settings: str
 
 
-@dataclass
-class UpsertAMQAccountBody:
+class UpsertAMQAccountBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_username: str
     username: str
 
 
-@dataclass
-class UpsertAnilistAccountBody:
+class UpsertAnilistAccountBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_username: str
     service: Literal['ANILIST', 'MYANIMELIST']
     username: str
 
 
-@dataclass
-class UpsertDiscordAccountBodyItem:
+class UpsertDiscordAccountBodyItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_username: str
 
 
-@dataclass
-class UpsertGuildEventBody:
+class UpsertGuildEventBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     name: str
     start_time: datetime
     end_time: datetime
@@ -1877,14 +1876,14 @@ class UpsertGuildEventBody:
     url: str | None = None
 
 
-@dataclass
-class UpsertPlayerBody:
+class UpsertPlayerBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_username: str
     game_mode: Literal['WAIFU', 'HUSBANDO', 'ALL']
 
 
-@dataclass
-class UpsertProfileBody:
+class UpsertProfileBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_username: str
     full_name: str | None = None
     photo: str | None = None
@@ -1892,73 +1891,73 @@ class UpsertProfileBody:
     telephone: str | None = None
 
 
-@dataclass
-class UpsertUserCalendarBody:
+class UpsertUserCalendarBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_username: str
     ics: str
 
 
-@dataclass
-class UserBulkMergeResult:
+class UserBulkMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class UserCalendarDeleteResult:
+class UserCalendarDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class UserCalendarMergeResult:
+class UserCalendarMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class UserCalendarSelectAllResult:
+class UserCalendarSelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     ics: str
     user: 'UserCalendarSelectAllResultUser'
 
 
-@dataclass
-class UserCalendarSelectAllResultUser:
+class UserCalendarSelectAllResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class UserCalendarSelectResult:
+class UserCalendarSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     ics: str
     user: 'UserCalendarSelectResultUser'
 
 
-@dataclass
-class UserCalendarSelectResultUser:
+class UserCalendarSelectResultUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class UserSelectResult:
+class UserSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
     discord_username: str
 
 
-@dataclass
-class ValidationError:
+class ValidationError(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     loc: list[str | int]
     msg: str
     type: str
 
 
-@dataclass
-class WaifuBulkUpdateResult:
+class WaifuBulkUpdateResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     timestamp: datetime
     level: int
@@ -1976,61 +1975,61 @@ class WaifuBulkUpdateResult:
     custom_position_waifu: 'WaifuBulkUpdateResultCustomPositionWaifu | None'
 
 
-@dataclass
-class WaifuBulkUpdateResultCharacter:
+class WaifuBulkUpdateResultCharacter(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-@dataclass
-class WaifuBulkUpdateResultCustomPositionWaifu:
+class WaifuBulkUpdateResultCustomPositionWaifu(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class WaifuBulkUpdateResultOriginalOwner:
+class WaifuBulkUpdateResultOriginalOwner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'WaifuBulkUpdateResultOriginalOwnerUser'
 
 
-@dataclass
-class WaifuBulkUpdateResultOriginalOwnerUser:
+class WaifuBulkUpdateResultOriginalOwnerUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class WaifuBulkUpdateResultOwner:
+class WaifuBulkUpdateResultOwner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'WaifuBulkUpdateResultOwnerUser'
 
 
-@dataclass
-class WaifuBulkUpdateResultOwnerUser:
+class WaifuBulkUpdateResultOwnerUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class WaifuExportResult:
+class WaifuExportResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     players: list['WaifuExportResultPlayers']
     waifus: list['WaifuExportResultWaifus']
     charas: list['WaifuExportResultCharas']
 
 
-@dataclass
-class WaifuExportResultCharas:
+class WaifuExportResultCharas(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
     image: str
     favourites: int
 
 
-@dataclass
-class WaifuExportResultPlayers:
+class WaifuExportResultPlayers(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: str
     discord_username: str
     tracked: list[int]
 
 
-@dataclass
-class WaifuExportResultWaifus:
+class WaifuExportResultWaifus(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     character_id: int
     owner_discord_id: str
@@ -2043,13 +2042,13 @@ class WaifuExportResultWaifus:
     trade_locked: bool
 
 
-@dataclass
-class WaifuReplaceCustomPositionResult:
+class WaifuReplaceCustomPositionResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class WaifuSelectResult:
+class WaifuSelectResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     timestamp: datetime
     level: int
@@ -2067,44 +2066,44 @@ class WaifuSelectResult:
     custom_position_waifu: 'WaifuSelectResultCustomPositionWaifu | None'
 
 
-@dataclass
-class WaifuSelectResultCharacter:
+class WaifuSelectResultCharacter(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-@dataclass
-class WaifuSelectResultCustomPositionWaifu:
+class WaifuSelectResultCustomPositionWaifu(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class WaifuSelectResultOriginalOwner:
+class WaifuSelectResultOriginalOwner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'WaifuSelectResultOriginalOwnerUser'
 
 
-@dataclass
-class WaifuSelectResultOriginalOwnerUser:
+class WaifuSelectResultOriginalOwnerUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class WaifuSelectResultOwner:
+class WaifuSelectResultOwner(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     user: 'WaifuSelectResultOwnerUser'
 
 
-@dataclass
-class WaifuSelectResultOwnerUser:
+class WaifuSelectResultOwnerUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-@dataclass
-class WaifuUpdateCustomImageNameResult:
+class WaifuUpdateCustomImageNameResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-@dataclass
-class WhoamiResponse:
+class WhoamiResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     id: UUID
     username: str

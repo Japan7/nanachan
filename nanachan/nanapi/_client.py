@@ -1,7 +1,7 @@
 import dataclasses
 import json
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any, Literal, TypeGuard
@@ -9,6 +9,7 @@ from uuid import UUID
 
 import aiohttp
 from aiohttp.typedefs import Query
+from pydantic import BaseModel
 from yarl import QueryVariable, SimpleQuery
 
 from .model import (
@@ -212,6 +213,8 @@ def prep_serialization(d: dict[str, Any]) -> Query:
 
 class JsonDataclassEncoder(json.JSONEncoder):
     def default(self, o: Any):
+        if isinstance(o, BaseModel):
+            return o.model_dump(by_alias=True)
         if dataclasses.is_dataclass(o) and not isinstance(o, type):
             return dataclasses.asdict(o)
         return super().default(o)
@@ -1558,7 +1561,7 @@ class ClientModule:
 
         async with self.session.post(
             url,
-            data=aiohttp.FormData(asdict(body)),
+            data=aiohttp.FormData(body.model_dump(by_alias=True)),
         ) as resp:
             if resp.status == 201:
                 return Success[Literal[201], LoginResponse](
