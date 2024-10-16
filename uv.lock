@@ -488,7 +488,7 @@ wheels = [
 [[package]]
 name = "mahou-py"
 version = "0.1.0"
-source = { git = "https://github.com/Japan7/mahou.py.git?rev=23d8d2cc2150c4d603f9499ed596dcc91ab207c1#23d8d2cc2150c4d603f9499ed596dcc91ab207c1" }
+source = { git = "https://github.com/Japan7/mahou.py.git?rev=a42f235baca4e04b1ed0b22dd0925dd423b1fe6#a42f235baca4e04b1ed0b22dd0925dd423b1fe67" }
 dependencies = [
     { name = "aiohttp" },
     { name = "jinja2" },
@@ -681,7 +681,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "mahou-py", git = "https://github.com/Japan7/mahou.py.git?rev=23d8d2cc2150c4d603f9499ed596dcc91ab207c1" },
+    { name = "mahou-py", git = "https://github.com/Japan7/mahou.py.git?rev=a42f235baca4e04b1ed0b22dd0925dd423b1fe6" },
     { name = "pyright", specifier = "==1.1.384" },
     { name = "requests", specifier = "==2.32.3" },
     { name = "ruff", specifier = "==0.6.9" },
