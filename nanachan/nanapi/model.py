@@ -1429,7 +1429,7 @@ class ProjoSelectResult:
 class ProjoSelectResultExternalMedias:
     id: UUID
     title: str
-    added_alias: datetime | None = Field(alias='@added')
+    added_alias: datetime | None = Field(serialization_alias='@added')
 
 
 @dataclass
@@ -1450,7 +1450,7 @@ class ProjoSelectResultGuildEvents:
 class ProjoSelectResultMedias:
     id_al: int
     title_user_preferred: str
-    added_alias: datetime | None = Field(alias='@added')
+    added_alias: datetime | None = Field(serialization_alias='@added')
 
 
 @dataclass
