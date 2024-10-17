@@ -3,7 +3,7 @@ name = "nanachan"
 version = "0.1.0"
 description = "Japan7 Discord bot"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [
     { name = "mistiru", email = "dev@mistiru.me" },
     { name = "Pierre Jeanjean", email = "rhiobet@gmail.com" },
@@ -21,7 +21,8 @@ dependencies = [
     "pysaucenao==1.6.2",
     "Pillow==11.0.0",
     "html2text==2024.2.26",
-    "faust-cchardet==2.1.19",                  # https://github.com/PyYoshi/cChardet/issues/81
+    # https://github.com/PyYoshi/cChardet/issues/81
+    "faust-cchardet==2.1.19",
     "toolz==1.0.0",
     "yarl==1.15.4",
     "rich==13.9.2",
@@ -53,11 +54,11 @@ dev-dependencies = [
 
 [tool.uv.sources]
 discord-py = { git = "https://github.com/Japan7/discord.py.git", rev = "de39725b2a3c2fc582c1e049a17a3ef555723d91" }
-mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "ebff58794eaf0b938a71da6c8920ac83ef099f5e" }
+mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "8e932127da8bc69def99851aaeade660b9a20f32" }
 yappi = { git = "https://github.com/odrling/yappi.git", rev = "c1ea539c831ad0c46f7b0b463025688d7db05c14" }
 
 [project.urls]
-Homepage = "https://github.com/Japan7/nanachan"
+homepage = "https://github.com/Japan7/nanachan"
 
 [tool.pyright]
 pythonVersion = "3.13"
