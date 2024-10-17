@@ -42,7 +42,7 @@ dependencies = [
 [tool.uv]
 dev-dependencies = [
     "pyright==1.1.385",
-    "ruff==0.6.9",
+    "ruff==0.7.0",
     "mahou-py",
     "requests==2.32.3",
     # FIXME: https://pypi.org/project/types-redis/#description
