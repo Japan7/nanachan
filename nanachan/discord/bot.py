@@ -255,7 +255,8 @@ class Bot(commands.AutoShardedBot):
 
         guild = member.guild
         if guild.system_channel is not None:
-            await guild.system_channel.send(msg)
+            embed = Embed(title=msg)
+            await guild.system_channel.send(embed=embed)
 
     async def on_member_remove(self, member: Member):
         if not FAREWELL_MSG:

@@ -62,7 +62,7 @@ SLASH_PREFIX = ''
 TZ = ZoneInfo('Europe/Paris')
 
 # Welcome messages
-WELCOME_MSG = ":relaxed: いらっしゃいませ〜〜！ :relaxed:"
+WELCOME_MSG = ":relaxed: いらっしゃいませ {member}〜〜！ :relaxed:"
 WELCOME_BOT = "びーぷ！びぷぶぷ？"
 FAREWELL_MSG = "ばいばい {member}〜〜！"
 
