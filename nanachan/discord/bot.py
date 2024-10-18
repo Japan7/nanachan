@@ -37,6 +37,7 @@ import nanachan.extensions
 from nanachan.discord.help import CustomHelpCommand
 from nanachan.discord.helpers import (
     ChannelListener,
+    Embed,
     MultiplexingContext,
     WebhookMessage,
     get_multiplexing_level,
@@ -51,7 +52,6 @@ from nanachan.settings import (
     DISABLED_EXTENSIONS,
     ERROR_WEBHOOK,
     FAREWELL_MSG,
-    FAREWELL_USERNAME,
     PREFIX,
     TADAIMA,
     WELCOME_BOT,
@@ -266,8 +266,8 @@ class Bot(commands.AutoShardedBot):
 
         guild = member.guild
         if guild.system_channel is not None:
-            webhook = await self.get_webhook(guild.system_channel)
-            await webhook.send(FAREWELL_MSG.format(member=member), username=FAREWELL_USERNAME)
+            embed = Embed(title=FAREWELL_MSG.format(member=member))
+            await guild.system_channel.send(embed=embed)
 
     async def on_ready(self):
         await self.sync_commands()
