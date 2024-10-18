@@ -65,6 +65,7 @@ TZ = ZoneInfo('Europe/Paris')
 WELCOME_MSG = ":relaxed: いらっしゃいませ〜〜！ :relaxed:"
 WELCOME_BOT = "びーぷ！びぷぶぷ？"
 FAREWELL_MSG = "ばいばい {member}〜〜！"
+FAREWELL_USERNAME = "ばいばいbot"
 
 # Easter eggs
 WASABI_FREQUENCY = 250

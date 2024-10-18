@@ -16,6 +16,7 @@ from discord import (
     Guild,
     Intents,
     Interaction,
+    Member,
     NotFound,
     TextChannel,
     Thread,
@@ -50,6 +51,7 @@ from nanachan.settings import (
     DISABLED_EXTENSIONS,
     ERROR_WEBHOOK,
     FAREWELL_MSG,
+    FAREWELL_USERNAME,
     PREFIX,
     TADAIMA,
     WELCOME_BOT,
@@ -255,7 +257,7 @@ class Bot(commands.AutoShardedBot):
         if guild.system_channel is not None:
             await guild.system_channel.send(msg)
 
-    async def on_member_remove(self, member):
+    async def on_member_remove(self, member: Member):
         if not FAREWELL_MSG:
             return
 
@@ -264,7 +266,8 @@ class Bot(commands.AutoShardedBot):
 
         guild = member.guild
         if guild.system_channel is not None:
-            await guild.system_channel.send(FAREWELL_MSG.format(member=member))
+            webhook = await self.get_webhook(guild.system_channel)
+            await webhook.send(FAREWELL_MSG.format(member=member), username=FAREWELL_USERNAME)
 
     async def on_ready(self):
         await self.sync_commands()
