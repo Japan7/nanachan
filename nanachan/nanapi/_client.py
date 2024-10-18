@@ -215,6 +215,8 @@ class JsonDataclassEncoder(json.JSONEncoder):
     def default(self, o: Any):
         if isinstance(o, BaseModel):
             return o.model_dump(by_alias=True)
+        if isinstance(o, datetime):
+            return o.isoformat()
         if dataclasses.is_dataclass(o) and not isinstance(o, type):
             return dataclasses.asdict(o)
         return super().default(o)
