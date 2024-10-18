@@ -30,6 +30,7 @@ from discord import (
 from discord.abc import Messageable
 from discord.ext import commands
 from discord.ext.commands import Context
+from discord.ext.commands.context import AllowedMentions
 from discord.utils import MISSING
 from toolz.curried import compose
 
@@ -44,17 +45,15 @@ from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import ChannelListener, Embed, MultiplexingMessage, getEmojiStr
 from nanachan.discord.views import AutoNavigatorView
-from nanachan.extensions.easter_eggs import Bananas
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
     NewReminderBody,
     ReminderInsertSelectResult,
     ReminderSelectAllResult,
 )
-from nanachan.settings import FAREWELL_MSG, SAUCENAO_API_KEY, SLASH_PREFIX, TZ
+from nanachan.settings import SAUCENAO_API_KEY, SLASH_PREFIX, TZ
 from nanachan.utils.misc import get_session, tldr_get_page
 
-farewell_re = re.compile(re.escape(FAREWELL_MSG).replace(r'\{member\}', '.*'))
 logger = logging.getLogger(__name__)
 
 
@@ -165,22 +164,6 @@ class BasicCommands(Cog, name='Basic Commands'):
         message = await ctx.send(content)
         await message.add_reaction(b'\xF0\x9F\x87\xAB'.decode())
 
-    def _say_checks(self, ctx, message: str):
-        bananas_cog = self.bot.get_cog("Bananas")
-        if bananas_cog is None:
-            return
-
-        bananas_cog = cast(Bananas, bananas_cog)
-
-        if "@everyone" in message:
-            return bananas_cog.bananas(ctx, ctx.author, 60)
-
-        if message in ("いたい！:confounded:", "ごめんなさい！ :confounded:"):
-            return bananas_cog.bananas(ctx, ctx.author, 5)
-
-        if farewell_re.match(message) is not None:
-            return bananas_cog.bananas(ctx, ctx.author, 5)
-
     @nana_command()
     @app_commands.guild_only()
     @app_commands.describe(message="message to send")
@@ -189,12 +172,9 @@ class BasicCommands(Cog, name='Basic Commands'):
         await interaction.response.defer(ephemeral=True)
         ctx = await Context.from_interaction(interaction)
 
-        payback = self._say_checks(ctx, message)
-        await ctx.channel.send(message)
+        await ctx.channel.send(message, allowed_mentions=AllowedMentions.none())
         await interaction.followup.send(content='Message sent succesfully',
                                         ephemeral=True)
-        if payback is not None:
-            await payback
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
