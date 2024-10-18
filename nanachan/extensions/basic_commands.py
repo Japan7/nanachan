@@ -13,6 +13,7 @@ import parsedatetime.parsedatetime as pdt
 import pysaucenao
 import pysaucenao.errors
 from discord import (
+    AllowedMentions,
     File,
     Guild,
     Interaction,
@@ -30,7 +31,6 @@ from discord import (
 from discord.abc import Messageable
 from discord.ext import commands
 from discord.ext.commands import Context
-from discord.ext.commands.context import AllowedMentions
 from discord.utils import MISSING
 from toolz.curried import compose
 
