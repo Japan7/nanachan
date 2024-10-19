@@ -892,7 +892,7 @@ class Quizz(Cog):
 def context_menu_start(cog: Quizz):
 
     @app_commands.context_menu(name='Quizz start')
-    async def msg_cmd_start(interaction: discord.Interaction,
+    async def msg_cmd_start(interaction: discord.Interaction[Bot],
                             message: discord.Message):
         ctx = await LegacyCommandContext.from_interaction(interaction)
         await ctx.defer(ephemeral=True)
@@ -905,7 +905,7 @@ def context_menu_start(cog: Quizz):
 def context_menu_end(cog: Quizz):
 
     @app_commands.context_menu(name='Quizz end')
-    async def msg_cmd_end(interaction: discord.Interaction,
+    async def msg_cmd_end(interaction: discord.Interaction[Bot],
                           message: discord.Message):
         ctx = await LegacyCommandContext.from_interaction(interaction)
         await ctx.defer(ephemeral=True)

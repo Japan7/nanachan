@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Coroutine, Iterable, Literal, cast
 from uuid import UUID
 
 import discord
-from discord import app_commands
+from discord import Interaction, app_commands
 from discord.app_commands.commands import Check
 from discord.app_commands.tree import ALL_GUILDS
 from discord.enums import ButtonStyle
@@ -73,7 +73,12 @@ from nanachan.settings import (
     RequiresWaicolle,
     is_spam,
 )
-from nanachan.utils.anilist import PER_PAGE, media_autocomplete, staff_autocomplete
+from nanachan.utils.anilist import (
+    PER_PAGE,
+    autocomplete_cast,
+    media_autocomplete,
+    staff_autocomplete,
+)
 from nanachan.utils.conditions import conditional_drop
 from nanachan.utils.misc import print_exc, run_coro
 from nanachan.utils.waicolle import (
@@ -1510,7 +1515,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         collection = 'collection'
 
     async def track_autocomplete(self, interaction: discord.Interaction,
-                                 current: str):
+                                 current: str) -> list[app_commands.Choice[str]]:
         track_type = get_option(interaction,
                                 'track_type',
                                 cast_func=partial(getitem, self.TrackChoice))
@@ -1537,8 +1542,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         if member is None:
             member = ctx.author
 
+        assert ctx.interaction is not None
+
         if track_type is self.TrackChoice.media:
-            media_id = int(item)
+            media_id = await autocomplete_cast(ctx.interaction, self.track_autocomplete, int, item)
+
             resp = await get_nanapi().waicolle.waicolle_get_player_media_album(
                 member.id, media_id, owned_only=1 if owned_only else 0)
             if not success(resp):
@@ -1557,7 +1565,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             collage_id = collage.media.id_al
 
         elif track_type is self.TrackChoice.staff:
-            staff_id = int(item)
+            staff_id = await autocomplete_cast(ctx.interaction, self.track_autocomplete, int, item)
             resp = await get_nanapi().waicolle.waicolle_get_player_staff_album(
                 member.id, staff_id, owned_only=1 if owned_only else 0)
             if not success(resp):
@@ -1577,7 +1585,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             collage_id = collage.staff.id_al
 
         elif track_type is self.TrackChoice.collection:
-            collec_id = UUID(item)
+            collec_id = await autocomplete_cast(
+                ctx.interaction, self.track_autocomplete, UUID, item
+            )
             resp = await get_nanapi(
             ).waicolle.waicolle_get_player_collection_album(
                 member.id, collec_id, owned_only=1 if owned_only else 0)
@@ -1748,80 +1758,86 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
 
     @slash_track.command(name='add')
     @app_commands.autocomplete(id=track_autocomplete)
-    @legacy_command()
-    async def slash_track_add(self, ctx: LegacyCommandContext,
+    async def slash_track_add(self, interaction: Interaction[Bot],
                               track_type: TrackChoice, id: str):
         """Add a track"""
+        await interaction.response.defer()
+
         if track_type is self.TrackChoice.media:
-            media_id = int(id)
+            media_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_media(
-                ctx.author.id, media_id)
+                interaction.user.id, media_id)
             if not success(resp):
                 match resp.code:
                     case 404:
-                        raise commands.CommandError(
-                            'Not a player or media not found')
+                        await interaction.followup.send('Not a player or media not found')
+                        return
                     case _:
                         raise RuntimeError(resp.result)
             track = resp.result
-            await ctx.reply(
+            await interaction.followup.send(
                 f"**{track.media.title_user_preferred}** ({track.media.type.casefold()}) "
                 f"added to track list")
+
         elif track_type is self.TrackChoice.staff:
-            staff_id = int(id)
+            staff_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_staff(
-                ctx.author.id, staff_id)
+                interaction.user.id, staff_id)
             if not success(resp):
                 match resp.code:
                     case 404:
-                        raise commands.CommandError(
-                            'Not a player or staff not found')
+                        await interaction.followup.send('Not a player or staff not found')
+                        return
                     case _:
                         raise RuntimeError(resp.result)
             track = resp.result
             name_native = f" ({track.staff.name_native})" if track.staff.name_native else ''
-            await ctx.reply(
+            await interaction.followup.send(
                 f"Staff **{track.staff.name_user_preferred}{name_native}** added to track list")
+
         elif track_type is self.TrackChoice.collection:
-            collec_id = UUID(id)
+            collec_id = await autocomplete_cast(interaction, self.track_autocomplete, UUID, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_collection(
-                ctx.author.id, collec_id)
+                interaction.user.id, collec_id)
             if not success(resp):
                 match resp.code:
                     case 404:
-                        raise commands.CommandError(
+                        await interaction.followup.send(
                             'Not a player or collection not found')
+                        return
                     case _:
                         raise RuntimeError(resp.result)
             track = resp.result
-            await ctx.reply(
+            await interaction.followup.send(
                 f"Collection **{track.collection.name}** added to track list")
         else:
             raise RuntimeError("How did you get there?")
 
     @slash_track.command(name='remove')
     @app_commands.autocomplete(id=track_autocomplete)
-    @legacy_command()
-    async def slash_track_remove(self, ctx: LegacyCommandContext,
+    async def slash_track_remove(self, interaction: Interaction[Bot],
                                  track_type: TrackChoice, id: str):
         """Remove a track"""
+        await interaction.response.defer()
         if track_type is self.TrackChoice.media:
-            media_id = int(id)
+            media_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_media(
-                ctx.author.id, media_id)
+                interaction.user.id, media_id)
         elif track_type is self.TrackChoice.staff:
-            staff_id = int(id)
+            staff_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_staff(
-                ctx.author.id, staff_id)
+                interaction.user.id, staff_id)
         elif track_type is self.TrackChoice.collection:
-            collec_id = UUID(id)
+            collec_id = await autocomplete_cast(interaction, self.track_autocomplete, UUID, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_collection(
-                ctx.author.id, collec_id)
+                interaction.user.id, collec_id)
         else:
             raise RuntimeError("How did you get there?")
+
         if not success(resp):
             raise RuntimeError(resp.result)
-        await ctx.reply(self.bot.get_emoji_str('FubukiGO'))
+
+        await interaction.followup.send(self.bot.get_emoji_str('FubukiGO'))
 
     class TrackUnlockedSort(Enum):
         RECENT = 'recent'
@@ -1976,32 +1992,37 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
                         "You already have a collection with this name.")
                 case _:
                     raise RuntimeError(resp.result)
+
         collec = resp.result
         await ctx.reply(f'Created collection **{collec.name}**')
 
     @slash_collec.command(name='delete')
     @app_commands.autocomplete(coll=collection_autocomplete())
     @app_commands.rename(coll="collection")
-    @legacy_command()
-    async def slash_track_colle_delete(self, ctx: LegacyCommandContext,
+    async def slash_track_colle_delete(self, interaction: Interaction[Bot],
                                        coll: str):
         """Delete a collection"""
-        cid = UUID(coll)
+        await interaction.response.defer()
+        cid = await autocomplete_cast(interaction, collection_autocomplete(), UUID, coll)
+
         resp1 = await get_nanapi().waicolle.waicolle_get_collection(cid)
         if not success(resp1):
             match resp1.code:
                 case 404:
-                    raise commands.CommandError("Collection not found.")
+                    await interaction.followup.send("Collection not found.")
+                    return
                 case _:
                     raise RuntimeError(resp1.result)
         collec = resp1.result
-        if collec.author.user.discord_id != ctx.author.id:
-            raise commands.CommandError(
-                "You can only delete your own collections")
+
+        if collec.author.user.discord_id != interaction.user.id:
+            await interaction.followup.send("You can only delete your own collections")
+            return
+
         resp2 = await get_nanapi().waicolle.waicolle_delete_collection(cid)
         if not success(resp2):
             raise RuntimeError(resp2.result)
-        await ctx.reply(self.bot.get_emoji_str('FubukiGO'))
+        await interaction.followup.send(self.bot.get_emoji_str('FubukiGO'))
 
     class CollecTrackChoice(Enum):
         media = 'media'
@@ -2011,12 +2032,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
     @app_commands.autocomplete(coll=collection_autocomplete(),
                                item=track_autocomplete)
     @app_commands.rename(coll="collection")
-    @legacy_command()
-    async def slash_track_colle_add(self, ctx: LegacyCommandContext, coll: str,
+    async def slash_track_colle_add(self, interaction: Interaction[Bot], coll: str,
                                     track_type: CollecTrackChoice, item: str):
         """Add a media AniList ID to collection"""
-        cid = UUID(coll)
-        id_al = int(item)
+        await interaction.response.defer()
+        cid = await autocomplete_cast(interaction, collection_autocomplete(), UUID, coll)
+        id_al = await autocomplete_cast(interaction, self.track_autocomplete, int, item)
+
         resp1 = await get_nanapi().waicolle.waicolle_get_collection(cid)
         if not success(resp1):
             match resp1.code:
@@ -2025,20 +2047,23 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
                 case _:
                     raise RuntimeError(resp1.result)
         collec = resp1.result
-        if collec.author.user.discord_id != ctx.author.id:
-            raise commands.CommandError(
-                "You can only edit your own collections")
+        if collec.author.user.discord_id != interaction.user.id:
+            await interaction.followup.send("You can only edit your own collections")
+            return
+
         if track_type is self.CollecTrackChoice.media:
             resp2 = await get_nanapi().waicolle.waicolle_collection_track_media(
                 cid, id_al)
             if not success(resp2):
                 match resp2.code:
                     case 404:
-                        raise commands.CommandError("Media not found.")
+                        await interaction.followup.send("Media not found.")
+                        return
                     case _:
                         raise RuntimeError(resp2.result)
+
             updated = resp2.result
-            await ctx.reply(
+            await interaction.followup.send(
                 f"**{updated.media.title_user_preferred}** ({updated.media.type.casefold()}) "
                 f"added to track collection {updated.collection.id} – {updated.collection.name}"
             )
@@ -2048,12 +2073,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             if not success(resp2):
                 match resp2.code:
                     case 404:
-                        raise commands.CommandError("Staff not found.")
+                        await interaction.followup.send("Staff not found.")
+                        return
                     case _:
                         raise RuntimeError(resp2.result)
+
             updated = resp2.result
             name_native = f" ({updated.staff.name_native})" if updated.staff.name_native else ''
-            await ctx.reply(
+            await interaction.followup.send(
                 f"**{updated.staff.name_user_preferred}{name_native}** "
                 f"added to track collection {updated.collection.id} – {updated.collection.name}"
             )
@@ -2064,21 +2091,24 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
     @app_commands.autocomplete(coll=collection_autocomplete(),
                                item=track_autocomplete)
     @app_commands.rename(coll="collection")
-    @legacy_command()
-    async def slash_track_colle_remove(self, ctx: LegacyCommandContext, coll: str,
+    async def slash_track_colle_remove(self, interaction: Interaction[Bot], coll: str,
                                        track_type: CollecTrackChoice, item: str):
         """Remove a media AniList ID from collection"""
-        cid = UUID(coll)
-        id_al = int(item)
+        await interaction.response.defer()
+        cid = await autocomplete_cast(interaction, collection_autocomplete(), UUID, coll)
+        id_al = await autocomplete_cast(interaction, self.track_autocomplete, int, item)
+
         resp1 = await get_nanapi().waicolle.waicolle_get_collection(cid)
         if not success(resp1):
             match resp1.code:
                 case 404:
-                    raise commands.CommandError("Collection not found.")
+                    await interaction.followup.send("Collection not found.")
+                    return
                 case _:
                     raise RuntimeError(resp1.result)
         collec = resp1.result
-        if collec.author.user.discord_id != ctx.author.id:
+
+        if collec.author.user.discord_id != interaction.user.id:
             raise commands.CommandError(
                 "You can only edit your own collections")
         if track_type is self.CollecTrackChoice.media:
@@ -2089,9 +2119,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
                 cid, id_al)
         else:
             raise RuntimeError("How did you get there?")
+
         if not success(resp2):
             raise RuntimeError(resp2.result)
-        await ctx.reply(self.bot.get_emoji_str('FubukiGO'))
+
+        await interaction.followup.send(self.bot.get_emoji_str('FubukiGO'))
 
     ##########
     # Coupon #
@@ -2356,7 +2388,7 @@ def user_menu_trade(cog: WaifuCollection):
     @app_commands.context_menu(name='Waifu trade')
     @app_commands.guild_only()
     @handle_command_errors
-    async def user_trade(interaction: discord.Interaction,
+    async def user_trade(interaction: discord.Interaction[Bot],
                          member: discord.Member):
         ctx = await LegacyCommandContext.from_interaction(interaction)
         await cog._trade(ctx, member)

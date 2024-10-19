@@ -4,10 +4,11 @@ import re
 from dataclasses import asdict
 from itertools import batched
 from operator import attrgetter
-from typing import Any, Callable
+from typing import Any, Callable, Coroutine
 
 import discord
 from discord.app_commands import Choice
+from discord.interactions import Interaction
 from discord.ui import Button
 from html2text import HTML2Text as HTML2md
 from toolz.curried import compose_left
@@ -169,6 +170,19 @@ async def get_score_fields(bot: Bot, media: MediaSelectResult):
     return sorted(fields, key=compose_left(attrgetter('name'), str.casefold))
 
 
+async def autocomplete_cast[T](
+    interaction: Interaction[Bot],
+    autocomplete_cb: Callable[[Interaction[Bot], str], Coroutine[Any, Any, list[Choice[str]]]],
+    cast_fn: Callable[[str], T],
+    value: str,
+):
+    try:
+        return cast_fn(value)
+    except ValueError:
+        choices = await autocomplete_cb(interaction, value)
+        return cast_fn(choices[0].value)
+
+
 def media_autocomplete(media_type: MediaType | None = None,
                        id_al_as_value: bool = False):
 
@@ -179,7 +193,7 @@ def media_autocomplete(media_type: MediaType | None = None,
             raise RuntimeError(resp.result)
         results = resp.result
 
-        choices: list[Choice] = []
+        choices: list[Choice[str]] = []
         for r in results:
             name = r.title_user_preferred
             if id_al_as_value:
@@ -271,7 +285,7 @@ def staff_autocomplete(id_al_as_value: bool = False):
         if not success(resp):
             raise RuntimeError(resp.result)
         results = resp.result
-        choices: list[Choice] = []
+        choices: list[Choice[str]] = []
         for r in results:
             native = f" ({r.name_native})" if r.name_native else ''
             choice = Choice(

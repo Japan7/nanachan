@@ -4,13 +4,14 @@ import asyncio
 import inspect
 import logging
 from functools import wraps
-from typing import Any, Callable, Concatenate, Optional, ParamSpec, TypeVar
+from typing import Any, Callable, Concatenate, ParamSpec, TypeVar, override
 
 from discord import Interaction, app_commands
 from discord.ext.commands import CommandError, Context
 from discord.interactions import InteractionMessage
 from discord.webhook import WebhookMessage
 
+from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import UserWebhookContextMixin
 from nanachan.settings import SLASH_PREFIX
 
@@ -24,15 +25,17 @@ logger = logging.getLogger(__name__)
 
 # FIXME: no easy way to fix the typing here
 # maybe mixins just suck
-class LegacyCommandContext(Context, UserWebhookContextMixin):  # type: ignore
+class LegacyCommandContext(Context[Bot], UserWebhookContextMixin):  # type: ignore
     ephemeral: bool
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._sending = asyncio.Lock()
+        self.ephemeral = False
 
+    @override
     @classmethod
-    async def from_interaction(cls, interaction: Interaction, ephemeral: bool = False):
+    async def from_interaction(cls, interaction: Interaction[Bot], ephemeral: bool = False):
         inst = await super().from_interaction(interaction)
         inst.ephemeral = ephemeral
         asyncio.create_task(inst.send_initial_message())
@@ -55,7 +58,7 @@ class LegacyCommandContext(Context, UserWebhookContextMixin):  # type: ignore
         return await self.send(*args, **kwargs)
 
     async def send(self,
-                   content: Optional[str] = None,
+                   content: str | None = None,
                    **kwargs) -> InteractionMessage | WebhookMessage:
         assert self.interaction is not None
         if content is not None:
@@ -140,7 +143,7 @@ def legacy_command(ephemeral: bool = False):
                   ) -> Callable[Concatenate[Any, Interaction, P], T]:
 
         @wraps(func)
-        async def decorated(cog, interaction: Interaction, *args, **kwargs):
+        async def decorated(cog, interaction: Interaction[Bot], *args, **kwargs):
             ctx = await LegacyCommandContext.from_interaction(interaction, ephemeral=ephemeral)
             try:
                 return await func(cog, ctx, *args, **kwargs)  # type: ignore
