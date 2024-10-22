@@ -1157,7 +1157,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
         await ctx.reply(embed=embed, view=view, ephemeral=True)
 
         if not await view.confirmation:
-            raise commands.CommandError('Roll aborted')
+            await ctx.reply('Roll aborted')
+            return
 
         await self._roll(ctx, ctx.author, view.selected_roll, notice)
 
