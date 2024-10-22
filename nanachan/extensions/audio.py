@@ -2,7 +2,7 @@ import asyncio
 import logging
 from collections.abc import Coroutine, MutableSequence
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Callable
 
 import discord
 from discord.abc import Messageable
@@ -11,8 +11,9 @@ from discord.ext import commands
 from discord.ui import Button, button
 from yt_dlp import YoutubeDL
 
+from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
-from nanachan.discord.cog import Cog
+from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed
 from nanachan.discord.views import BaseView, ChoiceView
 from nanachan.settings import BOT_VOICE_ID, OPUS_LIB_LOCATION, YOUTUBE_DL_CONFIG
@@ -31,19 +32,19 @@ class AudioControlsView(BaseView):
         self.cog = cog
 
     @button(emoji=MUTE_EMOJI, style=ButtonStyle.red)
-    async def mute(self, interaction: discord.Interaction, button: Button):
+    async def mute(self, interaction: discord.Interaction, _: Button[BaseView]):
         await interaction.response.defer()
         self.cog.muted = not self.cog.muted
         await self._manage_volume()
 
     @button(emoji=DECREASE_EMOJI, style=ButtonStyle.grey)
-    async def decrease(self, interaction: discord.Interaction, button: Button):
+    async def decrease(self, interaction: discord.Interaction, _: Button[BaseView]):
         await interaction.response.defer()
         self.cog.volume = max(0., self.cog.volume - 0.1)
         await self._manage_volume()
 
     @button(emoji=INCREASE_EMOJI, style=ButtonStyle.grey)
-    async def increase(self, interaction: discord.Interaction, button: Button):
+    async def increase(self, interaction: discord.Interaction, _: Button[BaseView]):
         await interaction.response.defer()
         self.cog.volume = min(1., self.cog.volume + 0.1)
         await self._manage_volume()
@@ -71,11 +72,8 @@ class TrackInfo:
     display_url: str | None
 
 
-T = TypeVar('T')
-
-
 @dataclass(slots=True)
-class PlaylistEntry(Generic[T]):
+class PlaylistEntry[T]:
     item: T
     callback: Callable[[T], Coroutine[Any, Any, None]]
     name: str
@@ -84,29 +82,32 @@ class PlaylistEntry(Generic[T]):
         return await self.callback(self.item)
 
 
-class Audio(Cog):
+@discord.app_commands.guild_only()
+class Audio(NanaGroupCog, group_name="audio"):
     """ Make {bot_name} sing and talk to you while you play with your friends """
     emoji = '\N{SPEAKER}'
 
     def __init__(self, bot: Bot):
-        super().__init__(bot)
+        super().__init__()
 
+        self.bot = bot
         self.connection: discord.VoiceClient | None = None
-        self.audio_source: discord.PCMVolumeTransformer | None = None
+        self.audio_source: discord.PCMVolumeTransformer[discord.AudioSource] | None = None
         self.track_info: TrackInfo | None = None
         self.control_message: discord.Message | None = None
         self.volume = 0.5
         self.muted = False
         self.playlist: MutableSequence[PlaylistEntry[Any]] = []
 
-    @commands.guild_only()
-    @commands.command(help='Stop audio play if any')
-    async def stop(self, ctx: commands.Context[Bot]):
+    @discord.app_commands.command(description='Stop audio playback if any')
+    async def stop(self, interaction: discord.Interaction[Bot]):
+        await interaction.response.defer()
         await self._disconnect()
+        await interaction.followup.send(":ok_hand:")
 
-    @commands.guild_only()
-    @commands.command(name='play', help='Play music from Youtube')
-    async def ytdl_play(self, ctx: commands.Context[Bot], *, search_tags: str):
+    @discord.app_commands.command(name='play', description='Play music from Youtube')
+    @legacy_command()
+    async def ytdl_play(self, ctx: LegacyCommandContext, query_or_url: str):
 
         async def play_yt_video(video: YTVideo):
             audio_source = discord.FFmpegPCMAudio(
@@ -120,21 +121,23 @@ class Audio(Cog):
             await self.add_to_playlist(PlaylistEntry(video, play_yt_video, video.title))
 
         async with ctx.typing():
-            videos = await asyncio.to_thread(self._find_yt_video, search_tags)
+            videos = await asyncio.to_thread(self._find_yt_video, query_or_url)
             if len(videos) == 0:
-                raise commands.CommandError('No result found')
+                await ctx.reply('No result found')
+                return
             elif len(videos) == 1:
                 await add_to_playlist(videos[0])
             else:
                 view = ChoiceView(self.bot, videos, add_to_playlist)
                 await ctx.reply('**What do you want to listen to?**', view=view)
 
-    @commands.guild_only()
-    @commands.command(help='Play next item in playlist')
-    async def skip(self, ctx: commands.Context[Bot]):
+    @discord.app_commands.command(description="Play next item in playlist")
+    async def skip(self, interaction: discord.Interaction[Bot]):
+        await interaction.response.defer()
         if self.connection is not None and self.connection.is_playing():
             self.connection.stop()
             # self._play_next() is called by the connection callback (_end_sync_callback)
+        await interaction.followup.send("Skipped song.")
 
     async def play(self,
                    ctx: commands.Context[Bot],
@@ -143,7 +146,8 @@ class Audio(Cog):
                    volume: float | None = None,
                    show_control: bool = True):
         if self.audio_source:
-            raise commands.CommandError('I am already playing!')
+            await ctx.reply('I am already playing!')
+            return
 
         if not volume:
             volume = self.volume
@@ -224,10 +228,11 @@ class Audio(Cog):
         if error:
             log.error(error)
 
-        def callback():
-            asyncio.create_task(self._play_next())
+        async def callback():
+            await asyncio.sleep(3)
+            await self._play_next()
 
-        self.bot.loop.call_soon_threadsafe(self.bot.loop.call_later, 3, callback) # type: ignore
+        asyncio.create_task(callback())
 
     async def _send_control_message(self, ctx: Messageable):
         embed = self._build_control_message()
@@ -293,3 +298,5 @@ async def setup(bot: Bot):
         discord.opus.load_opus(OPUS_LIB_LOCATION)
     if discord.opus.is_loaded():
         await bot.add_cog(Audio(bot))
+    else:
+        log.info("failed to load libopus")
