@@ -690,7 +690,7 @@ requires-dist = [
     { name = "watchgod", specifier = "==0.8.2" },
     { name = "yappi", git = "https://github.com/odrling/yappi.git?rev=c1ea539c831ad0c46f7b0b463025688d7db05c14" },
     { name = "yarl", specifier = "==1.16.0" },
-    { name = "yt-dlp", specifier = "==2024.10.22" },
+    { name = "yt-dlp", extras = ["default"], specifier = "==2024.10.22" },
 ]
 
 [package.metadata.requires-dev]
