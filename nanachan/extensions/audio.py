@@ -1,8 +1,8 @@
 import asyncio
 import logging
+from collections.abc import Coroutine, MutableSequence
 from dataclasses import dataclass
-from functools import partial
-from typing import Any, Callable, Coroutine, Generic, MutableSequence, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 import discord
 from discord.abc import Messageable
@@ -101,12 +101,12 @@ class Audio(Cog):
 
     @commands.guild_only()
     @commands.command(help='Stop audio play if any')
-    async def stop(self, ctx: commands.Context):
+    async def stop(self, ctx: commands.Context[Bot]):
         await self._disconnect()
 
     @commands.guild_only()
     @commands.command(name='play', help='Play music from Youtube')
-    async def ytdl_play(self, ctx: commands.Context, *, search_tags: str):
+    async def ytdl_play(self, ctx: commands.Context[Bot], *, search_tags: str):
 
         async def play_yt_video(video: YTVideo):
             audio_source = discord.FFmpegPCMAudio(
@@ -120,9 +120,7 @@ class Audio(Cog):
             await self.add_to_playlist(PlaylistEntry(video, play_yt_video, video.title))
 
         async with ctx.typing():
-            loop = asyncio.get_running_loop()
-            videos = await loop.run_in_executor(
-                None, partial(self._find_yt_video, search_tags))
+            videos = await asyncio.to_thread(self._find_yt_video, search_tags)
             if len(videos) == 0:
                 raise commands.CommandError('No result found')
             elif len(videos) == 1:
@@ -133,13 +131,13 @@ class Audio(Cog):
 
     @commands.guild_only()
     @commands.command(help='Play next item in playlist')
-    async def skip(self, ctx: commands.Context):
+    async def skip(self, ctx: commands.Context[Bot]):
         if self.connection is not None and self.connection.is_playing():
             self.connection.stop()
             # self._play_next() is called by the connection callback (_end_sync_callback)
 
     async def play(self,
-                   ctx: commands.Context,
+                   ctx: commands.Context[Bot],
                    audio_source: discord.AudioSource,
                    track_info: TrackInfo | None = None,
                    volume: float | None = None,
@@ -174,7 +172,7 @@ class Audio(Cog):
         else:
             await playlist_entry()
 
-    async def _connect(self, ctx: commands.Context, show_control: bool):
+    async def _connect(self, ctx: commands.Context[Bot], show_control: bool):
         if self.connection:
             return
 
