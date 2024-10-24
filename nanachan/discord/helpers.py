@@ -24,7 +24,7 @@ from typing import (
 
 import discord
 from discord import (
-    Guild,
+    ForumChannel,
     HTTPException,
     Message,
     PartialEmoji,
@@ -45,13 +45,12 @@ from discord.types.embed import EmbedType
 from discord.webhook import WebhookMessage as DpyWebhookMessage
 from yarl import URL
 
-from nanachan.settings import DEFAULT_COLOUR, PREFIX, WC_CHANNEL
+from nanachan.settings import DEFAULT_COLOUR, PREFIX
 from nanachan.utils.misc import default_backoff, run_coro, truncate_at
 
 if TYPE_CHECKING:
     from nanachan.discord.bot import Bot
     from nanachan.extensions.easter_eggs import Bananas
-    from nanachan.extensions.waicolle import WaifuCollection
 
 
 __all__ = ('getEmojiStr',
@@ -60,7 +59,6 @@ __all__ = ('getEmojiStr',
            'clean_markdown',
            'get_multiplexing_level',
            'context_modifier',
-           'UserWebhookContextMixin',
            'MultiplexingContext',
            'MultiplexingMessage',
            'ChannelListener',
@@ -250,30 +248,19 @@ def context_modifier(func):
 ContextModifier = context_modifier
 
 
-class UserWebhookContextMixin:
-
-    guild: Guild | None
-    channel: TextChannel
-    author: User
-    message: MultiplexingMessage
+class MultiplexingContext(commands.Context['Bot']):
     bot: Bot
+    listeners: list[tuple[Callable[[MultiplexingContext], bool],
+                          asyncio.Future[MultiplexingContext]]] = []
 
-    async def get_user_webhook(self, chara=None, app_cmd_context: bool = False) -> 'WebhookProxy':
+    async def get_user_webhook(self, app_cmd_context: bool = False) -> 'WebhookProxy':
         if self.guild is None:
             raise RuntimeError("Webhook cannot be created outside of a guild")
 
+        assert isinstance(self.channel, (TextChannel, ForumChannel))
         webhook = await self.bot.get_webhook(self.channel)
         webhook = CheckEmptyWebhook(webhook)
-        webhook = UserWebhook(webhook, self.author)
-
-        if self.waifued and chara is None:
-            waifu_cog = cast('WaifuCollection | None',
-                             self.bot.get_cog('WaiColle ~Waifu Collection~'))
-            if waifu_cog is not None:
-                chara = waifu_cog.waifued_members[self.author.id]
-
-        if chara is not None:
-            webhook = WaifuWebhook(webhook, chara, self.author.display_name)
+        webhook = UserWebhook(webhook, cast(User, self.author))
 
         if not app_cmd_context:
             webhook = ReplyWebhook(webhook, self.message)
@@ -307,30 +294,13 @@ class UserWebhookContextMixin:
         return False
 
     @cached_property
-    def waifued(self) -> bool:
-        waifu_cog = self.bot.get_cog('WaiColle ~Waifu Collection~')
-        waifu_cog = cast('WaifuCollection | None',
-                         self.bot.get_cog('WaiColle ~Waifu Collection~'))
-        if waifu_cog is not None:
-            return all([
-                self.author.id in waifu_cog.waifued_members,
-                self.channel.id == WC_CHANNEL,
-            ])
-
-        return False
-
-    @cached_property
     def webhooked(self) -> bool:
-        return (not self.author.bot and
-                self.guild is not None and
-                self.message.system_content == self.message.content and
-                any([self.bananased, self.waifued]))
-
-
-class MultiplexingContext(commands.Context[Bot], UserWebhookContextMixin):  # type: ignore # trust me bro
-    bot: Bot
-    listeners: list[tuple[Callable[[MultiplexingContext], bool],
-                          asyncio.Future[MultiplexingContext]]] = []
+        return (
+            not self.author.bot
+            and self.guild is not None
+            and self.message.system_content == self.message.content
+            and self.bananased
+        )
 
     def __init__(self, message: discord.Message, **attrs):
         self._command = None

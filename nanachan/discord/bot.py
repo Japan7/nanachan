@@ -395,7 +395,7 @@ class Bot(commands.AutoShardedBot):
                                   guild=guild, guilds=guilds)
             self._cogs[cog.qualified_name.casefold()] = cog
 
-    def get_cog(self, name) -> Optional[commands.Cog]:
+    def get_cog(self, name: str) -> Optional[commands.Cog]:
         name = name.casefold()
         if name in self._cogs:
             return self._cogs[name]

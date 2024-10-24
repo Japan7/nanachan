@@ -149,9 +149,6 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
                                            parent=slash_waifu_global,
                                            description="WaiColle utils")
 
-    # TODO: stub
-    waifued_members = {}
-
     def __init__(self, bot: Bot):
         super().__init__(bot)
         self.alert_lock = asyncio.Lock()

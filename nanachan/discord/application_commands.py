@@ -12,7 +12,6 @@ from discord.interactions import InteractionMessage
 from discord.webhook import WebhookMessage
 
 from nanachan.discord.bot import Bot
-from nanachan.discord.helpers import UserWebhookContextMixin
 from nanachan.settings import SLASH_PREFIX
 
 __all__ = ('LegacyCommandContext',
@@ -23,9 +22,7 @@ __all__ = ('LegacyCommandContext',
 logger = logging.getLogger(__name__)
 
 
-# FIXME: no easy way to fix the typing here
-# maybe mixins just suck
-class LegacyCommandContext(Context[Bot], UserWebhookContextMixin):  # type: ignore
+class LegacyCommandContext(Context[Bot]):
     ephemeral: bool
 
     def __init__(self, *args, **kwargs):
