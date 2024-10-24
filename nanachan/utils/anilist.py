@@ -1,22 +1,21 @@
 import asyncio
 import calendar
 import re
+from collections.abc import Coroutine
 from dataclasses import asdict
 from itertools import batched
-from operator import attrgetter
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable
 
 import discord
 from discord.app_commands import Choice
 from discord.interactions import Interaction
 from discord.ui import Button
 from html2text import HTML2Text as HTML2md
-from toolz.curried import compose_left
 from yarl import URL
 
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import Embed, EmbedField
-from nanachan.discord.views import NavigatorView
+from nanachan.discord.views import BaseView, NavigatorView
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import MediaSelectResult, MediaType, StaffSelectResult
 from nanachan.settings import NANAPI_PUBLIC_URL
@@ -31,7 +30,7 @@ html2md.body_width = 0
 html2md.single_line_break = True
 
 
-class MediaScoreButton(Button):
+class MediaScoreButton(Button[BaseView]):
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -154,7 +153,7 @@ async def get_score_fields(bot: Bot, media: MediaSelectResult):
     total = (media.episodes
              if media.type == MediaType.ANIME else media.chapters) or '?'
 
-    fields = []
+    fields: list[EmbedField] = []
     for entry in entries:
         status = entry.status.capitalize()
         if status != 'Completed':
@@ -167,7 +166,7 @@ async def get_score_fields(bot: Bot, media: MediaSelectResult):
             EmbedField(name=str(bot.get_user(entry.account.user.discord_id)),
                        value=status + progress + score))
 
-    return sorted(fields, key=compose_left(attrgetter('name'), str.casefold))
+    return sorted(fields, key=lambda i: i.name.casefold())
 
 
 async def autocomplete_cast[T](

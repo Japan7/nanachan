@@ -4,13 +4,14 @@ import logging
 import math
 import re
 from collections import OrderedDict, defaultdict
+from collections.abc import Coroutine, Iterable
 from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from enum import Enum
 from functools import partial
 from itertools import batched, zip_longest
-from operator import getitem
-from typing import TYPE_CHECKING, Any, Coroutine, Iterable, Literal, cast
+from operator import getitem, itemgetter
+from typing import TYPE_CHECKING, Any, Literal, cast
 from uuid import UUID
 
 import discord
@@ -21,7 +22,6 @@ from discord.enums import ButtonStyle
 from discord.ext import commands, tasks
 from discord.ui import Button
 from discord.utils import utcnow
-from toolz.curried import first, second
 from yarl import URL
 
 from nanachan.discord.application_commands import (
@@ -1735,13 +1735,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
 
             elems.append((percent, desc))
 
-        elems = sorted(elems, key=first, reverse=True)
+        elems = sorted(elems, key=itemgetter(0), reverse=True)
 
         await AutoNavigatorView.create(
             self.bot,
             ctx.reply,
             title='Tracking list',
-            description='\n'.join(map(second, elems)),
+            description='\n'.join(map(itemgetter(1), elems)),
             color=WC_COLOR,
             author_name=str(member),
             author_icon_url=member.display_avatar.url)

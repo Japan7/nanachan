@@ -3,6 +3,7 @@ from __future__ import annotations
 import abc
 import asyncio
 import datetime
+import itertools
 import logging
 import random
 import re
@@ -43,11 +44,11 @@ from discord.ext.commands.view import StringView
 from discord.mentions import AllowedMentions
 from discord.types.embed import EmbedType
 from discord.webhook import WebhookMessage as DpyWebhookMessage
-from toolz import interleave, take
 from yarl import URL
 
 from nanachan.settings import DEFAULT_COLOUR, PREFIX, WC_CHANNEL
 from nanachan.utils.misc import default_backoff, run_coro, truncate_at
+from nanachan.utils.toolz import interleave
 
 if TYPE_CHECKING:
     from nanachan.discord.bot import Bot
@@ -133,7 +134,7 @@ class Colour(discord.Colour):
 
 @dataclass
 class EmbedField:
-    name: Any
+    name: str
     value: Any
     inline: bool = True
 
@@ -281,7 +282,7 @@ class UserWebhookContextMixin:
             webhook = ReplyWebhook(webhook, self.message)
             webhook = AttachmentsWebhook(webhook, self.message.attachments)
 
-            if isinstance(self.message, MultiplexingMessage):
+            if isinstance(self.message, MultiplexingMessage) and self.embedders:
                 webhook = EmbeddersWebhook(webhook, self.embedders)
 
             if self.message.stickers:
@@ -315,7 +316,7 @@ class UserWebhookContextMixin:
     def embedders(self):
         embed_cogs = cast('Embeds | None', self.bot.get_cog('Embeds'))
         if embed_cogs is not None:
-            return embed_cogs.get_embedders(self, *self.message.urls)
+            return embed_cogs.get_embedders(self, *self.message.urls) # type: ignore
 
     @cached_property
     def waifued(self) -> bool:
@@ -845,15 +846,23 @@ class StickerWebhook(WebhookProxy):
 
 
 class EmbeddersWebhook(WebhookProxy):
-
-    def __init__(self, webhook: Webhook | WebhookProxy, embedders, **kwargs):
+    def __init__(
+        self,
+        webhook: Webhook | WebhookProxy,
+        embedders: list[asyncio.Task[list[discord.Embed]]],
+        **kwargs,
+    ):
         super().__init__(webhook, **kwargs)
         self.embedders = embedders
 
-    async def send(self, wait=True, **kwargs):
+    async def send(self, wait: bool = True, **kwargs):
         if self.embedders:
-            embeds = filter(bool, await self.embedders)
-            embeds = list(take(10, interleave(embeds)))
+            embedders_embeds: list[list[discord.Embed]] = []
+            for embedder in self.embedders:
+                ebs = await embedder
+                embedders_embeds.append(ebs)
+
+            embeds: list[discord.Embed] = list(itertools.islice(interleave(embedders_embeds), 10))
         else:
             embeds = []
 

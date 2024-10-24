@@ -661,7 +661,6 @@ dependencies = [
     { name = "redis", extra = ["hiredis"] },
     { name = "rich" },
     { name = "tldr" },
-    { name = "toolz" },
     { name = "tzdata" },
     { name = "vobject" },
     { name = "watchgod" },
@@ -699,7 +698,6 @@ requires-dist = [
     { name = "redis", extras = ["hiredis"], specifier = "==5.1.1" },
     { name = "rich", specifier = "==13.9.3" },
     { name = "tldr", specifier = "==3.3.0" },
-    { name = "toolz", specifier = "==1.0.0" },
     { name = "tzdata", specifier = "==2024.2" },
     { name = "vobject", specifier = "==0.9.8" },
     { name = "watchgod", specifier = "==0.8.2" },
@@ -1151,15 +1149,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e4/6e/466fdfd09b4a95b9707b9c4c0bcd7dbf3b4ac9be140726792b2264722999/tldr-3.3.0.tar.gz", hash = "sha256:8e243c20add63e8923d7b968b6854d8d41d443af5e8622880192d64e30208ba7", size = 16098 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/d4/493a6d04e88fa11e165b998915ab259107fefe9b0a6251ee34e4e47aeff2/tldr-3.3.0-py3-none-any.whl", hash = "sha256:584258182f492e62d7e7dd29787a6febdc9b653a10f346f179c013ea172c286c", size = 12178 },
-]
-
-[[package]]
-name = "toolz"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8a/0b/d80dfa675bf592f636d1ea0b835eab4ec8df6e9415d8cfd766df54456123/toolz-1.0.0.tar.gz", hash = "sha256:2c86e3d9a04798ac556793bced838816296a2f085017664e4995cb40a1047a02", size = 66790 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl", hash = "sha256:292c8f1c4e7516bf9086f8850935c799a874039c8bcf959d47b600e4c44a6236", size = 56383 },
 ]
 
 [[package]]

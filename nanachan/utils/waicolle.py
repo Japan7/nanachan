@@ -1,5 +1,6 @@
 import asyncio
 import calendar
+import itertools
 import logging
 import math
 from collections import OrderedDict, defaultdict
@@ -15,7 +16,6 @@ from discord.app_commands import Choice
 from discord.components import SelectOption
 from discord.ext import commands
 from discord.ui import Button, Select
-from toolz.curried import concat, first, second
 from yarl import URL
 
 from nanachan.discord.bot import Bot
@@ -146,10 +146,10 @@ class WaifuSelectorView(CompositeNavigatorView):
             for waifu, i in zip(displayed_waifus, waifu_range):
                 chara = charas[waifu.character.id_al]
                 edge = edges[waifu.character.id_al]
-                is_default = str(i) in self.selected_per_page.get(
-                    displayed_page, [])
+                is_default = str(i) in self.selected_per_page.get(displayed_page, [])
                 option = WaifuTextHelper(waifu, chara, edge).get_select_option(
-                    i + 1, value=str(i), default=is_default)
+                    i + 1, value=str(i), default=is_default
+                )
                 options_tasks.append(tg.create_task(option))
 
         options = [await opt for opt in options_tasks]
@@ -177,7 +177,7 @@ class WaifuSelectorView(CompositeNavigatorView):
     def selected(self):
         return [
             self.waifus[int(cast(str, i))]
-            for i in sorted(set(concat(self.selected_per_page.values())))
+            for i in sorted(set(itertools.chain.from_iterable(self.selected_per_page.values())))
         ]
 
 
@@ -640,7 +640,7 @@ def chara_autocomplete(id_al_as_value: bool = False):
         if not success(resp):
             raise RuntimeError(resp.result)
         results = resp.result
-        choices: list[Choice] = []
+        choices: list[Choice[str]] = []
         for r in results:
             native = f" ({r.name_native})" if r.name_native else ''
             choice = Choice(
@@ -970,11 +970,12 @@ class TradeHelper:
     @classmethod
     async def create(cls, cog: 'WaifuCollection',
                      trade_waifus: OrderedDict[int, list[UUID]]):
+        (player_a_id, player_a_waifus), (player_b_id, player_b_waifus) = trade_waifus.items()
         body = NewTradeBody(
-            player_a_discord_id=first(trade_waifus.keys()),
-            waifus_a_ids=list(map(str, first(trade_waifus.values()))),
-            player_b_discord_id=second(trade_waifus.keys()),
-            waifus_b_ids=list(map(str, second(trade_waifus.values()))))
+            player_a_discord_id=player_a_id,
+            waifus_a_ids=list(map(str, player_a_waifus)),
+            player_b_discord_id=player_b_id,
+            waifus_b_ids=list(map(str, player_b_waifus)))
         resp = await get_nanapi().waicolle.waicolle_new_trade(body)
         if not success(resp):
             raise RuntimeError(resp.result)

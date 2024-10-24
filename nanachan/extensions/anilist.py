@@ -1,5 +1,5 @@
 from functools import partial
-from operator import attrgetter, itemgetter
+from operator import itemgetter
 from typing import TYPE_CHECKING, cast
 
 import discord
@@ -7,7 +7,6 @@ from discord import app_commands
 from discord.enums import ButtonStyle
 from discord.ext import commands
 from discord.ui import Button
-from toolz.curried import compose_left
 
 from nanachan.discord.application_commands import LegacyCommandContext, NanaGroup, legacy_command
 from nanachan.discord.bot import Bot
@@ -95,7 +94,7 @@ class Anilist(Cog):
     # Helpers #
     ###########
 
-    async def get_accounts(self, ctx: commands.Context):
+    async def get_accounts(self, ctx: commands.Context[Bot]):
         """Get members AL/MAL links."""
         llist = []
         services = {}
@@ -115,8 +114,7 @@ class Anilist(Cog):
                 EmbedField(str(member), f"[{anilist.service.value}]({link})"))
             services[anilist.service] = services.get(anilist.service, 0) + 1
 
-        llist = sorted(llist,
-                       key=compose_left(attrgetter('name'), str.casefold))
+        llist = sorted(llist, key=lambda i: i.name.casefold())
 
         services = sorted(services.items(), key=itemgetter(1), reverse=True)
         services = [f"{count} {service.value}" for service, count in services]

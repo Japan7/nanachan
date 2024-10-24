@@ -22,6 +22,7 @@ from discord import (
     NotFound,
     PartialEmoji,
     PrivacyLevel,
+    Reaction,
     TextChannel,
     Thread,
     User,
@@ -32,7 +33,6 @@ from discord.abc import Messageable
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import MISSING
-from toolz.curried import compose
 
 import nanachan.resources
 from nanachan.discord.application_commands import (
@@ -279,7 +279,7 @@ class BasicCommands(Cog, name='Basic Commands'):
             for shape in shapes:
                 await message.add_reaction(shape)
 
-            def check(reaction, user):
+            def check(reaction: Reaction, user: Member | User):
                 return reaction.message == message and user == player and str(
                     reaction.emoji) in shapes
 
@@ -291,7 +291,7 @@ class BasicCommands(Cog, name='Basic Commands'):
             resp = '\n'.join(f"{player} chose {choice}"
                              for player, choice in zip([player1, player2], choices)) + "\n\n"
 
-            choice1, choice2 = map(compose(shapes.index, str), choices)
+            choice1, choice2 = map(shapes.index, map(str, choices))
 
             if choice1 == choice2:
                 resp += f"**It's a tie! {getEmojiStr(ctx, 'amoesip')}**"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import itertools
 import logging
 import unicodedata
 from dataclasses import asdict
@@ -21,7 +22,6 @@ import discord
 from discord.components import SelectOption
 from discord.enums import ButtonStyle
 from discord.ui import Button, Item, Select, View
-from toolz.curried import concat
 
 from nanachan.discord.helpers import Embed, EmbedField, UserType
 from nanachan.discord.reactions import Pages
@@ -598,7 +598,9 @@ class StringSelectorView(CompositeNavigatorView):
 
     @property
     def selected(self):
-        return [string for string in concat(self.selected_per_page.values())]
+        return [
+            string for string in itertools.chain.from_iterable(self.selected_per_page.values())
+        ]
 
     @classmethod
     async def create(cls,

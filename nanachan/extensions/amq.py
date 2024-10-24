@@ -7,10 +7,10 @@ import re
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import update_wrapper
-from operator import attrgetter, itemgetter
+from operator import itemgetter
 from pprint import pformat
 from random import choice, randrange
-from typing import Any, Callable, List, Optional, Type, cast
+from typing import Any, Callable, cast
 
 import discord
 import socketio
@@ -19,7 +19,6 @@ from discord.app_commands.tree import ALL_GUILDS
 from discord.ext import commands
 from discord.ext.commands import has_permissions
 from discord.permissions import Permissions
-from toolz.curried import compose_left
 from yarl import URL
 
 from nanachan.discord.application_commands import LegacyCommandContext, NanaGroup, legacy_command
@@ -59,7 +58,7 @@ class Player:
     ingame: bool = True
     _ready: bool = False
     _host: bool = False
-    team: Optional[int] = None
+    team: int | None = None
 
     @property
     def ready(self):
@@ -111,7 +110,7 @@ class Roll(AMQCommand):
         self.__func_doc__ = value
 
 
-def amq_command(category: str, event: str, cls: Type[AMQCommand] = AMQCommand):
+def amq_command(category: str, event: str, cls: type[AMQCommand] = AMQCommand):
 
     def decorator(func: Callable[..., Any]):
         if isinstance(func, cls):
@@ -300,7 +299,7 @@ class AMQBot(metaclass=MetaAMQBot):
         await asyncio.sleep(2)
         await self.send_command('social', 'invite to game', target=name)
 
-    async def _join_room(self, room_id: int, password: Optional[str] = None):
+    async def _join_room(self, room_id: int, password: str | None = None):
         self.join_future = self.loop.create_future()
         await self.send_command('roombrowser', 'join game',
                                 gameId=int(room_id), password=password)
@@ -336,7 +335,7 @@ class AMQBot(metaclass=MetaAMQBot):
         while await self.connect(**socket_info):
             logger.debug('reconnecting')
 
-    async def join_room(self, room_name: int, password: Optional[str] = None):
+    async def join_room(self, room_name: int, password: str | None = None):
         await self.connected_event.wait()
         return await self._join_room(room_name, password)
 
@@ -672,7 +671,7 @@ class AMQBot(metaclass=MetaAMQBot):
     ##################
 
     @amq_command('bot_command', '7save')
-    async def save_settings(self, words: List[str], sender: str):
+    async def save_settings(self, words: list[str], sender: str):
         """ save the current settings """
         if len(words) < 2:
             return 'usage: 7save [settings_name]'
@@ -692,12 +691,12 @@ class AMQBot(metaclass=MetaAMQBot):
                                 answer=answer, isPlaying=True, volumeAtMax=False)
 
     @amq_command('bot_command', '7invite')
-    async def invite_players(self, words: List[str], _=None):
+    async def invite_players(self, words: list[str], _=None):
         tasks = (self.invite(name) for name in words[1:])
         await asyncio.gather(*tasks)
 
     @amq_command('bot_command', '777')
-    async def answer(self, words: List[str], _):
+    async def answer(self, words: list[str], _):
         """ answer in my stead """
         answer = ' '.join(words[1:]).strip()
         await self.send_answer(answer)
@@ -740,7 +739,7 @@ class AMQBot(metaclass=MetaAMQBot):
         return str(self.credits)
 
     @amq_command('bot_command', '7roll', cls=Roll)
-    async def roll(self, words: List[str], sender: str):
+    async def roll(self, words: list[str], sender: str):
         """ a virtual dice for %s (and others) """
         try:
             n = int(words[1])
@@ -759,7 +758,7 @@ class AMQBot(metaclass=MetaAMQBot):
                 await self.send_message(message, sender)
 
     @amq_command('bot_command', '7ings')
-    async def set_settings(self, words: List[str], sender: str):
+    async def set_settings(self, words: list[str], sender: str):
         """ change the settings """
         if self.bot_settings is None:
             self.bot_settings = await load_settings()
@@ -952,7 +951,7 @@ class AMQ(Cog):
 
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.amq: Optional[AMQBot] = None
+        self.amq: AMQBot | None = None
         self.reset_tracker()
 
     def reset_tracker(self):
@@ -1001,7 +1000,7 @@ class AMQ(Cog):
         else:
             await self._load(ctx, settings_name)
 
-    async def _load(self, ctx, settings_name: Optional[str] = None):
+    async def _load(self, ctx, settings_name: str | None = None):
         self.start_session()
         assert self.amq is not None
         if settings_name is None:
@@ -1111,7 +1110,7 @@ class AMQ(Cog):
                 row.user.discord_id)), row.username)
             for row in players
         ]
-        fields.sort(key=compose_left(attrgetter('name'), str.casefold))
+        fields.sort(key=lambda i: i.name.casefold())
         assert ctx.guild is not None
         guild_icon = ctx.guild.icon.url if ctx.guild.icon is not None else None
         await AutoNavigatorView.create(
