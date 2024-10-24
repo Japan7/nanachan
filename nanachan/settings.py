@@ -90,10 +90,6 @@ PROJO_LEADER_ROLE_ID = 0000
 # SauceNAO
 SAUCENAO_API_KEY = None
 
-# Twitch
-TWITCH_CLIENT_ID: str | None = None
-TWITCH_CLIENT_SECRET: str | None = None
-
 # AniList
 LOW_PRIORITY_THRESH = 30
 AL_CACHE_EXPIRE = 3600 * 24
@@ -161,7 +157,6 @@ RequiresAMQ = RequiredSettings(AMQ_DEFAULT_SETTINGS, AMQ_ROOM_PASSWORD,
                                AMQ_ROOM_NAME, AMQ_PASSWORD, AMQ_USERNAME,
                                AMQ_ROOM)
 RequiresKaraoke = RequiredSettings(KARA_BASE)
-RequiresTwitch = RequiredSettings(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET)
 RequiresRoleAssignment = RequiredSettings(ROLE_ASSIGNMENT_CHANNEL)
 RequiresWaicolle = RequiredSettings(WC_ROLE, WC_CHANNEL)
 RequiresProjo = RequiredSettings(PROJO_THREADS_ROOM, PROJO_ROOM, PROJO_VOICE, PROJO_LEADER_ROLE_ID)
