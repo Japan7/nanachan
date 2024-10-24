@@ -160,7 +160,7 @@ class Embed(discord.Embed):
             else:
                 colour = color
 
-        super().__init__(title=title, description=description, colour=colour, **kwargs)
+        super().__init__(title=title, url=url, description=description, colour=colour, **kwargs)
 
     def set_author(self, *args, **kwargs):
         kwargs = {k: v for k, v in kwargs.items()
