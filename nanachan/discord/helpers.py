@@ -3,7 +3,6 @@ from __future__ import annotations
 import abc
 import asyncio
 import datetime
-import itertools
 import logging
 import random
 import re
@@ -48,12 +47,10 @@ from yarl import URL
 
 from nanachan.settings import DEFAULT_COLOUR, PREFIX, WC_CHANNEL
 from nanachan.utils.misc import default_backoff, run_coro, truncate_at
-from nanachan.utils.toolz import interleave
 
 if TYPE_CHECKING:
     from nanachan.discord.bot import Bot
     from nanachan.extensions.easter_eggs import Bananas
-    from nanachan.extensions.embeds import Embeds
     from nanachan.extensions.waicolle import WaifuCollection
 
 
@@ -282,9 +279,6 @@ class UserWebhookContextMixin:
             webhook = ReplyWebhook(webhook, self.message)
             webhook = AttachmentsWebhook(webhook, self.message.attachments)
 
-            if isinstance(self.message, MultiplexingMessage) and self.embedders:
-                webhook = EmbeddersWebhook(webhook, self.embedders)
-
             if self.message.stickers:
                 webhook = StickerWebhook(webhook, self.message.stickers)
 
@@ -313,12 +307,6 @@ class UserWebhookContextMixin:
         return False
 
     @cached_property
-    def embedders(self):
-        embed_cogs = cast('Embeds | None', self.bot.get_cog('Embeds'))
-        if embed_cogs is not None:
-            return embed_cogs.get_embedders(self, *self.message.urls) # type: ignore
-
-    @cached_property
     def waifued(self) -> bool:
         waifu_cog = self.bot.get_cog('WaiColle ~Waifu Collection~')
         waifu_cog = cast('WaifuCollection | None',
@@ -336,12 +324,10 @@ class UserWebhookContextMixin:
         return (not self.author.bot and
                 self.guild is not None and
                 self.message.system_content == self.message.content and
-                any([self.bananased,
-                     self.waifued,
-                     self.embedders is not None]))
+                any([self.bananased, self.waifued]))
 
 
-class MultiplexingContext(commands.Context, UserWebhookContextMixin):  # type: ignore # trust me bro
+class MultiplexingContext(commands.Context[Bot], UserWebhookContextMixin):  # type: ignore # trust me bro
     bot: Bot
     listeners: list[tuple[Callable[[MultiplexingContext], bool],
                           asyncio.Future[MultiplexingContext]]] = []
@@ -841,32 +827,6 @@ class StickerWebhook(WebhookProxy):
                 content = stickers
 
             kwargs['content'] = content
-
-        return await super().send(wait=wait, **kwargs)
-
-
-class EmbeddersWebhook(WebhookProxy):
-    def __init__(
-        self,
-        webhook: Webhook | WebhookProxy,
-        embedders: list[asyncio.Task[list[discord.Embed]]],
-        **kwargs,
-    ):
-        super().__init__(webhook, **kwargs)
-        self.embedders = embedders
-
-    async def send(self, wait: bool = True, **kwargs):
-        if self.embedders:
-            embedders_embeds: list[list[discord.Embed]] = []
-            for embedder in self.embedders:
-                ebs = await embedder
-                embedders_embeds.append(ebs)
-
-            embeds: list[discord.Embed] = list(itertools.islice(interleave(embedders_embeds), 10))
-        else:
-            embeds = []
-
-        kwargs.setdefault('embeds', embeds)
 
         return await super().send(wait=wait, **kwargs)
 
