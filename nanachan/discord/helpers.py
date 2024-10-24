@@ -2,14 +2,25 @@ from __future__ import annotations
 
 import abc
 import asyncio
+import datetime
 import logging
 import random
 import re
 import unicodedata
+from collections.abc import Sequence
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import cached_property, wraps
-from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, TypeVar, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    NotRequired,
+    TypedDict,
+    TypeVar,
+    Unpack,
+    cast,
+)
 
 import discord
 from discord import (
@@ -30,6 +41,7 @@ from discord.ext.commands import BadArgument, Command
 from discord.ext.commands.converter import MemberConverter
 from discord.ext.commands.view import StringView
 from discord.mentions import AllowedMentions
+from discord.types.embed import EmbedType
 from discord.webhook import WebhookMessage as DpyWebhookMessage
 from toolz import interleave, take
 from yarl import URL
@@ -126,32 +138,33 @@ class EmbedField:
     inline: bool = True
 
 
+class EmbedExtraKWArgs(TypedDict):
+     type: NotRequired[EmbedType]
+     timestamp: NotRequired[datetime.datetime | None]
+
+
 class Embed(discord.Embed):
 
-    def __init__(self, title: Optional[str] = None,
-                 description: Optional[str] = None,
-                 colour: Optional[Union[int, discord.Colour]] = None,
-                 color: Optional[Union[int, discord.Colour]] = None,
-                 url: Optional[str] = None,
-                 **kwargs):
+    def __init__(self,
+                 title: str | None = None,
+                 description: str | None = None,
+                 url: str | None = None,
+                 colour: int | discord.Colour | None = None,
+                 color: int | discord.Colour | None = None,
+                 **kwargs: Unpack[EmbedExtraKWArgs]):
         if title:
-            kwargs['title'] = truncate_at(256, title)
+            title = truncate_at(256, title)
 
         if description:
-            kwargs['description'] = truncate_at(2048, description)
+            description = truncate_at(2048, description)
 
         if colour is None:
             if color is None:
-                kwargs['colour'] = Colour.default()
+                colour = Colour.default()
             else:
-                kwargs['colour'] = color
-        else:
-            kwargs['colour'] = colour
+                colour = color
 
-        if url:
-            kwargs['url'] = url
-
-        super().__init__(**kwargs)
+        super().__init__(title=title, description=description, colour=colour, **kwargs)
 
     def set_author(self, *args, **kwargs):
         kwargs = {k: v for k, v in kwargs.items()
@@ -211,7 +224,7 @@ def _get_multiplexing_level(text: str):
             yield from _get_multiplexing_level(text)
 
 
-def get_multiplexing_level(message: Union[discord.Message, str]):
+def get_multiplexing_level(message: discord.Message | str):
     if isinstance(message, str):
         text = message
     else:
@@ -221,7 +234,7 @@ def get_multiplexing_level(message: Union[discord.Message, str]):
         return multiplexing_level[0], multiplexing_level[1][::-1]
 
 
-def strip_multiplexing_chars(text: str, opening: Optional[str], closing: Optional[str]):
+def strip_multiplexing_chars(text: str, opening: str | None, closing: str | None):
     if opening and closing:
         return text[len(opening):-len(closing)]
     else:
@@ -241,7 +254,7 @@ ContextModifier = context_modifier
 
 class UserWebhookContextMixin:
 
-    guild: Optional[Guild]
+    guild: Guild | None
     channel: TextChannel
     author: User
     message: MultiplexingMessage
@@ -543,7 +556,7 @@ class MultiplexingMessage:
 
 class ChannelListener(metaclass=abc.ABCMeta):
 
-    def __init__(self, bot, channel: Union[TextChannel, PrivateChannel]):
+    def __init__(self, bot, channel: TextChannel | PrivateChannel):
         self.bot = bot
         self.channel = channel
         self.bot.register_channel_listener(self.channel.id, self)
@@ -656,9 +669,9 @@ class UserWebhook(WebhookProxy):
 
     def __init__(self,
                  webhook: Webhook | WebhookProxy,
-                 user: Optional[discord.User] = None,
-                 display_name: Optional[str] = None,
-                 display_avatar: Optional[str] = None,
+                 user: discord.User | None = None,
+                 display_name: str | None = None,
+                 display_avatar: str | None = None,
                  **kwargs):
         super().__init__(webhook, **kwargs)
         self.user = user
@@ -739,7 +752,7 @@ class BananasWebhook(WebhookProxy):
 
         return new_message
 
-    async def send(self, wait=True, *, content: Optional[str], **kwargs):
+    async def send(self, wait=True, *, content: str | None, **kwargs):
         if content:
             if multiplexing_level := get_multiplexing_level(content):
                 opening, closing = multiplexing_level
