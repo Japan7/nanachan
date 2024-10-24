@@ -31,7 +31,7 @@ dependencies = [
     "watchgod==0.8.2",
     "backoff==2.2.1",
     "yappi",
-    "redis[hiredis]==5.1.1",
+    "redis[hiredis]==5.2.0",
     "parsedatetime==2.6",
     "yt-dlp[default]==2024.10.22",
     "aiojobs==1.3.0",
