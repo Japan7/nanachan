@@ -2,7 +2,7 @@ import dataclasses
 import json
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, time
 from enum import Enum
 from typing import Any, Literal, TypeGuard
 from uuid import UUID
@@ -215,10 +215,12 @@ class JsonDataclassEncoder(json.JSONEncoder):
     def default(self, o: Any):
         if isinstance(o, BaseModel):
             return o.model_dump(by_alias=True)
-        if isinstance(o, datetime):
+        if isinstance(o, (datetime, date, time)):
             return o.isoformat()
         if dataclasses.is_dataclass(o) and not isinstance(o, type):
             return dataclasses.asdict(o)
+        if isinstance(o, UUID):
+            return str(o)
         return super().default(o)
 
 
