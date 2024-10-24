@@ -3,11 +3,12 @@ import logging
 import random
 import re
 import signal
+from collections.abc import Coroutine, Sequence
 from contextlib import suppress
 from functools import partial
 from operator import itemgetter as get
 from pathlib import Path
-from typing import Any, Coroutine, Optional, Sequence, Type, TypeVar, cast
+from typing import Any, cast
 
 from discord import (
     AllowedMentions,
@@ -88,9 +89,6 @@ def get_command_prefix(bot, message):
     return opening + PREFIX
 
 
-T = TypeVar('T')
-
-
 class Bot(commands.AutoShardedBot):
 
     def __init__(self):
@@ -118,12 +116,12 @@ class Bot(commands.AutoShardedBot):
         self.extension_errors = await load_extensions(self)
         await super().start(token, reconnect=reconnect)
 
-    def get_channel_type(self, channel_id: int, channel_type: Type[T]) -> T | None:
+    def get_channel_type[T](self, channel_id: int, channel_type: type[T]) -> T | None:
         text_channel = self.get_channel(channel_id)
         assert isinstance(text_channel, channel_type)
         return text_channel
 
-    async def fetch_channel_type(self, channel_id: int, channel_type: Type[T]) -> T:
+    async def fetch_channel_type[T](self, channel_id: int, channel_type: type[T]) -> T:
         text_channel = await self.fetch_channel(channel_id)
         assert isinstance(text_channel, channel_type)
         return text_channel
@@ -340,7 +338,7 @@ class Bot(commands.AutoShardedBot):
 
     async def webhook_message(self,
                               ctx: MultiplexingContext,
-                              content: Optional[str] = None,
+                              content: str | None = None,
                               **kwargs) -> MultiplexingContext:
         if content is None:
             content = ctx.message.content
@@ -367,10 +365,6 @@ class Bot(commands.AutoShardedBot):
         assert self.user is not None
         return self.user.id
 
-    @bot_id.setter
-    def bot_id(self, value):
-        self._bot_id = value
-
     def get_anas(self, guild: Guild):
         return guild.get_member(ANAS_ID)
 
@@ -386,7 +380,7 @@ class Bot(commands.AutoShardedBot):
 
         return await channel.create_webhook(name="bananas")
 
-    async def add_cog(self, cog: Optional[commands.Cog], *,
+    async def add_cog(self, cog: commands.Cog | None, *,
                       override: bool = False,
                       guild: Snowflake | None = MISSING,
                       guilds: Sequence[Snowflake] = MISSING):
@@ -395,7 +389,7 @@ class Bot(commands.AutoShardedBot):
                                   guild=guild, guilds=guilds)
             self._cogs[cog.qualified_name.casefold()] = cog
 
-    def get_cog(self, name: str) -> Optional[commands.Cog]:
+    def get_cog(self, name: str) -> commands.Cog | None:
         name = name.casefold()
         if name in self._cogs:
             return self._cogs[name]
@@ -436,7 +430,7 @@ class Bot(commands.AutoShardedBot):
         if listener := self.reaction_listeners.get(payload.message_id, None):
             listener.unregister()
 
-    def get_nana_emoji(self, name: str) -> Optional[Emoji]:
+    def get_nana_emoji(self, name: str) -> Emoji | None:
         if name == 'saladedefruits' and random.random() <= 0.05:
             name = 'slddfrts'
 
