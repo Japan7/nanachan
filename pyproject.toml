@@ -39,8 +39,8 @@ dependencies = [
     "ollama==0.3.3",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pyright==1.1.386",
     "ruff==0.7.1",
     "mahou-py",
