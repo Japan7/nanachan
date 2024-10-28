@@ -941,6 +941,7 @@ class TradeHelper:
         resp = await get_nanapi().waicolle.waicolle_commit_trade(self.id)
         match resp:
             case Error(code=409):
+                await self.release()
                 await interaction.followup.send(
                     f"{self.player_a.mention} {self.player_b.mention}\n"
                     "Trade aborted: resources unavailable"
