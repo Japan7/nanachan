@@ -23,7 +23,7 @@ dependencies = [
     "html2text==2024.2.26",
     # https://github.com/PyYoshi/cChardet/issues/81
     "faust-cchardet==2.1.19",
-    "yarl==1.17.0",
+    "yarl==1.17.1",
     "rich==13.9.3",
     "pydantic==2.9.2",
     "numpy==2.1.2",
