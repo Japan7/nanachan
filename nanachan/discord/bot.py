@@ -38,6 +38,7 @@ from watchgod import awatch
 from watchgod.watcher import Change, PythonWatcher
 
 import nanachan.extensions
+from nanachan.discord.cog import Cog
 from nanachan.discord.help import CustomHelpCommand
 from nanachan.discord.helpers import (
     ChannelListener,
@@ -384,16 +385,25 @@ class Bot(commands.AutoShardedBot):
         return await channel.create_webhook(name="bananas")
 
     @override
-    async def add_cog(self, cog: commands.Cog | None, *,
-                      override: bool = False,
-                      guild: Snowflake | None = MISSING,
-                      guilds: Sequence[Snowflake] = MISSING):
-        if cog is None:
-            log.info("None cog found")
+    async def add_cog(
+        self,
+        cog: commands.Cog,
+        *,
+        override: bool = False,
+        guild: Snowflake | None = MISSING,
+        guilds: Sequence[Snowflake] = MISSING,
+    ):
+        if isinstance(cog, Cog):
+            if cog.__required_settings__ is not None and not cog.__required_settings__:
+                log.warning(
+                    f'{cog.__class__.__name__} is not configured properly and won’t be initialised'
+                )
+                return
         else:
-            await super().add_cog(cog, override=override,
-                                  guild=guild, guilds=guilds)
-            self._cogs[cog.qualified_name.casefold()] = cog
+            log.debug(f"{cog.__class__.__name__} is not an instance of {Cog.__name__}")
+
+        await super().add_cog(cog, override=override, guild=guild, guilds=guilds)
+        self._cogs[cog.qualified_name.casefold()] = cog
 
     @override
     def get_cog(self, name: str) -> commands.Cog | None:

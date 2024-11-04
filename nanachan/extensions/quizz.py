@@ -427,8 +427,7 @@ class LouisQuizz(QuizzBase):
         await self._kininarimasu(message.channel)
 
 
-@RequiresQuizz
-class Quizz(Cog):
+class Quizz(Cog, required_settings=RequiresQuizz):
     """ Ask questions and get hints for quizzes """
     emoji = '🃏'
 

@@ -938,8 +938,7 @@ AMQ_FFMPEG_SPEED_FILTERS = {
 }
 
 
-@RequiresAMQ
-class AMQ(Cog):
+class AMQ(Cog, required_settings=RequiresAMQ):
     """ Play AMQ with {bot_name} """
     emoji = '🎵'
 

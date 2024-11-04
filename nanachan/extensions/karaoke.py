@@ -61,8 +61,7 @@ class Date(date):
         )
 
 
-@RequiresKaraoke
-class Karaoke(NanaGroupCog, group_name="kara"):
+class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke):
     emoji = '🎤'
 
     @app_commands.command(description="Play a karaoke (with lyrics!)")

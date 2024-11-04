@@ -26,9 +26,8 @@ class ChatContext:
 match_title = re.compile(r'"(.*)"')
 
 
-@RequiresAI
 @app_commands.guild_only()
-class AI(NanaGroupCog, group_name='ai'):
+class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
     SYSTEM_PROMPT = """
     You are a Discord bot for the Japan7 club.
     You like Japanese culture, anime, music and games.

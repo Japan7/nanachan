@@ -59,8 +59,9 @@ from nanachan.utils.projection import ProjectionView, get_active_projo, get_proj
 logger = logging.getLogger(__name__)
 
 
-@RequiresProjo
-class ProjectionCog(NanaGroupCog, name="Projection", group_name="projo"):
+class ProjectionCog(
+    NanaGroupCog, name='Projection', group_name='projo', required_settings=RequiresProjo
+):
     """ Suggest, vote and plan anime for upcoming projections """
     emoji = "📽"
 

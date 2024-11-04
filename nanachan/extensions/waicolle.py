@@ -134,8 +134,7 @@ def check_failure_suppress(check: Check) -> Check:
     return wrapper
 
 
-@RequiresWaicolle
-class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
+class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings=RequiresWaicolle):
     """ The best gacha game ever made """
     emoji = WC_EMOJI
 
