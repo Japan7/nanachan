@@ -100,7 +100,6 @@ ROLE_ASSIGNMENT_CHANNEL = 0000
 # Waifu
 VERIFIED_ROLE: None | int = None
 WC_ROLE: None | int = None
-WC_CHANNEL = None
 DROP_RATE = 1000
 GLOBAL_COIN_MULTIPLIER = 1
 WC_WEB = 'https://waicolle.japan7.bde.enseeiht.fr'
@@ -158,7 +157,7 @@ RequiresAMQ = RequiredSettings(AMQ_DEFAULT_SETTINGS, AMQ_ROOM_PASSWORD,
                                AMQ_ROOM)
 RequiresKaraoke = RequiredSettings(KARA_BASE)
 RequiresRoleAssignment = RequiredSettings(ROLE_ASSIGNMENT_CHANNEL)
-RequiresWaicolle = RequiredSettings(WC_ROLE, WC_CHANNEL)
+RequiresWaicolle = RequiredSettings(WC_ROLE)
 RequiresProjo = RequiredSettings(PROJO_THREADS_ROOM, PROJO_ROOM, PROJO_VOICE, PROJO_LEADER_ROLE_ID)
 RequiresQuizz = RequiredSettings(
     ANIME_QUIZZ_CHANNEL, MANGA_QUIZZ_CHANNEL, LOUIS_QUIZZ_CHANNEL)

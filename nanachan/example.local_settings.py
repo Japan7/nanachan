@@ -83,7 +83,6 @@ BOT_VOICE_ID = 0000
 # Waifu
 #VERIFIED_ROLE = 0000
 #WC_ROLE = 0000
-#WC_CHANNEL = 0000
 #DROP_RATE = 1000
 #GLOBAL_COIN_MULTIPLIER = 1
 #WC_WEB = 'https://waicolle.japan7.bde.enseeiht.fr'
