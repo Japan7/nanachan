@@ -1039,29 +1039,68 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         async with self.trade_lock_context(ctx.author, other_member):
             await ctx.reply(f"Trading with **{other_member}**...")
 
-            resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0)
-            if not success(resp1):
-                match resp1.code:
+            async with asyncio.TaskGroup() as tg:
+                other_track_unlocked_task = tg.create_task(
+                    get_nanapi().waicolle.waicolle_get_player_track_unlocked(
+                        discord_id=other_member.id,
+                        hide_singles=0
+                    )
+                )
+                player_track_unlocked_task = tg.create_task(
+                    get_nanapi().waicolle.waicolle_get_player_track_unlocked(
+                        discord_id=ctx.author.id,
+                        hide_singles=0
+                    )
+                )
+                player_waifus_task = tg.create_task(get_nanapi().waicolle.waicolle_get_waifus(
+                    discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0))
+                other_waifus_task = tg.create_task(get_nanapi().waicolle.waicolle_get_waifus(
+                    discord_id=other_member.id, locked=0, trade_locked=0, blooded=0))
+
+            player_waifus_resp = await player_waifus_task
+            if not success(player_waifus_resp):
+                match player_waifus_resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{ctx.author}** is not a player "
                             f"{self.bot.get_emoji_str('saladedefruits')}")
                     case _:
-                        raise RuntimeError(resp1.result)
-            player_waifus = resp1.result
+                        raise RuntimeError(player_waifus_resp.result)
+            player_waifus = player_waifus_resp.result
 
-            resp2 = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=other_member.id, locked=0, trade_locked=0, blooded=0)
-            if not success(resp2):
-                match resp2.code:
+            other_waifus_resp = await other_waifus_task
+            if not success(other_waifus_resp):
+                match other_waifus_resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{other_member}** is not a player "
                             f"{self.bot.get_emoji_str('saladedefruits')}")
                     case _:
-                        raise RuntimeError(resp2.result)
-            other_waifus = resp2.result
+                        raise RuntimeError(other_waifus_resp.result)
+            other_waifus = other_waifus_resp.result
+
+            player_track_unlocked_resp = await player_track_unlocked_task
+            if not success(player_track_unlocked_resp):
+                raise RuntimeError(player_track_unlocked_resp.result)
+            tracked_waifus = player_track_unlocked_resp.result
+
+            tracked_waifus_ids = [w.id for w in tracked_waifus]
+            other_waifus = sorted(
+                other_waifus,
+                key=lambda w: (w.id not in tracked_waifus_ids, w.timestamp)
+            )
+
+
+            other_track_unlocked_resp = await other_track_unlocked_task
+            if not success(other_track_unlocked_resp):
+                raise RuntimeError(other_track_unlocked_resp.result)
+            other_track_unlocked_waifus = other_track_unlocked_resp.result
+
+            other_track_unlocked_waifus_ids = [w.id for w in other_track_unlocked_waifus]
+            player_waifus = sorted(
+                player_waifus,
+                key= lambda w: (w.id not in other_track_unlocked_waifus_ids, w.timestamp)
+            )
 
             chousen_player_coro = self.waifus_selector(ctx, player_waifus,
                                                        'give', ctx.author)
