@@ -8,17 +8,20 @@ from contextlib import suppress
 from functools import partial
 from operator import itemgetter as get
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast, override
 
 from discord import (
     AllowedMentions,
+    Client,
     Emoji,
     ForumChannel,
     Guild,
     Intents,
     Interaction,
     Member,
+    Message,
     NotFound,
+    RawReactionActionEvent,
     TextChannel,
     Thread,
     VoiceChannel,
@@ -29,7 +32,7 @@ from discord.abc import MISSING, Snowflake
 from discord.app_commands.errors import AppCommandError
 from discord.errors import IHateThe3SecondsTimeout
 from discord.ext import commands
-from discord.ext.commands import Paginator
+from discord.ext.commands import Context, Paginator
 from discord.ext.commands.errors import ExtensionError, ExtensionNotLoaded
 from watchgod import awatch
 from watchgod.watcher import Change, PythonWatcher
@@ -95,9 +98,9 @@ class Bot(commands.AutoShardedBot):
         intents = Intents.default()
         intents.members = True
         intents.message_content = True
-        self.channel_listeners = {}
-        self.reaction_listeners = {}
-        self._cogs = {}
+        self.channel_listeners: dict[int, set[ChannelListener]] = {}
+        self.reaction_listeners: dict[int, ReactionListener] = {}
+        self._cogs: dict[str, commands.Cog] = {}
         self.commands_ready = asyncio.Event()
 
         super().__init__(command_prefix=get_command_prefix,
@@ -380,15 +383,19 @@ class Bot(commands.AutoShardedBot):
 
         return await channel.create_webhook(name="bananas")
 
+    @override
     async def add_cog(self, cog: commands.Cog | None, *,
                       override: bool = False,
                       guild: Snowflake | None = MISSING,
                       guilds: Sequence[Snowflake] = MISSING):
-        if cog is not None:
+        if cog is None:
+            log.info("None cog found")
+        else:
             await super().add_cog(cog, override=override,
                                   guild=guild, guilds=guilds)
             self._cogs[cog.qualified_name.casefold()] = cog
 
+    @override
     def get_cog(self, name: str) -> commands.Cog | None:
         name = name.casefold()
         if name in self._cogs:
@@ -416,17 +423,19 @@ class Bot(commands.AutoShardedBot):
                 listener.unregister()
             await listener.clear_reactions()
 
-    async def _on_raw_reaction(self, payload, action):
+    async def _on_raw_reaction(
+        self, payload: RawReactionActionEvent, action: Literal['add', 'remove']
+    ):
         if reaction_listener := self.reaction_listeners.get(payload.message_id):
             await reaction_listener.on_reaction(payload, action)
 
-    async def on_raw_reaction_add(self, payload):
+    async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
         await self._on_raw_reaction(payload, 'add')
 
-    async def on_raw_reaction_remove(self, payload):
+    async def on_raw_reaction_remove(self, payload: RawReactionActionEvent):
         await self._on_raw_reaction(payload, 'remove')
 
-    async def on_raw_message_delete(self, payload):
+    async def on_raw_message_delete(self, payload: RawReactionActionEvent):
         if listener := self.reaction_listeners.get(payload.message_id, None):
             listener.unregister()
 
@@ -447,15 +456,19 @@ class Bot(commands.AutoShardedBot):
     def get_emojied_str(self, content: str) -> str:
         return EMOJI_REG.sub(lambda m: self.get_emoji_str(m.group(1)), content)
 
-    async def get_context(self,  # type: ignore  # trust me bro
-                          message,
-                          *,
-                          cls=MultiplexingContext) -> MultiplexingContext:
-        return await super().get_context(message, cls=cls)
+    @override
+    async def get_context[T: Context[Bot]](
+        self,
+        message: Message | WebhookMessage | Interaction[Client],
+        *,
+        cls: type[T] = MultiplexingContext,
+    ) -> T:
+        return await super().get_context(message, cls=cls)  # type: ignore
 
-    async def on_message(self, message):
+    @override
+    async def on_message(self, message: Message):
         if listeners := self.channel_listeners.get(message.channel.id):
-            for listener in tuple(listeners):
+            for listener in listeners.copy():
                 try:
                     await listener.on_message(message)
                 except UnregisterListener:
@@ -463,7 +476,7 @@ class Bot(commands.AutoShardedBot):
 
         await super().on_message(message)
 
-    def register_channel_listener(self, channel_id, listener: ChannelListener):
+    def register_channel_listener(self, channel_id: int, listener: ChannelListener):
         self.channel_listeners.setdefault(channel_id, set())
         self.channel_listeners[channel_id].add(listener)
 

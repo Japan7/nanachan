@@ -162,16 +162,6 @@ class Embed(discord.Embed):
 
         super().__init__(title=title, url=url, description=description, colour=colour, **kwargs)
 
-    def set_author(self, *args, **kwargs):
-        kwargs = {k: v for k, v in kwargs.items()
-                  if v is not None}
-        return super().set_author(*args, **kwargs)
-
-    def set_footer(self, *args, **kwargs):
-        kwargs = {k: v for k, v in kwargs.items()
-                  if v is not None}
-        return super().set_footer(*args, **kwargs)
-
 
 fuckin_markdown_star = re.compile(r"(\*+)(?P<clean>[^*\n]*)\1")
 fuckin_markdown_underscore = re.compile(r"(?P<stop>https?://[^\s]*)?(\_+)(?P<clean>[^_\n]*)\2")

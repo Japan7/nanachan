@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import bisect
 import logging
 import math
 import re
@@ -1678,59 +1679,92 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             match resp.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{member}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
+                        f"**{member}** is not a player {self.bot.get_emoji_str('saladedefruits')}"
+                    )
                 case _:
                     raise RuntimeError(resp.result)
         tracks = resp.result
 
-        stats_tasks = []
-        async with asyncio.TaskGroup() as tg:
-            for media in tracks.tracked_medias:
-                stats_tasks.append(tg.create_task(
-                    get_nanapi().waicolle.waicolle_get_player_media_stats(member.id, media.id_al)))
-            for staff in tracks.tracked_staffs:
-                stats_tasks.append(tg.create_task(
-                    get_nanapi().waicolle.waicolle_get_player_staff_stats(member.id, staff.id_al)))
-            for collection in tracks.tracked_collections:
-                stats_tasks.append(tg.create_task(
+        stats_tasks: list[
+            asyncio.Task[
+                Success[
+                    Literal[200],
+                    PlayerMediaStatsResult,
+                ]
+                | Success[
+                    Literal[200],
+                    PlayerStaffStatsResult,
+                ]
+                | Success[
+                    Literal[200],
+                    PlayerCollectionStatsResult,
+                ]
+                | Error[Any, Any]
+            ]
+        ] = []
+
+        for media in tracks.tracked_medias:
+            stats_tasks.append(
+                asyncio.create_task(
+                    get_nanapi().waicolle.waicolle_get_player_media_stats(
+                        member.id, media.id_al
+                    )
+                )
+            )
+        for staff in tracks.tracked_staffs:
+            stats_tasks.append(
+                asyncio.create_task(
+                    get_nanapi().waicolle.waicolle_get_player_staff_stats(
+                        member.id, staff.id_al
+                    )
+                )
+            )
+        for collection in tracks.tracked_collections:
+            stats_tasks.append(
+                asyncio.create_task(
                     get_nanapi().waicolle.waicolle_get_player_collection_stats(
-                        member.id, collection.id)))
-        resps = [await t for t in stats_tasks]
+                        member.id, collection.id
+                    )
+                )
+            )
+        resps = (await t for t in stats_tasks)
 
         elems: list[tuple[float, str]] = []
-        for resp in resps:
-            if not success(resp):
-                raise RuntimeError(resp.result)
-            stat = resp.result
-            sub_lines = []
-            if isinstance(stat, PlayerMediaStatsResult):
-                desc = (f"`[{stat.media.type[0]}-{stat.media.id_al}]` "
-                        f"**{stat.media.title_user_preferred}**")
-            elif isinstance(stat, PlayerStaffStatsResult):
-                name_native = f" ({stat.staff.name_native})" if stat.staff.name_native else ''
-                desc = (f"`[S-{stat.staff.id_al}]` "
-                        f"**{stat.staff.name_user_preferred}{name_native}**")
-            elif isinstance(stat, PlayerCollectionStatsResult):
-                for media in stat.collection.medias:
-                    sub_lines.append(
-                        f"​　　`[{media.type[0]}-{media.id_al}]` {media.title_user_preferred}"
-                    )
-                for staff in stat.collection.staffs:
-                    name_native = f" ({staff.name_native})" if staff.name_native else ''
-                    sub_lines.append(
-                        f"​　　`[S-{staff.id_al}]` {staff.name_user_preferred}{name_native}")
-                desc = f"`[C]` **{stat.collection.name}**"
-            else:
-                raise RuntimeError("How did you get there?")
+        async for resp in resps:
+            sub_lines: list[str] = []
+            match resp:
+                case Success(200, PlayerMediaStatsResult()):
+                    stat = resp.result
+                    desc = (f"`[{stat.media.type[0]}-{stat.media.id_al}]` "
+                            f"**{stat.media.title_user_preferred}**")
+                case Success(200, PlayerStaffStatsResult()):
+                    stat = resp.result
+                    name_native = f" ({stat.staff.name_native})" if stat.staff.name_native else ''
+                    desc = (f"`[S-{stat.staff.id_al}]` "
+                            f"**{stat.staff.name_user_preferred}{name_native}**")
+                case Success(200, PlayerCollectionStatsResult()):
+                    stat = resp.result
 
-            desc, percent = self._format_line(stat.nb_owned,
-                                              stat.nb_charas, desc)
+                    for media in stat.collection.medias:
+                        sub_lines.append(
+                            f'​　　`[{media.type[0]}-{media.id_al}]` {media.title_user_preferred}'
+                        )
+
+                    for staff in stat.collection.staffs:
+                        name_native = f" ({staff.name_native})" if staff.name_native else ''
+                        sub_lines.append(
+                            f"​　　`[S-{staff.id_al}]` {staff.name_user_preferred}{name_native}")
+
+                    desc = f"`[C]` **{stat.collection.name}**"
+                case Error():
+                    raise RuntimeError(resp.result)
+
+            desc, percent = self._format_line(stat.nb_owned, stat.nb_charas, desc)
 
             if len(sub_lines) > 0:
                 desc += '\n' + '\n'.join(sub_lines)
 
-            elems.append((percent, desc))
+            bisect.insort(elems, (percent, desc), key=itemgetter(0))
 
         elems = sorted(elems, key=itemgetter(0), reverse=True)
 
@@ -1744,12 +1778,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~'):
             author_icon_url=member.display_avatar.url)
 
     @staticmethod
-    def _format_line(nb_owned: int, nb_charas: int, *components):
-        components = [*components, f"**{nb_owned}/{nb_charas}** characters"]
+    def _format_line(nb_owned: int, nb_charas: int, *components: str):
+        components = *components, f"**{nb_owned}/{nb_charas}** characters"
         if nb_charas > 0:
             percent = 100 * nb_owned / nb_charas
             completion = f"**{percent:.2f}%** completed"
-            components.append(completion)
+            components = *components, completion
         else:
             percent = 0
         return " • ".join(components), percent

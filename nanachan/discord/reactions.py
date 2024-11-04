@@ -6,7 +6,7 @@ from collections import OrderedDict
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, Union, cast
 
 import discord
 from discord.abc import PrivateChannel
@@ -131,7 +131,7 @@ class ReactionListener(metaclass=MetaReactionListener):
         if channel_id is not None:
             asyncio.create_task(self.prefetch_message())
 
-        self._done = self.bot.loop.create_future()
+        self._done: asyncio.Future[Any] = self.bot.loop.create_future()
         asyncio.create_task(
             self.bot.register_reaction_listener(self.message_id, self)
         )
@@ -221,7 +221,9 @@ class ReactionListener(metaclass=MetaReactionListener):
 
         return self.message
 
-    async def on_reaction(self, payload, action):
+    async def on_reaction(
+        self, payload: discord.RawReactionActionEvent, action: Literal['add', 'remove']
+    ):
         user = self.bot.get_user(payload.user_id)
         if user is None:
             raise RuntimeError(f"Unknown user {payload.user_id}")

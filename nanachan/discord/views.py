@@ -16,6 +16,7 @@ from typing import (
     Coroutine,
     Iterable,
     Sequence,
+    override,
 )
 
 import discord
@@ -240,7 +241,7 @@ class NavigatorView(BaseView):
     @classmethod
     async def create(cls,
                      bot: Bot,
-                     send_function: Callable,
+                     send_function: Callable[..., Coroutine[Any, Any, Any]],
                      *,
                      pages: list[Any],
                      static_content: str | None = None,
@@ -314,7 +315,7 @@ class AutoNavigatorView(NavigatorView):
         if description is None:
             description = ""
 
-        pages = []
+        pages: list[dict[str, dict[str, Any]]] = []
         for page_desc, page_fields in zip_longest(cls._split_pages(description),
                                                   batched(fields, 24)):
             embed = Embed(title=title, description=page_desc, colour=colour, color=color, url=url)
@@ -328,17 +329,18 @@ class AutoNavigatorView(NavigatorView):
                 for field in page_fields:
                     embed.add_field(**asdict(field))
 
-            page: dict[str, Any] = dict(embed= embed)
+            page: dict[str, Any] = dict(embed=embed)
             if attachments is not None:
                 page['attachments'] = attachments
             pages.append(page)
 
         return pages
 
+    @override
     @classmethod
     async def create(cls,
                      bot: Bot,
-                     send_function: Callable,
+                     send_function: Callable[..., Coroutine[Any, Any, Any]],
                      *,
                      static_content: str | None = None,
                      start_at: int = 1,
