@@ -4,10 +4,11 @@ import itertools
 import logging
 import math
 from collections import OrderedDict, defaultdict
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from functools import partial
 from itertools import batched
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID
 
 import discord
@@ -32,6 +33,7 @@ from nanachan.discord.views import (
     RefreshableButton,
     RefreshableSelect,
 )
+from nanachan.nanapi._client import Success
 from nanachan.nanapi.client import Error, get_nanapi, success
 from nanachan.nanapi.model import (
     BulkUpdateWaifusBody,
@@ -823,7 +825,13 @@ class TradeHelper:
         assert player is not None
         return player
 
-    async def send(self, replyable):
+    async def send(
+        self,
+        replyable: Callable[..., Coroutine[Any, Any, Any]],
+    ):
+        """
+        Sends a trade message with the replyable function.
+        """
         desc = ''
         tot_ids_al = []
         for user, (waifus, moecoins, blood_shards) in zip(
@@ -909,30 +917,25 @@ class TradeHelper:
             author_name=str(self.player_a),
             author_icon_url=self.player_a.display_avatar.url,
             thumbnail_url=thumbnail_url,
-            footer_text=f"ID {self.id}",  # NOTE:used by the refresh_trade message command
-            trade=self)
-
-        await offer.pin()
+            footer_text=f'ID {self.id}',
+            trade=self,
+        )
 
     async def refresh(self, message: discord.Message):
         # TODO: should be a TradeOfferView
         trade_view = TradeConfirmationView(self.bot, trade=self)
         await message.edit(view=trade_view)
-        if not message.pinned:
-            await message.pin()
 
     async def unregister(self, interaction: discord.Interaction):
         await interaction.response.defer()
         assert interaction.message is not None
         await interaction.message.edit(view=None)
-        await interaction.message.unpin()
 
     async def abort(self, interaction: discord.Interaction):
         try:
+            content = f'{self.player_a.mention} {self.player_b.mention}\nTrade aborted'
             await self.unregister(interaction)
-            await interaction.followup.send(
-                f"{self.player_a.mention} {self.player_b.mention}\n"
-                "Trade aborted")
+            await interaction.followup.send(content)
         finally:
             await self.release()
 
@@ -943,25 +946,25 @@ class TradeHelper:
             case Error(code=409):
                 await self.release()
                 await interaction.followup.send(
-                    f"{self.player_a.mention} {self.player_b.mention}\n"
-                    "Trade aborted: resources unavailable"
+                    f'{self.player_a.mention} {self.player_b.mention}\n'
+                    'Trade aborted: resources unavailable'
                 )
                 return
             case Error():
                 raise RuntimeError(str(resp))
+            case Success():
+                result = resp.result
 
-        result = resp.result
-
-        await self.cog.drop_alert(self.player_a,
-                                  result.waifus_a,
-                                  'Trade',
-                                  interaction.followup,
-                                  spoiler=False)
-        await self.cog.drop_alert(self.player_b,
-                                  result.waifus_b,
-                                  'Trade',
-                                  interaction.followup,
-                                  spoiler=False)
+                await self.cog.drop_alert(self.player_a,
+                                          result.waifus_a,
+                                          'Trade',
+                                          interaction.followup,
+                                          spoiler=False)
+                await self.cog.drop_alert(self.player_b,
+                                          result.waifus_b,
+                                          'Trade',
+                                          interaction.followup,
+                                          spoiler=False)
 
     async def release(self):
         resp = await get_nanapi().waicolle.waicolle_cancel_trade(self.id)

@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 from uuid import UUID
 
 import discord
-from discord import Interaction, app_commands
+from discord import AllowedMentions, Interaction, app_commands
 from discord.app_commands.commands import Check
 from discord.app_commands.tree import ALL_GUILDS
 from discord.enums import ButtonStyle
@@ -185,8 +185,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         trades = resp2.result
         for trade in trades:
             # TODO: should be a TradeOfferView
-            self.bot.add_view(
-                TradeConfirmationView(self.bot, TradeHelper(self, trade)))
+            self.bot.add_view(TradeConfirmationView(self.bot, TradeHelper(self, trade)))
         logger.info("trades ready")
 
     @tasks.loop(hours=24)
@@ -1085,6 +1084,35 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             except Exception:
                 await trade.release()
                 raise
+
+    @slash_waifu.command()
+    async def inbox(
+        self, interaction: Interaction[Bot], member: discord.User | discord.Member | None = None
+    ):
+        await interaction.response.defer()
+        trades_resp = await get_nanapi().waicolle.waicolle_trade_index()
+        match trades_resp:
+            case Error():
+                raise RuntimeError(trades_resp.result)
+            case Success():
+                trades = trades_resp.result
+
+        if member is None:
+            member = interaction.user
+
+        user_trades = [
+            TradeHelper(self, t) for t in trades
+            if t.player_b.user.discord_id == member.id
+        ]
+
+        for trade in user_trades:
+            send = partial(
+                interaction.followup.send,
+                allowed_mentions=AllowedMentions(users=[interaction.user]),
+            )
+            await trade.send(send)
+        if len(user_trades) == 0:
+            await interaction.followup.send(f"No trades for {member}")
 
     @asynccontextmanager
     async def trade_lock_context(
