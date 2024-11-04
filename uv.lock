@@ -666,7 +666,7 @@ dependencies = [
     { name = "watchgod" },
     { name = "yappi" },
     { name = "yarl" },
-    { name = "yt-dlp" },
+    { name = "yt-dlp", extra = ["default"] },
 ]
 
 [package.dev-dependencies]
@@ -703,7 +703,7 @@ requires-dist = [
     { name = "watchgod", specifier = "==0.8.2" },
     { name = "yappi", git = "https://github.com/odrling/yappi.git?rev=c1ea539c831ad0c46f7b0b463025688d7db05c14" },
     { name = "yarl", specifier = "==1.17.1" },
-    { name = "yt-dlp", extras = ["default"], specifier = "==2024.10.22" },
+    { name = "yt-dlp", extras = ["default"], specifier = "==2024.11.4" },
 ]
 
 [package.metadata.requires-dev]
@@ -1322,9 +1322,15 @@ wheels = [
 
 [[package]]
 name = "yt-dlp"
-version = "2024.10.22"
+version = "2024.11.4"
 source = { registry = "https://pypi.org/simple" }
-dependencies = [
+sdist = { url = "https://files.pythonhosted.org/packages/52/50/0014e9099a9dc3dec1da086e5eb5f861984a0512738bd3d3b63cedd82cbb/yt_dlp-2024.11.4.tar.gz", hash = "sha256:ed204c1b61bc563e134447766d1ab343173540799e13ebb953e887ce7dcf6865", size = 2900105 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6e/e4/e45c5067a79780954b905db4a42aa83d7aaefd91e32b18ab91c77600e668/yt_dlp-2024.11.4-py3-none-any.whl", hash = "sha256:589d51ed9f154624a45c1f0ceb3d68d0d1e2031460e8dbc62139be631c20b388", size = 3165645 },
+]
+
+[package.optional-dependencies]
+default = [
     { name = "brotli", marker = "implementation_name == 'cpython'" },
     { name = "brotlicffi", marker = "implementation_name != 'cpython'" },
     { name = "certifi" },
@@ -1333,8 +1339,4 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
     { name = "websockets" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/2f/79/acfe1c2bf64ed83e1b465e6550c0f5bc2214ea447a900b102f5ca6e4186e/yt_dlp-2024.10.22.tar.gz", hash = "sha256:47b82a1fd22411b5c95ef2f0a1ae1af4e6dfd736ea99fdb2a0ea41445abc62ba", size = 2885622 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/68/548f9819b41d53561d4f3d39588111cf39993c066b6e5300b4ae118eb2e6/yt_dlp-2024.10.22-py3-none-any.whl", hash = "sha256:ba166602ebe22a220e4dc1ead45bf00eb469ed812b22f4fb8bb54734f9b02084", size = 3155189 },
 ]
