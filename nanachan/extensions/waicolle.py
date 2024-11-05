@@ -1031,11 +1031,21 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     @slash_waifu.command()
     @legacy_command()
-    async def trade(self, ctx: LegacyCommandContext, other_member: discord.User):
+    async def trade(
+        self,
+        ctx: LegacyCommandContext,
+        other_member: discord.User,
+        hide_singles: bool=True
+    ):
         """Trade your characters with other players"""
-        return await self._trade(ctx, other_member)
+        return await self._trade(ctx, other_member, 1 if hide_singles else 0)
 
-    async def _trade(self, ctx: LegacyCommandContext, other_member: discord.User | discord.Member):
+    async def _trade(
+        self,
+        ctx: LegacyCommandContext,
+        other_member: discord.User | discord.Member,
+        hide_singles: Literal[1, 0]=1,
+    ):
         async with self.trade_lock_context(ctx.author, other_member):
             await ctx.reply(f"Trading with **{other_member}**...")
 
@@ -1043,13 +1053,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 other_track_unlocked_task = tg.create_task(
                     get_nanapi().waicolle.waicolle_get_player_track_unlocked(
                         discord_id=other_member.id,
-                        hide_singles=0
+                        hide_singles=hide_singles
                     )
                 )
                 player_track_unlocked_task = tg.create_task(
                     get_nanapi().waicolle.waicolle_get_player_track_unlocked(
                         discord_id=ctx.author.id,
-                        hide_singles=0
+                        hide_singles=hide_singles
                     )
                 )
                 player_waifus_task = tg.create_task(get_nanapi().waicolle.waicolle_get_waifus(
