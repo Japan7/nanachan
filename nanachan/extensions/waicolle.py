@@ -3,7 +3,6 @@ import base64
 import bisect
 import logging
 import math
-import re
 from collections import OrderedDict, defaultdict
 from collections.abc import Coroutine, Iterable
 from contextlib import asynccontextmanager, suppress
@@ -2455,42 +2454,7 @@ def user_menu_trade(cog: WaifuCollection):
     return user_trade
 
 
-def message_refresh_trade(cog: WaifuCollection):
-    id_parser = re.compile("ID ([0-9a-f-]+)", re.IGNORECASE)
-
-    @app_commands.context_menu(name='Refresh trade')
-    @app_commands.guild_only()
-    @handle_command_errors
-    async def refresh_trade(interaction: discord.Interaction,
-                            message: discord.Message):
-        assert message.embeds
-        assert message.embeds[0].footer.text is not None
-        id_str = id_parser.match(message.embeds[0].footer.text)
-        if id_str is None:
-            await interaction.response.send_message("No ID found")
-            return
-        trade_uuid = UUID(id_str.group(1))
-        await interaction.response.defer()
-
-        resp = await get_nanapi().waicolle.waicolle_trade_index()
-        if not success(resp):
-            raise RuntimeError(resp.result)
-
-        trades = resp.result
-        for trade_data in trades:
-            if trade_data.id == trade_uuid:
-                trade = TradeHelper(cog, trade_data)
-                await trade.refresh(message)
-                await interaction.followup.send(f"Refreshed message {message.id}")
-                return
-
-        await interaction.followup.send(f"Could not find trade {trade_uuid}")
-
-    return refresh_trade
-
-
 async def setup(bot: Bot):
     cog = WaifuCollection(bot)
     await bot.add_cog(cog)
     bot.tree.add_command(user_menu_trade(cog))
-    bot.tree.add_command(message_refresh_trade(cog))

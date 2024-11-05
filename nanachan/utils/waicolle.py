@@ -921,11 +921,6 @@ class TradeHelper:
             trade=self,
         )
 
-    async def refresh(self, message: discord.Message):
-        # TODO: should be a TradeOfferView
-        trade_view = TradeConfirmationView(self.bot, trade=self)
-        await message.edit(view=trade_view)
-
     async def unregister(self, interaction: discord.Interaction):
         await interaction.response.defer()
         assert interaction.message is not None
