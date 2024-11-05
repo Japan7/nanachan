@@ -1127,6 +1127,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def inbox(
         self, interaction: Interaction[Bot], member: discord.User | discord.Member | None = None
     ):
+        """Find out if you have trades from last year"""
         await interaction.response.defer()
         trades_resp = await get_nanapi().waicolle.waicolle_trade_index()
         match trades_resp:
