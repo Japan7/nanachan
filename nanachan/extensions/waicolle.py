@@ -1087,9 +1087,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             tracked_waifus_ids = [w.id for w in tracked_waifus]
             other_waifus = sorted(
                 other_waifus,
-                key=lambda w: (w.id not in tracked_waifus_ids, w.timestamp)
+                key=lambda w: (w.id not in tracked_waifus_ids, -w.timestamp)
             )
-
 
             other_track_unlocked_resp = await other_track_unlocked_task
             if not success(other_track_unlocked_resp):
@@ -1099,7 +1098,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             other_track_unlocked_waifus_ids = [w.id for w in other_track_unlocked_waifus]
             player_waifus = sorted(
                 player_waifus,
-                key= lambda w: (w.id not in other_track_unlocked_waifus_ids, w.timestamp)
+                key= lambda w: (w.id not in other_track_unlocked_waifus_ids, -w.timestamp)
             )
 
             chousen_player_coro = self.waifus_selector(ctx, player_waifus,
