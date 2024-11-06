@@ -720,24 +720,36 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     @slash_waifu_global.command()
     @legacy_command()
-    async def lock(self, ctx: LegacyCommandContext):
+    async def lock(self, ctx: LegacyCommandContext, prioritize_singles: bool=False):
         """Lock your characters to avoid accidentally killing them"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
                 f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
 
         async with self.trade_lock[ctx.author.id]:
-            resp = await get_nanapi().waicolle.waicolle_get_waifus(
+            owned_waifus_resp = await get_nanapi().waicolle.waicolle_get_waifus(
                 discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0)
-            if not success(resp):
-                match resp.code:
+            if not success(owned_waifus_resp):
+                match owned_waifus_resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{ctx.author}** is not a player "
                             f"{self.bot.get_emoji_str('saladedefruits')}")
                     case _:
-                        raise RuntimeError(resp.result)
-            waifus = resp.result
+                        raise RuntimeError(owned_waifus_resp.result)
+            waifus = owned_waifus_resp.result
+
+            tracked_waifus_resp = await get_nanapi().waicolle.waicolle_get_player_track_unlocked(
+                discord_id=ctx.author.id, hide_singles=0 if prioritize_singles else 1,
+            )
+            if not success(tracked_waifus_resp):
+                raise RuntimeError(tracked_waifus_resp.result)
+            tracked_waifus_ids = [w.id for w in tracked_waifus_resp.result]
+
+            waifus = sorted(
+                waifus,
+                key=lambda w: (w.id not in tracked_waifus_ids, -w.timestamp.timestamp())
+            )
 
             notice = await ctx.reply('Locking characters...')
 
@@ -746,10 +758,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             nb = len(selected)
             if nb > 0:
                 ids_str = ','.join(str(w.id) for w in selected)
-                resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
+                update_resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
                     ids_str, BulkUpdateWaifusBody(locked=True))
-                if not success(resp):
-                    raise RuntimeError(resp.result)
+                if not success(update_resp):
+                    raise RuntimeError(update_resp.result)
 
             await notice.edit(
                 content=f"**{nb}** character{'s' if nb > 1 else ''} locked.")
