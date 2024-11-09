@@ -67,7 +67,6 @@ from nanachan.settings import (
     GLOBAL_COIN_MULTIPLIER,
     NANAPI_PUBLIC_URL,
     TZ,
-    VERIFIED_ROLE,
     WC_ROLE,
     WC_WEB,
     RequiresWaicolle,
@@ -2425,7 +2424,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                         raise RuntimeError(resp.result)
 
         try:
-            for role_id in (VERIFIED_ROLE, WC_ROLE):
+            for role_id in (WC_ROLE,):
                 if (role_id is None) or ((role := ctx.guild.get_role(role_id)) is None):
                     continue
                 perms = ctx.channel.permissions_for(role)

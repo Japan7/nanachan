@@ -1,4 +1,3 @@
-# Extensions
 from pathlib import Path
 from typing import Sequence
 from zoneinfo import ZoneInfo
@@ -6,19 +5,48 @@ from zoneinfo import ZoneInfo
 from aiohttp import BasicAuth
 from discord.utils import utcnow
 
-NANAPI_URL = 'https://nanapi.japan7.bde.enseeiht.fr/prod'
-NANAPI_PUBLIC_URL = NANAPI_URL
+LOG_LEVEL = 'INFO'
+DEBUG = True
+ERROR_WEBHOOK = None
+TADAIMA = False
 
+## Bot
+# TOKEN = ''
+PREFIX = '7'
+SLASH_PREFIX = ''
+# BOT_ROOM_ID = 0000
+# BOT_VOICE_ID = 0000
+TZ = ZoneInfo('Europe/Paris')
+DEFAULT_COLOUR = 0xE91E63
 DISABLED_EXTENSIONS = set('snowflake')
 
+## Nanapi
+NANAPI_URL = 'https://nanapi.japan7.bde.enseeiht.fr/prod'
+NANAPI_PUBLIC_URL = NANAPI_URL
 JAPAN7_AUTH: BasicAuth | None = None
+# NANAPI_CLIENT_USERNAME = ''
+# NANAPI_CLIENT_PASSWORD = ''
 
-# Karaoke
-IGNORED_TIMERS = ['Toyunda Epitanime', '???',
-                  'Extérieur', 'Joysound Exporter Japan7', 'Pititi-N']
-KARA_BASE: str | None = None
+## Redis
+REDIS_HOST = None
+REDIS_PORT = 6379
+REDIS_KWARGS = {}
 
-# YoutubeDL
+## Roles
+ANAS_ID = 0000
+BUREAU_ROLE_ID = 0000
+YEAR_ROLES: Sequence[int] = tuple()
+
+## Welcome messages
+WELCOME_MSG = ':relaxed: いらっしゃいませ {member}〜〜！ :relaxed:'
+WELCOME_BOT = 'びーぷ！びぷぶぷ？'
+FAREWELL_MSG = 'ばいばい {member}〜〜！'
+
+## Easter eggs
+WASABI_FREQUENCY = 250
+WASABI_RANGE = 50
+
+## Audio
 YOUTUBE_DL_CONFIG = {
     'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
@@ -30,50 +58,16 @@ YOUTUBE_DL_CONFIG = {
     'no_warnings': True,
     'default_search': 'ytsearch5',
 }
-
-# Redis
-REDIS_HOST = None
-REDIS_PORT = 6379
-REDIS_KWARGS = {}
-
-# Debug
-DEBUG = True
-TADAIMA = False
-ERROR_WEBHOOK = None
-
-# Logging
-LOG_LEVEL = 'INFO'
-
-# Sound
 OPUS_LIB_LOCATION = None
 for p in ('/usr/lib/libopus.so.0', '/usr/lib64/libopus.so.0'):
     if Path(p).exists():
         OPUS_LIB_LOCATION = p
 
-# Colour
-DEFAULT_COLOUR = 0xe91e63
+## Karaoke
+IGNORED_TIMERS = ['Toyunda Epitanime', '???', 'Extérieur', 'Joysound Exporter Japan7', 'Pititi-N']
+KARA_BASE: str | None = None
 
-# Anas
-ANAS_ID = 0000
-
-# Bot
-PREFIX = '7'
-SLASH_PREFIX = ''
-TZ = ZoneInfo('Europe/Paris')
-
-# Welcome messages
-WELCOME_MSG = ":relaxed: いらっしゃいませ {member}〜〜！ :relaxed:"
-WELCOME_BOT = "びーぷ！びぷぶぷ？"
-FAREWELL_MSG = "ばいばい {member}〜〜！"
-
-# Easter eggs
-WASABI_FREQUENCY = 250
-WASABI_RANGE = 50
-
-# Anime
-DELETE_ENTRY_IF_CLEANING_ERROR = False
-
-# AMQ
+## AMQ
 AMQ_USERNAME: str | None = None
 AMQ_PASSWORD: str | None = None
 AMQ_ROOM_NAME: str | None = None
@@ -81,45 +75,34 @@ AMQ_ROOM_PASSWORD: str | None = None
 AMQ_DEFAULT_SETTINGS: str | None = None
 AMQ_ROOM = 0000
 
-# Projection
+## Projection
 PROJO_ROOM = 0000
 PROJO_VOICE = 0000
 PROJO_THREADS_ROOM = 0000
 PROJO_LEADER_ROLE_ID = 0000
 
-# SauceNAO
-SAUCENAO_API_KEY = None
+## Quizz
+ANIME_QUIZZ_CHANNEL = 0000
+MANGA_QUIZZ_CHANNEL = 0000
+LOUIS_QUIZZ_CHANNEL = 0000
 
-# AniList
-LOW_PRIORITY_THRESH = 30
-AL_CACHE_EXPIRE = 3600 * 24
-
-# Role assignment
-ROLE_ASSIGNMENT_CHANNEL = 0000
-
-# Waifu
-VERIFIED_ROLE: None | int = None
+## WaiColle
 WC_ROLE: None | int = None
 DROP_RATE = 1000
 GLOBAL_COIN_MULTIPLIER = 1
 WC_WEB = 'https://waicolle.japan7.bde.enseeiht.fr'
 
-# Quizz
-ANIME_QUIZZ_CHANNEL = 0000
-MANGA_QUIZZ_CHANNEL = 0000
-LOUIS_QUIZZ_CHANNEL = 0000
-
-# Churros
-CHURROS_TOKEN = None
-CHURROS_REFRESH_INTERVAL = 15     # in minutes
-
-# ollama
+## Ollama
 OLLAMA_HOST = ''
 OLLAMA_MODEL = ''
 
-# producer
-PRODUCER_UPLOAD_ENDPOINT = "https://producer.japan7.bde.enseeiht.fr"
-PRODUCER_TOKEN = ""
+## SauceNAO
+SAUCENAO_API_KEY = None
+
+## Producer
+PRODUCER_UPLOAD_ENDPOINT = 'https://producer.japan7.bde.enseeiht.fr'
+PRODUCER_TOKEN = ''
+
 
 _spamers = {}
 _start_time = utcnow()
@@ -138,11 +121,6 @@ async def is_spam(ctx) -> bool:
 
     return spam
 
-# Year roles
-YEAR_ROLES: Sequence[int] = tuple()
-
-# Bureau
-BUREAU_ROLE_ID = 0000
 
 # Local settings
 try:
@@ -152,14 +130,11 @@ except ImportError:
 
 from nanachan.utils.settings import RequiredSettings  # noqa: E402
 
-RequiresAMQ = RequiredSettings(AMQ_DEFAULT_SETTINGS, AMQ_ROOM_PASSWORD,
-                               AMQ_ROOM_NAME, AMQ_PASSWORD, AMQ_USERNAME,
-                               AMQ_ROOM)
 RequiresKaraoke = RequiredSettings(KARA_BASE)
-RequiresRoleAssignment = RequiredSettings(ROLE_ASSIGNMENT_CHANNEL)
-RequiresWaicolle = RequiredSettings(WC_ROLE)
+RequiresAMQ = RequiredSettings(
+    AMQ_DEFAULT_SETTINGS, AMQ_ROOM_PASSWORD, AMQ_ROOM_NAME, AMQ_PASSWORD, AMQ_USERNAME, AMQ_ROOM
+)
 RequiresProjo = RequiredSettings(PROJO_THREADS_ROOM, PROJO_ROOM, PROJO_VOICE, PROJO_LEADER_ROLE_ID)
-RequiresQuizz = RequiredSettings(
-    ANIME_QUIZZ_CHANNEL, MANGA_QUIZZ_CHANNEL, LOUIS_QUIZZ_CHANNEL)
-RequiresChurros = RequiredSettings(CHURROS_TOKEN)
+RequiresQuizz = RequiredSettings(ANIME_QUIZZ_CHANNEL, MANGA_QUIZZ_CHANNEL, LOUIS_QUIZZ_CHANNEL)
+RequiresWaicolle = RequiredSettings(WC_ROLE)
 RequiresAI = RequiredSettings(OLLAMA_HOST, OLLAMA_MODEL)
