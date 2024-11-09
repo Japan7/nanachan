@@ -20,7 +20,7 @@ TZ = ZoneInfo('Europe/Paris')
 DEFAULT_COLOUR = 0xE91E63
 DISABLED_EXTENSIONS = set('snowflake')
 
-## Nanapi
+## nanapi
 NANAPI_URL = 'https://nanapi.japan7.bde.enseeiht.fr/prod'
 NANAPI_PUBLIC_URL = NANAPI_URL
 JAPAN7_AUTH: BasicAuth | None = None

@@ -87,7 +87,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "nanachan/changelog.py" = ["E501"]
-"nanachan/nanapi/model.py" = ["E501"]
+"nanachan/*local_settings.py" = ["E501"]
 
 [tool.ruff.format]
 quote-style = "single"
