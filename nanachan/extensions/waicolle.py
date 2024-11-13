@@ -1488,28 +1488,27 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             member = ctx.author
 
         filter_formatted = cast(
-            Literal["FULL", "LOCKED", "UNLOCKED",
-                    "ASCENDED", "EDGED", "CUSTOM"],
-            filter.value.upper())
-        resp = await get_nanapi().waicolle.waicolle_get_player_collage(
-            member.id, filter_formatted)
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError(
-                        f"**{member}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
-                case _:
-                    raise RuntimeError(resp.result)
-        collage = resp.result
+            Literal['FULL', 'LOCKED', 'UNLOCKED', 'ASCENDED', 'EDGED', 'CUSTOM'],
+            filter.value.upper(),
+        )
+
+        resp = await get_nanapi().waicolle.waicolle_get_player_collage(member.id, filter_formatted)
+        match resp:
+            case Error(404):
+                raise commands.CommandError(
+                    f"**{member}** is not a player {self.bot.get_emoji_str('saladedefruits')}"
+                )
+            case Error():
+                raise RuntimeError(resp.result)
+            case Success():
+                collage = resp.result
 
         if collage.url is None:
             raise commands.CommandError(
-                f"**{member}** has no character "
-                f"{self.bot.get_emoji_str('saladedefruits')}")
+                f"**{member}** has no character {self.bot.get_emoji_str('saladedefruits')}"
+            )
 
-        embed = Embed(title=f"{filter.value.capitalize()} collage",
-                      color=WC_COLOR)
+        embed = Embed(title=f'{filter.value.capitalize()} collage', color=WC_COLOR)
         embed.set_image(url=collage.url)
         embed.set_author(name=member, icon_url=member.display_avatar.url)
         embed.set_footer(text=f"{collage.total} characters")
