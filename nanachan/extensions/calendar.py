@@ -91,7 +91,7 @@ class Calendar_Generator(Cog, name='Calendar'):
             if projo:
                 url = URL(NANALOOK_URL) / str(projo.id)
                 await interaction.response.send_message(
-                    content=f'[nanalook link]({url}) for **📽️ {projo.name}**'
+                    content=f'[nanalook link](<{url}>) for **📽️ {projo.name}**'
                 )
                 return
             thread_members = await interaction.channel.fetch_members()
@@ -107,7 +107,7 @@ class Calendar_Generator(Cog, name='Calendar'):
         members = [u for u in users if u and not u.bot]
         url = url.with_query(users=','.join(str(m.id) for m in members))
         await interaction.response.send_message(
-            content=f'[nanalook link]({url}) for {interaction.channel.mention}'
+            content=f'[nanalook link](<{url}>) for {interaction.channel.mention}'
         )
 
     @Cog.listener()
