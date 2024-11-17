@@ -92,6 +92,9 @@ DROP_RATE = 1000
 GLOBAL_COIN_MULTIPLIER = 1
 WC_WEB = 'https://waicolle.japan7.bde.enseeiht.fr'
 
+## Calendar
+NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
+
 ## Ollama
 OLLAMA_HOST = ''
 OLLAMA_MODEL = ''

@@ -5,6 +5,7 @@ from datetime import datetime
 
 import discord.utils
 from discord import EventStatus, Forbidden, Interaction, Member, ScheduledEvent, User, VoiceState
+from discord.ext import commands
 from yarl import URL
 
 from nanachan.discord.application_commands import nana_command
@@ -14,8 +15,9 @@ from nanachan.discord.helpers import MultiplexingContext
 from nanachan.extensions.projection import ProjectionCog
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import ParticipantAddBody, UpsertUserCalendarBody
-from nanachan.settings import NANAPI_CLIENT_USERNAME, NANAPI_PUBLIC_URL, TZ
+from nanachan.settings import NANALOOK_URL, NANAPI_CLIENT_USERNAME, NANAPI_PUBLIC_URL, TZ
 from nanachan.utils.calendar import reconcile_participants, upsert_event
+from nanachan.utils.projection import get_active_projo
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +83,32 @@ class Calendar_Generator(Cog, name='Calendar'):
         url = URL(NANAPI_PUBLIC_URL) / 'calendar' / 'ics'
         url = url.with_query(client=NANAPI_CLIENT_USERNAME, user=interaction.user.id)
         await interaction.response.send_message(content=url, ephemeral=True)
+
+    @nana_command(description='nanalook link')
+    async def nanalook(self, interaction: Interaction):
+        if isinstance(interaction.channel, discord.Thread):
+            projo = await get_active_projo(interaction.channel.id)
+            if projo:
+                url = URL(NANALOOK_URL) / str(projo.id)
+                await interaction.response.send_message(
+                    content=f'[nanalook link]({url}) for **📽️ {projo.name}**'
+                )
+                return
+            thread_members = await interaction.channel.fetch_members()
+            users = [self.bot.get_user(tm.id) for tm in thread_members]
+        elif isinstance(
+            interaction.channel,
+            (discord.VoiceChannel, discord.StageChannel, discord.TextChannel),
+        ):
+            users = interaction.channel.members
+        else:
+            raise commands.CommandError('This command should be used inside a text channel.')
+        url = URL(NANALOOK_URL) / 'custom'
+        members = [u for u in users if u and not u.bot]
+        url = url.with_query(users=','.join(str(m.id) for m in members))
+        await interaction.response.send_message(
+            content=f'[nanalook link]({url}) for {interaction.channel.mention}'
+        )
 
     @Cog.listener()
     async def on_scheduled_event_create(self, event: ScheduledEvent):
