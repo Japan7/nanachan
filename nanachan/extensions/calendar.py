@@ -4,14 +4,23 @@ from contextlib import suppress
 from datetime import datetime
 
 import discord.utils
-from discord import EventStatus, Forbidden, Interaction, Member, ScheduledEvent, User, VoiceState
+from discord import (
+    AllowedMentions,
+    EventStatus,
+    Forbidden,
+    Interaction,
+    Member,
+    ScheduledEvent,
+    User,
+    VoiceState,
+)
 from discord.ext import commands
 from yarl import URL
 
 from nanachan.discord.application_commands import nana_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
-from nanachan.discord.helpers import MultiplexingContext
+from nanachan.discord.helpers import Members, MultiplexingContext
 from nanachan.extensions.projection import ProjectionCog
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import ParticipantAddBody, UpsertUserCalendarBody
@@ -85,29 +94,38 @@ class Calendar_Generator(Cog, name='Calendar'):
         await interaction.response.send_message(content=url, ephemeral=True)
 
     @nana_command(description='nanalook link')
-    async def nanalook(self, interaction: Interaction):
-        if isinstance(interaction.channel, discord.Thread):
-            projo = await get_active_projo(interaction.channel.id)
-            if projo:
-                url = URL(NANALOOK_URL) / str(projo.id)
-                await interaction.response.send_message(
-                    content=f'[nanalook link](<{url}>) for **📽️ {projo.name}**'
-                )
-                return
-            thread_members = await interaction.channel.fetch_members()
-            users = [self.bot.get_user(tm.id) for tm in thread_members]
-        elif isinstance(
-            interaction.channel,
-            (discord.VoiceChannel, discord.StageChannel, discord.TextChannel),
-        ):
-            users = interaction.channel.members
+    async def nanalook(self, interaction: Interaction, members: Members | None = None):
+        if members:
+            users = set(members)
+            mention = ', '.join(u.mention for u in users)
         else:
-            raise commands.CommandError('This command should be used inside a text channel.')
+            if isinstance(interaction.channel, discord.Thread):
+                projo = await get_active_projo(interaction.channel.id)
+                if projo:
+                    url = URL(NANALOOK_URL) / str(projo.id)
+                    await interaction.response.send_message(
+                        content=f'[nanalook link](<{url}>) for **📽️ {projo.name}**'
+                    )
+                    return
+                thread_members = await interaction.channel.fetch_members()
+                users = [
+                    user
+                    for tm in thread_members
+                    if (user := self.bot.get_user(tm.id)) and not user.bot
+                ]
+            elif isinstance(
+                interaction.channel,
+                (discord.VoiceChannel, discord.StageChannel, discord.TextChannel),
+            ):
+                users = [m for m in interaction.channel.members if not m.bot]
+            else:
+                raise commands.CommandError('This command should be used inside a text channel.')
+            mention = interaction.channel.mention
         url = URL(NANALOOK_URL) / 'custom'
-        members = [u for u in users if u and not u.bot]
-        url = url.with_query(users=','.join(str(m.id) for m in members))
+        url = url.with_query(users=','.join(str(u.id) for u in users))
         await interaction.response.send_message(
-            content=f'[nanalook link](<{url}>) for {interaction.channel.mention}'
+            content=f'[nanalook link](<{url}>) for {mention}',
+            allowed_mentions=AllowedMentions.none(),
         )
 
     @Cog.listener()
