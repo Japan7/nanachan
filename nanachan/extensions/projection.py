@@ -2,7 +2,7 @@ import asyncio
 import logging
 import re
 from contextlib import suppress
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from enum import Enum
 from functools import partial
 from operator import getitem
@@ -20,7 +20,7 @@ from discord import (
 from discord.abc import GuildChannel
 from discord.channel import TextChannel
 from discord.errors import NotFound
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
@@ -82,6 +82,24 @@ class ProjectionCog(
             self.bot.add_view(ProjectionView(self.bot, projo.id))
 
         asyncio.create_task(self.sync_participants(projos))
+
+        self.remind_projo.start()
+
+    @tasks.loop(time=time(hour=9, minute=0, tzinfo=TZ))
+    async def remind_projo(self):
+        now = datetime.now(tz=TZ)
+        resp = await get_nanapi().projection.projection_get_projections(status="ONGOING")
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        projos = resp.result
+        for projo in projos:
+            for event in projo.guild_events:
+                if event.start_time > now and event.start_time <= now + timedelta(hours=24):
+                    thread = self.bot.get_thread(projo.channel_id)
+                    await thread.send(
+                        f"べ、別にあんたのために言うんじゃないわよ。でも、<t:{event.start_time.timestamp():.0f}:R>に上映があるって聞いたわ。気にしないでよね、ばか！"
+                    )
+                    break
 
     async def sync_participants(self, projos: list[ProjoSelectResult]):
         logger.info('Start syncing projo participants')
