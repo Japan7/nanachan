@@ -16,7 +16,7 @@ dependencies = [
     "matplotlib==3.9.2",
     "vobject==0.9.8",
     "python-socketio[asyncio_client]==5.11.4",
-    "aiohttp[speedups]==3.11.2",
+    "aiohttp[speedups]==3.11.3",
     "aiofiles==24.1.0",
     "pysaucenao==1.6.2",
     "Pillow==11.0.0",
