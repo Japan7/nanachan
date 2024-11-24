@@ -96,8 +96,10 @@ class ProjectionCog(
             for event in projo.guild_events:
                 if event.start_time > now and event.start_time <= now + timedelta(hours=24):
                     thread = self.bot.get_thread(projo.channel_id)
+                    event_url = f'https://discord.com/events/{thread.guild.id}/{event.discord_id}'
                     await thread.send(
-                        f"べ、別にあんたのために言うんじゃないわよ。でも、<t:{event.start_time.timestamp():.0f}:R>に上映があるって聞いたわ。気にしないでよね、ばか！"
+                        f'[{event.name}](<{event_url}>) starts '
+                        f'<t:{event.start_time.timestamp():.0f}:R>.'
                     )
                     break
 
