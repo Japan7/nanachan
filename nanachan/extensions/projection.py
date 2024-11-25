@@ -98,8 +98,7 @@ class ProjectionCog(
                     thread = self.bot.get_thread(projo.channel_id)
                     event_url = f'https://discord.com/events/{thread.guild.id}/{event.discord_id}'
                     await thread.send(
-                        f'[{event.name}](<{event_url}>) starts '
-                        f'<t:{event.start_time.timestamp():.0f}:R>.'
+                        f'[Event]({event_url}) starts <t:{event.start_time.timestamp():.0f}:R>.'
                     )
                     break
 
