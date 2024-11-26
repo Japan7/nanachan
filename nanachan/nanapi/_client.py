@@ -1,6 +1,6 @@
 import dataclasses
 import json
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from enum import Enum
@@ -5998,6 +5998,6 @@ class ClientSession(aiohttp.ClientSession):
 
 
 def get_session(
-    server_url: str, *args, json_serialize=default_json_serializer, **kwargs
+    server_url: str, *, json_serialize: Callable[[Any], str] = default_json_serializer, **kwargs
 ) -> ClientSession:
-    return ClientSession(server_url, *args, json_serialize=json_serialize, **kwargs)
+    return ClientSession(server_url, json_serialize=json_serialize, **kwargs)
