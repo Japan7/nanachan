@@ -350,7 +350,7 @@ class RollResultsView(CompositeNavigatorView):
                 player_waifus = resp2.result
 
                 chousen_player_coro = self._waifus_selector(
-                    interaction, player_waifus, 'give', interaction.user
+                    interaction, player_waifus, 'offer', interaction.user
                 )
                 chousen_other_coro = self._waifus_selector(
                     interaction, available, 'receive', self.user
@@ -419,12 +419,12 @@ class TradeConfirmationView(BaseConfirmationView):
         self.trade = trade
 
     async def accept(self, interaction: discord.Interaction):
-        if interaction.user.id == self.trade.player_b.id:
+        if interaction.user.id == self.trade.offeree.id:
             await self.trade.complete(interaction)
 
     async def refuse(self, interaction: discord.Interaction):
-        if interaction.user.id in (self.trade.player_a.id,
-                                   self.trade.player_b.id):
+        if interaction.user.id in (self.trade.author.id,
+                                   self.trade.offeree.id):
             await self.trade.abort(interaction)
 
 
@@ -812,16 +812,14 @@ class TradeHelper:
         return self.cog.bot
 
     @property
-    def player_a(self) -> discord.User:
-        player = self.cog.bot.get_user(
-            self.trade_data.player_a.user.discord_id)
+    def author(self) -> discord.User:
+        player = self.cog.bot.get_user(self.trade_data.author.user.discord_id)
         assert player is not None
         return player
 
     @property
-    def player_b(self) -> discord.User:
-        player = self.cog.bot.get_user(
-            self.trade_data.player_b.user.discord_id)
+    def offeree(self) -> discord.User:
+        player = self.cog.bot.get_user(self.trade_data.offeree.user.discord_id)
         assert player is not None
         return player
 
@@ -834,18 +832,16 @@ class TradeHelper:
         """
         desc = ''
         tot_ids_al = []
-        for user, (waifus, moecoins, blood_shards) in zip(
-            (self.player_a, self.player_b),
-            ((self.trade_data.waifus_a, self.trade_data.moecoins_a,
-              self.trade_data.blood_shards_a),
-             (self.trade_data.waifus_b, self.trade_data.moecoins_b,
-              self.trade_data.blood_shards_b)),
+        for user, (waifus, blood_shards) in zip(
+            (self.author, self.offeree),
+            (
+                (self.trade_data.offered, self.trade_data.blood_shards),
+                (self.trade_data.received, None),
+            ),
         ):
             desc += f"**From {user}**\n"
 
             suppl = ''
-            if moecoins:
-                suppl += f"{moecoins} {self.bot.get_emoji_str('moecoins')}"
             if blood_shards:
                 suppl += f"{blood_shards} :drop_of_blood:"
             if len(waifus) > 0:
@@ -894,8 +890,8 @@ class TradeHelper:
 
             desc += "\n\n"
 
-        content = (f"{self.player_b.mention}\n"
-                   f"**Trade offer from {self.player_a.mention}**\n"
+        content = (f"{self.offeree.mention}\n"
+                   f"**Trade offer from {self.author.mention}**\n"
                    f"You can accept by reacting with "
                    f"{self.bot.get_emoji_str(ConfirmationView.ACCEPT_EMOTE)}")
 
@@ -914,8 +910,8 @@ class TradeHelper:
             title='Trade offer',
             description=desc,
             color=WC_COLOR,
-            author_name=str(self.player_a),
-            author_icon_url=self.player_a.display_avatar.url,
+            author_name=str(self.author),
+            author_icon_url=self.author.display_avatar.url,
             thumbnail_url=thumbnail_url,
             footer_text=f'ID {self.id}',
             trade=self,
@@ -928,7 +924,7 @@ class TradeHelper:
 
     async def abort(self, interaction: discord.Interaction):
         try:
-            content = f'{self.player_a.mention} {self.player_b.mention}\nTrade aborted'
+            content = f'{self.author.mention} {self.offeree.mention}\nTrade aborted'
             await self.unregister(interaction)
             await interaction.followup.send(content)
         finally:
@@ -941,7 +937,7 @@ class TradeHelper:
             case Error(code=409):
                 await self.release()
                 await interaction.followup.send(
-                    f'{self.player_a.mention} {self.player_b.mention}\n'
+                    f'{self.author.mention} {self.offeree.mention}\n'
                     'Trade aborted: resources unavailable'
                 )
                 return
@@ -950,13 +946,13 @@ class TradeHelper:
             case Success():
                 result = resp.result
 
-                await self.cog.drop_alert(self.player_a,
-                                          result.waifus_a,
+                await self.cog.drop_alert(self.author,
+                                          result.received,
                                           'Trade',
                                           interaction.followup,
                                           spoiler=False)
-                await self.cog.drop_alert(self.player_b,
-                                          result.waifus_b,
+                await self.cog.drop_alert(self.offeree,
+                                          result.offered,
                                           'Trade',
                                           interaction.followup,
                                           spoiler=False)
@@ -967,14 +963,14 @@ class TradeHelper:
             raise RuntimeError(resp.result)
 
     @classmethod
-    async def create(cls, cog: 'WaifuCollection',
-                     trade_waifus: OrderedDict[int, list[UUID]]):
-        (player_a_id, player_a_waifus), (player_b_id, player_b_waifus) = trade_waifus.items()
+    async def create(cls, cog: 'WaifuCollection', trade_waifus: OrderedDict[int, list[UUID]]):
+        (author_id, author_waifus), (offeree_id, offeree_waifus) = trade_waifus.items()
         body = NewTradeBody(
-            player_a_discord_id=player_a_id,
-            waifus_a_ids=list(map(str, player_a_waifus)),
-            player_b_discord_id=player_b_id,
-            waifus_b_ids=list(map(str, player_b_waifus)))
+            author_discord_id=author_id,
+            received_ids=list(map(str, offeree_waifus)),
+            offeree_discord_id=offeree_id,
+            offered_ids=list(map(str, author_waifus)),
+        )
         resp = await get_nanapi().waicolle.waicolle_new_trade(body)
         if not success(resp):
             raise RuntimeError(resp.result)
