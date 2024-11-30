@@ -446,8 +446,8 @@ class CollectionRemoveStaffResult(BaseModel):
 
 class CommitTradeResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    waifus_a: list['WaifuSelectResult']
-    waifus_b: list['WaifuSelectResult']
+    received: list['WaifuSelectResult']
+    offered: list['WaifuSelectResult']
 
 
 class CouponDeleteResult(BaseModel):
@@ -765,9 +765,9 @@ class GuildEventDeleteResult(BaseModel):
     description: str | None
     discord_id: int
     id: UUID
-    projection: 'GuildEventDeleteResultProjection | None'
     organizer: 'GuildEventDeleteResultOrganizer'
     participants: list['GuildEventDeleteResultParticipants']
+    projection: 'GuildEventDeleteResultProjection | None'
     client: 'GuildEventDeleteResultClient'
 
 
@@ -818,9 +818,9 @@ class GuildEventMergeResult(BaseModel):
     start_time: datetime
     url: str | None
     client: 'GuildEventMergeResultClient'
+    projection: 'GuildEventMergeResultProjection | None'
     participants: list['GuildEventMergeResultParticipants']
     organizer: 'GuildEventMergeResultOrganizer'
-    projection: 'GuildEventMergeResultProjection | None'
 
 
 class GuildEventMergeResultClient(BaseModel):
@@ -880,9 +880,9 @@ class GuildEventSelectResult(BaseModel):
     start_time: datetime
     url: str | None
     client: 'GuildEventSelectResultClient'
+    projection: 'GuildEventSelectResultProjection | None'
     participants: list['GuildEventSelectResultParticipants']
     organizer: 'GuildEventSelectResultOrganizer'
-    projection: 'GuildEventSelectResultProjection | None'
 
 
 class GuildEventSelectResultClient(BaseModel):
@@ -1082,14 +1082,11 @@ class NewRoleBody(BaseModel):
 
 class NewTradeBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    player_a_discord_id: int
-    waifus_a_ids: list[str]
-    player_b_discord_id: int
-    waifus_b_ids: list[str]
-    moecoins_a: int | None = None
-    blood_shards_a: int | None = None
-    moecoins_b: int | None = None
-    blood_shards_b: int | None = None
+    author_discord_id: int
+    received_ids: list[str]
+    offeree_discord_id: int
+    offered_ids: list[str]
+    blood_shards: int | None = None
 
 
 class ParticipantAddBody(BaseModel):
@@ -1704,136 +1701,137 @@ class TradeDeleteResult(BaseModel):
 
 class TradeSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    author: 'TradeSelectResultAuthor'
+    received: list['TradeSelectResultReceived']
+    offeree: 'TradeSelectResultOfferee'
+    offered: list['TradeSelectResultOffered']
     id: UUID
-    player_a: 'TradeSelectResultPlayerA'
-    waifus_a: list['TradeSelectResultWaifusA']
-    moecoins_a: int
-    blood_shards_a: int
-    player_b: 'TradeSelectResultPlayerB'
-    waifus_b: list['TradeSelectResultWaifusB']
-    moecoins_b: int
-    blood_shards_b: int
+    blood_shards: int
+    completed_at: datetime | None
+    created_at: datetime
 
 
-class TradeSelectResultPlayerA(BaseModel):
+class TradeSelectResultAuthor(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'TradeSelectResultPlayerAUser'
+    user: 'TradeSelectResultAuthorUser'
 
 
-class TradeSelectResultPlayerAUser(BaseModel):
+class TradeSelectResultAuthorUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-class TradeSelectResultPlayerB(BaseModel):
+class TradeSelectResultOffered(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'TradeSelectResultPlayerBUser'
-
-
-class TradeSelectResultPlayerBUser(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
-
-
-class TradeSelectResultWaifusA(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
+    character: 'TradeSelectResultOfferedCharacter'
+    owner: 'TradeSelectResultOfferedOwner'
+    original_owner: 'TradeSelectResultOfferedOriginalOwner | None'
+    custom_position_waifu: 'TradeSelectResultOfferedCustomPositionWaifu | None'
     id: UUID
-    timestamp: datetime
-    level: int
-    locked: bool
-    trade_locked: bool
     blooded: bool
-    nanaed: bool
+    custom_collage: bool
     custom_image: str | None
     custom_name: str | None
-    custom_collage: bool
     custom_position: 'WaicolleCollagePosition'
-    character: 'TradeSelectResultWaifusACharacter'
-    owner: 'TradeSelectResultWaifusAOwner'
-    original_owner: 'TradeSelectResultWaifusAOriginalOwner | None'
-    custom_position_waifu: 'TradeSelectResultWaifusACustomPositionWaifu | None'
+    level: int
+    locked: bool
+    nanaed: bool
+    timestamp: datetime
+    trade_locked: bool
+    disabled: bool
 
 
-class TradeSelectResultWaifusACharacter(BaseModel):
+class TradeSelectResultOfferedCharacter(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-class TradeSelectResultWaifusACustomPositionWaifu(BaseModel):
+class TradeSelectResultOfferedCustomPositionWaifu(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-class TradeSelectResultWaifusAOriginalOwner(BaseModel):
+class TradeSelectResultOfferedOriginalOwner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'TradeSelectResultWaifusAOriginalOwnerUser'
+    user: 'TradeSelectResultOfferedOriginalOwnerUser'
 
 
-class TradeSelectResultWaifusAOriginalOwnerUser(BaseModel):
+class TradeSelectResultOfferedOriginalOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-class TradeSelectResultWaifusAOwner(BaseModel):
+class TradeSelectResultOfferedOwner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'TradeSelectResultWaifusAOwnerUser'
+    user: 'TradeSelectResultOfferedOwnerUser'
 
 
-class TradeSelectResultWaifusAOwnerUser(BaseModel):
+class TradeSelectResultOfferedOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-class TradeSelectResultWaifusB(BaseModel):
+class TradeSelectResultOfferee(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    user: 'TradeSelectResultOffereeUser'
+
+
+class TradeSelectResultOffereeUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    discord_id: int
+    discord_id_str: str
+
+
+class TradeSelectResultReceived(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    character: 'TradeSelectResultReceivedCharacter'
+    owner: 'TradeSelectResultReceivedOwner'
+    original_owner: 'TradeSelectResultReceivedOriginalOwner | None'
+    custom_position_waifu: 'TradeSelectResultReceivedCustomPositionWaifu | None'
     id: UUID
-    timestamp: datetime
-    level: int
-    locked: bool
-    trade_locked: bool
     blooded: bool
-    nanaed: bool
+    custom_collage: bool
     custom_image: str | None
     custom_name: str | None
-    custom_collage: bool
     custom_position: 'WaicolleCollagePosition'
-    character: 'TradeSelectResultWaifusBCharacter'
-    owner: 'TradeSelectResultWaifusBOwner'
-    original_owner: 'TradeSelectResultWaifusBOriginalOwner | None'
-    custom_position_waifu: 'TradeSelectResultWaifusBCustomPositionWaifu | None'
+    level: int
+    locked: bool
+    nanaed: bool
+    timestamp: datetime
+    trade_locked: bool
+    disabled: bool
 
 
-class TradeSelectResultWaifusBCharacter(BaseModel):
+class TradeSelectResultReceivedCharacter(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
 
 
-class TradeSelectResultWaifusBCustomPositionWaifu(BaseModel):
+class TradeSelectResultReceivedCustomPositionWaifu(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
 
-class TradeSelectResultWaifusBOriginalOwner(BaseModel):
+class TradeSelectResultReceivedOriginalOwner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'TradeSelectResultWaifusBOriginalOwnerUser'
+    user: 'TradeSelectResultReceivedOriginalOwnerUser'
 
 
-class TradeSelectResultWaifusBOriginalOwnerUser(BaseModel):
+class TradeSelectResultReceivedOriginalOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str
 
 
-class TradeSelectResultWaifusBOwner(BaseModel):
+class TradeSelectResultReceivedOwner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'TradeSelectResultWaifusBOwnerUser'
+    user: 'TradeSelectResultReceivedOwnerUser'
 
 
-class TradeSelectResultWaifusBOwnerUser(BaseModel):
+class TradeSelectResultReceivedOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_id: int
     discord_id_str: str

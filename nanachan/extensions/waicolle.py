@@ -1164,7 +1164,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         user_trades = [
             TradeHelper(self, t) for t in trades
-            if t.player_b.user.discord_id == member.id
+            if t.offeree.user.discord_id == member.id
         ]
 
         for trade in user_trades:
