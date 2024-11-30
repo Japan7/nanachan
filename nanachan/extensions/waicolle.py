@@ -270,6 +270,26 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                                       'Register',
                                       messageable=interaction.followup)
 
+
+    @slash_waifu_utils.command()
+    @app_commands.check(is_admin_or_bureau)
+    @legacy_command()
+    async def freeze(self, ctx: LegacyCommandContext, member: discord.User):
+        """Freeze player"""
+        resp = await get_nanapi().waicolle.waicolle_freeze_player(member.id)
+        if not success(resp):
+            match resp.code:
+                case 404:
+                    raise commands.CommandError(
+                        f"**{member}** is not a player {self.bot.get_emoji_str('saladedefruits')}"
+                    )
+                case _:
+                    raise RuntimeError(resp.result)
+        await ctx.reply(
+            f'Player {member.mention} frozen',
+            allowed_mentions=discord.AllowedMentions(users=False),
+        )
+
     ############
     # Moecoins #
     ############
