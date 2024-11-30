@@ -1023,6 +1023,12 @@ class NewCouponBody(BaseModel):
     code: str | None = None
 
 
+class NewFrozenAutotradeBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    player_discord_id: int
+    chara_id_al: int
+
+
 class NewGameBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     message_id: int
@@ -1096,10 +1102,12 @@ class ParticipantAddBody(BaseModel):
 
 class PlayerAddCoinsResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    game_mode: 'WaicolleGameMode'
-    moecoins: int
-    blood_shards: int
     user: 'PlayerAddCoinsResultUser'
+    frozen_at: datetime | None
+    moecoins: int
+    game_mode: 'WaicolleGameMode'
+    blood_shards: int
+    id: UUID
 
 
 class PlayerAddCoinsResultUser(BaseModel):
@@ -1202,12 +1210,19 @@ class PlayerCollectionStatsResultCollectionStaffs(BaseModel):
     name_native: str | None
 
 
+class PlayerFreezeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
 class PlayerGetByUserResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    user: 'PlayerGetByUserResultUser'
+    id: UUID
+    blood_shards: int
     game_mode: 'WaicolleGameMode'
     moecoins: int
-    blood_shards: int
-    user: 'PlayerGetByUserResultUser'
+    frozen_at: datetime | None
 
 
 class PlayerGetByUserResultUser(BaseModel):
@@ -1258,10 +1273,12 @@ class PlayerSelectAllResultUser(BaseModel):
 
 class PlayerSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    user: 'PlayerSelectAllResultUser'
+    id: UUID
+    blood_shards: int
     game_mode: 'WaicolleGameMode'
     moecoins: int
-    blood_shards: int
-    user: 'PlayerSelectAllResultUser'
+    frozen_at: datetime | None
 
 
 class PlayerStaffStatsResult(BaseModel):
@@ -1740,6 +1757,7 @@ class TradeSelectResultOffered(BaseModel):
     timestamp: datetime
     trade_locked: bool
     disabled: bool
+    frozen: bool
 
 
 class TradeSelectResultOfferedCharacter(BaseModel):
@@ -1803,6 +1821,7 @@ class TradeSelectResultReceived(BaseModel):
     timestamp: datetime
     trade_locked: bool
     disabled: bool
+    frozen: bool
 
 
 class TradeSelectResultReceivedCharacter(BaseModel):
@@ -1956,21 +1975,23 @@ class ValidationError(BaseModel):
 
 class WaifuBulkUpdateResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    timestamp: datetime
-    level: int
-    locked: bool
-    trade_locked: bool
-    blooded: bool
-    nanaed: bool
-    custom_image: str | None
-    custom_name: str | None
-    custom_collage: bool
-    custom_position: 'WaicolleCollagePosition'
     character: 'WaifuBulkUpdateResultCharacter'
     owner: 'WaifuBulkUpdateResultOwner'
     original_owner: 'WaifuBulkUpdateResultOriginalOwner | None'
     custom_position_waifu: 'WaifuBulkUpdateResultCustomPositionWaifu | None'
+    frozen: bool
+    disabled: bool
+    trade_locked: bool
+    timestamp: datetime
+    nanaed: bool
+    locked: bool
+    level: int
+    custom_position: 'WaicolleCollagePosition'
+    custom_name: str | None
+    custom_image: str | None
+    custom_collage: bool
+    blooded: bool
+    id: UUID
 
 
 class WaifuBulkUpdateResultCharacter(BaseModel):
@@ -2047,21 +2068,23 @@ class WaifuReplaceCustomPositionResult(BaseModel):
 
 class WaifuSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    timestamp: datetime
-    level: int
-    locked: bool
-    trade_locked: bool
-    blooded: bool
-    nanaed: bool
-    custom_image: str | None
-    custom_name: str | None
-    custom_collage: bool
-    custom_position: 'WaicolleCollagePosition'
     character: 'WaifuSelectResultCharacter'
     owner: 'WaifuSelectResultOwner'
     original_owner: 'WaifuSelectResultOriginalOwner | None'
     custom_position_waifu: 'WaifuSelectResultCustomPositionWaifu | None'
+    id: UUID
+    blooded: bool
+    custom_collage: bool
+    custom_image: str | None
+    custom_name: str | None
+    custom_position: 'WaicolleCollagePosition'
+    level: int
+    locked: bool
+    nanaed: bool
+    timestamp: datetime
+    trade_locked: bool
+    disabled: bool
+    frozen: bool
 
 
 class WaifuSelectResultCharacter(BaseModel):

@@ -72,6 +72,7 @@ from .model import (
     NewClientBody,
     NewCollectionBody,
     NewCouponBody,
+    NewFrozenAutotradeBody,
     NewGameBody,
     NewHistoireBody,
     NewOfferingBody,
@@ -87,6 +88,7 @@ from .model import (
     PlayerAddMediaResult,
     PlayerAddStaffResult,
     PlayerCollectionStatsResult,
+    PlayerFreezeResult,
     PlayerGetByUserResult,
     PlayerMediaStatsResult,
     PlayerMergeResult,
@@ -3836,6 +3838,53 @@ class WaicolleModule:
                 headers=resp.headers,
             )
 
+    async def waicolle_freeze_player(
+        self, discord_id: int, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], PlayerFreezeResult]
+        | Error[Literal[404], HTTPExceptionModel]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/waicolle/players/{discord_id}/freeze'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.put(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], PlayerFreezeResult](
+                    code=200, result=PlayerFreezeResult(**(await resp.json()))
+                )
+            if resp.status == 404:
+                return Error[Literal[404], HTTPExceptionModel](
+                    code=404, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
     async def waicolle_add_player_coins(
         self, discord_id: int, body: AddPlayerCoinsBody, client_id: UUID | None = None
     ) -> (
@@ -5230,6 +5279,54 @@ class WaicolleModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         url = f'{self.server_url}/waicolle/trades/offerings'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.post(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 201:
+                return Success[Literal[201], TradeSelectResult](
+                    code=201, result=TradeSelectResult(**(await resp.json()))
+                )
+            if resp.status == 404:
+                return Error[Literal[404], HTTPExceptionModel](
+                    code=404, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def waicolle_new_frozen_autotrade(
+        self, body: NewFrozenAutotradeBody, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[201], TradeSelectResult]
+        | Error[Literal[404], HTTPExceptionModel]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        url = f'{self.server_url}/waicolle/trades/frozen'
         params = {
             'client_id': client_id,
         }
