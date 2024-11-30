@@ -72,9 +72,9 @@ from .model import (
     NewClientBody,
     NewCollectionBody,
     NewCouponBody,
-    NewFrozenAutotradeBody,
     NewGameBody,
     NewHistoireBody,
+    NewLootBody,
     NewOfferingBody,
     NewPresenceBody,
     NewProjectionBody,
@@ -5317,8 +5317,8 @@ class WaicolleModule:
                 headers=resp.headers,
             )
 
-    async def waicolle_new_frozen_autotrade(
-        self, body: NewFrozenAutotradeBody, client_id: UUID | None = None
+    async def waicolle_new_loot(
+        self, body: NewLootBody, client_id: UUID | None = None
     ) -> (
         Success[Literal[201], TradeSelectResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -5326,7 +5326,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        url = f'{self.server_url}/waicolle/trades/frozen'
+        url = f'{self.server_url}/waicolle/trades/loots'
         params = {
             'client_id': client_id,
         }

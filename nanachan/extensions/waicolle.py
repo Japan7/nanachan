@@ -49,7 +49,7 @@ from nanachan.nanapi.model import (
     DonatePlayerCoinsBody,
     NewCollectionBody,
     NewCouponBody,
-    NewFrozenAutotradeBody,
+    NewLootBody,
     NewOfferingBody,
     PlayerCollectionStatsResult,
     PlayerMediaStatsResult,
@@ -993,10 +993,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     @slash_waifu.command()
     @legacy_command()
-    async def steal(self, ctx: LegacyCommandContext, character_id: int):
-        """Steal frozen waifu"""
-        body = NewFrozenAutotradeBody(player_discord_id=ctx.author.id, chara_id_al=character_id)
-        resp = await get_nanapi().waicolle.waicolle_new_frozen_autotrade(body)
+    async def loot(self, ctx: LegacyCommandContext, character_id: int):
+        """Loot frozen waifu"""
+        body = NewLootBody(player_discord_id=ctx.author.id, chara_id_al=character_id)
+        resp = await get_nanapi().waicolle.waicolle_new_loot(body)
         match resp:
             case Error(code=404):
                 raise commands.CommandError('No frozen waifu found.')

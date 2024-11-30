@@ -1023,12 +1023,6 @@ class NewCouponBody(BaseModel):
     code: str | None = None
 
 
-class NewFrozenAutotradeBody(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    player_discord_id: int
-    chara_id_al: int
-
-
 class NewGameBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     message_id: int
@@ -1040,6 +1034,12 @@ class NewHistoireBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     title: str
     text: str
+
+
+class NewLootBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    player_discord_id: int
+    chara_id_al: int
 
 
 class NewOfferingBody(BaseModel):
