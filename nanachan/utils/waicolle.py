@@ -835,8 +835,8 @@ class TradeHelper:
         for user, (waifus, blood_shards) in zip(
             (self.author, self.offeree),
             (
-                (self.trade_data.offered, self.trade_data.blood_shards),
-                (self.trade_data.received, None),
+                (self.trade_data.offered, None),
+                (self.trade_data.received, self.trade_data.blood_shards),
             ),
         ):
             desc += f"**From {user}**\n"
