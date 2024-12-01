@@ -956,7 +956,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     raise RuntimeError(resp.result)
 
             data = resp.result
-            trade = TradeHelper(self, data)
+            trade = TradeHelper(self, data, can_author_accept=True)
             try:
                 await trade.send(ctx.reply)
             except Exception:

@@ -419,12 +419,13 @@ class TradeConfirmationView(BaseConfirmationView):
         self.trade = trade
 
     async def accept(self, interaction: discord.Interaction):
-        if interaction.user.id == self.trade.offeree.id:
+        if (interaction.user.id == self.trade.offeree.id) or (
+            self.trade.can_author_accept and (interaction.user.id == self.trade.author.id)
+        ):
             await self.trade.complete(interaction)
 
     async def refuse(self, interaction: discord.Interaction):
-        if interaction.user.id in (self.trade.author.id,
-                                   self.trade.offeree.id):
+        if interaction.user.id in (self.trade.author.id, self.trade.offeree.id):
             await self.trade.abort(interaction)
 
 
@@ -798,10 +799,15 @@ class RankHelper:
 
 
 class TradeHelper:
-
-    def __init__(self, cog: 'WaifuCollection', trade_data: TradeSelectResult):
+    def __init__(
+        self,
+        cog: 'WaifuCollection',
+        trade_data: TradeSelectResult,
+        can_author_accept: bool = False,
+    ):
         self.cog = cog
         self.trade_data = trade_data
+        self.can_author_accept = can_author_accept
 
     @property
     def id(self) -> UUID:
