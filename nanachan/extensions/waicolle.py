@@ -994,7 +994,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @slash_waifu.command()
     @legacy_command()
     async def loot(self, ctx: LegacyCommandContext, character_id: int):
-        """Loot frozen waifu"""
+        """Loot unlocked frozen waifu"""
         body = NewLootBody(player_discord_id=ctx.author.id, chara_id_al=character_id)
         resp = await get_nanapi().waicolle.waicolle_new_loot(body)
         match resp:
