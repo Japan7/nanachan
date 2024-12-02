@@ -559,9 +559,11 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         raise RuntimeError(resp2.result)
     waifus = resp2.result
 
+    alive_waifus = filter(lambda w: not w.blooded, waifus)
+
     players_waifus = filter(
-        lambda w: all((not w.frozen, w.owner.user.discord_id != bot.bot_id, not w.blooded)),
-        waifus,
+        lambda w: (w.owner.user.discord_id != bot.bot_id) and not w.frozen,
+        alive_waifus,
     )
 
     owners = defaultdict(WaifuOwnership)
@@ -595,12 +597,10 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         if subtext:
             text.append(subtext)
 
-    frozen_waifus = filter(lambda w: w.frozen, waifus)
+    frozen_waifus = filter(lambda w: w.frozen and not w.locked, alive_waifus)
 
     frozen = WaifuOwnershipTypes('🧊')
     for frozen_waifu in frozen_waifus:
-        if frozen_waifu.locked:
-            continue
         if frozen_waifu.level == 0:
             frozen.simple += 1
         if frozen_waifu.level == 1:
@@ -611,10 +611,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     if frozen.count:
         text.append(str(frozen))
 
-    nanaed_waifus = filter(
-        lambda w: (w.owner.user.discord_id == bot.bot_id) and not w.blooded,
-        waifus,
-    )
+    nanaed_waifus = filter(lambda w: w.owner.user.discord_id == bot.bot_id, alive_waifus)
 
     nanaed = WaifuOwnershipTypes('🌈')
     for nanaed_waifu in nanaed_waifus:
@@ -628,7 +625,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     if nanaed.count:
         text.append(str(nanaed))
 
-    blooded_waifus = filter(lambda w: w.blooded, waifus)
+    blooded_waifus = filter(lambda w: w.blooded and not w.frozen, waifus)
 
     blooded = WaifuOwnershipTypes('🩸')
     for blooded_waifu in blooded_waifus:
