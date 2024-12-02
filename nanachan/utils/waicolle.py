@@ -455,7 +455,7 @@ class WaifuOwnershipTypes:
         if self.count == 1 and self.simple == 1:
             return out
 
-        out += "("
+        out += " ("
 
         if self.double_ascended > 1:
             out += f"**{self.double_ascended}**"
@@ -858,14 +858,18 @@ class TradeHelper:
 
     @property
     def author(self) -> discord.User:
-        player = self.cog.bot.get_user(self.trade_data.author.user.discord_id)
-        assert player is not None
+        player = self.bot.get_user(self.trade_data.author.user.discord_id)
+        if player is None:
+            player = self.bot.get_user(self.bot.bot_id)
+            assert player
         return player
 
     @property
     def offeree(self) -> discord.User:
-        player = self.cog.bot.get_user(self.trade_data.offeree.user.discord_id)
-        assert player is not None
+        player = self.bot.get_user(self.trade_data.offeree.user.discord_id)
+        if player is None:
+            player = self.bot.get_user(self.bot.bot_id)
+            assert player
         return player
 
     async def send(
