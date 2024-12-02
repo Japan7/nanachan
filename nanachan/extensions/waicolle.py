@@ -265,6 +265,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     interaction.user.id, nb=10)
                 if not success(resp3):
                     raise RuntimeError(resp3.result)
+                assert resp3.code == 201
                 waifus = resp3.result
                 await self.drop_alert(interaction.user,
                                       waifus,
@@ -461,6 +462,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     )
                 case Error():
                     raise RuntimeError(resp.result)
+                case Success(code=204):
+                    await replyable.send(f'{member} is frozen 🧊')
                 case Success():
                     if coupon_code:
                         await replyable.send(self.bot.get_emoji_str('FubukiGO'))

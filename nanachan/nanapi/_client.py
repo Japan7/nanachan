@@ -4011,6 +4011,7 @@ class WaicolleModule:
         client_id: UUID | None = None,
     ) -> (
         Success[Literal[201], list[WaifuSelectResult]]
+        | Success[Literal[204], None]
         | Error[Literal[400], HTTPExceptionModel]
         | Error[Literal[404], HTTPExceptionModel]
         | Error[Literal[409], HTTPExceptionModel]
@@ -4036,6 +4037,8 @@ class WaicolleModule:
                 return Success[Literal[201], list[WaifuSelectResult]](
                     code=201, result=[WaifuSelectResult(**e) for e in (await resp.json())]
                 )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
             if resp.status == 400:
                 return Error[Literal[400], HTTPExceptionModel](
                     code=400, result=HTTPExceptionModel(**(await resp.json()))
