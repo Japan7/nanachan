@@ -611,7 +611,10 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     if frozen.count:
         text.append(str(frozen))
 
-    nanaed_waifus = filter(lambda w: w.owner.user.discord_id == bot.bot_id, waifus)
+    nanaed_waifus = filter(
+        lambda w: (w.owner.user.discord_id == bot.bot_id) and not w.blooded,
+        waifus,
+    )
 
     nanaed = WaifuOwnershipTypes('🌈')
     for nanaed_waifu in nanaed_waifus:
