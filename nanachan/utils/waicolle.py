@@ -559,11 +559,14 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         raise RuntimeError(resp2.result)
     waifus = resp2.result
 
-    not_blooded = filter(lambda w: not w.blooded, waifus)
+    players_waifus = filter(
+        lambda w: all((not w.frozen, w.owner.user.discord_id != bot.bot_id, not w.blooded)),
+        waifus,
+    )
 
     owners = defaultdict(WaifuOwnership)
 
-    for waifu in not_blooded:
+    for waifu in players_waifus:
         owner = owners[waifu.owner.user.discord_id]
         if waifu.trade_locked:
             ownership = owner.in_trade
@@ -591,6 +594,36 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
 
         if subtext:
             text.append(subtext)
+
+    frozen_waifus = filter(lambda w: w.frozen, waifus)
+
+    frozen = WaifuOwnershipTypes('🧊')
+    for frozen_waifu in frozen_waifus:
+        if frozen_waifu.locked:
+            continue
+        if frozen_waifu.level == 0:
+            frozen.simple += 1
+        if frozen_waifu.level == 1:
+            frozen.ascended += 1
+        if frozen_waifu.level > 1:
+            frozen.double_ascended += 1
+
+    if frozen.count:
+        text.append(str(frozen))
+
+    nanaed_waifus = filter(lambda w: w.owner.user.discord_id == bot.bot_id, waifus)
+
+    nanaed = WaifuOwnershipTypes('🌈')
+    for nanaed_waifu in nanaed_waifus:
+        if nanaed_waifu.level == 0:
+            nanaed.simple += 1
+        if nanaed_waifu.level == 1:
+            nanaed.ascended += 1
+        if nanaed_waifu.level > 1:
+            nanaed.double_ascended += 1
+
+    if nanaed.count:
+        text.append(str(nanaed))
 
     blooded_waifus = filter(lambda w: w.blooded, waifus)
 
@@ -725,6 +758,8 @@ class WaifuTextHelper(WaifuHelper):
         mods = ""
         if self.waifu.trade_locked:
             mods += "🔀"
+        if self.waifu.frozen:
+            mods += '🧊'
         if self.waifu.locked:
             mods += '🔒'
         if self.waifu.level == 1:
@@ -804,10 +839,14 @@ class TradeHelper:
         cog: 'WaifuCollection',
         trade_data: TradeSelectResult,
         can_author_accept: bool = False,
+        author_silent: bool = False,
+        offeree_silent: bool = False,
     ):
         self.cog = cog
         self.trade_data = trade_data
         self.can_author_accept = can_author_accept
+        self.author_silent = author_silent
+        self.offeree_silent = offeree_silent
 
     @property
     def id(self) -> UUID:
@@ -956,12 +995,14 @@ class TradeHelper:
                                           result.received,
                                           'Trade',
                                           interaction.followup,
-                                          spoiler=False)
+                                          spoiler=False,
+                                          silent=self.author_silent)
                 await self.cog.drop_alert(self.offeree,
                                           result.offered,
                                           'Trade',
                                           interaction.followup,
-                                          spoiler=False)
+                                          spoiler=False,
+                                          silent=self.offeree_silent)
 
     async def release(self):
         resp = await get_nanapi().waicolle.waicolle_cancel_trade(self.id)

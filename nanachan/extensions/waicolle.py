@@ -49,6 +49,7 @@ from nanachan.nanapi.model import (
     DonatePlayerCoinsBody,
     NewCollectionBody,
     NewCouponBody,
+    NewLootBody,
     NewOfferingBody,
     PlayerCollectionStatsResult,
     PlayerMediaStatsResult,
@@ -270,6 +271,26 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                                       'Register',
                                       messageable=interaction.followup)
 
+
+    @slash_waifu_utils.command()
+    @app_commands.check(is_admin_or_bureau)
+    @legacy_command()
+    async def freeze(self, ctx: LegacyCommandContext, member: discord.User):
+        """Freeze player"""
+        resp = await get_nanapi().waicolle.waicolle_freeze_player(member.id)
+        if not success(resp):
+            match resp.code:
+                case 404:
+                    raise commands.CommandError(
+                        f"**{member}** is not a player {self.bot.get_emoji_str('saladedefruits')}"
+                    )
+                case _:
+                    raise RuntimeError(resp.result)
+        await ctx.reply(
+            f'Player {member.mention} frozen',
+            allowed_mentions=discord.AllowedMentions(users=False),
+        )
+
     ############
     # Moecoins #
     ############
@@ -452,7 +473,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                          waifus: list[WaifuSelectResult],
                          reason: str,
                          messageable: discord.abc.Messageable | discord.Webhook | None = None,
-                         spoiler: bool = True):
+                         spoiler: bool = True,
+                         silent: bool = False):
         pages = []
         nb = len(waifus)
 
@@ -476,27 +498,35 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                                             title='Summary',
                                             spoiler=spoiler)
 
+        allowed_mentions = discord.AllowedMentions(users=not silent)
+
         async with self.alert_lock:
             if messageable is not None:
-                resp, _ = await NavigatorView.create(self.bot,
-                                                     messageable.send,
-                                                     pages=summary_pages,
-                                                     static_content=content)
+                resp, _ = await NavigatorView.create(
+                    self.bot,
+                    partial(messageable.send, allowed_mentions=allowed_mentions),
+                    pages=summary_pages,
+                    static_content=content,
+                )
             else:
                 bot_room = self.bot.get_bot_room()
-                resp, _ = await NavigatorView.create(self.bot,
-                                                     bot_room.send,
-                                                     pages=summary_pages,
-                                                     static_content=content)
+                resp, _ = await NavigatorView.create(
+                    self.bot,
+                    partial(bot_room.send, allowed_mentions=allowed_mentions),
+                    pages=summary_pages,
+                    static_content=content,
+                )
             if nb > 0:
-                await RollResultsView.create(self.bot,
-                                             resp.reply,
-                                             cog=self,
-                                             user=user,
-                                             waifus=waifus,
-                                             pages=pages,
-                                             static_content=user.mention,
-                                             prefetch_min_batch_size=25)
+                await RollResultsView.create(
+                    self.bot,
+                    partial(resp.reply, allowed_mentions=allowed_mentions),
+                    cog=self,
+                    user=user,
+                    waifus=waifus,
+                    pages=pages,
+                    static_content=user.mention,
+                    prefetch_min_batch_size=25,
+                )
 
     ########
     # List #
@@ -930,17 +960,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @legacy_command()
     async def offering(self, ctx: LegacyCommandContext, character_id: int):
         """Offer blood in exchange for characters"""
-        if self.trade_lock[ctx.author.id].locked():
-            raise commands.CommandError(
-                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
-
         assert self.bot.user is not None
         if self.trade_lock[self.bot.user.id].locked():
             raise commands.CommandError(
                 f"**{self.bot.user}** has a pending trade/reroll/lock/unlock/ascend."
             )
 
-        await self.trade_lock[ctx.author.id].acquire()
         await self.trade_lock[self.bot.user.id].acquire()
 
         try:
@@ -963,10 +988,30 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 await trade.release()
                 raise
         finally:
-            if self.trade_lock[ctx.author.id].locked():
-                self.trade_lock[ctx.author.id].release()
             if self.trade_lock[self.bot.user.id].locked():
                 self.trade_lock[self.bot.user.id].release()
+
+    @slash_waifu.command()
+    @legacy_command()
+    async def loot(self, ctx: LegacyCommandContext, character_id: int):
+        """Loot unlocked frozen waifu"""
+        body = NewLootBody(player_discord_id=ctx.author.id, chara_id_al=character_id)
+        resp = await get_nanapi().waicolle.waicolle_new_loot(body)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError('No frozen waifu found.')
+            case Error():
+                raise RuntimeError(resp.result)
+
+        data = resp.result
+        trade = TradeHelper(self, data, can_author_accept=True, offeree_silent=True)
+        try:
+            await trade.send(
+                partial(ctx.reply, allowed_mentions=AllowedMentions(users=[ctx.author]))
+            )
+        except Exception:
+            await trade.release()
+            raise
 
     ##########
     # Reroll #
