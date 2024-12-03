@@ -652,7 +652,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     members = set(
         str(bot.get_user(tracker.user.discord_id))
         for tracker in trackers
-        if tracker.frozen_at is not None
+        if tracker.frozen_at is None
     )
     members = list(members)
     if members:
