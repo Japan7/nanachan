@@ -650,7 +650,10 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     trackers = resp3.result
 
     members = set(
-        [str(bot.get_user(tracker.user.discord_id)) for tracker in trackers])
+        str(bot.get_user(tracker.user.discord_id))
+        for tracker in trackers
+        if tracker.frozen_at is not None
+    )
     members = list(members)
     if members:
         embed.add_field(name='In tracking list of',
