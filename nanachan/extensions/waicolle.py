@@ -262,7 +262,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             assert isinstance(interaction.channel, discord.TextChannel)
             async with interaction.channel.typing():
                 resp3 = await get_nanapi().waicolle.waicolle_player_roll(
-                    interaction.user.id, nb=10)
+                    interaction.user.id, nb=10, reason='register'
+                )
                 if not success(resp3):
                     raise RuntimeError(resp3.result)
                 assert resp3.code == 201
@@ -424,7 +425,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             for member in members:
                 asyncio.create_task(
-                    self._drop(member, 'Event drop', replyable=ctx, nb=nb))
+                    self._drop(member, 'Event drop', replyable=ctx, nb=nb, rollop_reason='event')
+                )
 
     async def _drop(self,
                     member: UserType,
@@ -434,7 +436,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     roll_id: str | None = None,
                     coupon_code: str | None = None,
                     nb: int | None = 1,
-                    pool_player: UserType | None = None):
+                    pool_player: UserType | None = None,
+                    rollop_reason: str | None = None):
         if member.bot:
             return
 
@@ -452,7 +455,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 roll_id=roll_id,
                 coupon_code=coupon_code,
                 nb=nb,
-                pool_discord_id=pool_player.id)
+                pool_discord_id=pool_player.id,
+                reason=rollop_reason)
 
             match resp:
                 case Error(code=404 | 409):
@@ -2362,7 +2366,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if user.bot:
             return
 
-        await self._drop(user, reason, nb=nb)
+        await self._drop(user, reason, nb=nb, rollop_reason=reason.casefold())
 
     async def reward_coins(self,
                            user: UserType,
@@ -2543,7 +2547,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                             user = await listener.queue.get()
 
                         dropped = True
-                        asyncio.create_task(self._drop(user, 'Random drop'))
+                        asyncio.create_task(
+                            self._drop(user, 'Random drop', rollop_reason='random')
+                        )
 
                 if dropped:
                     self.next_drop[ctx.guild.id] = RNG.integers(1,

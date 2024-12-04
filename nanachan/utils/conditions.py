@@ -364,9 +364,10 @@ class StringCondition(Condition):
                             embed=ctx.message.quote_embed)
         await self.waifu_cog._drop(
             self.user,
-            f"Conditional drop: {ctx.author} {self.word.action}",
+            f'Conditional drop: {ctx.author} {self.word.action}',
             nb=nb,
-            pool_player=ctx.author
+            pool_player=ctx.author,
+            rollop_reason='conditional',
         )
         self.__class__.available_instances += 1
 

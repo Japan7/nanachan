@@ -4008,6 +4008,7 @@ class WaicolleModule:
         coupon_code: str | None = None,
         nb: int | None = None,
         pool_discord_id: int | None = None,
+        reason: str | None = None,
         client_id: UUID | None = None,
     ) -> (
         Success[Literal[201], list[WaifuSelectResult]]
@@ -4025,6 +4026,7 @@ class WaicolleModule:
             'coupon_code': coupon_code,
             'nb': nb,
             'pool_discord_id': pool_discord_id,
+            'reason': reason,
             'client_id': client_id,
         }
         params = prep_serialization(params)
