@@ -1344,9 +1344,12 @@ class ProfileGetByDiscordIdResultUser(BaseModel):
 
 class ProfileSearchResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    birthday: datetime | None
     full_name: str | None
+    graduation_year: str | None
     photo: str | None
-    promotion: str | None
+    pronouns: str | None
+    n7_major: str | None
     telephone: str | None
     user: 'ProfileGetByDiscordIdResultUser'
 
@@ -1883,9 +1886,12 @@ class UpsertPlayerBody(BaseModel):
 class UpsertProfileBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_username: str
+    birthday: datetime | None = None
     full_name: str | None = None
+    graduation_year: str | None = None
+    n7_major: str | None = None
     photo: str | None = None
-    promotion: str | None = None
+    pronouns: str | None = None
     telephone: str | None = None
 
 
