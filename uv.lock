@@ -728,7 +728,7 @@ requires-dist = [
     { name = "watchgod", specifier = "==0.8.2" },
     { name = "yappi", git = "https://github.com/odrling/yappi.git?rev=c1ea539c831ad0c46f7b0b463025688d7db05c14" },
     { name = "yarl", specifier = "==1.18.3" },
-    { name = "yt-dlp", extras = ["default"], specifier = "==2024.12.6" },
+    { name = "yt-dlp", extras = ["default"], specifier = "==2024.12.13" },
 ]
 
 [package.metadata.requires-dev]
@@ -1364,11 +1364,11 @@ wheels = [
 
 [[package]]
 name = "yt-dlp"
-version = "2024.12.6"
+version = "2024.12.13"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c5/5e/0b632b39b4399a4acbf1c421b0aa656fbbb3d6e4eb78af3d0b09182a8a74/yt_dlp-2024.12.6.tar.gz", hash = "sha256:743dbe081ea871be3f5ff083e2cd95da866dea773fc70ae6b109838cfbf72ac4", size = 2912236 }
+sdist = { url = "https://files.pythonhosted.org/packages/8a/fd/a05fac6661cc43057a6f804eeeba3f8f893f3f3bb22e071e0c4aa798ccdb/yt_dlp-2024.12.13.tar.gz", hash = "sha256:77e15afb9d460ecb7294a39bb5e39dc9f4e8a65f3a37ef4db58800b94d095511", size = 2913186 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/75/85c878fa4cbc7d0b6965f85af0f6c8f828f1adb567971e7dba099949022c/yt_dlp-2024.12.6-py3-none-any.whl", hash = "sha256:a7b8724e58fff4f3204cae4feb936dbd249ca6d22c5f25dec1b3c6f1cb7745a2", size = 3175289 },
+    { url = "https://files.pythonhosted.org/packages/42/5b/e39cb315ce5be55cfd1ebef707dc2d8e4f02c6c6f8b61752076c67c8427f/yt_dlp-2024.12.13-py3-none-any.whl", hash = "sha256:5a16b7511e8500cbb13ff0babc9c6deb1e049dc1c854a51738aad2529167fcdf", size = 3175556 },
 ]
 
 [package.optional-dependencies]
