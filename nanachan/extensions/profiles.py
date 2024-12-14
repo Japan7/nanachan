@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import base64
-import io
 import re
 from datetime import datetime
 from functools import partial
@@ -10,14 +8,12 @@ from operator import itemgetter
 from typing import Optional, Protocol
 
 import discord
+import discord.ext
 from discord import Interaction, Member, SelectOption, app_commands, ui
 from discord.ext.commands import (
-    BadArgument,
+    CommandError,
     Context,
-    MissingRequiredArgument,
     command,
-    group,
-    guild_only,
 )
 from discord.ui import Button
 
@@ -37,7 +33,7 @@ from nanachan.nanapi.model import (
     UpsertProfileBody,
 )
 from nanachan.settings import YEAR_ROLES
-from nanachan.utils.misc import list_display, to_producer
+from nanachan.utils.misc import to_producer
 
 
 class RegistrarProtocol(Protocol):
@@ -68,9 +64,12 @@ class Profiles(Cog):
         assert interaction.guild
         member = interaction.guild.get_member(interaction.user.id)
         assert member
-        profile = await self._get_profile(interaction.user.id)
+        profile = await self._create_or_update_profile(
+            member, UpsertProfileBody(discord_username=interaction.user.name)
+        )
+        embed = self.create_vcard(member, profile)
         await interaction.response.send_message(
-            view=ProfileCreateOrChangeView(self.bot, member, profile)
+            embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile)
         )
 
     async def _year_role_member(self, ctx: Context, profile: ProfileSearchResult):
@@ -152,16 +151,7 @@ class Profiles(Cog):
     async def _get_profile(self, discord_id: int):
         profile_resp = await get_nanapi().user.user_get_profile(discord_id)
         if not success(profile_resp):
-            match profile_resp.code:
-                case 404:
-                    user = self.bot.get_user(discord_id)
-                    assert user
-                    await self._create_or_update_profile(
-                        user, UpsertProfileBody(discord_username=user.name)
-                    )
-                    return await self._get_profile(discord_id=discord_id)
-                case _:
-                    raise RuntimeError(profile_resp.result)
+            raise RuntimeError(profile_resp.result)
         return profile_resp.result
 
     @staticmethod
@@ -175,19 +165,29 @@ class Profiles(Cog):
     @staticmethod
     def create_vcard(member: Optional[Member], profile: ProfileSearchResult):
         embed = Embed(colour=getattr(member, 'colour', None))
-        embed = embed.add_field(name='氏名', value=profile.full_name)
-
         if member is not None:
             embed.set_author(name=member, icon_url=member.display_avatar.url)
+
+        if profile.full_name is not None:
+            embed = embed.add_field(name='氏名', value=profile.full_name)
 
         if profile.graduation_year:
             embed.add_field(name='学級', value=profile.graduation_year)
 
+        if profile.n7_major:
+            embed.add_field(name='専門', value=profile.n7_major)
+
+        if profile.pronouns:
+            embed.add_field(name='代名詞', value=profile.pronouns)
+
+        if profile.birthday:
+            embed.add_field(name='誕生日', value=datetime.strftime(profile.birthday, '%Y-%m-%d'))
+
         if profile.telephone:
             embed.add_field(name='携帯番号', value=profile.telephone)
 
-        # if profile.photo:
-        #     embed.set_thumbnail(url=profile.photo)
+        if profile.photo:
+            embed.set_thumbnail(url=profile.photo)
 
         return embed
 
@@ -221,7 +221,23 @@ class Profiles(Cog):
         member = ctx.guild.get_member(ctx.author.id)
         profile = await self._get_profile(ctx.author.id)
         assert member
-        await ctx.send(view=ProfileCreateOrChangeView(self.bot, member, profile))
+        embed = self.create_vcard(member, profile)
+        await ctx.send(embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile))
+
+    @legacy_command()
+    async def whois(self, ctx: LegacyCommandContext, other: discord.User):
+        profile_resp = await get_nanapi().user.user_get_profile(other.id)
+        if not success(profile_resp):
+            match profile_resp.code:
+                case 404:
+                    raise CommandError("User has no registered profile.")
+                case _:
+                    raise RuntimeError(profile_resp.result)
+        profile = profile_resp.result
+        assert ctx.guild
+        member = ctx.guild.get_member(other.id)
+        assert member
+        await ctx.send(embed=self.create_vcard(member, profile))
 
 
 class ProfileModal(ui.Modal):
@@ -271,16 +287,20 @@ class ProfileModal(ui.Modal):
             required=False,
             default=self.profile_dict['telephone'],
         )
+        self.add_item(self.birthday)
+        self.add_item(self.full_name)
+        self.add_item(self.graduation_year)
+        self.add_item(self.pronouns)
+        self.add_item(self.telephone)
 
     async def on_submit(self, interaction: Interaction):
+        await interaction.response.defer()
         errors = []
         if (
             self.birthday.value != ''
             and re.fullmatch(r'^\d{4}-\d{2}-\d{2}$', self.birthday.value) is None
         ):
             errors.append('Invalid birthday format.')
-        if self.full_name.value != '':
-            errors.append('Invalid full name format.')
         if (
             self.graduation_year.value != ''
             and re.fullmatch(r'^\d{4}$', self.graduation_year.value) is None
@@ -295,7 +315,23 @@ class ProfileModal(ui.Modal):
             '\n'.join(errors) if len(errors) > 0 else 'All information gathered succesfully.'
         )
 
-        await interaction.response.send_message(response, ephemeral=True)
+        def parse_date(date_str):
+            return datetime.strptime(date_str + ' +0000', '%Y-%m-%d %z') if date_str else None
+
+        def get_value_or_none(field):
+            return field.value or None
+
+        if not errors:
+            self.profile_dict.update(
+                {
+                    'birthday': parse_date(self.birthday.value),
+                    'full_name': get_value_or_none(self.full_name),
+                    'graduation_year': get_value_or_none(self.graduation_year),
+                    'pronouns': get_value_or_none(self.pronouns),
+                    'telephone': get_value_or_none(self.telephone),
+                }
+            )
+        await interaction.followup.send(response, ephemeral=True)
 
 
 class ProfileCreateOrChangeView(BaseView):
@@ -303,7 +339,6 @@ class ProfileCreateOrChangeView(BaseView):
         super().__init__(bot)
         self.member = member
         self.profile = profile
-        self.embed = Profiles.create_vcard(member, profile)
         n7_major_select = ui.Select(
             placeholder='Select your major at N7',
             options=[
@@ -319,14 +354,23 @@ class ProfileCreateOrChangeView(BaseView):
         photo_button = ui.Button(label='Upload picture', emoji='🖼️', row=0)
         photo_button.callback = self._photo_button_cb
         confirm_button = ui.Button(
-            label='Confirm changes', emoji=self.bot.get_nana_emoji('FubukiGO')
+            label='Confirm changes', emoji=self.bot.get_nana_emoji('FubukiGO'), row=2
         )
-        cancel_button = ui.Button(label='Cancel changes', emoji=bot.get_nana_emoji('FubukiStop'))
+        confirm_button.callback = self._confirm_button_cb
+        cancel_button = ui.Button(
+            label='Cancel changes', emoji=bot.get_nana_emoji('FubukiStop'), row=2
+        )
+        cancel_button.callback = self._cancel_button_cb
         self.add_item(form_button)
+        self.add_item(photo_button)
         self.add_item(n7_major_select)
+        self.add_item(confirm_button)
+        self.add_item(cancel_button)
 
-    def _edit_embed(self, profile: ProfileSearchResult):
+    async def _edit_embed(self, profile: ProfileSearchResult, interaction: Interaction):
         self.embed = Profiles.create_vcard(self.member, profile=profile)
+        assert interaction.message
+        await interaction.message.edit(embed=self.embed)
 
     async def _photo_button_cb(self, interaction: Interaction):
         await interaction.response.send_message('Upload your profile picture', ephemeral=True)
@@ -342,30 +386,55 @@ class ProfileCreateOrChangeView(BaseView):
 
         resp = await MultiplexingContext.set_will_delete(check=check)
         resp = resp.message
-        profile_picture = None
         if len(resp.attachments) > 0:
             attachment = resp.attachments[0]
             if attachment.content_type == 'image/png':
-                profile_picture = await attachment.read()
-                hikari = await to_producer(
-                    profile_picture, filename=f'profile_{interaction.user.id}.jpg'
-                )
+                hikari = await to_producer(attachment.url)
                 self.profile.photo = hikari['url']
             else:
                 await resp.reply('Not a valid PNG file!')
 
         await resp.delete()
+        await self._edit_embed(self.profile, interaction)
 
     async def _n7_major_select_cb(self, interaction: Interaction):
+        await interaction.response.defer()
         assert interaction.data
         assert 'values' in interaction.data
         self.profile.n7_major = interaction.data['values'][0]
+        await self._edit_embed(self.profile, interaction)
+
+    async def _confirm_button_cb(self, interaction: Interaction):
+        await interaction.response.defer()
+        profile_to_send = UpsertProfileBody(
+            discord_username=self.member.name,
+            birthday=self.profile.birthday,
+            full_name=self.profile.full_name,
+            graduation_year=self.profile.graduation_year,
+            n7_major=self.profile.n7_major,
+            photo=self.profile.photo,
+            pronouns=self.profile.pronouns,
+            telephone=self.profile.telephone,
+        )
+        await Profiles._create_or_update_profile(self.member, profile_to_send)
+        assert interaction.message
+        await interaction.message.edit(
+            content='Profile has been updated successfully.', embed=None, view=None
+        )
+
+    async def _cancel_button_cb(self, interaction: Interaction):
+        assert interaction.message
+        await interaction.message.edit(content='Profile update cancelled.', embed=None, view=None)
 
     async def _instantiate_form_modal(self, interaction: Interaction, discord_id: int):
         modal = ProfileModal(title='Create/Update your Japan7 profile.', profile=self.profile)
         await interaction.response.send_modal(modal)
         await modal.wait()
         self._update_profile_from_dict(self.profile, modal.profile_dict)
+        await self._edit_embed(self.profile, interaction)
+
+    async def interaction_check(self, interaction: Interaction):
+        return self.member.id == interaction.user.id
 
     @staticmethod
     def _update_profile_from_dict(profile: ProfileSearchResult, profile_dict: dict[str, str]):
