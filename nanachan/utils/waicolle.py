@@ -331,6 +331,7 @@ class RollResultsView(CompositeNavigatorView):
                             not w.locked,
                             not w.trade_locked,
                             not w.blooded,
+                            not w.disabled,
                         ]
                     )
                 ]
