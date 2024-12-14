@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 import re
 from datetime import datetime
@@ -134,20 +132,6 @@ class Profiles(Cog):
             footer_text=f'{len(text)} members',
         )
 
-    # @nana_command(description='Display information about someone')
-    # @legacy_command()
-    # async def whois(self, ctx: LegacyCommandContext, user: discord.User):
-    #     profile_resp = await get_nanapi().user.user_get_profile(user.id)
-    #     if not success(profile_resp):
-    #         raise RuntimeError(profile_resp.result)
-    #     profile = profile_resp.result
-    #     assert ctx.guild
-    #     await ctx.send(
-    #         embed=self._create_vcard(
-    #         ctx.guild.get_member(user.id), profile
-    #         )
-    #     )
-
     async def _get_profile(self, discord_id: int):
         profile_resp = await get_nanapi().user.user_get_profile(discord_id)
         if not success(profile_resp):
@@ -214,7 +198,7 @@ class Profiles(Cog):
             view=view,
         )
 
-    @nana_command()
+    @nana_command(description="Edit your own profile.")
     @legacy_command()
     async def iam(self, ctx: LegacyCommandContext):
         assert ctx.guild
@@ -224,6 +208,7 @@ class Profiles(Cog):
         embed = self.create_vcard(member, profile)
         await ctx.send(embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile))
 
+    @nana_command(description="Display other user's profile.")
     @legacy_command()
     async def whois(self, ctx: LegacyCommandContext, other: discord.User):
         profile_resp = await get_nanapi().user.user_get_profile(other.id)
