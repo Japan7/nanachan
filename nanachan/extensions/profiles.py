@@ -237,14 +237,17 @@ class ProfileModal(ui.Modal):
     def __init__(self, *, title: str, profile: ProfileSearchResult):
         super().__init__(title=title)
         self.profile = profile
+        default_birthday = (
+            self.profile.birthday.strftime('%Y-%m-%d')
+            if self.profile.birthday
+            else None
+        )
         self.birthday = ui.TextInput(
             label='Birthdate',
             placeholder='Enter your birthdate (YYYY-MM-DD)',
             style=discord.TextStyle.short,
             required=False,
-            default=self.profile.birthday.strftime('%Y-%m-%d')
-            if self.profile.birthday
-            else None,
+            default=default_birthday
         )
         self.full_name = ui.TextInput(
             label='Full Name',
@@ -253,14 +256,17 @@ class ProfileModal(ui.Modal):
             required=False,
             default=self.profile.full_name,
         )
+        default_graduation_year = (
+            str(self.profile.graduation_year)
+            if self.profile.graduation_year
+            else ''
+        )
         self.graduation_year = ui.TextInput(
             label='Graduation Year',
             placeholder='Enter your graduation year',
             style=discord.TextStyle.short,
             required=False,
-            default=str(self.profile.graduation_year)
-            if self.profile.graduation_year
-            else '',
+            default=default_graduation_year,
         )
         self.pronouns = ui.TextInput(
             label='Pronouns',
