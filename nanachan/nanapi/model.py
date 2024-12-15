@@ -1346,7 +1346,7 @@ class ProfileSearchResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     birthday: datetime | None
     full_name: str | None
-    graduation_year: str | None
+    graduation_year: int | None
     photo: str | None
     pronouns: str | None
     n7_major: str | None
@@ -1888,7 +1888,7 @@ class UpsertProfileBody(BaseModel):
     discord_username: str
     birthday: datetime | None = None
     full_name: str | None = None
-    graduation_year: str | None = None
+    graduation_year: int | None = None
     n7_major: str | None = None
     photo: str | None = None
     pronouns: str | None = None

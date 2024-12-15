@@ -3,7 +3,7 @@ import re
 from datetime import datetime, timezone
 from functools import partial
 from operator import itemgetter
-from typing import Protocol
+from typing import Protocol, TypedDict
 
 import discord
 import discord.ext
@@ -75,12 +75,8 @@ class Profiles(Cog):
         guild = ctx.guild
         assert guild is not None
 
-        if (
-            profile.graduation_year is not None
-            and 'ENSEEIHT' in profile.graduation_year
-            and profile.graduation_year is not None
-        ):
-            graduation_year = int(profile.graduation_year)
+        if profile.graduation_year is not None:
+            graduation_year = profile.graduation_year
 
             now = datetime.now()
             last_promotion = now.year if now.month >= 7 else now.year - 1
@@ -199,7 +195,7 @@ class Profiles(Cog):
             view=view,
         )
 
-    @nana_command(description="Edit your own profile.")
+    @nana_command(description='Edit your own profile.')
     @legacy_command()
     async def iam(self, ctx: LegacyCommandContext):
         assert ctx.guild
@@ -216,7 +212,7 @@ class Profiles(Cog):
         if not success(profile_resp):
             match profile_resp.code:
                 case 404:
-                    raise CommandError("User has no registered profile.")
+                    raise CommandError('User has no registered profile.')
                 case _:
                     raise RuntimeError(profile_resp.result)
         profile = profile_resp.result
@@ -226,53 +222,59 @@ class Profiles(Cog):
         await ctx.send(embed=self.create_vcard(member, profile))
 
 
+class ModalDict(TypedDict):
+    birthday: datetime | None
+    full_name: str | None
+    graduation_year: int | None
+    pronouns: str | None
+    telephone: str | None
+
 class ProfileModal(ui.Modal):
     birthday_regex = re.compile(r'^(\d{4}-\d{2}-\d{2})?$')
     graduation_year_regex = re.compile(r'^(\d{4})?$')
     telephone_regex = re.compile(r'^((\+33)|0\d{9}$)?')
+
     def __init__(self, *, title: str, profile: ProfileSearchResult):
         super().__init__(title=title)
-        self.profile_dict = {
-            'birthday': profile.birthday if profile.birthday else '',
-            'full_name': profile.full_name if profile.full_name else '',
-            'graduation_year': profile.graduation_year if profile.graduation_year else '',
-            'pronouns': profile.pronouns if profile.pronouns else '',
-            'telephone': profile.telephone if profile.telephone else '',
-        }
+        self.profile = profile
         self.birthday = ui.TextInput(
             label='Birthdate',
             placeholder='Enter your birthdate (YYYY-MM-DD)',
             style=discord.TextStyle.short,
             required=False,
-            default=self.profile_dict['birthday'],
+            default=self.profile.birthday.strftime('%Y-%m-%d')
+            if self.profile.birthday
+            else None,
         )
         self.full_name = ui.TextInput(
             label='Full Name',
             placeholder='Enter you full name (First name Last name)',
             style=discord.TextStyle.short,
             required=False,
-            default=self.profile_dict['full_name'],
+            default=self.profile.full_name,
         )
         self.graduation_year = ui.TextInput(
             label='Graduation Year',
             placeholder='Enter your graduation year',
             style=discord.TextStyle.short,
             required=False,
-            default=self.profile_dict['graduation_year'],
+            default=str(self.profile.graduation_year)
+            if self.profile.graduation_year
+            else '',
         )
         self.pronouns = ui.TextInput(
             label='Pronouns',
             placeholder='Enter your prnouns',
             style=discord.TextStyle.short,
             required=False,
-            default=self.profile_dict['pronouns'],
+            default=self.profile.pronouns,
         )
         self.telephone = ui.TextInput(
             label='Phone Number',
             placeholder='Enter your phone number',
             style=discord.TextStyle.short,
             required=False,
-            default=self.profile_dict['telephone'],
+            default=self.profile.telephone,
         )
         self.add_item(self.birthday)
         self.add_item(self.full_name)
@@ -283,29 +285,32 @@ class ProfileModal(ui.Modal):
     async def on_submit(self, interaction: Interaction):
         await interaction.response.defer()
         errors = []
-        if self.birthday_regex.fullmatch(self.birthday.value):
+        if not self.birthday_regex.fullmatch(self.birthday.value):
             errors.append('Invalid birthday format.')
-        if self.graduation_year_regex.fullmatch(self.graduation_year.value):
+        if not self.graduation_year_regex.fullmatch(self.graduation_year.value):
             errors.append('Invalid graduataion year.')
-        if self.telephone_regex.fullmatch(self.telephone.value):
+        if not self.telephone_regex.fullmatch(self.telephone.value):
             errors.append('Invalid phone number')
         response = (
             '\n'.join(errors) if len(errors) > 0 else 'All information gathered succesfully.'
         )
 
         if not errors:
-            self.profile_dict.update(
-                    birthday=self.parse_date(self.birthday.value),
-                    full_name=self.full_name.value or None,
-                    graduation_year=self.graduation_year.value or None,
-                    pronouns=self.pronouns.value or None,
-                    telephone=self.telephone.value or None,
-            )
+            self.profile.birthday = self.parse_date(self.birthday.value)
+            self.profile.full_name = self.full_name.value or None
+            self.profile.graduation_year = self.parse_int(self.graduation_year.value)
+            self.profile.pronouns = self.pronouns.value or None
+            self.profile.telephone = self.telephone.value or None
         await interaction.followup.send(response, ephemeral=True)
 
     @staticmethod
     def parse_date(date_str: str):
         return parse(date_str).replace(tzinfo=timezone.utc) if date_str else None
+
+    @staticmethod
+    def parse_int(i: str):
+        return int(i) if i else None
+
 
 
 class ProfileCreateOrChangeView(BaseView):
@@ -405,17 +410,11 @@ class ProfileCreateOrChangeView(BaseView):
         modal = ProfileModal(title='Create/Update your Japan7 profile.', profile=self.profile)
         await interaction.response.send_modal(modal)
         await modal.wait()
-        self._update_profile_from_dict(self.profile, modal.profile_dict)
+        self.profile = modal.profile
         await self._edit_embed(self.profile, interaction)
 
     async def interaction_check(self, interaction: Interaction):
         return self.member.id == interaction.user.id
-
-    @staticmethod
-    def _update_profile_from_dict(profile: ProfileSearchResult, profile_dict: dict[str, str]):
-        for key, val in profile_dict.items():
-            if hasattr(profile, key):
-                setattr(profile, key, val)
 
 
 @app_commands.context_menu(name='Who is')
