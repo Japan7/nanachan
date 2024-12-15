@@ -146,8 +146,7 @@ class Profiles(Cog):
     @staticmethod
     def create_vcard(member: Member, profile: ProfileSearchResult):
         embed = Embed(colour=getattr(member, 'colour', None))
-        if member is not None:
-            embed.set_author(name=member, icon_url=member.display_avatar.url)
+        embed.set_author(name=member, icon_url=member.display_avatar.url)
 
         if profile.full_name is not None:
             embed = embed.add_field(name='氏名', value=profile.full_name)
@@ -294,7 +293,7 @@ class ProfileModal(ui.Modal):
         if not self.birthday_regex.fullmatch(self.birthday.value):
             errors.append('Invalid birthday format.')
         if not self.graduation_year_regex.fullmatch(self.graduation_year.value):
-            errors.append('Invalid graduataion year.')
+            errors.append('Invalid graduation year.')
         if not self.telephone_regex.fullmatch(self.telephone.value):
             errors.append('Invalid phone number')
         response = (
