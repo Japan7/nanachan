@@ -1,12 +1,13 @@
 import asyncio
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial
 from operator import itemgetter
-from typing import Optional, Protocol
+from typing import Protocol
 
 import discord
 import discord.ext
+from dateutil.parser import parse
 from discord import Interaction, Member, SelectOption, app_commands, ui
 from discord.ext.commands import (
     CommandError,
@@ -147,7 +148,7 @@ class Profiles(Cog):
         return profile
 
     @staticmethod
-    def create_vcard(member: Optional[Member], profile: ProfileSearchResult):
+    def create_vcard(member: Member, profile: ProfileSearchResult):
         embed = Embed(colour=getattr(member, 'colour', None))
         if member is not None:
             embed.set_author(name=member, icon_url=member.display_avatar.url)
@@ -226,14 +227,15 @@ class Profiles(Cog):
 
 
 class ProfileModal(ui.Modal):
+    birthday_regex = re.compile(r'^(\d{4}-\d{2}-\d{2})?$')
+    graduation_year_regex = re.compile(r'^(\d{4})?$')
+    telephone_regex = re.compile(r'^((\+33)|0\d{9}$)?')
     def __init__(self, *, title: str, profile: ProfileSearchResult):
         super().__init__(title=title)
         self.profile_dict = {
-            'birthday': profile.birthday.date().strftime(r'%Y-%m-%d') if profile.birthday else '',
+            'birthday': profile.birthday if profile.birthday else '',
             'full_name': profile.full_name if profile.full_name else '',
-            'graduation_year': re.findall(r'\d{4}', profile.graduation_year)[0]
-            if profile.graduation_year
-            else '',
+            'graduation_year': profile.graduation_year if profile.graduation_year else '',
             'pronouns': profile.pronouns if profile.pronouns else '',
             'telephone': profile.telephone if profile.telephone else '',
         }
@@ -281,42 +283,29 @@ class ProfileModal(ui.Modal):
     async def on_submit(self, interaction: Interaction):
         await interaction.response.defer()
         errors = []
-        if (
-            self.birthday.value != ''
-            and re.fullmatch(r'^\d{4}-\d{2}-\d{2}$', self.birthday.value) is None
-        ):
+        if self.birthday_regex.fullmatch(self.birthday.value):
             errors.append('Invalid birthday format.')
-        if (
-            self.graduation_year.value != ''
-            and re.fullmatch(r'^\d{4}$', self.graduation_year.value) is None
-        ):
-            errors.append('Invalid gradutaion year.')
-        if (
-            self.telephone.value != ''
-            and re.fullmatch(r'^(\+33)|0\d{9}$', self.telephone.value) is None
-        ):
+        if self.graduation_year_regex.fullmatch(self.graduation_year.value):
+            errors.append('Invalid graduataion year.')
+        if self.telephone_regex.fullmatch(self.telephone.value):
             errors.append('Invalid phone number')
         response = (
             '\n'.join(errors) if len(errors) > 0 else 'All information gathered succesfully.'
         )
 
-        def parse_date(date_str):
-            return datetime.strptime(date_str + ' +0000', '%Y-%m-%d %z') if date_str else None
-
-        def get_value_or_none(field):
-            return field.value or None
-
         if not errors:
             self.profile_dict.update(
-                {
-                    'birthday': parse_date(self.birthday.value),
-                    'full_name': get_value_or_none(self.full_name),
-                    'graduation_year': get_value_or_none(self.graduation_year),
-                    'pronouns': get_value_or_none(self.pronouns),
-                    'telephone': get_value_or_none(self.telephone),
-                }
+                    birthday=self.parse_date(self.birthday.value),
+                    full_name=self.full_name.value or None,
+                    graduation_year=self.graduation_year.value or None,
+                    pronouns=self.pronouns.value or None,
+                    telephone=self.telephone.value or None,
             )
         await interaction.followup.send(response, ephemeral=True)
+
+    @staticmethod
+    def parse_date(date_str: str):
+        return parse(date_str).replace(tzinfo=timezone.utc) if date_str else None
 
 
 class ProfileCreateOrChangeView(BaseView):
@@ -327,9 +316,9 @@ class ProfileCreateOrChangeView(BaseView):
         n7_major_select = ui.Select(
             placeholder='Select your major at N7',
             options=[
-                SelectOption(emoji='⚡', label='3EA', value='3EA'),
-                SelectOption(emoji='🌊', label='MF2E', value='MF2E'),
-                SelectOption(emoji='💻', label='SN', value='SN'),
+                SelectOption(emoji='⚡', label='Elec', value='Elec'),
+                SelectOption(emoji='🌊', label='Hydro', value='Hydro'),
+                SelectOption(emoji='💻', label='Info', value='Info'),
             ],
             row=1,
         )
@@ -378,6 +367,7 @@ class ProfileCreateOrChangeView(BaseView):
                 self.profile.photo = hikari['url']
             else:
                 await resp.reply('Not a valid PNG file!')
+                return
 
         await resp.delete()
         await self._edit_embed(self.profile, interaction)
