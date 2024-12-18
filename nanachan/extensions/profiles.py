@@ -20,6 +20,7 @@ from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import Embed, MultiplexingContext
 from nanachan.discord.views import AutoNavigatorView, BaseView, LockedView
+from nanachan.nanapi._client import Error, Success
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
     ProfileSearchResult,
@@ -202,12 +203,15 @@ class Profiles(Cog):
     @legacy_command()
     async def whois(self, ctx: LegacyCommandContext, other: discord.User):
         profile_resp = await get_nanapi().user.user_get_profile(other.id)
-        if not success(profile_resp):
-            match profile_resp.code:
-                case 404:
-                    raise CommandError('User has no registered profile.')
-                case _:
-                    raise RuntimeError(profile_resp.result)
+        match profile_resp:
+            case Success():
+                pass
+            case Error(code=404):
+                await ctx.reply('User has no registered profile.')
+                return
+            case _:
+                raise RuntimeError(profile_resp.result)
+
         profile = profile_resp.result
         assert ctx.guild
         member = ctx.guild.get_member(other.id)
@@ -419,15 +423,17 @@ class ProfileCreateOrChangeView(BaseView):
 @app_commands.context_menu(name='Who is')
 async def user_who_is(interaction: Interaction, member: Member):
     resp = await get_nanapi().user.user_get_profile(member.id)
-    if not success(resp):
-        match resp.code:
-            case 404:
-                await interaction.response.send_message(
-                    f'No informations found about **{member}**', ephemeral=True
-                )
-                return
-            case _:
-                raise RuntimeError(resp.result)
+    match resp:
+        case Success():
+            pass
+        case Error(code=404):
+            await interaction.response.send_message(
+                f'No informations found about **{member}**', ephemeral=True
+            )
+            return
+        case _:
+            raise RuntimeError(resp.result)
+
     profile = resp.result
     send = partial(interaction.response.send_message, ephemeral=True)
     await send(embed=Profiles.create_vcard(member, profile))
