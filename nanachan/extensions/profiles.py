@@ -8,12 +8,7 @@ from typing import Protocol, TypedDict
 import discord
 import discord.ext
 from dateutil.parser import parse
-from discord import Interaction, Member, SelectOption, app_commands, ui
-from discord.ext.commands import (
-    CommandError,
-    Context,
-    command,
-)
+from discord import Guild, Interaction, Member, SelectOption, app_commands, ui
 from discord.ui import Button
 
 from nanachan.discord.application_commands import (
@@ -23,7 +18,7 @@ from nanachan.discord.application_commands import (
 )
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
-from nanachan.discord.helpers import Embed, MultiplexingContext, typing
+from nanachan.discord.helpers import Embed, MultiplexingContext
 from nanachan.discord.views import AutoNavigatorView, BaseView, LockedView
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
@@ -71,10 +66,7 @@ class Profiles(Cog):
             embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile)
         )
 
-    async def _year_role_member(self, ctx: Context, profile: ProfileSearchResult):
-        guild = ctx.guild
-        assert guild is not None
-
+    async def _year_role_member(self, guild: Guild, profile: ProfileSearchResult):
         if profile.graduation_year is not None:
             graduation_year = profile.graduation_year
 
@@ -94,11 +86,13 @@ class Profiles(Cog):
                     await member.add_roles(role)
                     return member, profile, role
 
-    @command()
-    @typing
-    async def promo(self, ctx: Context):
+    @nana_command(description="refresh promo roles")
+    @app_commands.guild_only()
+    async def promo(self, interaction: Interaction):
         """Refresh promo roles"""
-        guild = ctx.guild
+        await interaction.response.defer()
+
+        guild = interaction.guild
         assert guild is not None
 
         resp = await get_nanapi().user.user_profile_search(
@@ -109,7 +103,7 @@ class Profiles(Cog):
         profiles = resp.result
 
         refreshed = await asyncio.gather(
-            *(self._year_role_member(ctx, profile) for profile in profiles)
+            *(self._year_role_member(guild, profile) for profile in profiles)
         )
 
         text = [
@@ -121,7 +115,7 @@ class Profiles(Cog):
         icon_url = None if guild.icon is None else guild.icon.url
         await AutoNavigatorView.create(
             self.bot,
-            ctx.reply,
+            interaction.followup.send,
             title='ENSEEIHT members',
             description='\n'.join(text),
             author_name=str(guild),
