@@ -53,19 +53,25 @@ class Profiles(Cog):
                 for member in all_members
             ]
         )
-        self.registrars['Japan7 Profile'] = self._register
 
-    async def _register(self, interaction: Interaction):
-        assert interaction.guild
-        member = interaction.guild.get_member(interaction.user.id)
-        assert member
-        profile = await self._create_or_update_profile(
-            member, UpsertProfileBody(discord_username=interaction.user.name)
+    @Cog.listener()
+    async def on_member_update(self, before: Member, after: Member):
+        year_role = [role.id for role in after.roles if role.id in YEAR_ROLES]
+        if len(year_role) != 1:
+            return
+        year_role = year_role[0]
+        if year_role == YEAR_ROLES[0]:  # 4A+
+            return
+        current_date = datetime.now()
+        graduation_year_offset = 1 if current_date.month >= 9 else 0
+        graduation_year = (
+            current_date.year + graduation_year_offset + YEAR_ROLES.index(year_role) - 1
         )
-        embed = self.create_vcard(member, profile)
-        await interaction.response.send_message(
-            embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile)
+
+        user_profile = UpsertProfileBody(
+            discord_username=after.name, graduation_year=graduation_year
         )
+        await get_nanapi().user.user_upsert_profile(discord_id=after.id, body=user_profile)
 
     async def _year_role_member(self, guild: Guild, profile: ProfileSearchResult):
         if profile.graduation_year is not None:
@@ -87,7 +93,7 @@ class Profiles(Cog):
                     await member.add_roles(role)
                     return member, profile, role
 
-    @nana_command(description="refresh promo roles")
+    @nana_command(description='refresh promo roles')
     @app_commands.guild_only()
     async def promo(self, interaction: Interaction):
         """Refresh promo roles"""
@@ -124,12 +130,6 @@ class Profiles(Cog):
             footer_text=f'{len(text)} members',
         )
 
-    async def _get_profile(self, discord_id: int):
-        profile_resp = await get_nanapi().user.user_get_profile(discord_id)
-        if not success(profile_resp):
-            raise RuntimeError(profile_resp.result)
-        return profile_resp.result
-
     @staticmethod
     async def _create_or_update_profile(member: Member | discord.User, payload: UpsertProfileBody):
         resp = await get_nanapi().user.user_upsert_profile(member.id, payload)
@@ -139,7 +139,7 @@ class Profiles(Cog):
         return profile
 
     @staticmethod
-    def create_vcard(member: Member, profile: ProfileSearchResult):
+    def create_vcard(member: Member, profile: ProfileSearchResult | UpsertProfileBody):
         embed = Embed(colour=getattr(member, 'colour', None))
         embed.set_author(name=member, icon_url=member.display_avatar.url)
 
@@ -194,7 +194,16 @@ class Profiles(Cog):
     async def iam(self, ctx: LegacyCommandContext):
         assert ctx.guild
         member = ctx.guild.get_member(ctx.author.id)
-        profile = await self._get_profile(ctx.author.id)
+        profile_resp = await get_nanapi().user.user_get_profile(ctx.author.id)
+        match profile_resp:
+            case Success():
+                profile = profile_upsert_body_from_search_result(
+                    ctx.author.name, profile_resp.result
+                )
+            case Error(code=404):
+                profile = UpsertProfileBody(discord_username=ctx.author.name)
+            case _:
+                raise RuntimeError(profile_resp.result)
         assert member
         embed = self.create_vcard(member, profile)
         await ctx.send(embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile))
@@ -226,25 +235,24 @@ class ModalDict(TypedDict):
     pronouns: str | None
     telephone: str | None
 
+
 class ProfileModal(ui.Modal):
     birthday_regex = re.compile(r'^(\d{4}-\d{2}-\d{2})?$')
     graduation_year_regex = re.compile(r'^(\d{4})?$')
     telephone_regex = re.compile(r'^((\+33)|0\d{9}$)?')
 
-    def __init__(self, *, title: str, profile: ProfileSearchResult):
+    def __init__(self, *, title: str, profile: UpsertProfileBody):
         super().__init__(title=title)
         self.profile = profile
         default_birthday = (
-            self.profile.birthday.strftime('%Y-%m-%d')
-            if self.profile.birthday
-            else None
+            self.profile.birthday.strftime('%Y-%m-%d') if self.profile.birthday else None
         )
         self.birthday = ui.TextInput(
             label='Birthdate',
             placeholder='Enter your birthdate (YYYY-MM-DD)',
             style=discord.TextStyle.short,
             required=False,
-            default=default_birthday
+            default=default_birthday,
         )
         self.full_name = ui.TextInput(
             label='Full Name',
@@ -254,9 +262,7 @@ class ProfileModal(ui.Modal):
             default=self.profile.full_name,
         )
         default_graduation_year = (
-            str(self.profile.graduation_year)
-            if self.profile.graduation_year
-            else ''
+            str(self.profile.graduation_year) if self.profile.graduation_year else ''
         )
         self.graduation_year = ui.TextInput(
             label='Graduation Year',
@@ -315,9 +321,8 @@ class ProfileModal(ui.Modal):
         return int(i) if i else None
 
 
-
 class ProfileCreateOrChangeView(BaseView):
-    def __init__(self, bot: Bot, member: Member, profile: ProfileSearchResult):
+    def __init__(self, bot: Bot, member: Member, profile: UpsertProfileBody):
         super().__init__(bot)
         self.member = member
         self.profile = profile
@@ -332,7 +337,7 @@ class ProfileCreateOrChangeView(BaseView):
         )
         n7_major_select.callback = self._n7_major_select_cb
         form_button = ui.Button(label='Open Form', emoji='📔', row=0)
-        form_button.callback = partial(self._instantiate_form_modal, discord_id=member.id)
+        form_button.callback = self._instantiate_form_modal
         photo_button = ui.Button(label='Upload picture', emoji='🖼️', row=0)
         photo_button.callback = self._photo_button_cb
         confirm_button = ui.Button(
@@ -349,7 +354,7 @@ class ProfileCreateOrChangeView(BaseView):
         self.add_item(confirm_button)
         self.add_item(cancel_button)
 
-    async def _edit_embed(self, profile: ProfileSearchResult, interaction: Interaction):
+    async def _edit_embed(self, profile: UpsertProfileBody, interaction: Interaction):
         self.embed = Profiles.create_vcard(self.member, profile=profile)
         assert interaction.message
         await interaction.message.edit(embed=self.embed)
@@ -389,17 +394,7 @@ class ProfileCreateOrChangeView(BaseView):
 
     async def _confirm_button_cb(self, interaction: Interaction):
         await interaction.response.defer()
-        profile_to_send = UpsertProfileBody(
-            discord_username=self.member.name,
-            birthday=self.profile.birthday,
-            full_name=self.profile.full_name,
-            graduation_year=self.profile.graduation_year,
-            n7_major=self.profile.n7_major,
-            photo=self.profile.photo,
-            pronouns=self.profile.pronouns,
-            telephone=self.profile.telephone,
-        )
-        await Profiles._create_or_update_profile(self.member, profile_to_send)
+        await Profiles._create_or_update_profile(self.member, self.profile)
         assert interaction.message
         await interaction.message.edit(
             content='Profile has been updated successfully.', embed=None, view=None
@@ -409,7 +404,7 @@ class ProfileCreateOrChangeView(BaseView):
         assert interaction.message
         await interaction.message.edit(content='Profile update cancelled.', embed=None, view=None)
 
-    async def _instantiate_form_modal(self, interaction: Interaction, discord_id: int):
+    async def _instantiate_form_modal(self, interaction: Interaction):
         modal = ProfileModal(title='Create/Update your Japan7 profile.', profile=self.profile)
         await interaction.response.send_modal(modal)
         await modal.wait()
@@ -437,6 +432,21 @@ async def user_who_is(interaction: Interaction, member: Member):
     profile = resp.result
     send = partial(interaction.response.send_message, ephemeral=True)
     await send(embed=Profiles.create_vcard(member, profile))
+
+
+def profile_upsert_body_from_search_result(
+    member_user_name: str, search_result: ProfileSearchResult
+):
+    return UpsertProfileBody(
+        discord_username=member_user_name,
+        birthday=search_result.birthday,
+        full_name=search_result.full_name,
+        graduation_year=search_result.graduation_year,
+        n7_major=search_result.n7_major,
+        photo=search_result.photo,
+        pronouns=search_result.pronouns,
+        telephone=search_result.telephone,
+    )
 
 
 async def setup(bot: Bot):
