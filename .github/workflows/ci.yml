@@ -28,9 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
+      - uses: astral-sh/setup-uv@v5
       - run: cp nanachan/example.local_settings.py nanachan/local_settings.py
       - run: uv run --frozen pyright
       - run: uv run --frozen ruff check nanachan/
