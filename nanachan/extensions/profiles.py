@@ -60,8 +60,15 @@ class Profiles(Cog):
         if len(year_role) != 1:
             return
         year_role = year_role[0]
+
         if year_role == YEAR_ROLES[0]:  # 4A+
             return
+
+        # skip if role was already there
+        for role in before.roles:
+            if year_role == role.id:
+                return
+
         current_date = datetime.now()
         graduation_year_offset = 1 if current_date.month >= 9 else 0
         graduation_year = (
