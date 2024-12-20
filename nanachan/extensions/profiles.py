@@ -407,7 +407,10 @@ class ProfileCreateOrChangeView(BaseView):
     async def _instantiate_form_modal(self, interaction: Interaction):
         modal = ProfileModal(title='Create/Update your Japan7 profile.', profile=self.profile)
         await interaction.response.send_modal(modal)
-        await modal.wait()
+
+        if await modal.wait():
+            return  # timeout
+
         self.profile = modal.profile
         await self._edit_embed(self.profile, interaction)
 
