@@ -3,7 +3,7 @@ import re
 from datetime import datetime, timezone
 from functools import partial
 from operator import itemgetter
-from typing import Protocol, TypedDict
+from typing import Protocol, TypedDict, override
 
 import discord
 import discord.ext
@@ -247,14 +247,17 @@ class ProfileModal(ui.Modal):
         default_birthday = (
             self.profile.birthday.strftime('%Y-%m-%d') if self.profile.birthday else None
         )
-        self.birthday = ui.TextInput(
+
+        TextInput = ui.TextInput[ProfileModal]
+
+        self.birthday = TextInput(
             label='Birthdate',
             placeholder='Enter your birthdate (YYYY-MM-DD)',
             style=discord.TextStyle.short,
             required=False,
             default=default_birthday,
         )
-        self.full_name = ui.TextInput(
+        self.full_name = TextInput(
             label='Full Name',
             placeholder='Enter you full name (First name Last name)',
             style=discord.TextStyle.short,
@@ -264,36 +267,38 @@ class ProfileModal(ui.Modal):
         default_graduation_year = (
             str(self.profile.graduation_year) if self.profile.graduation_year else ''
         )
-        self.graduation_year = ui.TextInput(
+        self.graduation_year = TextInput(
             label='Graduation Year',
             placeholder='Enter your graduation year',
             style=discord.TextStyle.short,
             required=False,
             default=default_graduation_year,
         )
-        self.pronouns = ui.TextInput(
+        self.pronouns = TextInput(
             label='Pronouns',
             placeholder='Enter your prnouns',
             style=discord.TextStyle.short,
             required=False,
             default=self.profile.pronouns,
         )
-        self.telephone = ui.TextInput(
+        self.telephone = TextInput(
             label='Phone Number',
             placeholder='Enter your phone number',
             style=discord.TextStyle.short,
             required=False,
             default=self.profile.telephone,
         )
+
         self.add_item(self.birthday)
         self.add_item(self.full_name)
         self.add_item(self.graduation_year)
         self.add_item(self.pronouns)
         self.add_item(self.telephone)
 
+    @override
     async def on_submit(self, interaction: Interaction):
         await interaction.response.defer()
-        errors = []
+        errors: list[str] = []
         if not self.birthday_regex.fullmatch(self.birthday.value):
             errors.append('Invalid birthday format.')
         if not self.graduation_year_regex.fullmatch(self.graduation_year.value):
@@ -326,7 +331,8 @@ class ProfileCreateOrChangeView(BaseView):
         super().__init__(bot)
         self.member = member
         self.profile = profile
-        n7_major_select = ui.Select(
+
+        n7_major_select = ui.Select[ProfileCreateOrChangeView](
             placeholder='Select your major at N7',
             options=[
                 SelectOption(emoji='⚡', label='Elec', value='Elec'),
@@ -336,15 +342,20 @@ class ProfileCreateOrChangeView(BaseView):
             row=1,
         )
         n7_major_select.callback = self._n7_major_select_cb
-        form_button = ui.Button(label='Open Form', emoji='📔', row=0)
+
+        Button = ui.Button[ProfileCreateOrChangeView]
+
+        form_button = Button(label='Open Form', emoji='📔', row=0)
         form_button.callback = self._instantiate_form_modal
-        photo_button = ui.Button(label='Upload picture', emoji='🖼️', row=0)
+
+        photo_button = Button(label='Upload picture', emoji='🖼️', row=0)
         photo_button.callback = self._photo_button_cb
-        confirm_button = ui.Button(
+
+        confirm_button = Button(
             label='Confirm changes', emoji=self.bot.get_nana_emoji('FubukiGO'), row=2
         )
         confirm_button.callback = self._confirm_button_cb
-        cancel_button = ui.Button(
+        cancel_button = Button(
             label='Cancel changes', emoji=bot.get_nana_emoji('FubukiStop'), row=2
         )
         cancel_button.callback = self._cancel_button_cb
@@ -362,7 +373,7 @@ class ProfileCreateOrChangeView(BaseView):
     async def _photo_button_cb(self, interaction: Interaction):
         await interaction.response.send_message('Upload your profile picture', ephemeral=True)
 
-        def check(message):
+        def check(message: MultiplexingContext):
             return all(
                 [
                     message.command is None,
@@ -414,6 +425,7 @@ class ProfileCreateOrChangeView(BaseView):
         self.profile = modal.profile
         await self._edit_embed(self.profile, interaction)
 
+    @override
     async def interaction_check(self, interaction: Interaction):
         return self.member.id == interaction.user.id
 
