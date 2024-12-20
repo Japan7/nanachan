@@ -139,7 +139,7 @@ class Profiles(Cog):
         return profile
 
     @staticmethod
-    def create_vcard(member: Member, profile: ProfileSearchResult | UpsertProfileBody):
+    def create_embed(member: Member, profile: ProfileSearchResult | UpsertProfileBody):
         embed = Embed(colour=getattr(member, 'colour', None))
         embed.set_author(name=member, icon_url=member.display_avatar.url)
 
@@ -205,7 +205,7 @@ class Profiles(Cog):
             case _:
                 raise RuntimeError(profile_resp.result)
         assert member
-        embed = self.create_vcard(member, profile)
+        embed = self.create_embed(member, profile)
         await ctx.send(embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile))
 
     @nana_command(description="Display other user's profile.")
@@ -225,7 +225,7 @@ class Profiles(Cog):
         assert ctx.guild
         member = ctx.guild.get_member(other.id)
         assert member
-        await ctx.send(embed=self.create_vcard(member, profile))
+        await ctx.send(embed=self.create_embed(member, profile))
 
 
 class ModalDict(TypedDict):
@@ -355,9 +355,9 @@ class ProfileCreateOrChangeView(BaseView):
         self.add_item(cancel_button)
 
     async def _edit_embed(self, profile: UpsertProfileBody, interaction: Interaction):
-        self.embed = Profiles.create_vcard(self.member, profile=profile)
         assert interaction.message
-        await interaction.message.edit(embed=self.embed)
+        embed = Profiles.create_embed(self.member, profile=profile)
+        await interaction.message.edit(embed=embed)
 
     async def _photo_button_cb(self, interaction: Interaction):
         await interaction.response.send_message('Upload your profile picture', ephemeral=True)
@@ -431,7 +431,7 @@ async def user_who_is(interaction: Interaction, member: Member):
 
     profile = resp.result
     send = partial(interaction.response.send_message, ephemeral=True)
-    await send(embed=Profiles.create_vcard(member, profile))
+    await send(embed=Profiles.create_embed(member, profile))
 
 
 def profile_upsert_body_from_search_result(
