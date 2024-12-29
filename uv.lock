@@ -719,7 +719,7 @@ requires-dist = [
     { name = "pillow", specifier = "==11.0.0" },
     { name = "pydantic", specifier = "==2.10.4" },
     { name = "pysaucenao", specifier = "==1.6.2" },
-    { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.12.0" },
+    { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.12.1" },
     { name = "redis", extras = ["hiredis"], specifier = "==5.2.1" },
     { name = "rich", specifier = "==13.9.4" },
     { name = "tldr", specifier = "==3.3.0" },
@@ -1041,15 +1041,15 @@ wheels = [
 
 [[package]]
 name = "python-socketio"
-version = "5.12.0"
+version = "5.12.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bidict" },
     { name = "python-engineio" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/95/35/554914000c4549f88d45ddb9fd616f380d53afcd11c6a82f8acb858b3419/python_socketio-5.12.0.tar.gz", hash = "sha256:39b55bff4ef6ac5c39b8bbc38fa61962e22e15349b038c1ca7ee2e18824e06dc", size = 120093 }
+sdist = { url = "https://files.pythonhosted.org/packages/ce/d0/40ed38076e8aee94785d546d3e3a1cae393da5806a8530be877187e2875f/python_socketio-5.12.1.tar.gz", hash = "sha256:0299ff1f470b676c09c1bfab1dead25405077d227b2c13cf217a34dadc68ba9c", size = 119991 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f7/5f/bccb8d210f9a2bb5d5723cfe3034d940501045f8c1e074ec3c2574d2519c/python_socketio-5.12.0-py3-none-any.whl", hash = "sha256:50fe22fd2b0aa634df3e74489e42217b09af2fb22eee45f2c006df36d1d08cb9", size = 77036 },
+    { url = "https://files.pythonhosted.org/packages/8a/a3/c69806f30dd81df5a99d592e7db4c930c3a9b098555aa97b0eb866b20b11/python_socketio-5.12.1-py3-none-any.whl", hash = "sha256:24a0ea7cfff0e021eb28c68edbf7914ee4111bdf030b95e4d250c4dc9af7a386", size = 76947 },
 ]
 
 [package.optional-dependencies]
