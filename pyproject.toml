@@ -19,7 +19,7 @@ dependencies = [
     "aiohttp[speedups]==3.11.11",
     "aiofiles==24.1.0",
     "pysaucenao==1.6.2",
-    "Pillow==11.0.0",
+    "Pillow==11.1.0",
     "html2text==2024.2.26",
     # https://github.com/PyYoshi/cChardet/issues/81
     "faust-cchardet==2.1.19",
