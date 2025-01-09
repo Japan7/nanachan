@@ -1,24 +1,15 @@
-from __future__ import annotations
-
 import asyncio
-import base64
-import io
+import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial
 from operator import itemgetter
-from typing import Optional, Protocol
+from typing import Protocol, TypedDict, override
 
-import vobject
-from discord import Interaction, Member, app_commands
-from discord.ext.commands import (
-    BadArgument,
-    Context,
-    MissingRequiredArgument,
-    command,
-    group,
-    guild_only,
-)
+import discord
+import discord.ext
+from dateutil.parser import parse
+from discord import Interaction, Member, Role, SelectOption, app_commands, ui
 from discord.ui import Button
 
 from nanachan.discord.application_commands import (
@@ -28,8 +19,9 @@ from nanachan.discord.application_commands import (
 )
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
-from nanachan.discord.helpers import Embed, MultiplexingContext, typing
-from nanachan.discord.views import AutoNavigatorView, LockedView
+from nanachan.discord.helpers import Embed, MultiplexingContext
+from nanachan.discord.views import AutoNavigatorView, BaseView, LockedView
+from nanachan.nanapi._client import Error, Success
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
     ProfileSearchResult,
@@ -37,7 +29,9 @@ from nanachan.nanapi.model import (
     UpsertProfileBody,
 )
 from nanachan.settings import YEAR_ROLES
-from nanachan.utils.misc import list_display, to_producer
+from nanachan.utils.misc import to_producer
+
+logger = logging.getLogger(__name__)
 
 
 class RegistrarProtocol(Protocol):
@@ -63,67 +57,48 @@ class Profiles(Cog):
             ]
         )
 
-    @command(
-        aliases=['iam'],
-        help='Tell who you are\n' 'You need to attach your .vcf card while using this command',
-    )
-    async def i_am(self, ctx):
-        vcard = await self._fetch_vcard(ctx.message)
-        profile = await self._create_or_update_profile(ctx.author, vcard)
-        await self._year_role_member(ctx, profile)
-        await self._send_vcard(ctx.send, ctx.author, profile)
+    @Cog.listener()
+    async def on_member_update(self, before: Member, after: Member):
+        year_role = [role.id for role in after.roles if role.id in YEAR_ROLES]
+        if len(year_role) != 1:
+            return
+        year_role = year_role[0]
 
-    @guild_only()
-    @command(
-        aliases=['thisis'],
-        help='Tell who this member is\n'
-        'You need to attach the member’s .vcf card while using this command',
-    )
-    async def this_is(self, ctx, member: Member):
-        vcard = await self._fetch_vcard(ctx.message)
-        profile = await self._create_or_update_profile(member, vcard)
-        await self._year_role_member(ctx, profile)
-        await self._send_vcard(ctx.send, member, profile)
+        if year_role == YEAR_ROLES[0]:  # 4A+
+            return
 
-    @this_is.error
-    async def thisis_error(self, ctx, error):
-        if isinstance(error, MissingRequiredArgument):
-            await ctx.send('SPARTAAAA!!')
-        else:
-            await self.bot.on_command_error(ctx, error, force=True)
-
-    async def _year_role_member(self, ctx: Context, profile: ProfileSearchResult):
-        guild = ctx.guild
-        assert guild is not None
-
-        if (
-            profile.promotion is not None
-            and 'ENSEEIHT' in profile.promotion
-            and (year_search := re.search(r'\d+', profile.promotion))
-        ):
-            promotion = int(year_search.group(0))
-
-            now = datetime.now()
-            last_promotion = now.year if now.month >= 7 else now.year - 1
-
-            member = guild.get_member(profile.user.discord_id)
-            if member is None:
+        # skip if role was already there
+        for role in before.roles:
+            if year_role == role.id:
                 return
 
-            year_roles = [
-                role for role in (guild.get_role(id) for id in YEAR_ROLES) if role is not None
-            ]
-            for i, role in enumerate(year_roles):
-                if promotion <= last_promotion + i:
-                    await member.remove_roles(*year_roles)
-                    await member.add_roles(role)
-                    return member, profile, role
+        current_date = datetime.now()
+        graduation_year_offset = 1 if current_date.month >= 7 else 0
+        graduation_year = (
+            current_date.year + graduation_year_offset + YEAR_ROLES.index(year_role) - 1
+        )
 
-    @command()
-    @typing
-    async def promo(self, ctx: Context):
+        user_profile = UpsertProfileBody(
+            discord_username=after.name, graduation_year=graduation_year
+        )
+        await get_nanapi().user.user_upsert_profile(discord_id=after.id, body=user_profile)
+
+    async def _update_year_roles(
+        self, members: list[Member], year_roles: list[Role], target_roles: list[Role]
+    ):
+        for member, target_role in zip(members, target_roles):
+            await member.remove_roles(*year_roles)
+            await member.add_roles(target_role)
+
+        logger.info("done syncing member year roles")
+
+    @nana_command(description='refresh promo roles')
+    @app_commands.guild_only()
+    async def promo(self, interaction: Interaction):
         """Refresh promo roles"""
-        guild = ctx.guild
+        await interaction.response.defer()
+
+        guild = interaction.guild
         assert guild is not None
 
         resp = await get_nanapi().user.user_profile_search(
@@ -132,21 +107,35 @@ class Profiles(Cog):
         if not success(resp):
             raise RuntimeError(resp.result)
         profiles = resp.result
+        now = datetime.now()
+        last_promo = now.year if now.month >= 7 else now.year - 1
+        year_roles = [
+            role for role in (guild.get_role(id) for id in YEAR_ROLES) if role is not None
+        ]
+        new_roles = []
+        members = []
+        for profile in profiles:
+            if profile.graduation_year is None:
+                continue
+            member = guild.get_member(profile.user.discord_id)
+            if member is None:
+                continue
+            role_index = max(profile.graduation_year - last_promo, 0)
+            new_roles.append(year_roles[role_index])
+            members.append(member)
 
-        refreshed = await asyncio.gather(
-            *(self._year_role_member(ctx, profile) for profile in profiles)
-        )
+        asyncio.create_task(self._update_year_roles(members, year_roles, new_roles))
 
         text = [
             f'**{member}** • [**{role}**] {profile.full_name}'
-            for member, profile, role in filter(None, refreshed)
+            for member, profile, role in zip(members, profiles, new_roles)
         ]
         text.sort(key=str.casefold)
 
         icon_url = None if guild.icon is None else guild.icon.url
         await AutoNavigatorView.create(
             self.bot,
-            ctx.reply,
+            interaction.followup.send,
             title='ENSEEIHT members',
             description='\n'.join(text),
             author_name=str(guild),
@@ -154,196 +143,41 @@ class Profiles(Cog):
             footer_text=f'{len(text)} members',
         )
 
-    @command(aliases=['whois'], help='Display information about someone')
-    async def who_is(self, ctx: MultiplexingContext, *, search_tags):
-        members_and_profiles: dict[int, tuple[Member, ProfileSearchResult]] = {}
-
-        if (guild := ctx.guild) is None:
-            guild = self.bot.get_bot_room().guild
-
-        # search in the discord names
-        for member in guild.members:
-            magic_string = '\0'.join(
-                {
-                    member.name,
-                    member.nick or member.name,
-                    str(member.id),
-                    member.mention,
-                    f'{member.name}#{member.discriminator}',
-                }
-            )
-            if re.search(re.escape(search_tags), magic_string, re.IGNORECASE):
-                resp = await get_nanapi().user.user_get_profile(member.id)
-                if not success(resp):
-                    match resp.code:
-                        case 404:
-                            continue
-                        case _:
-                            raise RuntimeError(resp.result)
-                profile = resp.result
-                members_and_profiles[member.id] = (member, profile)
-
-        # search in the cards information
-        search = f'%{search_tags}%'
-        resp = await get_nanapi().user.user_profile_search(pattern=search)
-        if not success(resp):
-            raise RuntimeError(resp.result)
-        profiles = resp.result
-
-        for profile in profiles:
-            member = guild.get_member(profile.user.discord_id)
-            if member is None:
-                continue
-
-            members_and_profiles[member.id] = (member, profile)
-
-        # display all what we found
-        if len(members_and_profiles) > 0:
-            for member, profile in members_and_profiles.values():
-                await self._send_vcard(ctx.send, member, profile)
-        else:
-            await ctx.send('分かりません :confounded:')
-
-    @guild_only()
-    @group(aliases=['profiles'], invoke_without_command=True, help='List & manage profiles')
-    async def profile(self, ctx):
-        subcommand = ctx.subcommand_passed
-        if subcommand is not None:
-            raise BadArgument(f'Invalid profile command `{subcommand}`')
-        else:
-            raise BadArgument('Subcommand needed')
-
-    @guild_only()
-    @profile.command(help='List known members (this can be a long list)')
-    async def list(self, ctx):
-        resp = await get_nanapi().user.user_profile_search(
-            ','.join([str(m.id) for m in ctx.guild.members])
-        )
-        if not success(resp):
-            raise RuntimeError(resp.result)
-        profiles = resp.result
-        if profiles:
-            members = []
-            width = 0
-            for profile in profiles:
-                member = ctx.guild.get_member(profile.user.discord_id)
-                members.append((str(member), profile.full_name))
-                width = max(width, len(str(member)))
-            members = [f'{m[0].ljust(width)} : {m[1]}' for m in members]
-            for page in list_display('Member list', members):
-                await ctx.send(page)
-        else:
-            await ctx.send('```No member registered on this server```')
-
-    @guild_only()
-    @profile.command(help='List unknown members (this can be a long list)')
-    async def check(self, ctx):
-        resp = await get_nanapi().user.user_profile_search(
-            ','.join([str(m.id) for m in ctx.guild.members])
-        )
-        if not success(resp):
-            raise RuntimeError(resp.result)
-        profiles = resp.result
-        discord_ids = [p.user.discord_id for p in profiles]
-
-        unknown_members = sorted(
-            (
-                str(member)
-                for member in ctx.guild.members
-                if member.id not in discord_ids and not member.bot
-            ),
-            key=str.lower,
-        )
-
-        discords_ids_without_pp = [p.user.discord_id for p in profiles if p.photo is None]
-
-        members_without_pp = sorted(
-            (
-                str(member)
-                for member in ctx.guild.members
-                if member.id in discords_ids_without_pp and not member.bot
-            )
-        )
-
-        message = False
-        if unknown_members:
-            message = True
-            for page in list_display('Unknown members', unknown_members):
-                await ctx.send(page)
-        if members_without_pp:
-            message = True
-            for page in list_display('Members without profile picture', members_without_pp):
-                await ctx.send(page)
-        if not message:
-            await ctx.send("```All this server's members are known and have a profile picture```")
-
     @staticmethod
-    async def _fetch_vcard(message):
-        for attachment in message.attachments:
-            if attachment.filename.endswith('.vcf'):
-                break
-        else:
-            raise BadArgument('`.vcf` file not found')
-
-        return vobject.readOne((await attachment.read()).decode())  # type: ignore |not exported ig
-
-    @staticmethod
-    async def _create_or_update_profile(member: Member, vcard):
-        full_name = vcard.fn.value
-        promotion = re.sub('&amp,', '&', Profiles._flatten(vcard.org.value))
-        telephone = vcard.tel.value if 'tel' in vcard.contents else ''
-        photo = (
-            base64.b64encode(vcard.photo.value).decode('ascii')
-            if len(vcard.photo.value) > 5
-            else ''
-        )
-
-        resp = await get_nanapi().user.user_upsert_profile(
-            member.id,
-            UpsertProfileBody(
-                discord_username=str(member),
-                full_name=full_name,
-                promotion=promotion,
-                telephone=telephone,
-                photo=photo,
-            ),
-        )
+    async def _create_or_update_profile(member: Member | discord.User, payload: UpsertProfileBody):
+        resp = await get_nanapi().user.user_upsert_profile(member.id, payload)
         if not success(resp):
             raise RuntimeError(resp.result)
         profile = resp.result
         return profile
 
     @staticmethod
-    def _flatten(l):
-        if isinstance(l, list):
-            result = Profiles._flatten(l[0])
-            if len(l) > 1:
-                for element in l[1:]:
-                    result += ',' + Profiles._flatten(element)
-            return result
-        else:
-            return l
-
-    @staticmethod
-    async def _send_vcard(send_func, member: Optional[Member], profile):
+    def create_embed(member: Member, profile: ProfileSearchResult | UpsertProfileBody):
         embed = Embed(colour=getattr(member, 'colour', None))
-        embed = embed.add_field(name='氏名', value=profile.full_name)
+        embed.set_author(name=member, icon_url=member.display_avatar.url)
 
-        if member is not None:
-            embed.set_author(name=member, icon_url=member.display_avatar.url)
+        if profile.full_name is not None:
+            embed = embed.add_field(name='氏名', value=profile.full_name)
 
-        if profile.promotion:
-            embed.add_field(name='学級', value=profile.promotion)
+        if profile.graduation_year:
+            embed.add_field(name='学級', value=profile.graduation_year)
+
+        if profile.n7_major:
+            embed.add_field(name='専門', value=profile.n7_major)
+
+        if profile.pronouns:
+            embed.add_field(name='代名詞', value=profile.pronouns)
+
+        if profile.birthday:
+            embed.add_field(name='誕生日', value=datetime.strftime(profile.birthday, '%Y-%m-%d'))
 
         if profile.telephone:
             embed.add_field(name='携帯番号', value=profile.telephone)
 
         if profile.photo:
-            image = io.BytesIO(base64.b64decode(profile.photo))
-            hikari = await to_producer(image, filename='profile.jpg')
-            embed.set_thumbnail(url=hikari['url'])
+            embed.set_thumbnail(url=profile.photo)
 
-        await send_func(embed=embed)
+        return embed
 
     @nana_command()
     @legacy_command()
@@ -368,22 +202,279 @@ class Profiles(Cog):
             view=view,
         )
 
+    @nana_command(description='Edit your own profile.')
+    @legacy_command()
+    async def iam(self, ctx: LegacyCommandContext):
+        assert ctx.guild
+        member = ctx.guild.get_member(ctx.author.id)
+        profile_resp = await get_nanapi().user.user_get_profile(ctx.author.id)
+        match profile_resp:
+            case Success():
+                profile = profile_upsert_body_from_search_result(
+                    ctx.author.name, profile_resp.result
+                )
+            case Error(code=404):
+                profile = UpsertProfileBody(discord_username=ctx.author.name)
+            case _:
+                raise RuntimeError(profile_resp.result)
+        assert member
+        embed = self.create_embed(member, profile)
+        await ctx.send(embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile))
+
+    @nana_command(description="Display other user's profile.")
+    @legacy_command()
+    async def whois(self, ctx: LegacyCommandContext, other: discord.User):
+        profile_resp = await get_nanapi().user.user_get_profile(other.id)
+        match profile_resp:
+            case Success():
+                pass
+            case Error(code=404):
+                await ctx.reply('User has no registered profile.')
+                return
+            case _:
+                raise RuntimeError(profile_resp.result)
+
+        profile = profile_resp.result
+        assert ctx.guild
+        member = ctx.guild.get_member(other.id)
+        assert member
+        await ctx.send(embed=self.create_embed(member, profile))
+
+
+class ModalDict(TypedDict):
+    birthday: datetime | None
+    full_name: str | None
+    graduation_year: int | None
+    pronouns: str | None
+    telephone: str | None
+
+
+class ProfileModal(ui.Modal):
+    birthday_regex = re.compile(r'^(\d{4}-\d{2}-\d{2})?$')
+    graduation_year_regex = re.compile(r'^(\d{4})?$')
+    telephone_regex = re.compile(r'^((\+33)|0\d{9}$)?')
+
+    def __init__(self, *, title: str, profile: UpsertProfileBody):
+        super().__init__(title=title)
+        self.profile = profile
+        default_birthday = (
+            self.profile.birthday.strftime('%Y-%m-%d') if self.profile.birthday else None
+        )
+
+        TextInput = ui.TextInput[ProfileModal]
+
+        self.birthday = TextInput(
+            label='Birthdate',
+            placeholder='Enter your birthdate (YYYY-MM-DD)',
+            style=discord.TextStyle.short,
+            required=False,
+            default=default_birthday,
+        )
+        self.full_name = TextInput(
+            label='Full Name',
+            placeholder='Enter you full name (First name Last name)',
+            style=discord.TextStyle.short,
+            required=False,
+            default=self.profile.full_name,
+        )
+        default_graduation_year = (
+            str(self.profile.graduation_year) if self.profile.graduation_year else ''
+        )
+        self.graduation_year = TextInput(
+            label='Graduation Year',
+            placeholder='Enter your graduation year',
+            style=discord.TextStyle.short,
+            required=False,
+            default=default_graduation_year,
+        )
+        self.pronouns = TextInput(
+            label='Pronouns',
+            placeholder='Enter your prnouns',
+            style=discord.TextStyle.short,
+            required=False,
+            default=self.profile.pronouns,
+        )
+        self.telephone = TextInput(
+            label='Phone Number',
+            placeholder='Enter your phone number',
+            style=discord.TextStyle.short,
+            required=False,
+            default=self.profile.telephone,
+        )
+
+        self.add_item(self.birthday)
+        self.add_item(self.full_name)
+        self.add_item(self.graduation_year)
+        self.add_item(self.pronouns)
+        self.add_item(self.telephone)
+
+    @override
+    async def on_submit(self, interaction: Interaction):
+        await interaction.response.defer()
+        errors: list[str] = []
+        if not self.birthday_regex.fullmatch(self.birthday.value):
+            errors.append('Invalid birthday format.')
+        if not self.graduation_year_regex.fullmatch(self.graduation_year.value):
+            errors.append('Invalid graduation year.')
+        if not self.telephone_regex.fullmatch(self.telephone.value):
+            errors.append('Invalid phone number')
+        response = (
+            '\n'.join(errors) if len(errors) > 0 else 'All information gathered succesfully.'
+        )
+
+        if not errors:
+            self.profile.birthday = self.parse_date(self.birthday.value)
+            self.profile.full_name = self.full_name.value or None
+            self.profile.graduation_year = self.parse_int(self.graduation_year.value)
+            self.profile.pronouns = self.pronouns.value or None
+            self.profile.telephone = self.telephone.value or None
+        await interaction.followup.send(response, ephemeral=True)
+
+    @staticmethod
+    def parse_date(date_str: str):
+        return parse(date_str).replace(tzinfo=timezone.utc) if date_str else None
+
+    @staticmethod
+    def parse_int(i: str):
+        return int(i) if i else None
+
+
+class ProfileCreateOrChangeView(BaseView):
+    def __init__(self, bot: Bot, member: Member, profile: UpsertProfileBody):
+        super().__init__(bot)
+        self.member = member
+        self.profile = profile
+
+        n7_major_select = ui.Select[ProfileCreateOrChangeView](
+            placeholder='Select your major at N7',
+            options=[
+                SelectOption(emoji='⚡', label='Elec', value='Elec'),
+                SelectOption(emoji='🌊', label='Hydro', value='Hydro'),
+                SelectOption(emoji='💻', label='Info', value='Info'),
+            ],
+            row=1,
+        )
+        n7_major_select.callback = self._n7_major_select_cb
+
+        Button = ui.Button[ProfileCreateOrChangeView]
+
+        form_button = Button(label='Open Form', emoji='📔', row=0)
+        form_button.callback = self._instantiate_form_modal
+
+        photo_button = Button(label='Upload picture', emoji='🖼️', row=0)
+        photo_button.callback = self._photo_button_cb
+
+        confirm_button = Button(
+            label='Confirm changes', emoji=self.bot.get_nana_emoji('FubukiGO'), row=2
+        )
+        confirm_button.callback = self._confirm_button_cb
+        cancel_button = Button(
+            label='Cancel changes', emoji=bot.get_nana_emoji('FubukiStop'), row=2
+        )
+        cancel_button.callback = self._cancel_button_cb
+        self.add_item(form_button)
+        self.add_item(photo_button)
+        self.add_item(n7_major_select)
+        self.add_item(confirm_button)
+        self.add_item(cancel_button)
+
+    async def _edit_embed(self, profile: UpsertProfileBody, interaction: Interaction):
+        assert interaction.message
+        embed = Profiles.create_embed(self.member, profile=profile)
+        await interaction.message.edit(embed=embed)
+
+    async def _photo_button_cb(self, interaction: Interaction):
+        await interaction.response.send_message('Upload your profile picture', ephemeral=True)
+
+        def check(message: MultiplexingContext):
+            return all(
+                [
+                    message.command is None,
+                    message.author == interaction.user,
+                    message.channel == interaction.channel,
+                ]
+            )
+
+        resp = await MultiplexingContext.set_will_delete(check=check)
+        resp = resp.message
+        if len(resp.attachments) > 0:
+            attachment = resp.attachments[0]
+            if attachment.content_type == 'image/png':
+                hikari = await to_producer(attachment.url)
+                self.profile.photo = hikari['url']
+            else:
+                await resp.reply('Not a valid PNG file!')
+                return
+
+        await resp.delete()
+        await self._edit_embed(self.profile, interaction)
+
+    async def _n7_major_select_cb(self, interaction: Interaction):
+        await interaction.response.defer()
+        assert interaction.data
+        assert 'values' in interaction.data
+        self.profile.n7_major = interaction.data['values'][0]
+        await self._edit_embed(self.profile, interaction)
+
+    async def _confirm_button_cb(self, interaction: Interaction):
+        await interaction.response.defer()
+        await Profiles._create_or_update_profile(self.member, self.profile)
+        assert interaction.message
+        await interaction.message.edit(
+            content='Profile has been updated successfully.', embed=None, view=None
+        )
+
+    async def _cancel_button_cb(self, interaction: Interaction):
+        assert interaction.message
+        await interaction.message.edit(content='Profile update cancelled.', embed=None, view=None)
+
+    async def _instantiate_form_modal(self, interaction: Interaction):
+        modal = ProfileModal(title='Create/Update your Japan7 profile.', profile=self.profile)
+        await interaction.response.send_modal(modal)
+
+        if await modal.wait():
+            return  # timeout
+
+        self.profile = modal.profile
+        await self._edit_embed(self.profile, interaction)
+
+    @override
+    async def interaction_check(self, interaction: Interaction):
+        return self.member.id == interaction.user.id
+
 
 @app_commands.context_menu(name='Who is')
 async def user_who_is(interaction: Interaction, member: Member):
     resp = await get_nanapi().user.user_get_profile(member.id)
-    if not success(resp):
-        match resp.code:
-            case 404:
-                await interaction.response.send_message(
-                    f'No informations found about **{member}**', ephemeral=True
-                )
-                return
-            case _:
-                raise RuntimeError(resp.result)
+    match resp:
+        case Success():
+            pass
+        case Error(code=404):
+            await interaction.response.send_message(
+                f'No informations found about **{member}**', ephemeral=True
+            )
+            return
+        case _:
+            raise RuntimeError(resp.result)
+
     profile = resp.result
     send = partial(interaction.response.send_message, ephemeral=True)
-    await Profiles._send_vcard(send, member, profile)
+    await send(embed=Profiles.create_embed(member, profile))
+
+
+def profile_upsert_body_from_search_result(
+    member_user_name: str, search_result: ProfileSearchResult
+):
+    return UpsertProfileBody(
+        discord_username=member_user_name,
+        birthday=search_result.birthday,
+        full_name=search_result.full_name,
+        graduation_year=search_result.graduation_year,
+        n7_major=search_result.n7_major,
+        photo=search_result.photo,
+        pronouns=search_result.pronouns,
+        telephone=search_result.telephone,
+    )
 
 
 async def setup(bot: Bot):
