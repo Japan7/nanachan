@@ -21,7 +21,7 @@ from nanachan.nanapi.model import MediaSelectResult, MediaType, StaffSelectResul
 from nanachan.settings import NANAPI_PUBLIC_URL
 from nanachan.utils.misc import autocomplete_truncate
 
-STAFF_GARBAGE = re.compile(r"\s+")
+STAFF_GARBAGE = re.compile(r'\s+')
 AL_COLOR = int('48A9F8', 16)
 PER_PAGE = 10
 
@@ -31,13 +31,14 @@ html2md.single_line_break = True
 
 
 class MediaScoreButton(Button[BaseView]):
-
     def __init__(self, bot: Bot):
         self.bot = bot
-        super().__init__(emoji=self.bot.get_emoji_str('yuniiZOOM'),
-                         label='Scores',
-                         style=discord.ButtonStyle.green,
-                         disabled=True)
+        super().__init__(
+            emoji=self.bot.get_emoji_str('yuniiZOOM'),
+            label='Scores',
+            style=discord.ButtonStyle.green,
+            disabled=True,
+        )
         self.event = asyncio.Event()
 
     async def load(self, media: MediaSelectResult, og_embed: Embed):
@@ -51,8 +52,11 @@ class MediaScoreButton(Button[BaseView]):
 
         self.disabled = len(self.fields_partitions) == 0
         self.curr_ind = 0
-        self.label = f"Scores #{self.curr_ind}/{len(self.fields_partitions)}" if len(
-            self.fields_partitions) > 0 else 'No score'
+        self.label = (
+            f'Scores #{self.curr_ind}/{len(self.fields_partitions)}'
+            if len(self.fields_partitions) > 0
+            else 'No score'
+        )
 
         self.event.set()
 
@@ -61,7 +65,7 @@ class MediaScoreButton(Button[BaseView]):
 
         self.curr_ind += 1
         self.curr_ind %= len(self.fields_partitions) + 1
-        self.label = f"Scores #{self.curr_ind}/{len(self.fields_partitions)}"
+        self.label = f'Scores #{self.curr_ind}/{len(self.fields_partitions)}'
 
         assert interaction.message is not None
         embeds = interaction.message.embeds
@@ -77,7 +81,6 @@ class MediaScoreButton(Button[BaseView]):
 
 
 class MediaNavigator(NavigatorView):
-
     def __init__(self, *args, medias: list[MediaSelectResult], **kwargs):
         super().__init__(*args, **kwargs)
         self.medias = medias
@@ -91,17 +94,18 @@ class MediaNavigator(NavigatorView):
         return page
 
     @classmethod
-    async def create(cls,
-                     bot,
-                     send_function: Callable,
-                     *,
-                     medias: list[MediaSelectResult],
-                     static_content: str | None = None,
-                     start_at: int = 1,
-                     prefetch_min_batch_size: int = 5,
-                     prefetch_pages: int = 5,
-                     **kwargs):
-
+    async def create(
+        cls,
+        bot,
+        send_function: Callable,
+        *,
+        medias: list[MediaSelectResult],
+        static_content: str | None = None,
+        start_at: int = 1,
+        prefetch_min_batch_size: int = 5,
+        prefetch_pages: int = 5,
+        **kwargs,
+    ):
         return await super().create(
             bot,
             send_function,
@@ -111,7 +115,8 @@ class MediaNavigator(NavigatorView):
             prefetch_min_batch_size=prefetch_min_batch_size,
             prefetch_pages=prefetch_pages,
             medias=medias,
-            **kwargs)
+            **kwargs,
+        )
 
 
 async def media_embed(media: MediaSelectResult):
@@ -122,17 +127,17 @@ async def media_embed(media: MediaSelectResult):
 
     description = html2md.handle(media.description or '').strip()
 
-    embed = Embed(title=media.title_user_preferred,
-                  description=description,
-                  color=color,
-                  url=media.site_url)
-    embed.set_image(url=f"https://img.anili.st/media/{media.id_al}")
+    embed = Embed(
+        title=media.title_user_preferred, description=description, color=color, url=media.site_url
+    )
+    embed.set_image(url=f'https://img.anili.st/media/{media.id_al}')
     embed.set_author(
         name='AniList',
         url='https://anilist.co/',
-        icon_url='https://anilist.co/img/icons/msapplication-icon-144x144.png')
+        icon_url='https://anilist.co/img/icons/msapplication-icon-144x144.png',
+    )
 
-    text = f"ID {media.id_al}"
+    text = f'ID {media.id_al}'
     embed.set_footer(text=text)
 
     return embed
@@ -145,26 +150,29 @@ async def media_page(media: MediaSelectResult) -> dict[str, Embed]:
 
 async def get_score_fields(bot: Bot, media: MediaSelectResult):
     resp = await get_nanapi().anilist.anilist_get_media_list_entries(
-        media.id_al,)
+        media.id_al,
+    )
     if not success(resp):
         raise RuntimeError(resp.result)
     entries = resp.result
 
-    total = (media.episodes
-             if media.type == MediaType.ANIME else media.chapters) or '?'
+    total = (media.episodes if media.type == MediaType.ANIME else media.chapters) or '?'
 
     fields: list[EmbedField] = []
     for entry in entries:
         status = entry.status.capitalize()
         if status != 'Completed':
-            progress = f" ({entry.progress}/" + str(total) + ')'
+            progress = f' ({entry.progress}/' + str(total) + ')'
         else:
             progress = ''
 
-        score = f"\nScored {entry.score:.2f}/10" if entry.score else ''
+        score = f'\nScored {entry.score:.2f}/10' if entry.score else ''
         fields.append(
-            EmbedField(name=str(bot.get_user(entry.account.user.discord_id)),
-                       value=status + progress + score))
+            EmbedField(
+                name=str(bot.get_user(entry.account.user.discord_id)),
+                value=status + progress + score,
+            )
+        )
 
     return sorted(fields, key=lambda i: i.name.casefold())
 
@@ -182,12 +190,11 @@ async def autocomplete_cast[T](
         return cast_fn(choices[0].value)
 
 
-def media_autocomplete(media_type: MediaType | None = None,
-                       id_al_as_value: bool = False):
-
+def media_autocomplete(media_type: MediaType | None = None, id_al_as_value: bool = False):
     async def autocomplete(interaction: discord.Interaction, current: str):
         resp = await get_nanapi().anilist.anilist_media_title_autocomplete(
-            current, media_type.value if media_type is not None else None)
+            current, media_type.value if media_type is not None else None
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         results = resp.result
@@ -196,13 +203,13 @@ def media_autocomplete(media_type: MediaType | None = None,
         for r in results:
             name = r.title_user_preferred
             if id_al_as_value:
-                name = f"{r.id_al} — {name}"
+                name = f'{r.id_al} — {name}'
             if media_type is None:
-                name = f"[{r.type[:1]}] {name}"
-            value = str(r.id_al) if id_al_as_value else autocomplete_truncate(
-                r.title_user_preferred)
-            choices.append(Choice(name=autocomplete_truncate(name),
-                                  value=value))
+                name = f'[{r.type[:1]}] {name}'
+            value = (
+                str(r.id_al) if id_al_as_value else autocomplete_truncate(r.title_user_preferred)
+            )
+            choices.append(Choice(name=autocomplete_truncate(name), value=value))
 
         return choices
 
@@ -210,18 +217,19 @@ def media_autocomplete(media_type: MediaType | None = None,
 
 
 async def staff_embed(staff: StaffSelectResult):
-    title = STAFF_GARBAGE.sub(" ", staff.name_user_preferred)
+    title = STAFF_GARBAGE.sub(' ', staff.name_user_preferred)
     if staff.name_native is not None:
-        title += f" ({staff.name_native})"
+        title += f' ({staff.name_native})'
 
     embed = Embed(title=title, color=AL_COLOR, url=staff.site_url)
     embed.set_author(
         name='AniList',
         url='https://anilist.co/',
-        icon_url='https://anilist.co/img/icons/msapplication-icon-144x144.png')
+        icon_url='https://anilist.co/img/icons/msapplication-icon-144x144.png',
+    )
     embed.set_thumbnail(url=staff.image_large)
 
-    embed.add_field(name='Favourites', value=f"{staff.favourites}")
+    embed.add_field(name='Favourites', value=f'{staff.favourites}')
 
     if (gender := staff.gender) is not None:
         embed.add_field(name='Gender', value=gender)
@@ -233,9 +241,9 @@ async def staff_embed(staff: StaffSelectResult):
     if staff.date_of_birth_month is not None:
         birth = calendar.month_name[staff.date_of_birth_month]
         if staff.date_of_birth_day is not None:
-            birth += f" {staff.date_of_birth_day}"
+            birth += f' {staff.date_of_birth_day}'
             if staff.date_of_birth_year is not None:
-                birth += f", {staff.date_of_birth_year}"
+                birth += f', {staff.date_of_birth_year}'
     if birth is not None:
         embed.add_field(name='Birthday', value=birth)
 
@@ -243,9 +251,9 @@ async def staff_embed(staff: StaffSelectResult):
     if staff.date_of_death_month is not None:
         death = calendar.month_name[staff.date_of_death_month]
         if staff.date_of_death_day is not None:
-            death += f" {staff.date_of_death_day}"
+            death += f' {staff.date_of_death_day}'
             if staff.date_of_death_year is not None:
-                death += f", {staff.date_of_death_year}"
+                death += f', {staff.date_of_death_year}'
     if death is not None:
         embed.add_field(name='Death', value=death)
 
@@ -256,15 +264,14 @@ async def staff_embed(staff: StaffSelectResult):
 
     if edges:
         charas_map = {e.character.id_al: e.character.favourites for e in edges}
-        sorted_ids = sorted(charas_map,
-                            key=lambda id: charas_map[id],
-                            reverse=True)
+        sorted_ids = sorted(charas_map, key=lambda id: charas_map[id], reverse=True)
         ids_al_str = ','.join(map(str, sorted_ids))
-        url = URL(f"{NANAPI_PUBLIC_URL}/anilist/charas/collages").with_query(
-            ids_al=ids_al_str, hide_no_images=1)
+        url = URL(f'{NANAPI_PUBLIC_URL}/anilist/charas/collages').with_query(
+            ids_al=ids_al_str, hide_no_images=1
+        )
         embed.set_image(url=url)
 
-    text = f"ID {staff.id_al}"
+    text = f'ID {staff.id_al}'
     embed.set_footer(text=text)
 
     return embed
@@ -277,20 +284,22 @@ async def staff_page(staff: StaffSelectResult) -> dict[str, Any]:
 
 
 def staff_autocomplete(id_al_as_value: bool = False):
-
     async def autocomplete(interaction: discord.Interaction, current: str):
-        resp = await get_nanapi().anilist.anilist_staff_name_autocomplete(
-            current)
+        resp = await get_nanapi().anilist.anilist_staff_name_autocomplete(current)
         if not success(resp):
             raise RuntimeError(resp.result)
         results = resp.result
         choices: list[Choice[str]] = []
         for r in results:
-            native = f" ({r.name_native})" if r.name_native else ''
+            native = f' ({r.name_native})' if r.name_native else ''
             choice = Choice(
-                name=autocomplete_truncate(f"{r.name_user_preferred}{native}"),
-                value=(str(r.id_al) if id_al_as_value else
-                       autocomplete_truncate(r.name_user_preferred)))
+                name=autocomplete_truncate(f'{r.name_user_preferred}{native}'),
+                value=(
+                    str(r.id_al)
+                    if id_al_as_value
+                    else autocomplete_truncate(r.name_user_preferred)
+                ),
+            )
             choices.append(choice)
 
         return choices

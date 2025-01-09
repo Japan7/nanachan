@@ -4,7 +4,6 @@ __all__ = ('RequiredSettings',)
 
 
 class RequiredSettings:
-
     def __init__(self, *args: Any):
         self.configured = all(args)
 

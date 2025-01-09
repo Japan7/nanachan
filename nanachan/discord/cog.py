@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class CogMeta(cmd.CogMeta):
-
     def __new__(
         cls,
         *args,
@@ -29,7 +28,6 @@ class CogMeta(cmd.CogMeta):
 
 
 class CogDescriptionMixin:
-
     @property
     def _cog_description(self):
         return self.__doc__

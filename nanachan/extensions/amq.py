@@ -81,7 +81,6 @@ class Player:
 
 
 class AMQCommand:
-
     def __init__(self, category: str, event: str, func):
         self.func = func
         self.events_by_category = {category: [event]}
@@ -99,7 +98,6 @@ class AMQCommand:
 
 
 class Roll(AMQCommand):
-
     @property
     def __doc__(self):  # type: ignore
         random_shows = 'konosuba', 'kaleid liner', 'index'
@@ -111,7 +109,6 @@ class Roll(AMQCommand):
 
 
 def amq_command(category: str, event: str, cls: type[AMQCommand] = AMQCommand):
-
     def decorator(func: Callable[..., Any]):
         if isinstance(func, cls):
             func.add_event(category, event)
@@ -124,7 +121,7 @@ def amq_command(category: str, event: str, cls: type[AMQCommand] = AMQCommand):
 
 
 class Commands(dict):
-    """ just a case-insensitive dict """
+    """just a case-insensitive dict"""
 
     def __setitem__(self, key, value):
         super().__setitem__(key.lower(), value)
@@ -137,7 +134,7 @@ class Commands(dict):
 
 
 class MetaAMQBot(type):
-    """ adds decorated commands to the class """
+    """adds decorated commands to the class"""
 
     def __new__(cls, name, bases, attrs):
         _commands = {}
@@ -157,7 +154,7 @@ class MetaAMQBot(type):
 
 
 class Players(dict):
-    """ I hate it but I don't want to have to deal with that ever again """
+    """I hate it but I don't want to have to deal with that ever again"""
 
     def __getitem__(self, i):
         return super().__getitem__(str(i))
@@ -223,8 +220,11 @@ class AMQBot(metaclass=MetaAMQBot):
         return self.player.host
 
     def settings_diff(self, new_settings):
-        return {k: val for k, val in new_settings.items()
-                if k not in self.settings or val != self.settings[k]}
+        return {
+            k: val
+            for k, val in new_settings.items()
+            if k not in self.settings or val != self.settings[k]
+        }
 
     def update_settings(self, new_settings):
         diff = self.settings_diff(new_settings)
@@ -234,10 +234,7 @@ class AMQBot(metaclass=MetaAMQBot):
 
     async def login(self):
         self.connection_state = AMQBot.LOGGING_IN
-        req_data = {
-            'username': self.username,
-            'password': AMQ_PASSWORD
-        }
+        req_data = {'username': self.username, 'password': AMQ_PASSWORD}
 
         async with get_session().post(LOGIN_URL, json=req_data) as resp:
             if resp.status == 429:
@@ -272,16 +269,12 @@ class AMQBot(metaclass=MetaAMQBot):
         new_settings_diff = self.settings_diff(new_settings)
 
         if new_settings_diff:
-            await self.send_command('lobby', 'change game settings',
-                                    **new_settings_diff)
+            await self.send_command('lobby', 'change game settings', **new_settings_diff)
 
         return new_settings
 
     async def send_command(self, command_type: str, command: str, **kwargs):
-        request: dict[str, Any] = {
-            'type': command_type,
-            'command': command
-        }
+        request: dict[str, Any] = {'type': command_type, 'command': command}
 
         if kwargs:
             request['data'] = kwargs.copy()
@@ -301,8 +294,7 @@ class AMQBot(metaclass=MetaAMQBot):
 
     async def _join_room(self, room_id: int, password: str | None = None):
         self.join_future = self.loop.create_future()
-        await self.send_command('roombrowser', 'join game',
-                                gameId=int(room_id), password=password)
+        await self.send_command('roombrowser', 'join game', gameId=int(room_id), password=password)
         return await self.join_future
 
     async def _get_socket_info(self):
@@ -312,12 +304,12 @@ class AMQBot(metaclass=MetaAMQBot):
 
     async def connect(self, token: str, port: str):
         self.connection_state = AMQBot.CONNECTING
-        logger.info("connecting to socketio")
+        logger.info('connecting to socketio')
         # if it fails here check that the request uses EIO=4
         # in the browser as the current python-socketio doesn't
         # support other values
         await self.sio.connect(WS_URL % (port, token))
-        logger.info("waiting for connection to end")
+        logger.info('waiting for connection to end')
         await self.sio.wait()
         return self.connection_state == AMQBot.CONNECTED
 
@@ -429,7 +421,7 @@ class AMQBot(metaclass=MetaAMQBot):
             return
 
         if len(data):
-            settings = Settings(data[0]["settings"])
+            settings = Settings(data[0]['settings'])
             settings.pre_load()
             self.default_settings.set_result(settings)
 
@@ -476,10 +468,9 @@ class AMQBot(metaclass=MetaAMQBot):
             hostname = data['hostName']
             for p in data['players']:
                 slot = p['gamePlayerId']
-                player = Player(p['name'],
-                                _ready=p['ready'],
-                                _host=p['name'] == hostname,
-                                team=p['teamNumber'])
+                player = Player(
+                    p['name'], _ready=p['ready'], _host=p['name'] == hostname, team=p['teamNumber']
+                )
                 if player.username == self.username:
                     self.players[slot] = self.player
                 else:
@@ -536,8 +527,7 @@ class AMQBot(metaclass=MetaAMQBot):
     async def _start(self):
         logger.log(PANIC_LEVEL, str(self.players))
 
-        other_players = any(p.ingame for p in self.players.values()
-                            if p.username != self.username)
+        other_players = any(p.ingame for p in self.players.values() if p.username != self.username)
 
         if other_players and all((p.ready or not p.ingame) for p in self.players.values()):
             await self.start_game()
@@ -607,8 +597,7 @@ class AMQBot(metaclass=MetaAMQBot):
         size = data['mapSize']
 
         # jump to a random tile
-        await self.send_command('quiz', 'tile selected',
-                                x=randrange(size), y=randrange(size))
+        await self.send_command('quiz', 'tile selected', x=randrange(size), y=randrange(size))
 
     @amq_command('amq_events', 'game chat update')
     async def on_chat_update(self, data):
@@ -623,7 +612,7 @@ class AMQBot(metaclass=MetaAMQBot):
         if private:
             sender = data['sender']
             if sender not in self.friends:
-                await self.send_message("yeah, fuck you", sender)
+                await self.send_message('yeah, fuck you', sender)
                 return
 
         else:
@@ -672,7 +661,7 @@ class AMQBot(metaclass=MetaAMQBot):
 
     @amq_command('bot_command', '7save')
     async def save_settings(self, words: list[str], sender: str):
-        """ save the current settings """
+        """save the current settings"""
         if len(words) < 2:
             return 'usage: 7save [settings_name]'
 
@@ -687,8 +676,9 @@ class AMQBot(metaclass=MetaAMQBot):
         return "saved the current settings as '%s'" % settings_name
 
     async def send_answer(self, answer: str):
-        await self.send_command('quiz', 'quiz answer',
-                                answer=answer, isPlaying=True, volumeAtMax=False)
+        await self.send_command(
+            'quiz', 'quiz answer', answer=answer, isPlaying=True, volumeAtMax=False
+        )
 
     @amq_command('bot_command', '7invite')
     async def invite_players(self, words: list[str], _=None):
@@ -697,20 +687,18 @@ class AMQBot(metaclass=MetaAMQBot):
 
     @amq_command('bot_command', '777')
     async def answer(self, words: list[str], _):
-        """ answer in my stead """
+        """answer in my stead"""
         answer = ' '.join(words[1:]).strip()
         await self.send_answer(answer)
 
     async def send_message(self, message, sender: str | None = None):
         if sender is None:
             teamMessage = False  # maybe I'll look into it later
-            await self.send_command('lobby',
-                                    'game chat message',
-                                    msg=message,
-                                    teamMessage=teamMessage)
+            await self.send_command(
+                'lobby', 'game chat message', msg=message, teamMessage=teamMessage
+            )
         else:
-            await self.send_command('social', 'chat message',
-                                    target=sender, message=message)
+            await self.send_command('social', 'chat message', target=sender, message=message)
 
     @amq_command('bot_command', '7kudeta')
     async def kudeta(self, words, _):
@@ -725,22 +713,22 @@ class AMQBot(metaclass=MetaAMQBot):
 
     @amq_command('bot_command', '7projection')
     async def projection(self, *_):
-        """ fallait venir en projection """
+        """fallait venir en projection"""
         await self.send_message('Fallait venir en projection !')
 
     @amq_command('bot_command', '7lobby')
     async def back_to_lobby(self, *_):
-        """ return to lobby """
+        """return to lobby"""
         await self.send_command('quiz', 'start return lobby vote')
 
     @amq_command('bot_command', '7credits')
     async def show_credits(self, _, sender: str):
-        """ show my credits count """
+        """show my credits count"""
         return str(self.credits)
 
     @amq_command('bot_command', '7roll', cls=Roll)
     async def roll(self, words: list[str], sender: str):
-        """ a virtual dice for %s (and others) """
+        """a virtual dice for %s (and others)"""
         try:
             n = int(words[1])
         except (ValueError, IndexError):
@@ -759,7 +747,7 @@ class AMQBot(metaclass=MetaAMQBot):
 
     @amq_command('bot_command', '7ings')
     async def set_settings(self, words: list[str], sender: str):
-        """ change the settings """
+        """change the settings"""
         if self.bot_settings is None:
             self.bot_settings = await load_settings()
 
@@ -772,36 +760,33 @@ class AMQBot(metaclass=MetaAMQBot):
 
     @amq_command('bot_command', '7spectate')
     async def spectate(self, _, sender: str):
-        """ change to spectator """
+        """change to spectator"""
         if not self.players:
             return "I'm sorry Dave, I'm afraid I can't do that"
 
-        await self.send_command('lobby', 'change player to spectator',
-                                playerName=self.username)
+        await self.send_command('lobby', 'change player to spectator', playerName=self.username)
 
     @amq_command('bot_command', '7join')
     async def join(self, *_):
-        """ join the game again """
+        """join the game again"""
         await self.send_command('lobby', 'change to player')
 
     def get_embed(self, colour: Colour | None = None):
         if colour is None:
             colour = Colour.default()
 
-        invite_url = URL("https://animemusicquiz.com/invite")
+        invite_url = URL('https://animemusicquiz.com/invite')
         if self.room_id is not None:
             invite_url = invite_url.with_query(
                 roomId=self.room_id, password=self.settings['password']
             )
 
-        embed = Embed(title=self.settings['roomName'],
-                      colour=colour,
-                      url=str(invite_url))
+        embed = Embed(title=self.settings['roomName'], colour=colour, url=str(invite_url))
 
         embed.set_author(
             name='AMQ',
             url='https://animemusicquiz.com',
-            icon_url='http://animemusicquiz.com/favicon-32x32.png'
+            icon_url='http://animemusicquiz.com/favicon-32x32.png',
         )
 
         if self.settings.gamemode_extras:
@@ -809,15 +794,9 @@ class AMQBot(metaclass=MetaAMQBot):
         else:
             gamemode = self.settings.gamemode
 
+        embed.add_field(name='Game mode', value=gamemode, inline=False)
         embed.add_field(
-            name='Game mode',
-            value=gamemode,
-            inline=False
-        )
-        embed.add_field(
-            name=self.settings.songs,
-            value=', '.join(self.settings.songs_extras),
-            inline=False
+            name=self.settings.songs, value=', '.join(self.settings.songs_extras), inline=False
         )
 
         return embed
@@ -827,19 +806,12 @@ class AMQBot(metaclass=MetaAMQBot):
 #     Settings     #
 ####################
 
-class Settings(dict):
 
+class Settings(dict):
     # selection modes
-    selection_modes = {
-        1: "AMQ Roulette",
-        2: "Looting"
-    }
+    selection_modes = {1: 'AMQ Roulette', 2: 'Looting'}
     # scoring
-    scoring = {
-        1: "Count",
-        2: "Speed",
-        3: "Lives"
-    }
+    scoring = {1: 'Count', 2: 'Speed', 3: 'Lives'}
 
     def pre_load(self):
         self['roomName'] = AMQ_ROOM_NAME
@@ -849,20 +821,20 @@ class Settings(dict):
 
     @property
     def gamemode(self):
-        return Settings.selection_modes.get(self['showSelection'], "Unknown")
+        return Settings.selection_modes.get(self['showSelection'], 'Unknown')
 
     @property
     def gamemode_extras(self):
         extras = []
 
-        if Settings.scoring.get(self['scoreType']) == "Lives":
+        if Settings.scoring.get(self['scoreType']) == 'Lives':
             lives = self['lives']
             if lives > 1:
                 extras.append(f"{self['lives']} lives")
             else:
                 extras.append('Sudden Death')
 
-        if self.gamemode == "Looting":
+        if self.gamemode == 'Looting':
             loots = self['inventorySize']['standardValue']
             extras.append(f'{loots} loots')
 
@@ -875,8 +847,7 @@ class Settings(dict):
     @property
     def songs_extras(self):
         song_settings = self['songType']
-        song_types = [
-            t for t, v in song_settings['standardValue'].items() if v]
+        song_types = [t for t, v in song_settings['standardValue'].items() if v]
         song_type_msgs = []
         for song_type in song_types:
             if song_settings.get('advancedOn', False):
@@ -915,7 +886,8 @@ async def load_settings():
 
 async def save(settings: dict):
     resp = await get_nanapi().amq.amq_update_settings(
-        UpdateAMQSettingsBody(settings=json.dumps(settings)))
+        UpdateAMQSettingsBody(settings=json.dumps(settings))
+    )
     if not success(resp):
         raise RuntimeError(resp.result)
 
@@ -924,29 +896,25 @@ async def save(settings: dict):
 #     Discord extension     #
 #############################
 
-AMQ_THEME_TYPE = {
-    1: 'Opening',
-    2: 'Ending',
-    3: 'Insert'
-}
+AMQ_THEME_TYPE = {1: 'Opening', 2: 'Ending', 3: 'Insert'}
 
 AMQ_FFMPEG_SPEED_FILTERS = {
     1: '-c copy',
     1.5: '-filter:a "atempo=1.5"',
     2: '-filter:a "atempo=2.0"',
-    4: '-filter:a "atempo=2.0,atempo=2.0"'
+    4: '-filter:a "atempo=2.0,atempo=2.0"',
 }
 
 
 class AMQ(Cog, required_settings=RequiresAMQ):
-    """ Play AMQ with {bot_name} """
+    """Play AMQ with {bot_name}"""
+
     emoji = '🎵'
 
-    amq_group = NanaGroup(name="amq", guild_only=True)
-    amq_admin_group = NanaGroup(name="amq",
-                                default_permissions=Permissions(
-                                    administrator=True),
-                                guild_ids=[ALL_GUILDS])
+    amq_group = NanaGroup(name='amq', guild_only=True)
+    amq_admin_group = NanaGroup(
+        name='amq', default_permissions=Permissions(administrator=True), guild_ids=[ALL_GUILDS]
+    )
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -969,6 +937,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
     @Cog.listener()
     async def on_ready(self):
         from .profiles import Profiles
+
         profiles_cog = Profiles.get_cog(self.bot)
         if profiles_cog is not None:
             profiles_cog.registrars['Anime Music Quiz'] = self.register
@@ -989,9 +958,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
                 embed = Embed(title='Saved settings', colour=Colour.default())
 
                 for name, settings in all_settings.items():
-                    embed.add_field(name=name,
-                                    value=str(settings),
-                                    inline=False)
+                    embed.add_field(name=name, value=str(settings), inline=False)
 
                 await ctx.send(embed=embed)
             else:
@@ -1037,7 +1004,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
 
         await self.amq.invite_players(amq_players)
         if len(amq_players) == 1:
-            await ctx.send(f"invited player {amq_players[0]}")
+            await ctx.send(f'invited player {amq_players[0]}')
         else:
             await ctx.send(f"invited players {', '.join(amq_players)}")
 
@@ -1050,15 +1017,15 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         message = await self.amq.join_room(room_id, password)
         await ctx.send(message, embed=self.amq.get_embed())
 
-    @amq_group.command(description="give your answer to nanachan")
+    @amq_group.command(description='give your answer to nanachan')
     @legacy_command(ephemeral=True)
     async def answer(self, ctx, answer: str):
         if self.amq is None:
-            await ctx.send("Not connected to amq")
+            await ctx.send('Not connected to amq')
             return
 
-        await self.amq.answer(["", answer], None)
-        await ctx.send(self.bot.get_emoji_str("FubukiGO"))
+        await self.amq.answer(['', answer], None)
+        await ctx.send(self.bot.get_emoji_str('FubukiGO'))
 
     @amq_admin_group.command()
     @legacy_command()
@@ -1067,7 +1034,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         """Disconnect the bot from AMQ"""
         if self.amq is not None:
             self.amq.disconnect()
-        await ctx.send(self.bot.get_emoji_str("FubukiGO"))
+        await ctx.send(self.bot.get_emoji_str('FubukiGO'))
 
     ############
     # Tracking #
@@ -1075,13 +1042,15 @@ class AMQ(Cog, required_settings=RequiresAMQ):
 
     async def register(self, interaction: discord.Interaction):
         """Register or change a member AMQ account"""
+
         def check(ctx: MultiplexingContext) -> bool:
             return ctx.author == interaction.user
 
         await interaction.response.edit_message(view=None)
 
         await interaction.followup.send(
-            content=f"{interaction.user.mention}\nWhat is your AMQ username?")
+            content=f'{interaction.user.mention}\nWhat is your AMQ username?'
+        )
 
         resp = await MultiplexingContext.set_will_delete(check=check)
         answer = resp.message
@@ -1089,12 +1058,11 @@ class AMQ(Cog, required_settings=RequiresAMQ):
 
         resp1 = await get_nanapi().amq.amq_upsert_account(
             interaction.user.id,
-            UpsertAMQAccountBody(discord_username=str(interaction.user),
-                                 username=username))
+            UpsertAMQAccountBody(discord_username=str(interaction.user), username=username),
+        )
         if not success(resp1):
             raise RuntimeError(resp1.result)
-        await interaction.followup.send(
-            content=self.bot.get_emoji_str('FubukiGO'))
+        await interaction.followup.send(content=self.bot.get_emoji_str('FubukiGO'))
 
     @amq_group.command()
     @legacy_command()
@@ -1105,8 +1073,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
             raise RuntimeError(resp.result)
         players = resp.result
         fields = [
-            EmbedField(str(self.bot.get_user(
-                row.user.discord_id)), row.username)
+            EmbedField(str(self.bot.get_user(row.user.discord_id)), row.username)
             for row in players
         ]
         fields.sort(key=lambda i: i.name.casefold())
@@ -1117,18 +1084,21 @@ class AMQ(Cog, required_settings=RequiresAMQ):
             ctx.reply,
             title='AMQ players',
             fields=fields,
-            footer_text=f"{len(fields)} players",
+            footer_text=f'{len(fields)} players',
             author_name=str(ctx.guild),
-            author_icon_url=guild_icon)
+            author_icon_url=guild_icon,
+        )
 
     async def on_game_starting(self, data):
         amq_room = self.bot.get_text_channel(AMQ_ROOM)
 
         assert self.amq is not None
-        embed = Embed(title='Game Tracker', description=f"{self.amq.settings}")
-        embed.set_author(name='AMQ',
-                         url='https://animemusicquiz.com',
-                         icon_url='http://animemusicquiz.com/favicon-32x32.png')
+        embed = Embed(title='Game Tracker', description=f'{self.amq.settings}')
+        embed.set_author(
+            name='AMQ',
+            url='https://animemusicquiz.com',
+            icon_url='http://animemusicquiz.com/favicon-32x32.png',
+        )
 
         if amq_room is not None:
             await amq_room.send(embed=embed)
@@ -1140,7 +1110,8 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         amq_room = self.bot.get_text_channel(AMQ_ROOM)
         if amq_room is not None:
             self.song_embed = await amq_room.send(
-                f"**Round {self.round_infos['songNumber']} song**", file=file)
+                f"**Round {self.round_infos['songNumber']} song**", file=file
+            )
 
     async def on_quiz_next_video_info(self, data):
         coro = self._get_amq_extract(data)
@@ -1163,8 +1134,12 @@ class AMQ(Cog, required_settings=RequiresAMQ):
     async def on_quiz_over(self, data):
         assert self.amq is not None
         nbteams = len(
-            set(p.team for p in self.amq.players.values() if
-                p.team is not None and p.username != self.amq.player.username))
+            set(
+                p.team
+                for p in self.amq.players.values()
+                if p.team is not None and p.username != self.amq.player.username
+            )
+        )
 
         if self.answer_results is None:
             return
@@ -1173,7 +1148,6 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         multiplier = math.ceil(base / 2 - 1) * GLOBAL_COIN_MULTIPLIER
 
         async with asyncio.TaskGroup() as tg:
-
             if multiplier > 0:
                 waifu_cog = self.bot.get_cog(WaifuCollection.__cog_name__)
                 waifu_cog = cast(WaifuCollection, waifu_cog)
@@ -1189,8 +1163,8 @@ class AMQ(Cog, required_settings=RequiresAMQ):
 
                         if user is not None:
                             tg.create_task(
-                                waifu_cog.reward_coins(user, multiplier * score,
-                                                       'AMQ', AMQ_ROOM))
+                                waifu_cog.reward_coins(user, multiplier * score, 'AMQ', AMQ_ROOM)
+                            )
 
             amq_room = self.bot.get_text_channel(AMQ_ROOM)
             embed = await self._game_embed(self.answer_results)
@@ -1217,8 +1191,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
             await self.bot.on_message(msg)
         else:
             username = data['sender']
-            webhook = AMQWebhook(webhook, private=private,
-                                 display_name=username)
+            webhook = AMQWebhook(webhook, private=private, display_name=username)
             await webhook.send(content=content)
 
     @Cog.listener()
@@ -1241,7 +1214,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
             if not content:
                 return
 
-            content = f"[{ctx.author}] " + content
+            content = f'[{ctx.author}] ' + content
             if len(content) > 150:
                 content = content[:147] + '...'
             await self.amq.send_message(content)
@@ -1261,24 +1234,24 @@ class AMQ(Cog, required_settings=RequiresAMQ):
             return self.bot.get_user(players[0].user.discord_id)
 
     async def _round_embed(self, results, answers) -> Embed:
-        answers_dict = {
-            a['gamePlayerId']: a['answer'] for a in answers['answers']
-        }
+        answers_dict = {a['gamePlayerId']: a['answer'] for a in answers['answers']}
 
         desc = (
             f"**{results['songInfo']['songName']}** — {results['songInfo']['artist']}\n"
             f"*{results['songInfo']['animeNames']['romaji']}*\n"
-            f"{AMQ_THEME_TYPE[results['songInfo']['type']]}")
+            f"{AMQ_THEME_TYPE[results['songInfo']['type']]}"
+        )
 
         if (nb := results['songInfo']['typeNumber']) > 0:
-            desc += f" {nb}"
+            desc += f' {nb}'
 
         assert self.round_infos is not None
-        embed = Embed(title=f"Round {self.round_infos['songNumber']}",
-                      description=desc)
-        embed.set_author(name='AMQ',
-                         url='https://animemusicquiz.com',
-                         icon_url='http://animemusicquiz.com/favicon-32x32.png')
+        embed = Embed(title=f"Round {self.round_infos['songNumber']}", description=desc)
+        embed.set_author(
+            name='AMQ',
+            url='https://animemusicquiz.com',
+            icon_url='http://animemusicquiz.com/favicon-32x32.png',
+        )
 
         for player in sorted(results['players'], key=itemgetter('position'))[:25]:
             player_id = player['gamePlayerId']
@@ -1291,24 +1264,25 @@ class AMQ(Cog, required_settings=RequiresAMQ):
                 value = self._player_stats(player)
 
                 emoji = 'FubukiGO' if player['correct'] else 'FubukiStop'
-                value += f"\n{self.bot.get_emoji_str(emoji)}"
+                value += f'\n{self.bot.get_emoji_str(emoji)}'
 
                 if answers_dict[player_id]:
-                    value += f" *{answers_dict[player_id]}*"
+                    value += f' *{answers_dict[player_id]}*'
 
                 embed.add_field(name=str(d_user or username), value=value)
 
-                embed.set_footer(
-                    text=' • '.join(str(self.amq.settings).split('\n')))
+                embed.set_footer(text=' • '.join(str(self.amq.settings).split('\n')))
 
         return embed
 
     async def _game_embed(self, results) -> Embed:
         embed = Embed(title='Game result')
 
-        embed.set_author(name='AMQ',
-                         url='https://animemusicquiz.com',
-                         icon_url='http://animemusicquiz.com/favicon-32x32.png')
+        embed.set_author(
+            name='AMQ',
+            url='https://animemusicquiz.com',
+            icon_url='http://animemusicquiz.com/favicon-32x32.png',
+        )
 
         for player in sorted(results['players'], key=itemgetter('position'))[:25]:
             player_id = player['gamePlayerId']
@@ -1328,8 +1302,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
 
                 embed.add_field(name=str(d_user or username), value=value)
 
-                embed.set_footer(
-                    text=' • '.join(str(self.amq.settings).split('\n')))
+                embed.set_footer(text=' • '.join(str(self.amq.settings).split('\n')))
 
         return embed
 
@@ -1350,9 +1323,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         url = data['videoInfo']['videoMap']['catbox']['0']
 
         async with NamedTemporaryFile() as f:
-            headers = {
-                'Referer': "https://animemusicquiz.com/"
-            }
+            headers = {'Referer': 'https://animemusicquiz.com/'}
             async with get_session().get(url, headers=headers) as resp:
                 resp.raise_for_status()
                 filename = os.path.basename(resp.url.path)
@@ -1360,13 +1331,13 @@ class AMQ(Cog, required_settings=RequiresAMQ):
                     await f.write(buf)
 
             ffprobe_cmd = (
-                f"ffprobe -v error -show_entries format=duration "
-                f"-of default=noprint_wrappers=1:nokey=1 {f.name}")
+                f'ffprobe -v error -show_entries format=duration '
+                f'-of default=noprint_wrappers=1:nokey=1 {f.name}'
+            )
 
             proc = await asyncio.create_subprocess_shell(
-                ffprobe_cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE)
+                ffprobe_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            )
 
             stdout, stderr = await proc.communicate()
             if stderr:
@@ -1388,13 +1359,14 @@ class AMQ(Cog, required_settings=RequiresAMQ):
                     f"-ss {startPoint} "
                     f"-t {data['playLength']} "
                     f"{AMQ_FFMPEG_SPEED_FILTERS[data['playbackSpeed']]} "
-                    f"-f mp3 -c:a libmp3lame {f_out.name}")
+                    f"-f mp3 -c:a libmp3lame {f_out.name}"
+                )
 
                 async with NamedTemporaryFile() as err_out:
                     with open(err_out.name) as sync_out:
-                        proc = await asyncio.create_subprocess_shell(ffmpeg_cmd,
-                                                                     stdout=sync_out,
-                                                                     stderr=sync_out)
+                        proc = await asyncio.create_subprocess_shell(
+                            ffmpeg_cmd, stdout=sync_out, stderr=sync_out
+                        )
                     await proc.wait()
                     if proc.returncode != 0:
                         await err_out.seek(0)

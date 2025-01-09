@@ -10,7 +10,8 @@ from nanachan.nanapi.model import CollectPotBody, PotAddResult, PotGetByUserResu
 
 
 class Pot(Cog):
-    """ Collect (virtual) money for someone (may or may not imply any future payment) """
+    """Collect (virtual) money for someone (may or may not imply any future payment)"""
+
     emoji = '💸'
 
     @guild_only()
@@ -28,7 +29,8 @@ class Pot(Cog):
         amount = amount.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
 
         resp = await get_nanapi().pot.pot_collect_pot(
-            member.id, CollectPotBody(discord_username=str(member), amount=float(amount)))
+            member.id, CollectPotBody(discord_username=str(member), amount=float(amount))
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         funding = resp.result
@@ -41,8 +43,7 @@ class Pot(Cog):
         if not success(resp):
             match resp.code:
                 case 404:
-                    raise CommandError(
-                        f'No one has ever collected for {member} :cry:')
+                    raise CommandError(f'No one has ever collected for {member} :cry:')
                 case _:
                     raise RuntimeError(resp.result)
         funding = resp.result
@@ -52,12 +53,13 @@ class Pot(Cog):
     async def _send_pot(ctx, member: Member, funding: PotAddResult | PotGetByUserResult) -> None:
         average = funding.amount / funding.count
 
-        embed = (Embed(color=member.color)
-                 .set_author(name=f'{member}’s pot',
-                             icon_url=member.display_avatar.url)
-                 .add_field(name='Total', value=f'{funding.amount} €')
-                 .add_field(name='Count', value=funding.count)
-                 .add_field(name='Average', value=f'{average:.2f} €'))
+        embed = (
+            Embed(color=member.color)
+            .set_author(name=f'{member}’s pot', icon_url=member.display_avatar.url)
+            .add_field(name='Total', value=f'{funding.amount} €')
+            .add_field(name='Count', value=funding.count)
+            .add_field(name='Average', value=f'{average:.2f} €')
+        )
 
         await ctx.send(embed=embed)
 

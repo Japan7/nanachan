@@ -26,7 +26,6 @@ INCREASE_EMOJI = '\N{SPEAKER WITH THREE SOUND WAVES}'
 
 
 class AudioControlsView(BaseView):
-
     def __init__(self, bot: Bot, cog: 'Audio', timeout: float | None = None):
         super().__init__(bot, timeout=timeout)
         self.cog = cog
@@ -40,13 +39,13 @@ class AudioControlsView(BaseView):
     @button(emoji=DECREASE_EMOJI, style=ButtonStyle.grey)
     async def decrease(self, interaction: discord.Interaction, _: Button[BaseView]):
         await interaction.response.defer()
-        self.cog.volume = max(0., self.cog.volume - 0.1)
+        self.cog.volume = max(0.0, self.cog.volume - 0.1)
         await self._manage_volume()
 
     @button(emoji=INCREASE_EMOJI, style=ButtonStyle.grey)
     async def increase(self, interaction: discord.Interaction, _: Button[BaseView]):
         await interaction.response.defer()
-        self.cog.volume = min(1., self.cog.volume + 0.1)
+        self.cog.volume = min(1.0, self.cog.volume + 0.1)
         await self._manage_volume()
 
     async def _manage_volume(self):
@@ -56,7 +55,6 @@ class AudioControlsView(BaseView):
 
 
 class YTVideo:
-
     def __init__(self, data):
         self.title = data['title']
         self.url = data['url']
@@ -83,8 +81,9 @@ class PlaylistEntry[T]:
 
 
 @discord.app_commands.guild_only()
-class Audio(NanaGroupCog, group_name="audio"):
-    """ Make {bot_name} sing and talk to you while you play with your friends """
+class Audio(NanaGroupCog, group_name='audio'):
+    """Make {bot_name} sing and talk to you while you play with your friends"""
+
     emoji = '\N{SPEAKER}'
 
     def __init__(self, bot: Bot):
@@ -103,17 +102,17 @@ class Audio(NanaGroupCog, group_name="audio"):
     async def stop(self, interaction: discord.Interaction[Bot]):
         await interaction.response.defer()
         await self._disconnect()
-        await interaction.followup.send(":ok_hand:")
+        await interaction.followup.send(':ok_hand:')
 
     @discord.app_commands.command(name='play', description='Play music from Youtube')
     @legacy_command()
     async def ytdl_play(self, ctx: LegacyCommandContext, query_or_url: str):
-
         async def play_yt_video(video: YTVideo):
             audio_source = discord.FFmpegPCMAudio(
                 video.url,
                 options='-vn',
-                before_options='-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5')
+                before_options='-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            )
             track_info = TrackInfo(video.title, video.display_url)
             await self.play(ctx, audio_source, track_info=track_info)
 
@@ -131,20 +130,22 @@ class Audio(NanaGroupCog, group_name="audio"):
                 view = ChoiceView(self.bot, videos, add_to_playlist)
                 await ctx.reply('**What do you want to listen to?**', view=view)
 
-    @discord.app_commands.command(description="Play next item in playlist")
+    @discord.app_commands.command(description='Play next item in playlist')
     async def skip(self, interaction: discord.Interaction[Bot]):
         await interaction.response.defer()
         if self.connection is not None and self.connection.is_playing():
             self.connection.stop()
             # self._play_next() is called by the connection callback (_end_sync_callback)
-        await interaction.followup.send("Skipped song.")
+        await interaction.followup.send('Skipped song.')
 
-    async def play(self,
-                   ctx: commands.Context[Bot],
-                   audio_source: discord.AudioSource,
-                   track_info: TrackInfo | None = None,
-                   volume: float | None = None,
-                   show_control: bool = True):
+    async def play(
+        self,
+        ctx: commands.Context[Bot],
+        audio_source: discord.AudioSource,
+        track_info: TrackInfo | None = None,
+        volume: float | None = None,
+        show_control: bool = True,
+    ):
         if self.audio_source:
             await ctx.reply('I am already playing!')
             return
@@ -180,8 +181,11 @@ class Audio(NanaGroupCog, group_name="audio"):
         if self.connection:
             return
 
-        if (isinstance(ctx.author, discord.Member)
-                and ctx.author.voice is not None and ctx.author.voice.channel is not None):
+        if (
+            isinstance(ctx.author, discord.Member)
+            and ctx.author.voice is not None
+            and ctx.author.voice.channel is not None
+        ):
             room = ctx.author.voice.channel
         else:
             room = self.bot.get_voice_channel(BOT_VOICE_ID)
@@ -246,9 +250,7 @@ class Audio(NanaGroupCog, group_name="audio"):
 
         if self.audio_source is not None and self.track_info is not None:
             if self.track_info.title is None:
-                log.error(
-                    f'No music title defined for audio_source "{self.track_info}"'
-                )
+                log.error(f'No music title defined for audio_source "{self.track_info}"')
                 music = '*Titleless music (you can complain to the devs)*'
             else:
                 music = self.track_info.title
@@ -256,7 +258,7 @@ class Audio(NanaGroupCog, group_name="audio"):
             url = self.track_info.display_url
 
             if len(self.playlist) > 0:
-                next_item = f"> {self.playlist[0].name}"
+                next_item = f'> {self.playlist[0].name}'
             else:
                 next_item = 'Nothing next'
         else:
@@ -266,9 +268,7 @@ class Audio(NanaGroupCog, group_name="audio"):
 
         embed = Embed(description=f'Volume: {volume}')
         assert self.bot.user is not None
-        embed.set_author(name=music,
-                         url=url,
-                         icon_url=self.bot.user.display_avatar.url)
+        embed.set_author(name=music, url=url, icon_url=self.bot.user.display_avatar.url)
         embed.set_footer(text=next_item)
 
         return embed
@@ -299,4 +299,4 @@ async def setup(bot: Bot):
     if discord.opus.is_loaded():
         await bot.add_cog(Audio(bot))
     else:
-        log.info("failed to load libopus")
+        log.info('failed to load libopus')

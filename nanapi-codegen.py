@@ -14,8 +14,7 @@ from nanachan.utils.misc import get_session
 async def main():
     module = Path(nanachan.nanapi.__file__).parent
 
-    async with get_session().get(f"{NANAPI_URL}/openapi.json",
-                                 auth=JAPAN7_AUTH) as resp:
+    async with get_session().get(f'{NANAPI_URL}/openapi.json', auth=JAPAN7_AUTH) as resp:
         raw = await resp.read()
     data = raw.decode()
 

@@ -24,7 +24,7 @@ mutation LoginUser($email: String!, $password: String!) {
 }
 """
 
-ENDPOINT = "https://churros.inpt.fr/graphql"
+ENDPOINT = 'https://churros.inpt.fr/graphql'
 
 
 class MutationLoginSuccess(pydantic.BaseModel):
@@ -34,8 +34,10 @@ class MutationLoginSuccess(pydantic.BaseModel):
     id: str
     token: str
 
+
 class LoginData(pydantic.BaseModel):
     data: MutationLoginSuccess
+
 
 class _LoginResponse(pydantic.BaseModel):
     login: LoginData
@@ -46,18 +48,12 @@ class LoginResponse(pydantic.BaseModel):
 
 
 def main():
-    email = input("Email: ")
+    email = input('Email: ')
     password = getpass()
 
-    variables = {
-        'email': email,
-        'password': password
-    }
+    variables = {'email': email, 'password': password}
 
-    req_data = {
-        'query': LOGIN_QUERY,
-        'variables': variables
-    }
+    req_data = {'query': LOGIN_QUERY, 'variables': variables}
 
     resp = requests.post(ENDPOINT, json=req_data)
     resp.raise_for_status()

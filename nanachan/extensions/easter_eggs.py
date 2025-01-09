@@ -23,7 +23,6 @@ creeper_reg = re.compile(r'\bcreeper', re.IGNORECASE)
 
 
 class Keywords(Cog):
-
     @Cog.listener()
     async def on_user_message(self, ctx: MultiplexingContext):
         if ctx.author.bot:
@@ -71,23 +70,25 @@ class Wasabi(Cog):
                 waifu_cog = self.bot.get_cog(WaifuCollection.__cog_name__)
                 if waifu_cog is not None:
                     waifu_cog = cast(WaifuCollection, waifu_cog)
-                    await waifu_cog.reward_drop(ctx.message.author,
-                                                random.randint(0, 1),
-                                                'Wasabi')
+                    await waifu_cog.reward_drop(ctx.message.author, random.randint(0, 1), 'Wasabi')
 
     async def is_wasabi(self, message):
         count = await self.get_wasabi_count()
-        return (any(pattern in message.content.lower()
-                    for pattern in ['frott', 'frtt']) and count <= WASABI_RANGE
-                or count <= 0)
+        return (
+            any(pattern in message.content.lower() for pattern in ['frott', 'frtt'])
+            and count <= WASABI_RANGE
+            or count <= 0
+        )
 
     async def send_wasabi(self, message):
         emoji = self.bot.get_nana_emoji(Wasabi.wasabi_emoji_name)
         if emoji:
             await message.add_reaction(emoji)
         else:
-            log.warning(f'The custom emoji "{Wasabi.wasabi_emoji_name}"'
-                        f' is not present on server "{message.guild.name}"')
+            log.warning(
+                f'The custom emoji "{Wasabi.wasabi_emoji_name}"'
+                f' is not present on server "{message.guild.name}"'
+            )
         await message.channel.send('C’est comme le Wasabi !')
 
     @staticmethod
@@ -98,7 +99,6 @@ class Wasabi(Cog):
 
 
 class Ignored(Cog):
-
     def __init__(self, bot: Bot):
         self.bot = bot
         self.ignored_member_ids = {}  # {member_id: unignore_timer}
@@ -110,9 +110,9 @@ class Ignored(Cog):
         bot._connection.dispatch = self._dispatch
 
     @has_permissions(administrator=True)
-    @command(hidden=True,
-             help='A tyrant command\n'
-                  'Ignore this member for 5 minutes (by default)')
+    @command(
+        hidden=True, help='A tyrant command\n' 'Ignore this member for 5 minutes (by default)'
+    )
     async def ignore(self, ctx, anas: Member | None = None, period: int = 5):
         if anas is None:
             anas = self.bot.get_anas(ctx.guild)
@@ -141,9 +141,7 @@ class Ignored(Cog):
         await ctx.send(':ok_hand:')
 
     @has_permissions(administrator=True)
-    @command(hidden=True,
-             help='A tyrant command\n'
-                  'Unignore an ignored member')
+    @command(hidden=True, help='A tyrant command\n' 'Unignore an ignored member')
     async def unignore(self, ctx, anas: Member | None = None):
         if anas is None:
             anas = self.bot.get_anas(ctx.guild)
@@ -173,7 +171,6 @@ class Ignored(Cog):
 
 
 class Bananas(Cog):
-
     def __init__(self, bot):
         self.bot = bot
         self.bananased_member_ids = {}  # {member_id: timer}
@@ -186,7 +183,7 @@ class Bananas(Cog):
             return True
 
         if not ctx.author.guild_permissions.administrator:
-            raise CommandError("You cannot do that as a pleb")
+            raise CommandError('You cannot do that as a pleb')
 
         if not DEBUG and anas.guild_permissions.administrator:
             raise CommandError('I cannot :banana: ~~a tyrant~~ an admin')
@@ -196,9 +193,7 @@ class Bananas(Cog):
 
         return True
 
-    @command(hidden=True,
-             help='A tyrant command\n'
-                  'Bananas for 5 minutes (by default)')
+    @command(hidden=True, help='A tyrant command\n' 'Bananas for 5 minutes (by default)')
     async def bananas(self, ctx, anas: Optional[Member] = None, period: int = 5):
         if anas is None:
             anas = self.bot.get_anas(ctx.guild)
@@ -211,9 +206,7 @@ class Bananas(Cog):
             await ctx.send(':ok_hand:')
 
     @has_permissions(administrator=True)
-    @command(hidden=True,
-             help='A tyrant command\n'
-                  'Unbananas')
+    @command(hidden=True, help='A tyrant command\n' 'Unbananas')
     async def unbananas(self, ctx, anas: Member | None = None):
         if anas is None:
             anas = self.bot.get_anas(ctx.guild)
@@ -235,7 +228,7 @@ class Bananas(Cog):
         i = 1
         while i < len(message):
             j = random.randint(3, 5)
-            new_message += message[i:i+j] + ':banana:'
+            new_message += message[i : i + j] + ':banana:'
             i += j + 1
 
         return new_message

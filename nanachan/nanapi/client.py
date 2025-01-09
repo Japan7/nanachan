@@ -17,9 +17,9 @@ load_lock = asyncio.Lock()
 
 
 def check_invalid(r: ClientResponse):
-    return (r.status in (502, 520, 522) or
-            ('text/plain' in r.headers.get('Content-Type', "") and
-             r.status == 404))
+    return r.status in (502, 520, 522) or (
+        'text/plain' in r.headers.get('Content-Type', '') and r.status == 404
+    )
 
 
 async def load_bearer_token():
@@ -33,9 +33,9 @@ async def load_bearer_token():
         session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
         session._request = session_backoff(session._request)
 
-        body = Body_client_login(grant_type='password',
-                                 username=NANAPI_CLIENT_USERNAME,
-                                 password=NANAPI_CLIENT_PASSWORD)
+        body = Body_client_login(
+            grant_type='password', username=NANAPI_CLIENT_USERNAME, password=NANAPI_CLIENT_PASSWORD
+        )
         resp = await session.client.client_login(body)
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -54,19 +54,16 @@ def get_nanapi():
         await load_bearer_token()
         await bearer_ready.wait()
 
-    auth_backoff = backoff.on_predicate(backoff.expo,
-                                        lambda r: r.status == 401,
-                                        max_tries=2,
-                                        on_backoff=auth_on_backoff)
+    auth_backoff = backoff.on_predicate(
+        backoff.expo, lambda r: r.status == 401, max_tries=2, on_backoff=auth_on_backoff
+    )
 
-    session._request = auth_backoff(
-        session_backoff(wrap_request(session._request)))
+    session._request = auth_backoff(session_backoff(wrap_request(session._request)))
 
     return session
 
 
 def wrap_request(_request):
-
     async def _wrapped(*args, **kwargs):
         if not bearer_ready.is_set():
             await load_bearer_token()

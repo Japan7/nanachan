@@ -8,7 +8,6 @@ from nanachan.extensions.ai import AI
 
 
 class Tsundere(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
 

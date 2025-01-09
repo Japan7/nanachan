@@ -20,9 +20,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-__all__ = ('UnregisterListener',
-           'ReactionHandler',
-           'ReactionListener')
+__all__ = ('UnregisterListener', 'ReactionHandler', 'ReactionListener')
 
 
 T = TypeVar('T')
@@ -33,13 +31,14 @@ class UnregisterListener(Exception):
 
 
 class ReactionHandler:
-
-    def __init__(self,
-                 func,
-                 reaction: str,
-                 on_add: bool = False,
-                 on_remove: bool = False,
-                 remove_reaction=True):
+    def __init__(
+        self,
+        func,
+        reaction: str,
+        on_add: bool = False,
+        on_remove: bool = False,
+        remove_reaction=True,
+    ):
         self.func = func
         self.reaction = reaction
         self.remove_reaction = remove_reaction
@@ -49,8 +48,9 @@ class ReactionHandler:
     def __call__(self, listener, user, remove_reaction=True):
         message = listener.message
         if remove_reaction and self.remove_reaction and message.guild is not None:
-            asyncio.create_task(ignore(discord.NotFound,
-                                       message.remove_reaction(self.reaction, user)))
+            asyncio.create_task(
+                ignore(discord.NotFound, message.remove_reaction(self.reaction, user))
+            )
 
         func = fake_method(listener, self.func)
         return func(user)
@@ -69,7 +69,6 @@ class ReactionHandler:
 
 
 class MetaReactionListener(type):
-
     @classmethod
     def __prepare__(cls, *args, **kwargs):
         return OrderedDict()
@@ -77,7 +76,7 @@ class MetaReactionListener(type):
     def __new__(cls, name, bases, attrs, **kwargs):
         reaction_handlers: dict[str, dict[str, ReactionHandler]] = {
             'add': OrderedDict(),
-            'remove': OrderedDict()
+            'remove': OrderedDict(),
         }
 
         for base in bases:
@@ -98,10 +97,9 @@ class MetaReactionListener(type):
 
 
 class HandlerException(Exception):
-
     def __init__(self, listener: ReactionListener):
         self.listener = listener
-        super().__init__(f"{listener} for message {listener.message_id} ({listener.message})")
+        super().__init__(f'{listener} for message {listener.message_id} ({listener.message})')
 
 
 class ReactionListener(metaclass=MetaReactionListener):
@@ -110,11 +108,15 @@ class ReactionListener(metaclass=MetaReactionListener):
     prefetch_lock = asyncio.Lock()
     PREFETCH_DELAY = 5
 
-    def __init__(self, bot,
-                 message: Union[discord.Message, WebhookMessage, discord.WebhookMessage, int],
-                 channel_id: int | None = None, first_handlers=None):
+    def __init__(
+        self,
+        bot,
+        message: Union[discord.Message, WebhookMessage, discord.WebhookMessage, int],
+        channel_id: int | None = None,
+        first_handlers=None,
+    ):
         # TODO: remove this when we stop using multiple inherits
-        if hasattr(self, "_reaction_handlers"):
+        if hasattr(self, '_reaction_handlers'):
             return
 
         self.bot: Bot = bot
@@ -132,12 +134,9 @@ class ReactionListener(metaclass=MetaReactionListener):
             asyncio.create_task(self.prefetch_message())
 
         self._done: asyncio.Future[Any] = self.bot.loop.create_future()
-        asyncio.create_task(
-            self.bot.register_reaction_listener(self.message_id, self)
-        )
+        asyncio.create_task(self.bot.register_reaction_listener(self.message_id, self))
 
-        self._reaction_handlers = {'add': {},
-                                   'remove': {}}
+        self._reaction_handlers = {'add': {}, 'remove': {}}
         self._reaction_handlers_order = []
         if first_handlers is not None:
             for handler in first_handlers:
@@ -159,11 +158,11 @@ class ReactionListener(metaclass=MetaReactionListener):
             if self.message is None:
                 return
 
-            if (channel := self.bot.get_channel(self.channel_id)):
+            if channel := self.bot.get_channel(self.channel_id):
                 try:
                     await self.get_message(channel)
                 except discord.NotFound:
-                    logger.info(f"could not find message {self.message_id}")
+                    logger.info(f'could not find message {self.message_id}')
 
                 await asyncio.sleep(ReactionListener.PREFETCH_DELAY)
 
@@ -184,8 +183,7 @@ class ReactionListener(metaclass=MetaReactionListener):
 
     def get_handler(self, action, reaction):
         handlers = self._reaction_handlers[action]
-        handler = handlers.get(getattr(reaction, 'name',
-                               getattr(reaction, 'emoji', None)))
+        handler = handlers.get(getattr(reaction, 'name', getattr(reaction, 'emoji', None)))
         if handler is None:
             handler = handlers.get(str(reaction))
 
@@ -226,13 +224,13 @@ class ReactionListener(metaclass=MetaReactionListener):
     ):
         user = self.bot.get_user(payload.user_id)
         if user is None:
-            raise RuntimeError(f"Unknown user {payload.user_id}")
+            raise RuntimeError(f'Unknown user {payload.user_id}')
         assert self.bot.user is not None
         if user.bot or user.id == self.bot.user.id:
             return
 
         channel = self.bot.get_channel(payload.channel_id)
-        if getattr(channel, "guild", None):
+        if getattr(channel, 'guild', None):
             assert not isinstance(channel, PrivateChannel)
             assert channel is not None
             user = channel.guild.get_member(user.id)
@@ -243,7 +241,7 @@ class ReactionListener(metaclass=MetaReactionListener):
 
         if handler is not None:
             try:
-                await handler(self, user, remove_reaction=action == "add")
+                await handler(self, user, remove_reaction=action == 'add')
             except UnregisterListener:
                 self.unregister()
             except Exception as e:
@@ -251,9 +249,7 @@ class ReactionListener(metaclass=MetaReactionListener):
 
     def unregister(self):
         self._done.set_result(None)
-        return asyncio.create_task(
-            self.bot.unregister_reaction_listener(self.message_id)
-        )
+        return asyncio.create_task(self.bot.unregister_reaction_listener(self.message_id))
 
     async def done(self):
         await self._done
@@ -298,7 +294,7 @@ class Pages:
         upto = around + self.prefetch_pages
         from_ = around - self.prefetch_pages
 
-        for i in (i % len(self.pages) for i in range(from_, upto+1)):
+        for i in (i % len(self.pages) for i in range(from_, upto + 1)):
             if i not in self.page_cache:
                 asyncio.create_task(self.get_page(i, prefetch=False))
 
@@ -313,13 +309,17 @@ class Pages:
                 page = await run_coro(self.pages[i])
                 if len(self) > 1:
                     page['content'] = '\n'.join(
-                        filter(None, [
-                            self.static_content,
-                            page.get(
-                                'content',
-                                f"#{self.start_at + i}/{len(self.pages) + self.start_at - 1}"
-                            )
-                        ]))
+                        filter(
+                            None,
+                            [
+                                self.static_content,
+                                page.get(
+                                    'content',
+                                    f'#{self.start_at + i}/{len(self.pages) + self.start_at - 1}',
+                                ),
+                            ],
+                        )
+                    )
                 else:
                     page['content'] = self.static_content
 

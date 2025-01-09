@@ -33,13 +33,13 @@ class Changelog(Cog):
 
 
 class ChangelogView(BaseView):
-
     @button(emoji=Changelog.emoji)
     async def changelog_button(self, interaction: Interaction, button: Button):
         await NavigatorView.create(
             self.bot,
             partial(interaction.response.send_message, ephemeral=True),
-            pages=list(format_changelog()))
+            pages=list(format_changelog()),
+        )
 
 
 async def setup(bot: Bot) -> None:

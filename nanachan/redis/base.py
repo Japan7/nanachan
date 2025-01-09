@@ -18,18 +18,16 @@ logger = logging.getLogger(__name__)
 _redis: aioredis.Redis | bool | None = False
 
 
-@backoff.on_exception(backoff.expo, Exception, max_time=3600*12)
+@backoff.on_exception(backoff.expo, Exception, max_time=3600 * 12)
 async def get_redis() -> aioredis.Redis | None:
     global _redis
 
     if _redis is False:
         if REDIS_HOST is not None:
-            pool = aioredis.BlockingConnectionPool(host=REDIS_HOST,
-                                                   port=REDIS_PORT)
+            pool = aioredis.BlockingConnectionPool(host=REDIS_HOST, port=REDIS_PORT)
             _redis = await aioredis.Redis(connection_pool=pool, **REDIS_KWARGS)
         else:
-            logger.info(
-                "Redis is not set up, cache won't persist between restarts")
+            logger.info("Redis is not set up, cache won't persist between restarts")
             _redis = None
 
     return cast(aioredis.Redis | None, _redis)
@@ -42,7 +40,7 @@ redis_queue_lock = asyncio.Lock()
 
 
 def make_redis_key(key: str):
-    return f"{token_hash}_{key}"
+    return f'{token_hash}_{key}'
 
 
 def redis_submit(coro):
@@ -79,7 +77,7 @@ class BaseRedis[T](ABC):
         self.values = defaultdict(lambda: None)
 
     async def get(self, sub_key: SubKeyType = None) -> T | None:
-        key = self.key if sub_key is None else f"{self.key}:{sub_key}"
+        key = self.key if sub_key is None else f'{self.key}:{sub_key}'
 
         if self.values[sub_key] is None:
             redis = await get_redis()
@@ -93,12 +91,8 @@ class BaseRedis[T](ABC):
 
         return self._decode(self.values[sub_key])
 
-    async def set(self,
-                  value: T,
-                  sub_key: SubKeyType = None,
-                  expire: int | None = None,
-                  **kwargs):
-        key = self.key if sub_key is None else f"{self.key}:{sub_key}"
+    async def set(self, value: T, sub_key: SubKeyType = None, expire: int | None = None, **kwargs):
+        key = self.key if sub_key is None else f'{self.key}:{sub_key}'
 
         if expire is not None:
             kwargs['ex'] = expire
@@ -109,12 +103,10 @@ class BaseRedis[T](ABC):
         redis = await get_redis()
 
         if redis is not None:
-            asyncio.get_running_loop().create_task(
-                redis.set(key, encoded_value, **kwargs)
-            )
+            asyncio.get_running_loop().create_task(redis.set(key, encoded_value, **kwargs))
 
     async def expire_at(self, when: datetime, sub_key: SubKeyType = None):
-        key = self.key if sub_key is None else f"{self.key}:{sub_key}"
+        key = self.key if sub_key is None else f'{self.key}:{sub_key}'
         redis = await get_redis()
 
         if redis is None:
@@ -122,7 +114,7 @@ class BaseRedis[T](ABC):
         await redis.expireat(key, when)
 
     async def delete(self, sub_key: SubKeyType = None):
-        key = self.key if sub_key is None else f"{self.key}:{sub_key}"
+        key = self.key if sub_key is None else f'{self.key}:{sub_key}'
         redis = await get_redis()
 
         del self.values[sub_key]
@@ -134,9 +126,9 @@ class BaseRedis[T](ABC):
         redis = await get_redis()
 
         if redis is not None:
-            keys = [s.decode() for s in await redis.keys(f"{self.key}:*")]
+            keys = [s.decode() for s in await redis.keys(f'{self.key}:*')]
             for key in keys:
-                *_, sub_key = key.rpartition(":")
+                *_, sub_key = key.rpartition(':')
                 yield sub_key, await self.get(sub_key)
 
     @abstractmethod
@@ -155,7 +147,6 @@ class BaseRedis[T](ABC):
 
 
 class _StringValueMixin:
-
     def encode(self, value: str) -> bytes:
         return value.encode()
 
@@ -170,24 +161,16 @@ class StringValue(_StringValueMixin, BaseRedis[str]):
 class _IntegerLikeValue(BaseRedis[int]):
     BYTEORDER = 'big'
 
-    def __init__(self,
-                 key: str,
-                 int_bytes: int = 4,
-                 signed: bool = True,
-                 **kwargs):
+    def __init__(self, key: str, int_bytes: int = 4, signed: bool = True, **kwargs):
         super().__init__(key, **kwargs)
         self.int_bytes = int_bytes
         self.signed = signed
 
     def encode(self, value: int) -> bytes:
-        return value.to_bytes(self.int_bytes,
-                              byteorder=self.BYTEORDER,
-                              signed=self.signed)
+        return value.to_bytes(self.int_bytes, byteorder=self.BYTEORDER, signed=self.signed)
 
     def decode(self, value: bytes) -> int:
-        return int.from_bytes(value,
-                              byteorder=self.BYTEORDER,
-                              signed=self.signed)
+        return int.from_bytes(value, byteorder=self.BYTEORDER, signed=self.signed)
 
 
 class IntegerValue(_IntegerLikeValue):
@@ -195,13 +178,11 @@ class IntegerValue(_IntegerLikeValue):
 
 
 class TruncatedFloatValue(_IntegerLikeValue):
-
     def encode(self, value: float | int) -> bytes:
         return super().encode(int(value))
 
 
 class FloatValue(BaseRedis[float]):
-
     def encode(self, value: float) -> bytes:
         return str(value).encode()
 
@@ -210,7 +191,6 @@ class FloatValue(BaseRedis[float]):
 
 
 class BooleanValue(BaseRedis[bool]):
-
     def __init__(self, key: str, default: bool = False, **kwargs):
         super().__init__(key, **kwargs)
         self.default = default
@@ -229,7 +209,6 @@ class BooleanValue(BaseRedis[bool]):
 
 
 class JSONValue(BaseRedis[Any]):
-
     def encode(self, value: Any) -> bytes:
         return json_dumps(value).encode()
 

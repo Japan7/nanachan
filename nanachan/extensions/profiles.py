@@ -41,13 +41,12 @@ from nanachan.utils.misc import list_display, to_producer
 
 
 class RegistrarProtocol(Protocol):
-
-    async def __call__(self, interaction: Interaction):
-        ...
+    async def __call__(self, interaction: Interaction): ...
 
 
 class Profiles(Cog):
-    """ QUOI ?! IL S'APPELLE BOULMECK ?! """
+    """QUOI ?! IL S'APPELLE BOULMECK ?!"""
+
     emoji = '💳'
 
     def __init__(self, bot: Bot):
@@ -58,13 +57,16 @@ class Profiles(Cog):
     async def on_ready(self):
         all_members = {member for guild in self.bot.guilds for member in guild.members}
         await get_nanapi().user.user_upsert_discord_accounts(
-            [UpsertDiscordAccountBodyItem(discord_id=member.id, discord_username=str(member))
-             for member in all_members]
+            [
+                UpsertDiscordAccountBodyItem(discord_id=member.id, discord_username=str(member))
+                for member in all_members
+            ]
         )
 
-    @command(aliases=['iam'],
-             help='Tell who you are\n'
-                  'You need to attach your .vcf card while using this command')
+    @command(
+        aliases=['iam'],
+        help='Tell who you are\n' 'You need to attach your .vcf card while using this command',
+    )
     async def i_am(self, ctx):
         vcard = await self._fetch_vcard(ctx.message)
         profile = await self._create_or_update_profile(ctx.author, vcard)
@@ -72,9 +74,11 @@ class Profiles(Cog):
         await self._send_vcard(ctx.send, ctx.author, profile)
 
     @guild_only()
-    @command(aliases=['thisis'],
-             help='Tell who this member is\n'
-                  'You need to attach the member’s .vcf card while using this command')
+    @command(
+        aliases=['thisis'],
+        help='Tell who this member is\n'
+        'You need to attach the member’s .vcf card while using this command',
+    )
     async def this_is(self, ctx, member: Member):
         vcard = await self._fetch_vcard(ctx.message)
         profile = await self._create_or_update_profile(member, vcard)
@@ -88,13 +92,15 @@ class Profiles(Cog):
         else:
             await self.bot.on_command_error(ctx, error, force=True)
 
-    async def _year_role_member(self, ctx: Context,
-                                profile: ProfileSearchResult):
+    async def _year_role_member(self, ctx: Context, profile: ProfileSearchResult):
         guild = ctx.guild
         assert guild is not None
 
-        if (profile.promotion is not None and 'ENSEEIHT' in profile.promotion
-                and (year_search := re.search(r'\d+', profile.promotion))):
+        if (
+            profile.promotion is not None
+            and 'ENSEEIHT' in profile.promotion
+            and (year_search := re.search(r'\d+', profile.promotion))
+        ):
             promotion = int(year_search.group(0))
 
             now = datetime.now()
@@ -104,8 +110,9 @@ class Profiles(Cog):
             if member is None:
                 return
 
-            year_roles = [role for role in (guild.get_role(id) for id in YEAR_ROLES)
-                          if role is not None]
+            year_roles = [
+                role for role in (guild.get_role(id) for id in YEAR_ROLES) if role is not None
+            ]
             for i, role in enumerate(year_roles):
                 if promotion <= last_promotion + i:
                     await member.remove_roles(*year_roles)
@@ -119,34 +126,35 @@ class Profiles(Cog):
         guild = ctx.guild
         assert guild is not None
 
-        resp = await get_nanapi().user.user_profile_search(','.join(
-            str(m.id) for m in guild.members
-        ))
+        resp = await get_nanapi().user.user_profile_search(
+            ','.join(str(m.id) for m in guild.members)
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         profiles = resp.result
 
-        refreshed = await asyncio.gather(*(
-            self._year_role_member(ctx, profile) for profile in profiles
-        ))
+        refreshed = await asyncio.gather(
+            *(self._year_role_member(ctx, profile) for profile in profiles)
+        )
 
         text = [
-            f"**{member}** • [**{role}**] {profile.full_name}"
+            f'**{member}** • [**{role}**] {profile.full_name}'
             for member, profile, role in filter(None, refreshed)
         ]
         text.sort(key=str.casefold)
 
         icon_url = None if guild.icon is None else guild.icon.url
-        await AutoNavigatorView.create(self.bot,
-                                       ctx.reply,
-                                       title='ENSEEIHT members',
-                                       description='\n'.join(text),
-                                       author_name=str(guild),
-                                       author_icon_url=icon_url,
-                                       footer_text=f"{len(text)} members")
+        await AutoNavigatorView.create(
+            self.bot,
+            ctx.reply,
+            title='ENSEEIHT members',
+            description='\n'.join(text),
+            author_name=str(guild),
+            author_icon_url=icon_url,
+            footer_text=f'{len(text)} members',
+        )
 
-    @command(aliases=['whois'],
-             help='Display information about someone')
+    @command(aliases=['whois'], help='Display information about someone')
     async def who_is(self, ctx: MultiplexingContext, *, search_tags):
         members_and_profiles: dict[int, tuple[Member, ProfileSearchResult]] = {}
 
@@ -155,11 +163,15 @@ class Profiles(Cog):
 
         # search in the discord names
         for member in guild.members:
-            magic_string = '\0'.join({
-                member.name, member.nick or member.name,
-                str(member.id), member.mention,
-                f'{member.name}#{member.discriminator}'
-            })
+            magic_string = '\0'.join(
+                {
+                    member.name,
+                    member.nick or member.name,
+                    str(member.id),
+                    member.mention,
+                    f'{member.name}#{member.discriminator}',
+                }
+            )
             if re.search(re.escape(search_tags), magic_string, re.IGNORECASE):
                 resp = await get_nanapi().user.user_get_profile(member.id)
                 if not success(resp):
@@ -193,8 +205,7 @@ class Profiles(Cog):
             await ctx.send('分かりません :confounded:')
 
     @guild_only()
-    @group(aliases=['profiles'], invoke_without_command=True,
-           help='List & manage profiles')
+    @group(aliases=['profiles'], invoke_without_command=True, help='List & manage profiles')
     async def profile(self, ctx):
         subcommand = ctx.subcommand_passed
         if subcommand is not None:
@@ -205,8 +216,9 @@ class Profiles(Cog):
     @guild_only()
     @profile.command(help='List known members (this can be a long list)')
     async def list(self, ctx):
-        resp = await get_nanapi().user.user_profile_search(','.join(
-            [str(m.id) for m in ctx.guild.members]))
+        resp = await get_nanapi().user.user_profile_search(
+            ','.join([str(m.id) for m in ctx.guild.members])
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         profiles = resp.result
@@ -226,23 +238,32 @@ class Profiles(Cog):
     @guild_only()
     @profile.command(help='List unknown members (this can be a long list)')
     async def check(self, ctx):
-        resp = await get_nanapi().user.user_profile_search(','.join(
-            [str(m.id) for m in ctx.guild.members]))
+        resp = await get_nanapi().user.user_profile_search(
+            ','.join([str(m.id) for m in ctx.guild.members])
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         profiles = resp.result
         discord_ids = [p.user.discord_id for p in profiles]
 
-        unknown_members = sorted((str(member) for member in ctx.guild.members
-                                  if member.id not in discord_ids and not member.bot),
-                                 key=str.lower)
+        unknown_members = sorted(
+            (
+                str(member)
+                for member in ctx.guild.members
+                if member.id not in discord_ids and not member.bot
+            ),
+            key=str.lower,
+        )
 
-        discords_ids_without_pp = [
-            p.user.discord_id for p in profiles if p.photo is None
-        ]
+        discords_ids_without_pp = [p.user.discord_id for p in profiles if p.photo is None]
 
-        members_without_pp = sorted((str(member) for member in ctx.guild.members
-                                     if member.id in discords_ids_without_pp and not member.bot))
+        members_without_pp = sorted(
+            (
+                str(member)
+                for member in ctx.guild.members
+                if member.id in discords_ids_without_pp and not member.bot
+            )
+        )
 
         message = False
         if unknown_members:
@@ -254,7 +275,7 @@ class Profiles(Cog):
             for page in list_display('Members without profile picture', members_without_pp):
                 await ctx.send(page)
         if not message:
-            await ctx.send('```All this server\'s members are known and have a profile picture```')
+            await ctx.send("```All this server's members are known and have a profile picture```")
 
     @staticmethod
     async def _fetch_vcard(message):
@@ -271,16 +292,22 @@ class Profiles(Cog):
         full_name = vcard.fn.value
         promotion = re.sub('&amp,', '&', Profiles._flatten(vcard.org.value))
         telephone = vcard.tel.value if 'tel' in vcard.contents else ''
-        photo = base64.b64encode(vcard.photo.value).decode('ascii') if len(
-            vcard.photo.value) > 5 else ''
+        photo = (
+            base64.b64encode(vcard.photo.value).decode('ascii')
+            if len(vcard.photo.value) > 5
+            else ''
+        )
 
         resp = await get_nanapi().user.user_upsert_profile(
             member.id,
-            UpsertProfileBody(discord_username=str(member),
-                              full_name=full_name,
-                              promotion=promotion,
-                              telephone=telephone,
-                              photo=photo))
+            UpsertProfileBody(
+                discord_username=str(member),
+                full_name=full_name,
+                promotion=promotion,
+                telephone=telephone,
+                photo=photo,
+            ),
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         profile = resp.result
@@ -303,8 +330,7 @@ class Profiles(Cog):
         embed = embed.add_field(name='氏名', value=profile.full_name)
 
         if member is not None:
-            embed.set_author(name=member,
-                             icon_url=member.display_avatar.url)
+            embed.set_author(name=member, icon_url=member.display_avatar.url)
 
         if profile.promotion:
             embed.add_field(name='学級', value=profile.promotion)
@@ -322,26 +348,25 @@ class Profiles(Cog):
     @nana_command()
     @legacy_command()
     async def register(self, ctx: LegacyCommandContext):
-        """ Register yourself into Nana-chan """
+        """Register yourself into Nana-chan"""
         registrars = sorted(self.registrars.items(), key=itemgetter(0))
 
         desc = []
         view = LockedView(self.bot, ctx.author)
         for name, callback in registrars:
             emoji = callback.__self__.__class__.emoji  # type: ignore
-            desc.append(f"{emoji} **{name}**\n{callback.__doc__}")
+            desc.append(f'{emoji} **{name}**\n{callback.__doc__}')
             button = Button(label=name, emoji=emoji)
             button.callback = callback
             view.add_item(button)
 
-        embed = Embed(title=f"{self.emoji} Register",
-                      description='\n\n'.join(desc))
-        embed.set_author(name=ctx.author,
-                         icon_url=ctx.author.display_avatar.url)
+        embed = Embed(title=f'{self.emoji} Register', description='\n\n'.join(desc))
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
         await ctx.reply(
             content=f"React with the {self.bot.get_emoji_str('chousen')} option",
             embed=embed,
-            view=view)
+            view=view,
+        )
 
 
 @app_commands.context_menu(name='Who is')
@@ -351,7 +376,8 @@ async def user_who_is(interaction: Interaction, member: Member):
         match resp.code:
             case 404:
                 await interaction.response.send_message(
-                    f"No informations found about **{member}**", ephemeral=True)
+                    f'No informations found about **{member}**', ephemeral=True
+                )
                 return
             case _:
                 raise RuntimeError(resp.result)

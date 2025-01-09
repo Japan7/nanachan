@@ -18,24 +18,26 @@ from yarl import URL
 
 from nanachan.settings import PRODUCER_TOKEN, PRODUCER_UPLOAD_ENDPOINT
 
-__all__ = ('framed_header',
-           'list_display',
-           'run_coro',
-           'fake_method',
-           'dummy',
-           'async_dummy',
-           'get_session',
-           'to_producer',
-           'ignore',
-           'get_console',
-           'get_traceback',
-           'get_traceback_exc',
-           'get_traceback_str',
-           'print_exc',
-           'ic',
-           'tldr_get_page',
-           'async_all',
-           'EXECUTOR')
+__all__ = (
+    'framed_header',
+    'list_display',
+    'run_coro',
+    'fake_method',
+    'dummy',
+    'async_dummy',
+    'get_session',
+    'to_producer',
+    'ignore',
+    'get_console',
+    'get_traceback',
+    'get_traceback_exc',
+    'get_traceback_str',
+    'print_exc',
+    'ic',
+    'tldr_get_page',
+    'async_all',
+    'EXECUTOR',
+)
 
 
 EXECUTOR = ProcessPoolExecutor()
@@ -43,9 +45,8 @@ EXECUTOR = ProcessPoolExecutor()
 
 conn_backoff = backoff.on_exception(
     backoff.expo,
-    (aiohttp.ClientConnectorError,
-     aiohttp.ClientConnectionError, aiohttp.ContentTypeError),
-    max_time=600
+    (aiohttp.ClientConnectorError, aiohttp.ClientConnectionError, aiohttp.ContentTypeError),
+    max_time=600,
 )
 
 
@@ -54,17 +55,11 @@ def give_up(exception):
 
 
 response_backoff = backoff.on_exception(
-    backoff.expo,
-    aiohttp.ClientResponseError,
-    max_time=600,
-    giveup=give_up
+    backoff.expo, aiohttp.ClientResponseError, max_time=600, giveup=give_up
 )
 
 timeout_backoff = backoff.on_exception(
-    backoff.expo,
-    aiohttp.ServerTimeoutError,
-    max_time=300,
-    max_tries=5
+    backoff.expo, aiohttp.ServerTimeoutError, max_time=300, max_tries=5
 )
 
 
@@ -72,9 +67,7 @@ default_backoff = timeout_backoff(conn_backoff(response_backoff))
 
 
 def framed_header(header):
-    return (f'┌─{"─" * len(header)}─┐\n'
-            f'│ {header} │\n'
-            f'└─{"─" * len(header)}─┘')
+    return f'┌─{"─" * len(header)}─┐\n' f'│ {header} │\n' f'└─{"─" * len(header)}─┘'
 
 
 def list_display(header, elems):
@@ -93,7 +86,6 @@ async def run_coro(coro: Coroutine[Any, Any, Any] | Any):
 
 
 class FakeMethod:
-
     def __init__(self, instance, func):
         self.instance = instance
         self.func = func
@@ -144,14 +136,13 @@ async def to_producer(file: Union[str, URL]) -> ProducerResponse:
     async with get_session().get(url) as req:
         filename = url.name
         data = aiohttp.FormData()
-        data.add_field("file", req.content, filename=filename)
+        data.add_field('file', req.content, filename=filename)
         headers: dict[str, str] = {
-            "Authorization": PRODUCER_TOKEN,
-            "Expires": "0",
+            'Authorization': PRODUCER_TOKEN,
+            'Expires': '0',
         }
 
-        async with get_session().post(PRODUCER_UPLOAD_ENDPOINT,
-                                      headers=headers, data=data) as req:
+        async with get_session().post(PRODUCER_UPLOAD_ENDPOINT, headers=headers, data=data) as req:
             return await req.json()
 
 
@@ -162,12 +153,13 @@ async def _(file: io.IOBase, filename=None) -> ProducerResponse:
         file.name = filename  # type: ignore
 
     headers: dict[str, str] = {
-        "Authorization": PRODUCER_TOKEN,
-        "Expires": "0",
+        'Authorization': PRODUCER_TOKEN,
+        'Expires': '0',
     }
 
-    async with get_session().post(PRODUCER_UPLOAD_ENDPOINT,
-                                  headers=headers, data=dict(file=file)) as req:
+    async with get_session().post(
+        PRODUCER_UPLOAD_ENDPOINT, headers=headers, data=dict(file=file)
+    ) as req:
         return await req.json()
 
 
@@ -181,9 +173,7 @@ def get_console() -> Console:
     return Console(width=78)
 
 
-TRACEBACK_KWARGS: dict[str, Any] = {
-    'word_wrap': True
-}
+TRACEBACK_KWARGS: dict[str, Any] = {'word_wrap': True}
 
 
 def get_traceback(e: Optional[BaseException] = None) -> traceback.Traceback:
@@ -195,7 +185,7 @@ def get_traceback(e: Optional[BaseException] = None) -> traceback.Traceback:
 
 def get_traceback_str(trace: traceback.Traceback) -> str:
     console = get_console()
-    return "".join(s.text for s in console.render(trace))
+    return ''.join(s.text for s in console.render(trace))
 
 
 def get_traceback_exc() -> traceback.Traceback:
@@ -221,7 +211,7 @@ def ic(*args, **kwargs):
     return args
 
 
-tldr_arg = re.compile(r"{{(.+?)}}")
+tldr_arg = re.compile(r'{{(.+?)}}')
 
 
 async def tldr_get_page(command: str):
@@ -237,7 +227,7 @@ async def tldr_get_page(command: str):
 
             page = await resp.text()
             page = tldr_arg.sub(lambda match: match.group(1), page)
-            return page.replace(f"# {command}", "").strip()
+            return page.replace(f'# {command}', '').strip()
 
 
 def truncate_at(length: int, string: str) -> str:
@@ -245,15 +235,14 @@ def truncate_at(length: int, string: str) -> str:
     if len(string) <= length:
         return string
     else:
-        space_index = max(i for i, c in enumerate(string)
-                          if c == ' ' and i < length)
+        space_index = max(i for i, c in enumerate(string) if c == ' ' and i < length)
         return string[:space_index] + '…'
 
 
 @lru_cache(maxsize=1024)
 def autocomplete_truncate(name: str) -> str:
     while len(name) > 100:
-        name, *_ = name.rpartition(" ")
+        name, *_ = name.rpartition(' ')
 
     return name
 

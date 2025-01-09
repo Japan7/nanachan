@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
 
 class StoryBuilder:
-
     def __init__(self, title: str) -> None:
         self._title: str = self.format_title(title)
         self._parts: List[str] = []
@@ -50,7 +49,8 @@ class StoryBuilder:
 
 
 class Histoire(Cog):
-    """ Tell your story or that of the greatest heroes of our times """
+    """Tell your story or that of the greatest heroes of our times"""
+
     emoji = '👴'
 
     thumbsup = '\N{THUMBS UP SIGN}'
@@ -71,11 +71,10 @@ class Histoire(Cog):
             parts_count = builder.store(message.content)
             await ctx.send(f'{parts_count} parts cached')
 
-    @commands.group(invoke_without_command=True,
-                    recursive_help=False,
-                    help='Tell you a story (in french)')
-    async def histoire(self, ctx: commands.Context,
-                       story_id: Optional[str]) -> None:
+    @commands.group(
+        invoke_without_command=True, recursive_help=False, help='Tell you a story (in french)'
+    )
+    async def histoire(self, ctx: commands.Context, story_id: Optional[str]) -> None:
         _story_id = None
         # Check if story_id is subcommand or real parameter
         if story_id:
@@ -102,30 +101,26 @@ class Histoire(Cog):
         if not success(resp):
             match resp.code:
                 case 404:
-                    raise commands.CommandError(
-                        f'Story with id {_story_id} does not exist')
+                    raise commands.CommandError(f'Story with id {_story_id} does not exist')
                 case _:
                     raise RuntimeError(resp.result)
         story = resp.result
 
-        await AutoNavigatorView.create(self.bot,
-                                       ctx.reply,
-                                       title=story.title,
-                                       description=story.text)
+        await AutoNavigatorView.create(
+            self.bot, ctx.reply, title=story.title, description=story.text
+        )
 
     @histoire.command(help='Start the creation of a story')
     async def start(self, ctx: commands.Context, *, title: str) -> None:
         # Ensure title is one line
         if '\n' in title:
-            raise commands.BadArgument(
-                'Story title must be contained in one line')
+            raise commands.BadArgument('Story title must be contained in one line')
 
         # Check a story is not already recording
         channel: 'MessageableChannel' = ctx.channel
         user = ctx.author
         if (channel, user) in self.story_builders_by_channel_user:
-            raise commands.CommandError(
-                'A story is already being recorded in this channel')
+            raise commands.CommandError('A story is already being recorded in this channel')
 
         # Start the recording
         self.story_builders_by_channel_user[(channel.id, user.id)] = StoryBuilder(title)
@@ -221,10 +216,9 @@ class Histoire(Cog):
 
         # Show list
         if stories:
-            await AutoNavigatorView.create(self.bot,
-                                           ctx.reply,
-                                           title='Available stories',
-                                           description='\n'.join(stories))
+            await AutoNavigatorView.create(
+                self.bot, ctx.reply, title='Available stories', description='\n'.join(stories)
+            )
         else:
             await ctx.send('No available story')
 

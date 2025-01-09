@@ -14,10 +14,7 @@ from discord.webhook import WebhookMessage
 from nanachan.discord.bot import Bot
 from nanachan.settings import SLASH_PREFIX
 
-__all__ = ('LegacyCommandContext',
-           'nana_command',
-           'legacy_command',
-           'handle_command_errors')
+__all__ = ('LegacyCommandContext', 'nana_command', 'legacy_command', 'handle_command_errors')
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +51,9 @@ class LegacyCommandContext(Context[Bot]):
     async def reply(self, *args, **kwargs):
         return await self.send(*args, **kwargs)
 
-    async def send(self,
-                   content: str | None = None,
-                   **kwargs) -> InteractionMessage | WebhookMessage:
+    async def send(
+        self, content: str | None = None, **kwargs
+    ) -> InteractionMessage | WebhookMessage:
         assert self.interaction is not None
         if content is not None:
             kwargs['content'] = content
@@ -69,10 +66,9 @@ class LegacyCommandContext(Context[Bot]):
                 kwargs.setdefault('ephemeral', self.ephemeral)
 
             signature = inspect.signature(send)
-            to_remove = [key for key in kwargs
-                         if key not in signature.parameters]
+            to_remove = [key for key in kwargs if key not in signature.parameters]
             for key in to_remove:
-                logger.info(f"ignoring {key}")
+                logger.info(f'ignoring {key}')
                 del kwargs[key]
 
             message = await send(**kwargs)
@@ -88,10 +84,8 @@ P = ParamSpec('P')
 
 
 def app_command_decorator(func: Callable[P, T]) -> Callable[P, T]:
-
     @wraps(func)
     def decorated(*args, **kwargs):
-
         def cmd_decorator(func):
             kwargs['name'] = SLASH_PREFIX + kwargs.get('name', func.__name__)
 
@@ -106,7 +100,6 @@ nana_command = app_command_decorator(app_commands.command)
 
 
 def group_decorator(func: Callable[P, T]) -> Callable[P, T]:
-
     @wraps(func)
     def decorated(*args, **kwargs):
         kwargs['name'] = SLASH_PREFIX + kwargs.get('name', func.__name__)
@@ -135,10 +128,9 @@ def handle_command_errors(func: Callable[P, T]) -> Callable[P, T]:
 
 
 def legacy_command(ephemeral: bool = False):
-
-    def decorator(func: Callable[Concatenate[Any, LegacyCommandContext, P], T]
-                  ) -> Callable[Concatenate[Any, Interaction, P], T]:
-
+    def decorator(
+        func: Callable[Concatenate[Any, LegacyCommandContext, P], T],
+    ) -> Callable[Concatenate[Any, Interaction, P], T]:
         @wraps(func)
         async def decorated(cog, interaction: Interaction[Bot], *args, **kwargs):
             ctx = await LegacyCommandContext.from_interaction(interaction, ephemeral=ephemeral)

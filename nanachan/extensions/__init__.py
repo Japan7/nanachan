@@ -22,10 +22,14 @@ async def load_extensions(bot: 'Bot'):
     for extension_file in extensions_dir.iterdir():
         extension = extension_file.stem
 
-        if any((extension_file.is_dir(),
+        if any(
+            (
+                extension_file.is_dir(),
                 extension.startswith('_'),
                 extension.startswith('.'),
-                extension in DISABLED_EXTENSIONS)):
+                extension in DISABLED_EXTENSIONS,
+            )
+        ):
             continue
 
         try:

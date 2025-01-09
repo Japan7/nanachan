@@ -53,24 +53,26 @@ if TYPE_CHECKING:
     from nanachan.extensions.easter_eggs import Bananas
 
 
-__all__ = ('getEmojiStr',
-           'Colour',
-           'Embed',
-           'clean_markdown',
-           'get_multiplexing_level',
-           'context_modifier',
-           'MultiplexingContext',
-           'MultiplexingMessage',
-           'ChannelListener',
-           'Emoji',
-           'EmojiConverter',
-           'WebhookMessage',
-           'typing',
-           'default_backoff',
-           'MembersTransformer',
-           'Members',
-           'UserType',
-           'get_option')
+__all__ = (
+    'getEmojiStr',
+    'Colour',
+    'Embed',
+    'clean_markdown',
+    'get_multiplexing_level',
+    'context_modifier',
+    'MultiplexingContext',
+    'MultiplexingMessage',
+    'ChannelListener',
+    'Emoji',
+    'EmojiConverter',
+    'WebhookMessage',
+    'typing',
+    'default_backoff',
+    'MembersTransformer',
+    'Members',
+    'UserType',
+    'get_option',
+)
 
 logger = logging.getLogger(__name__)
 
@@ -80,13 +82,13 @@ def getEmojiStr(ctx, emoji_name):
 
 
 class Colour(discord.Colour):
-    colour_prog = re.compile(r"(rgba?|hsv)\s*\((\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)")
+    colour_prog = re.compile(r'(rgba?|hsv)\s*\((\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)')
 
     @classmethod
     def from_hex(cls, string: str):
         string = string.strip('#')
         if len(string) == 3:
-            string = ''.join(c+c for c in string)
+            string = ''.join(c + c for c in string)
 
         return cls(int(string, 16))
 
@@ -111,9 +113,7 @@ class Colour(discord.Colour):
                 return predefined_colour()
         else:
             groups = match.groups()
-            kwargs = {k: v
-                      for k, v in zip(groups[0][:3],
-                                      cls._get_values(groups[1:]))}
+            kwargs = {k: v for k, v in zip(groups[0][:3], cls._get_values(groups[1:]))}
 
             if groups[0].startswith('rgb'):
                 return cls.from_rgb(**kwargs)
@@ -135,19 +135,20 @@ class EmbedField:
 
 
 class EmbedExtraKWArgs(TypedDict):
-     type: NotRequired[EmbedType]
-     timestamp: NotRequired[datetime.datetime | None]
+    type: NotRequired[EmbedType]
+    timestamp: NotRequired[datetime.datetime | None]
 
 
 class Embed(discord.Embed):
-
-    def __init__(self,
-                 title: str | None = None,
-                 description: str | None = None,
-                 url: str | None = None,
-                 colour: int | discord.Colour | None = None,
-                 color: int | discord.Colour | None = None,
-                 **kwargs: Unpack[EmbedExtraKWArgs]):
+    def __init__(
+        self,
+        title: str | None = None,
+        description: str | None = None,
+        url: str | None = None,
+        colour: int | discord.Colour | None = None,
+        color: int | discord.Colour | None = None,
+        **kwargs: Unpack[EmbedExtraKWArgs],
+    ):
         if title:
             title = truncate_at(256, title)
 
@@ -163,9 +164,9 @@ class Embed(discord.Embed):
         super().__init__(title=title, url=url, description=description, colour=colour, **kwargs)
 
 
-fuckin_markdown_star = re.compile(r"(\*+)(?P<clean>[^*\n]*)\1")
-fuckin_markdown_underscore = re.compile(r"(?P<stop>https?://[^\s]*)?(\_+)(?P<clean>[^_\n]*)\2")
-fuckin_markdown_strike = re.compile(r"(~~)(?P<clean>[^_\n]*?)~~")
+fuckin_markdown_star = re.compile(r'(\*+)(?P<clean>[^*\n]*)\1')
+fuckin_markdown_underscore = re.compile(r'(?P<stop>https?://[^\s]*)?(\_+)(?P<clean>[^_\n]*)\2')
+fuckin_markdown_strike = re.compile(r'(~~)(?P<clean>[^_\n]*?)~~')
 markdown_cleaners = [
     fuckin_markdown_star,
     fuckin_markdown_underscore,
@@ -196,15 +197,19 @@ MULTIPLEXING_CHARS: dict[str, tuple[str, str]] = {
     '~': ('~~', '~~'),
     '_': ('_', '_'),
     '*': ('*', '*'),
-    '`': ('`', '`')
+    '`': ('`', '`'),
 }
 
 
 def _get_multiplexing_level(text: str):
     if text:
         opening, closing = MULTIPLEXING_CHARS.get(text[0], (None, None))
-        if (opening is not None and closing is not None
-                and text.startswith(opening) and text.endswith(closing)):
+        if (
+            opening is not None
+            and closing is not None
+            and text.startswith(opening)
+            and text.endswith(closing)
+        ):
             text = strip_multiplexing_chars(text, opening, closing)
             yield opening, closing
             yield from _get_multiplexing_level(text)
@@ -222,7 +227,7 @@ def get_multiplexing_level(message: discord.Message | str):
 
 def strip_multiplexing_chars(text: str, opening: str | None, closing: str | None):
     if opening and closing:
-        return text[len(opening):-len(closing)]
+        return text[len(opening) : -len(closing)]
     else:
         return text
 
@@ -240,12 +245,13 @@ ContextModifier = context_modifier
 
 class MultiplexingContext(commands.Context['Bot']):
     bot: Bot
-    listeners: list[tuple[Callable[[MultiplexingContext], bool],
-                          asyncio.Future[MultiplexingContext]]] = []
+    listeners: list[
+        tuple[Callable[[MultiplexingContext], bool], asyncio.Future[MultiplexingContext]]
+    ] = []
 
     async def get_user_webhook(self, app_cmd_context: bool = False) -> 'WebhookProxy':
         if self.guild is None:
-            raise RuntimeError("Webhook cannot be created outside of a guild")
+            raise RuntimeError('Webhook cannot be created outside of a guild')
 
         assert isinstance(self.channel, (TextChannel, ForumChannel))
         webhook = await self.bot.get_webhook(self.channel)
@@ -271,11 +277,13 @@ class MultiplexingContext(commands.Context['Bot']):
 
     @cached_property
     def bananased(self) -> bool:
-        bananas_cog = cast('Bananas | None', self.bot.get_cog("Bananas"))
+        bananas_cog = cast('Bananas | None', self.bot.get_cog('Bananas'))
         if bananas_cog is not None:
-            if perms := getattr(self.author, "guild_permissions", None):
-                bananas_cmd = getattr(self, 'command', None) in (bananas_cog.unbananas,
-                                                                 bananas_cog.bananas)
+            if perms := getattr(self.author, 'guild_permissions', None):
+                bananas_cmd = getattr(self, 'command', None) in (
+                    bananas_cog.unbananas,
+                    bananas_cog.bananas,
+                )
                 if perms.administrator and bananas_cmd:
                     return False
 
@@ -302,9 +310,8 @@ class MultiplexingContext(commands.Context['Bot']):
         self.amqed: bool = getattr(message, 'amqed', False)
         super().__init__(message=message, **attrs)
 
-        if quizz_cog := self.bot.get_cog("Quizz"):
-            imaaaage = re.match(rf'{re.escape(PREFIX)}ima+ge',
-                                self.message.stripped_content)
+        if quizz_cog := self.bot.get_cog('Quizz'):
+            imaaaage = re.match(rf'{re.escape(PREFIX)}ima+ge', self.message.stripped_content)
             if imaaaage is not None:
                 self.command = cast(Command, quizz_cog.image)  # type: ignore # I don't even get it
 
@@ -312,8 +319,9 @@ class MultiplexingContext(commands.Context['Bot']):
 
     async def wait(self):
         if self.is_user_message:
-            modifiers_tasks = [asyncio.create_task(run_coro(listener(self)))
-                               for listener in context_modifiers]
+            modifiers_tasks = [
+                asyncio.create_task(run_coro(listener(self))) for listener in context_modifiers
+            ]
             if modifiers_tasks:
                 await asyncio.wait(modifiers_tasks)
 
@@ -378,26 +386,28 @@ class MultiplexingContext(commands.Context['Bot']):
 
     @view.setter
     def view(self, value: StringView):  # type: ignore # trust me bro
-        if (self.opening and self.closing
-                and value.buffer.startswith(self.opening) and value.buffer.endswith(self.closing)):
-            value.buffer = value.buffer[:-len(self.closing)]
+        if (
+            self.opening
+            and self.closing
+            and value.buffer.startswith(self.opening)
+            and value.buffer.endswith(self.closing)
+        ):
+            value.buffer = value.buffer[: -len(self.closing)]
             value.end = len(value.buffer)
 
         self._view = value
 
     @default_backoff
     async def send(self, content: str | None = None, *args, **kwargs):  # type: ignore # trust me bro
-        logger.info("send")
+        logger.info('send')
         if content is not None:
-            content = f"{self.opening}{content}{self.closing}"
+            content = f'{self.opening}{content}{self.closing}'
 
-        return MultiplexingMessage(
-            await super().send(content, *args, **kwargs)
-        )
+        return MultiplexingMessage(await super().send(content, *args, **kwargs))
 
 
 class MultiplexingMessage:
-    url_prog = re.compile(r"https?://[^\s]+")
+    url_prog = re.compile(r'https?://[^\s]+')
     emoji_prog = re.compile(r'<a?(:[^ :]+:)\d+>')
     webhook_author = {}
 
@@ -409,9 +419,11 @@ class MultiplexingMessage:
             self.opening, self.closing = '', ''
 
     def __str__(self):
-        return (f"<{self.__class__.__name__} id={self.id} "
-                f"content={repr(self.content)} "
-                f"author={repr(self.author)}>")
+        return (
+            f'<{self.__class__.__name__} id={self.id} '
+            f'content={repr(self.content)} '
+            f'author={repr(self.author)}>'
+        )
 
     @property
     def is_webhook_message(self):
@@ -420,8 +432,7 @@ class MultiplexingMessage:
     @cached_property
     def urls(self) -> Sequence[URL]:
         return [
-            URL(url)
-            for url in set(self.url_prog.findall(clean_markdown(self.stripped_content)))
+            URL(url) for url in set(self.url_prog.findall(clean_markdown(self.stripped_content)))
         ]
 
     @property
@@ -441,21 +452,27 @@ class MultiplexingMessage:
 
     @cached_property
     def clean_content(self):
-        clean_content = strip_multiplexing_chars(self._message.clean_content,
-                                                 self.opening,
-                                                 self.closing)
+        clean_content = strip_multiplexing_chars(
+            self._message.clean_content, self.opening, self.closing
+        )
         return self.emoji_prog.sub(lambda m: m.group(1), clean_content)
 
     @cached_property
     def quote_embed(self):
-        embed = Embed(description=self._message.content,
-                      color=self._message.author.colour,
-                      timestamp=self._message.created_at)
-        embed.set_author(name=self._message.author.display_name,
-                         icon_url=self._message.author.display_avatar.url)
-        bang = "" if self._message.guild is None else "#"
-        embed.add_field(name=f"{bang}{self._message.channel}",
-                        value=f"[Jump to message]({self._message.jump_url})")
+        embed = Embed(
+            description=self._message.content,
+            color=self._message.author.colour,
+            timestamp=self._message.created_at,
+        )
+        embed.set_author(
+            name=self._message.author.display_name,
+            icon_url=self._message.author.display_avatar.url,
+        )
+        bang = '' if self._message.guild is None else '#'
+        embed.add_field(
+            name=f'{bang}{self._message.channel}',
+            value=f'[Jump to message]({self._message.jump_url})',
+        )
         if self._message.attachments is not None:
             for att in self._message.attachments:
                 if att.content_type is not None and att.content_type.split('/')[0] == 'image':
@@ -466,25 +483,21 @@ class MultiplexingMessage:
     @default_backoff
     async def send(self, content=None, *args, **kwargs):
         if content is not None:
-            content = f"{self.opening}{content}{self.closing}"
+            content = f'{self.opening}{content}{self.closing}'
 
-        return MultiplexingMessage(
-            await self.channel.send(content, *args, **kwargs)
-        )
+        return MultiplexingMessage(await self.channel.send(content, *args, **kwargs))
 
     @default_backoff
     async def reply(self, content=None, *args, **kwargs):
         if content is not None:
-            content = f"{self.opening}{content}{self.closing}"
+            content = f'{self.opening}{content}{self.closing}'
 
-        return MultiplexingMessage(
-            await self._message.reply(content, *args, **kwargs)
-        )
+        return MultiplexingMessage(await self._message.reply(content, *args, **kwargs))
 
     @default_backoff
     async def edit(self, content=None, *args, **kwargs):
         if content is not None:
-            content = f"{self.opening}{content}{self.closing}"
+            content = f'{self.opening}{content}{self.closing}'
 
         return await self._message.edit(*args, content=content, **kwargs)
 
@@ -502,7 +515,6 @@ class MultiplexingMessage:
 
 
 class ChannelListener(metaclass=abc.ABCMeta):
-
     def __init__(self, bot, channel: TextChannel | PrivateChannel):
         self.bot = bot
         self.channel = channel
@@ -523,7 +535,6 @@ class ChannelListener(metaclass=abc.ABCMeta):
 
 
 class Emoji(PartialEmoji):
-
     def __init__(self, name: str | None = None, emoji_id=None, emoji: str | None = None):
         self.emoji = emoji
         self.id = emoji_id
@@ -534,15 +545,15 @@ class Emoji(PartialEmoji):
             self.name = name
 
     def _as_reaction(self):
-        return f"{self.name}:{self.id}"
+        return f'{self.name}:{self.id}'
 
     def __str__(self):
         if self.emoji:
             return self.emoji
         if self.id:
-            return f"<:{self.name}:{self.id}>"
+            return f'<:{self.name}:{self.id}>'
         else:
-            return f":{self.name}:"
+            return f':{self.name}:'
 
     @classmethod
     def from_string(cls, bot: 'Bot', emoji_str: str):
@@ -560,7 +571,7 @@ class Emoji(PartialEmoji):
 
 
 class EmojiConverter(commands.Converter):
-    emoji_re = re.compile(r"(?:<)?:(?P<name>[\w\d_]+):(?:(?P<emoji_id>\d+)>)?")
+    emoji_re = re.compile(r'(?:<)?:(?P<name>[\w\d_]+):(?:(?P<emoji_id>\d+)>)?')
 
     async def convert(self, ctx, argument):
         if emoji := Emoji.from_string(cast(Bot, ctx.bot), argument):
@@ -570,7 +581,6 @@ class EmojiConverter(commands.Converter):
 
 
 class WebhookMessage:
-
     def __init__(self, message: Message, webhook: Webhook | WebhookProxy):
         self.message = message
         self.webhook = webhook
@@ -600,7 +610,6 @@ class WebhookMessage:
 
 
 class WebhookProxy:
-
     def __init__(self, webhook: Webhook | WebhookProxy):
         self.webhook = webhook
 
@@ -613,13 +622,14 @@ class WebhookProxy:
 
 
 class UserWebhook(WebhookProxy):
-
-    def __init__(self,
-                 webhook: Webhook | WebhookProxy,
-                 user: discord.User | None = None,
-                 display_name: str | None = None,
-                 display_avatar: str | None = None,
-                 **kwargs):
+    def __init__(
+        self,
+        webhook: Webhook | WebhookProxy,
+        user: discord.User | None = None,
+        display_name: str | None = None,
+        display_avatar: str | None = None,
+        **kwargs,
+    ):
         super().__init__(webhook, **kwargs)
         self.user = user
         self.display_name = None
@@ -650,7 +660,6 @@ class UserWebhook(WebhookProxy):
 
 
 class AMQWebhook(UserWebhook):
-
     def __init__(self, webhook: Webhook | WebhookProxy, private: bool, **kwargs):
         self.private = private
         super().__init__(webhook, **kwargs)
@@ -661,20 +670,15 @@ class AMQWebhook(UserWebhook):
 
     @display_name.setter
     def display_name(self, value: str):
-        prefix = "[AMQ – Private]" if self.private else "[AMQ]"
-        self._display_name = f"{prefix} {value}"
+        prefix = '[AMQ – Private]' if self.private else '[AMQ]'
+        self._display_name = f'{prefix} {value}'
 
     async def send(self, wait=True, **kwargs):
-        return cast(DpyWebhookMessage,
-                    AMQMessage(await super().send(wait=wait, **kwargs)))
+        return cast(DpyWebhookMessage, AMQMessage(await super().send(wait=wait, **kwargs)))
 
 
 class ThreadWebhook(WebhookProxy):
-
-    def __init__(self,
-                 webhook: Webhook | WebhookProxy,
-                 thread: Thread,
-                 **kwargs):
+    def __init__(self, webhook: Webhook | WebhookProxy, thread: Thread, **kwargs):
         super().__init__(webhook, **kwargs)
         self.thread = thread
 
@@ -684,7 +688,6 @@ class ThreadWebhook(WebhookProxy):
 
 
 class BananasWebhook(WebhookProxy):
-
     def __init__(self, webhook: Webhook | WebhookProxy, **kwargs):
         super().__init__(webhook, **kwargs)
 
@@ -694,7 +697,7 @@ class BananasWebhook(WebhookProxy):
         i = 1
         while i < len(message):
             j = random.randint(3, 5)
-            new_message += message[i:i+j] + ':banana:'
+            new_message += message[i : i + j] + ':banana:'
             i += j + 1
 
         return new_message
@@ -712,13 +715,14 @@ class BananasWebhook(WebhookProxy):
 
 
 class WaifuWebhook(WebhookProxy):
-
-    def __init__(self,
-                 webhook: Webhook | WebhookProxy,
-                 chara,
-                 display_name: str,
-                 hide_author: bool = False,
-                 **kwargs):
+    def __init__(
+        self,
+        webhook: Webhook | WebhookProxy,
+        chara,
+        display_name: str,
+        hide_author: bool = False,
+        **kwargs,
+    ):
         super().__init__(webhook, **kwargs)
         self.chara = chara
         self.display_name = display_name
@@ -727,9 +731,9 @@ class WaifuWebhook(WebhookProxy):
     async def send(self, wait=True, **kwargs):
         await self.chara.load_alchara()
 
-        username = f"{self.chara.alchara.name.userPreferred}"
+        username = f'{self.chara.alchara.name.userPreferred}'
         if not self.hide_author:
-            username += f" — {self.display_name}"
+            username += f' — {self.display_name}'
 
         kwargs.setdefault('username', username)
         kwargs.setdefault('avatar_url', self.chara.alchara.image.large)
@@ -738,11 +742,9 @@ class WaifuWebhook(WebhookProxy):
 
 
 class ReplyWebhook(WebhookProxy):
-
-    def __init__(self,
-                 webhook: Webhook | WebhookProxy,
-                 message: Message | MultiplexingMessage,
-                 **kwargs):
+    def __init__(
+        self, webhook: Webhook | WebhookProxy, message: Message | MultiplexingMessage, **kwargs
+    ):
         super().__init__(webhook, **kwargs)
         self.message = message
 
@@ -750,11 +752,12 @@ class ReplyWebhook(WebhookProxy):
         allowed_mentions = AllowedMentions(
             users=self.message.mentions,
             roles=self.message.role_mentions,
-            everyone=self.message.mention_everyone)
+            everyone=self.message.mention_everyone,
+        )
 
         if self.message.reference is not None and (replied := self.message.reference.resolved):
             replied = MultiplexingMessage(replied)
-            content = f"> **{replied.author.mention}** {replied.jump_url}"
+            content = f'> **{replied.author.mention}** {replied.jump_url}'
             msg_content = kwargs.get('content')
             if msg_content is not None:
                 content += '\n' + msg_content
@@ -764,14 +767,14 @@ class ReplyWebhook(WebhookProxy):
             allowed_mentions = AllowedMentions(
                 users=user_mentions,
                 roles=self.message.role_mentions,
-                everyone=self.message.mention_everyone)
+                everyone=self.message.mention_everyone,
+            )
 
         kwargs.setdefault('allowed_mentions', allowed_mentions)
         return await super().send(wait=wait, **kwargs)
 
 
 class StickerWebhook(WebhookProxy):
-
     def __init__(self, webhook: Webhook | WebhookProxy, stickers: list[StickerItem], **kwargs):
         super().__init__(webhook, **kwargs)
         self.stickers = stickers
@@ -792,7 +795,6 @@ class StickerWebhook(WebhookProxy):
 
 
 class AttachmentsWebhook(WebhookProxy):
-
     def __init__(self, webhook: Webhook | WebhookProxy, attachments, **kwargs):
         super().__init__(webhook, **kwargs)
         self.attachments = attachments
@@ -805,18 +807,16 @@ class AttachmentsWebhook(WebhookProxy):
 
 
 class CheckEmptyWebhook(WebhookProxy):
-
     async def send(self, wait=True, **kwargs):
         content = kwargs.get('content')
         files = kwargs.get('files')
         if not (content or files):
-            kwargs['content'] = "\u200b"
+            kwargs['content'] = '\u200b'
 
         return await super().send(wait=wait, **kwargs)
 
 
 def typing(func):
-
     @wraps(func)
     async def wrapper(self, ctx, *args, **kwargs):
         async with ctx.typing():
@@ -840,14 +840,13 @@ member_converter = MemberConverter()
 class MembersTransformer(app_commands.Transformer):
     split_reg = re.compile(r'(<@!?\d+>)|"([^"]*)"|([^\s"]+)')
 
-    async def transform(self,
-                        interaction: discord.Interaction[discord.Client],
-                        value: str) -> list[discord.Member]:
+    async def transform(
+        self, interaction: discord.Interaction[discord.Client], value: str
+    ) -> list[discord.Member]:
         interaction = cast(discord.Interaction['Bot'], interaction)
         ctx = await commands.Context.from_interaction(interaction)
         values = (match.group(1) for match in self.split_reg.finditer(value))
-        return [await member_converter.convert(ctx, v)
-                for v in values]
+        return [await member_converter.convert(ctx, v) for v in values]
 
 
 Members = app_commands.Transform[list[discord.Member], MembersTransformer]
@@ -856,12 +855,12 @@ Members = app_commands.Transform[list[discord.Member], MembersTransformer]
 T = TypeVar('T')
 
 
-def get_option(interaction: discord.Interaction,
-               name: str,
-               cast_func: Callable[[Any], T] = str) -> T | None:
+def get_option(
+    interaction: discord.Interaction, name: str, cast_func: Callable[[Any], T] = str
+) -> T | None:
     if interaction.data is not None and 'options' in interaction.data:
         for option in interaction.data.get('options', []):
-            logger.info(f"{option=}")
+            logger.info(f'{option=}')
             return _iter_opt(name, cast_func, option)
 
 

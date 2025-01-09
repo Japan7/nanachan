@@ -36,8 +36,7 @@ logger = logging.getLogger(__name__)
 
 LETTERS_EMOJIS = [
     unicodedata.lookup(f'REGIONAL INDICATOR SYMBOL LETTER {chr(letter)}')
-    for letter in range(ord('A'),
-                        ord('Z') + 1)
+    for letter in range(ord('A'), ord('Z') + 1)
 ]
 
 
@@ -45,14 +44,12 @@ LETTERS_EMOJIS = [
 # Views #
 #########
 class BaseView(View):
-
     def __init__(self, bot: Bot, timeout: float | None = None):
         super().__init__(timeout=timeout)
         self.bot = bot
 
 
 class LockedView(BaseView):
-
     def __init__(self, bot: Bot, lock: UserType | None = None, timeout: float | None = None):
         super().__init__(bot, timeout=timeout)
         self.lock = lock.id if lock is not None else None
@@ -65,40 +62,47 @@ class BaseConfirmationView(BaseView):
     ACCEPT_EMOTE = 'FubukiGO'
     REFUSE_EMOTE = 'FubukiStop'
 
-    def __init__(self,
-                 bot: Bot,
-                 timeout: float | None = None,
-                 accept_custom_id: str | None = None,
-                 refuse_custom_id: str | None = None):
+    def __init__(
+        self,
+        bot: Bot,
+        timeout: float | None = None,
+        accept_custom_id: str | None = None,
+        refuse_custom_id: str | None = None,
+    ):
         super().__init__(bot=bot, timeout=timeout)
-        self.accept_bt = Button(emoji=self.bot.get_nana_emoji(self.ACCEPT_EMOTE),
-                                style=ButtonStyle.green,
-                                custom_id=accept_custom_id)
+        self.accept_bt = Button(
+            emoji=self.bot.get_nana_emoji(self.ACCEPT_EMOTE),
+            style=ButtonStyle.green,
+            custom_id=accept_custom_id,
+        )
         self.accept_bt.callback = self.accept
 
-        self.refuse_bt = Button(emoji=self.bot.get_nana_emoji(self.REFUSE_EMOTE),
-                                style=ButtonStyle.red,
-                                custom_id=refuse_custom_id)
+        self.refuse_bt = Button(
+            emoji=self.bot.get_nana_emoji(self.REFUSE_EMOTE),
+            style=ButtonStyle.red,
+            custom_id=refuse_custom_id,
+        )
         self.refuse_bt.callback = self.refuse
 
         self.add_item(self.accept_bt)
         self.add_item(self.refuse_bt)
 
     async def accept(self, interaction: discord.Interaction) -> None:
-        raise RuntimeError("Not Implemented")  # can't use ABC, just be a good citizen
+        raise RuntimeError('Not Implemented')  # can't use ABC, just be a good citizen
 
     async def refuse(self, interaction: discord.Interaction) -> None:
-        raise RuntimeError("Not Implemented")  # can't use ABC, just be a good citizen
+        raise RuntimeError('Not Implemented')  # can't use ABC, just be a good citizen
 
 
 class ConfirmationView(BaseConfirmationView):
-
-    def __init__(self,
-                 bot: Bot,
-                 yes_user: UserType | None = None,
-                 no_user: UserType | None = None,
-                 timeout: float | None = None,
-                 delete_after: bool = False):
+    def __init__(
+        self,
+        bot: Bot,
+        yes_user: UserType | None = None,
+        no_user: UserType | None = None,
+        timeout: float | None = None,
+        delete_after: bool = False,
+    ):
         super().__init__(bot=bot, timeout=timeout)
         self.yes_user = yes_user
         self.no_user = no_user
@@ -147,15 +151,18 @@ class RefreshableSelect(Select, Refreshable):
 
 class NavigatorView(BaseView):
     """View replacement for PaginatedMessage"""
+
     PREV_EMOJI = '⬅️'
     NEXT_EMOJI = '➡️'
 
-    def __init__(self,
-                 bot: Bot,
-                 pages: Pages,
-                 named_buttons: bool = False,
-                 hide_jumper: bool = False,
-                 timeout: float | None = None):
+    def __init__(
+        self,
+        bot: Bot,
+        pages: Pages,
+        named_buttons: bool = False,
+        hide_jumper: bool = False,
+        timeout: float | None = None,
+    ):
         super().__init__(bot, timeout=timeout)
         self.pages = pages
         self.displayed_page = 0
@@ -163,14 +170,10 @@ class NavigatorView(BaseView):
         self.named_buttons = named_buttons
         self.hide_jumper = hide_jumper
 
-        self.prev_page_bt = RefreshableButton(emoji=self.PREV_EMOJI,
-                                              style=ButtonStyle.grey,
-                                              row=0)
+        self.prev_page_bt = RefreshableButton(emoji=self.PREV_EMOJI, style=ButtonStyle.grey, row=0)
         self.prev_page_bt.refresh = partial(self._nav_bt_refresh, self.prev_page_bt, -1)
 
-        self.next_page_bt = RefreshableButton(emoji=self.NEXT_EMOJI,
-                                              style=ButtonStyle.grey,
-                                              row=0)
+        self.next_page_bt = RefreshableButton(emoji=self.NEXT_EMOJI, style=ButtonStyle.grey, row=0)
         self.next_page_bt.refresh = partial(self._nav_bt_refresh, self.next_page_bt, +1)
 
         self.jumper_select = RefreshableSelect(row=1)
@@ -216,8 +219,9 @@ class NavigatorView(BaseView):
         jumper_max = min(displayed_page + 12, len(self.pages) - 1)
 
         self.jumper_select.placeholder = (
-            f"Jump between pages "
-            f"#{jumper_min + self.pages.start_at} – #{jumper_max + self.pages.start_at}")
+            f'Jump between pages '
+            f'#{jumper_min + self.pages.start_at} – #{jumper_max + self.pages.start_at}'
+        )
 
         jumper_range = range(jumper_min, jumper_max + 1)
         names = await asyncio.gather(*[self.pages.get_name(i) for i in jumper_range])
@@ -225,12 +229,13 @@ class NavigatorView(BaseView):
         options = []
         for i, name in zip(jumper_range, names):
             if name is not None:
-                option = discord.SelectOption(label=name[:100],
-                                              description=f"Page #{i + self.pages.start_at}",
-                                              value=str(i))
+                option = discord.SelectOption(
+                    label=name[:100], description=f'Page #{i + self.pages.start_at}', value=str(i)
+                )
             else:
-                option = discord.SelectOption(label=f"Page #{i + self.pages.start_at}",
-                                              value=str(i))
+                option = discord.SelectOption(
+                    label=f'Page #{i + self.pages.start_at}', value=str(i)
+                )
             options.append(option)
 
         self.jumper_select.options = options
@@ -239,22 +244,25 @@ class NavigatorView(BaseView):
         await self.update_page(int(self.jumper_select.values[0]), interaction)
 
     @classmethod
-    async def create(cls,
-                     bot: Bot,
-                     send_function: Callable[..., Coroutine[Any, Any, Any]],
-                     *,
-                     pages: list[Any],
-                     static_content: str | None = None,
-                     start_at: int = 1,
-                     prefetch_min_batch_size: int = 5,
-                     prefetch_pages: int = 5,
-                     **kwargs):
-
-        pages_obj = Pages(pages,
-                          static_content=static_content,
-                          start_at=start_at,
-                          prefetch_min_batch_size=prefetch_min_batch_size,
-                          prefetch_pages=prefetch_pages)
+    async def create(
+        cls,
+        bot: Bot,
+        send_function: Callable[..., Coroutine[Any, Any, Any]],
+        *,
+        pages: list[Any],
+        static_content: str | None = None,
+        start_at: int = 1,
+        prefetch_min_batch_size: int = 5,
+        prefetch_pages: int = 5,
+        **kwargs,
+    ):
+        pages_obj = Pages(
+            pages,
+            static_content=static_content,
+            start_at=start_at,
+            prefetch_min_batch_size=prefetch_min_batch_size,
+            prefetch_pages=prefetch_pages,
+        )
 
         view = cls(bot, pages_obj, **kwargs)
         await view.refresh_view(0)
@@ -265,7 +273,7 @@ class NavigatorView(BaseView):
             page = page.copy()
             page['files'] = page.pop('attachments')
 
-        logger.info(f"{view=}")
+        logger.info(f'{view=}')
         sent: discord.Message | discord.WebhookMessage = await send_function(**page, view=view)
 
         return sent, view
@@ -276,13 +284,13 @@ class AutoNavigatorView(NavigatorView):
 
     @classmethod
     def _split_pages(cls, description: str):
-        curr_lines = ""
+        curr_lines = ''
         split_description = description.strip().split('\n')
 
         for line in split_description:
             if len(curr_lines) + len(line) > 2048:
                 yield curr_lines
-                curr_lines = ""
+                curr_lines = ''
 
             curr_lines += line + '\n'
 
@@ -294,30 +302,33 @@ class AutoNavigatorView(NavigatorView):
             yield None
 
     @classmethod
-    def _create_pages(cls,
-                      title: str | None = None,
-                      description: str | None = None,
-                      colour: int | discord.Colour | None = None,
-                      color: int | discord.Colour | None = None,
-                      url: str | None = None,
-                      author_name: str | None = None,
-                      author_url: str | None = None,
-                      author_icon_url: str | None = None,
-                      footer_text: str | None = None,
-                      footer_icon_url: str | None = None,
-                      image_url: str | None = None,
-                      thumbnail_url: str | None = None,
-                      fields: list[EmbedField] | None = None,
-                      attachments: list[discord.File] | None = None,):
+    def _create_pages(
+        cls,
+        title: str | None = None,
+        description: str | None = None,
+        colour: int | discord.Colour | None = None,
+        color: int | discord.Colour | None = None,
+        url: str | None = None,
+        author_name: str | None = None,
+        author_url: str | None = None,
+        author_icon_url: str | None = None,
+        footer_text: str | None = None,
+        footer_icon_url: str | None = None,
+        image_url: str | None = None,
+        thumbnail_url: str | None = None,
+        fields: list[EmbedField] | None = None,
+        attachments: list[discord.File] | None = None,
+    ):
         if fields is None:
             fields = []
 
         if description is None:
-            description = ""
+            description = ''
 
         pages: list[dict[str, dict[str, Any]]] = []
-        for page_desc, page_fields in zip_longest(cls._split_pages(description),
-                                                  batched(fields, 24)):
+        for page_desc, page_fields in zip_longest(
+            cls._split_pages(description), batched(fields, 24)
+        ):
             embed = Embed(title=title, description=page_desc, colour=colour, color=color, url=url)
             if author_name:
                 embed.set_author(name=author_name, url=author_url, icon_url=author_icon_url)
@@ -338,51 +349,57 @@ class AutoNavigatorView(NavigatorView):
 
     @override
     @classmethod
-    async def create(cls,
-                     bot: Bot,
-                     send_function: Callable[..., Coroutine[Any, Any, Any]],
-                     *,
-                     static_content: str | None = None,
-                     start_at: int = 1,
-                     prefetch_min_batch_size: int = 5,
-                     prefetch_pages: int = 5,
-                     title: str | None = None,
-                     description: str | None = None,
-                     colour: int | discord.Colour | None = None,
-                     color: int | discord.Colour | None = None,
-                     url: str | None = None,
-                     author_name: str | None = None,
-                     author_url: str | None = None,
-                     author_icon_url: str | None = None,
-                     footer_text: str | None = None,
-                     footer_icon_url: str | None = None,
-                     image_url: str | None = None,
-                     thumbnail_url: str | None = None,
-                     fields: list[EmbedField] | None = None,
-                     attachments: list[discord.File] | None = None,
-                     **kwargs):
-        pages = cls._create_pages(title=title,
-                                  description=description,
-                                  colour=colour,
-                                  color=color,
-                                  url=url,
-                                  author_name=author_name,
-                                  author_url=author_url,
-                                  author_icon_url=author_icon_url,
-                                  footer_text=footer_text,
-                                  footer_icon_url=footer_icon_url,
-                                  image_url=image_url,
-                                  thumbnail_url=thumbnail_url,
-                                  fields=fields,
-                                  attachments=attachments)
-        return await super().create(bot,
-                                    send_function,
-                                    pages=pages,
-                                    static_content=static_content,
-                                    start_at=start_at,
-                                    prefetch_min_batch_size=prefetch_min_batch_size,
-                                    prefetch_pages=prefetch_pages,
-                                    **kwargs)
+    async def create(
+        cls,
+        bot: Bot,
+        send_function: Callable[..., Coroutine[Any, Any, Any]],
+        *,
+        static_content: str | None = None,
+        start_at: int = 1,
+        prefetch_min_batch_size: int = 5,
+        prefetch_pages: int = 5,
+        title: str | None = None,
+        description: str | None = None,
+        colour: int | discord.Colour | None = None,
+        color: int | discord.Colour | None = None,
+        url: str | None = None,
+        author_name: str | None = None,
+        author_url: str | None = None,
+        author_icon_url: str | None = None,
+        footer_text: str | None = None,
+        footer_icon_url: str | None = None,
+        image_url: str | None = None,
+        thumbnail_url: str | None = None,
+        fields: list[EmbedField] | None = None,
+        attachments: list[discord.File] | None = None,
+        **kwargs,
+    ):
+        pages = cls._create_pages(
+            title=title,
+            description=description,
+            colour=colour,
+            color=color,
+            url=url,
+            author_name=author_name,
+            author_url=author_url,
+            author_icon_url=author_icon_url,
+            footer_text=footer_text,
+            footer_icon_url=footer_icon_url,
+            image_url=image_url,
+            thumbnail_url=thumbnail_url,
+            fields=fields,
+            attachments=attachments,
+        )
+        return await super().create(
+            bot,
+            send_function,
+            pages=pages,
+            static_content=static_content,
+            start_at=start_at,
+            prefetch_min_batch_size=prefetch_min_batch_size,
+            prefetch_pages=prefetch_pages,
+            **kwargs,
+        )
 
 
 ##############
@@ -414,9 +431,9 @@ def composite_stop(composite: BaseCompositeView):
         view_stop()
 
 
-async def composite_on_error(composite: BaseCompositeView,
-                             interaction: discord.Interaction,
-                             error: Exception, item: Item):
+async def composite_on_error(
+    composite: BaseCompositeView, interaction: discord.Interaction, error: Exception, item: Item
+):
     for view_on_error in composite.view_on_errors:
         await view_on_error(interaction, error, item)
 
@@ -433,13 +450,13 @@ async def composite_interaction_check(views: Iterable[View], interaction: discor
 class BaseCompositeView(BaseView):
     views: Sequence[View]
     view_stops: list[Callable[[], None]]
-    view_on_errors: list[Callable[[discord.Interaction, Exception, Item],
-                                  Coroutine[Any, Any, None]]]
+    view_on_errors: list[
+        Callable[[discord.Interaction, Exception, Item], Coroutine[Any, Any, None]]
+    ]
     view_on_timeouts: list[Callable[[], Coroutine[Any, Any, None]]]
 
 
 class CompositeView(BaseCompositeView):
-
     def __init__(self, bot: Bot, *views, timeout: float | None = None):
         super().__init__(bot=bot, timeout=timeout)
         composite_init(self, views)
@@ -461,19 +478,22 @@ class CompositeView(BaseCompositeView):
 
 
 class CompositeNavigatorView(NavigatorView, BaseCompositeView):
-
-    def __init__(self,
-                 bot: Bot,
-                 *views,
-                 pages: Pages,
-                 named_buttons: bool = False,
-                 hide_jumper: bool = False,
-                 timeout: float | None = None):
-        super().__init__(bot=bot,
-                         pages=pages,
-                         named_buttons=named_buttons,
-                         hide_jumper=hide_jumper,
-                         timeout=timeout)
+    def __init__(
+        self,
+        bot: Bot,
+        *views,
+        pages: Pages,
+        named_buttons: bool = False,
+        hide_jumper: bool = False,
+        timeout: float | None = None,
+    ):
+        super().__init__(
+            bot=bot,
+            pages=pages,
+            named_buttons=named_buttons,
+            hide_jumper=hide_jumper,
+            timeout=timeout,
+        )
 
         composite_init(self, views)
 
@@ -494,19 +514,22 @@ class CompositeNavigatorView(NavigatorView, BaseCompositeView):
 
 
 class CompositeAutoNavigatorView(AutoNavigatorView, BaseCompositeView):
-
-    def __init__(self,
-                 bot: Bot,
-                 *views,
-                 pages: Pages,
-                 named_buttons: bool = False,
-                 hide_jumper: bool = False,
-                 timeout: float | None = None):
-        super().__init__(bot=bot,
-                         pages=pages,
-                         named_buttons=named_buttons,
-                         hide_jumper=hide_jumper,
-                         timeout=timeout)
+    def __init__(
+        self,
+        bot: Bot,
+        *views,
+        pages: Pages,
+        named_buttons: bool = False,
+        hide_jumper: bool = False,
+        timeout: float | None = None,
+    ):
+        super().__init__(
+            bot=bot,
+            pages=pages,
+            named_buttons=named_buttons,
+            hide_jumper=hide_jumper,
+            timeout=timeout,
+        )
 
         composite_init(self, views)
 
@@ -537,10 +560,12 @@ class ChoiceView(BaseView):
         self.elements = elements
         self.callback = callback
 
-        self.choice_select = Select(options=[
-            SelectOption(emoji=LETTERS_EMOJIS[i], label=str(e)[:100], value=str(i))
-            for i, e in enumerate(self.elements[:25])
-        ])
+        self.choice_select = Select(
+            options=[
+                SelectOption(emoji=LETTERS_EMOJIS[i], label=str(e)[:100], value=str(i))
+                for i, e in enumerate(self.elements[:25])
+            ]
+        )
         self.choice_select.callback = self._choice_select_callback
         self.add_item(self.choice_select)
 
@@ -554,13 +579,15 @@ class ChoiceView(BaseView):
 class StringSelectorView(CompositeNavigatorView):
     PER_PAGE_SELECTOR = 25
 
-    def __init__(self,
-                 bot: Bot,
-                 pages: Pages,
-                 strings: list[str],
-                 kind: str,
-                 lock: UserType,
-                 timeout: float | None = None):
+    def __init__(
+        self,
+        bot: Bot,
+        pages: Pages,
+        strings: list[str],
+        kind: str,
+        lock: UserType,
+        timeout: float | None = None,
+    ):
         self.confirmation_view = ConfirmationView(bot, yes_user=lock)
         components = [self.confirmation_view, LockedView(bot, lock=lock)]
 
@@ -579,12 +606,15 @@ class StringSelectorView(CompositeNavigatorView):
         return self.confirmation_view.confirmation
 
     async def _string_select_refresh(self, displayed_page: int):
-        displayed_strings = self.strings[StringSelectorView.PER_PAGE_SELECTOR *
-                                         displayed_page:StringSelectorView.PER_PAGE_SELECTOR *
-                                         (displayed_page + 1)]
+        displayed_strings = self.strings[
+            StringSelectorView.PER_PAGE_SELECTOR
+            * displayed_page : StringSelectorView.PER_PAGE_SELECTOR * (displayed_page + 1)
+        ]
 
-        string_range = range(StringSelectorView.PER_PAGE_SELECTOR * displayed_page,
-                             StringSelectorView.PER_PAGE_SELECTOR * (displayed_page + 1))
+        string_range = range(
+            StringSelectorView.PER_PAGE_SELECTOR * displayed_page,
+            StringSelectorView.PER_PAGE_SELECTOR * (displayed_page + 1),
+        )
         options = []
         for string, i in zip(displayed_strings, string_range):
             is_default = str(i) in self.selected_per_page.get(displayed_page, [])
@@ -605,35 +635,42 @@ class StringSelectorView(CompositeNavigatorView):
         ]
 
     @classmethod
-    async def create(cls,
-                     bot: Bot,
-                     send_function: Callable,
-                     *,
-                     strings: list[Any],
-                     kind: str,
-                     owner: UserType,
-                     capitalize: bool = True,
-                     static_content: str | None = None,
-                     start_at: int = 1,
-                     prefetch_min_batch_size: int = 5,
-                     prefetch_pages: int = 5,
-                     **kwargs):
-
+    async def create(
+        cls,
+        bot: Bot,
+        send_function: Callable,
+        *,
+        strings: list[Any],
+        kind: str,
+        owner: UserType,
+        capitalize: bool = True,
+        static_content: str | None = None,
+        start_at: int = 1,
+        prefetch_min_batch_size: int = 5,
+        prefetch_pages: int = 5,
+        **kwargs,
+    ):
         pages = []
         for i_pages in range(ceil(len(strings) / StringSelectorView.PER_PAGE_SELECTOR)):
             embed = Embed(
                 title=f'{kind.capitalize() if capitalize else kind} list',
                 description='\n'.join(
-                    strings[i_pages * StringSelectorView.PER_PAGE_SELECTOR:(i_pages + 1) *
-                            StringSelectorView.PER_PAGE_SELECTOR]))
+                    strings[
+                        i_pages * StringSelectorView.PER_PAGE_SELECTOR : (i_pages + 1)
+                        * StringSelectorView.PER_PAGE_SELECTOR
+                    ]
+                ),
+            )
             embed.set_author(name=owner, icon_url=owner.display_avatar.url)
             pages.append({'embed': embed})
 
-        pages_obj = Pages(pages,
-                          static_content=static_content,
-                          start_at=start_at,
-                          prefetch_min_batch_size=prefetch_min_batch_size,
-                          prefetch_pages=prefetch_pages)
+        pages_obj = Pages(
+            pages,
+            static_content=static_content,
+            start_at=start_at,
+            prefetch_min_batch_size=prefetch_min_batch_size,
+            prefetch_pages=prefetch_pages,
+        )
 
         view = cls(bot, pages_obj, strings=strings, kind=kind, lock=owner, **kwargs)
         await view.refresh_view(0)

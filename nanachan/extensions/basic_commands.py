@@ -58,14 +58,14 @@ logger = logging.getLogger(__name__)
 
 
 class MovingChannel(ChannelListener):
-
     async def on_message(self, message):
         if not message.author.bot:
             await message.delete()
 
 
 class BasicCommands(Cog, name='Basic Commands'):
-    """ Commands that we have no idea were to put """
+    """Commands that we have no idea were to put"""
+
     emoji = '🗨'
 
     quote_emoji = b'\xf0\x9f\x94\x97'.decode()
@@ -83,7 +83,7 @@ class BasicCommands(Cog, name='Basic Commands'):
         if not success(resp):
             raise RuntimeError(resp.result)
         reminders = resp.result
-        logger.info(f"reminders:{len(reminders)} reminders enqueued")
+        logger.info(f'reminders:{len(reminders)} reminders enqueued')
         self.reminders = sorted(reminders, key=attrgetter('timestamp'))
 
         if not self.reminders_processor_task:
@@ -100,7 +100,7 @@ class BasicCommands(Cog, name='Basic Commands'):
         sleep_time = 7200
 
         if not self.reminders:
-            logger.info("no reminders to process")
+            logger.info('no reminders to process')
 
         elif self.reminders[0].timestamp <= now:
             past_reminder = self.reminders.pop(0)
@@ -121,7 +121,7 @@ class BasicCommands(Cog, name='Basic Commands'):
             time_to_reminder = (self.reminders[0].timestamp - now).total_seconds()
             sleep_time = min(time_to_reminder, sleep_time)
 
-        logger.info(f"reminder:wait for {sleep_time}s")
+        logger.info(f'reminder:wait for {sleep_time}s')
         self.reminders_processor_task_sleep = asyncio.create_task(asyncio.sleep(sleep_time))
         try:
             await self.reminders_processor_task_sleep
@@ -153,7 +153,7 @@ class BasicCommands(Cog, name='Basic Commands'):
 
     @nana_command(description='Pay respect')
     @app_commands.guild_only()
-    @app_commands.describe(what="What to put your respect on")
+    @app_commands.describe(what='What to put your respect on')
     @legacy_command()
     async def respect(self, ctx: LegacyCommandContext, *, what: str | None = None):
         if what is None:
@@ -162,19 +162,18 @@ class BasicCommands(Cog, name='Basic Commands'):
             content = f'Put some respect for {what}'
 
         message = await ctx.send(content)
-        await message.add_reaction(b'\xF0\x9F\x87\xAB'.decode())
+        await message.add_reaction(b'\xf0\x9f\x87\xab'.decode())
 
     @nana_command()
     @app_commands.guild_only()
-    @app_commands.describe(message="message to send")
+    @app_commands.describe(message='message to send')
     async def say(self, interaction: Interaction[Bot], message: str = '42'):
         """Make me say something for you"""
         await interaction.response.defer(ephemeral=True)
         ctx = await Context.from_interaction(interaction)
 
         await ctx.channel.send(message, allowed_mentions=AllowedMentions.none())
-        await interaction.followup.send(content='Message sent succesfully',
-                                        ephemeral=True)
+        await interaction.followup.send(content='Message sent succesfully', ephemeral=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -194,17 +193,16 @@ class BasicCommands(Cog, name='Basic Commands'):
     @nana_command(description='HASHIRE SORI YO KAZE NO YOU NI TSUKIMIHARA WO')
     @app_commands.guild_only()
     async def padoru(self, interaction: Interaction[Bot]):
-        with resources.path(nanachan.resources,
-                            choice(['padoru.png', 'padoru_blush.png'])) as path:
+        with resources.path(
+            nanachan.resources, choice(['padoru.png', 'padoru_blush.png'])
+        ) as path:
             await interaction.response.send_message(file=File(path))
 
     @commands.has_permissions(manage_messages=True)
-    @commands.command(usage="<destination> <start_msg> [end_msg] [members]")
-    async def move(self,
-                   ctx,
-                   destination: TextChannel,
-                   start_msg: Message,
-                   end_msg: Optional[Message] = None):
+    @commands.command(usage='<destination> <start_msg> [end_msg] [members]')
+    async def move(
+        self, ctx, destination: TextChannel, start_msg: Message, end_msg: Optional[Message] = None
+    ):
         """Move entire connversations to another text channel
 
         It will move all messages from @mentions (everybody if unspecified), after the provided
@@ -227,8 +225,9 @@ class BasicCommands(Cog, name='Basic Commands'):
             async with ctx.channel.typing():
                 async with destination.typing():
                     with MovingChannel(self.bot, destination):
-                        async for message in ctx.channel.history(limit=None, after=start_id,
-                                                                 before=end_id, oldest_first=True):
+                        async for message in ctx.channel.history(
+                            limit=None, after=start_id, before=end_id, oldest_first=True
+                        ):
                             if not mentions or (message.author in mentions):
                                 try:
                                     content = message.content
@@ -252,16 +251,19 @@ class BasicCommands(Cog, name='Basic Commands'):
                                     username=message.author.display_name,
                                     avatar_url=message.author.display_avatar.url,
                                     wait=True,
-                                    thread=thread)
+                                    thread=thread,
+                                )
 
                 await ctx.message.delete()
 
     @nana_command()
     @app_commands.guild_only()
-    async def janken(self,
-                     interaction: Interaction[Bot],
-                     player1: discord.User,
-                     player2: discord.User | discord.Member | None = None):
+    async def janken(
+        self,
+        interaction: Interaction[Bot],
+        player1: discord.User,
+        player2: discord.User | discord.Member | None = None,
+    ):
         """Start a janken game between two members."""
         ctx = await Context.from_interaction(interaction)
         if player2 is None:
@@ -280,16 +282,24 @@ class BasicCommands(Cog, name='Basic Commands'):
                 await message.add_reaction(shape)
 
             def check(reaction: Reaction, user: Member | User):
-                return reaction.message == message and user == player and str(
-                    reaction.emoji) in shapes
+                return (
+                    reaction.message == message
+                    and user == player
+                    and str(reaction.emoji) in shapes
+                )
 
             reaction, _ = await self.bot.wait_for('reaction_add', timeout=30, check=check)
             return reaction
 
         try:
             choices = await asyncio.gather(get_choice(player1), get_choice(player2))
-            resp = '\n'.join(f"{player} chose {choice}"
-                             for player, choice in zip([player1, player2], choices)) + "\n\n"
+            resp = (
+                '\n'.join(
+                    f'{player} chose {choice}'
+                    for player, choice in zip([player1, player2], choices)
+                )
+                + '\n\n'
+            )
 
             choice1, choice2 = map(shapes.index, map(str, choices))
 
@@ -301,15 +311,15 @@ class BasicCommands(Cog, name='Basic Commands'):
                 resp += f'**{player1.mention} won! {getEmojiStr(ctx, "chousen")}**'
 
         except asyncio.TimeoutError:
-            emoji = getEmojiStr(ctx, "ChrisDespair")
-            resp = f"janken is cancelled {emoji}"
+            emoji = getEmojiStr(ctx, 'ChrisDespair')
+            resp = f'janken is cancelled {emoji}'
 
         await ctx.send(resp)
 
     @commands.command(aliases=['url', 'avatar', 'pfp', 'pp'])
-    async def link(self,
-                   ctx: commands.Context,
-                   user_or_emoji: User | PartialEmoji | Guild | None = None):
+    async def link(
+        self, ctx: commands.Context, user_or_emoji: User | PartialEmoji | Guild | None = None
+    ):
         """Get one user avatar/guild icon or custom emoji link."""
         if isinstance(user_or_emoji, Guild):
             assert user_or_emoji.icon is not None
@@ -321,17 +331,16 @@ class BasicCommands(Cog, name='Basic Commands'):
 
     @commands.has_permissions(manage_emojis=True)
     @commands.command(name='import')
-    async def emoji_import(self,
-                           ctx: commands.Context,
-                           emoji: Union[PartialEmoji, str],
-                           name: str | None = None):
+    async def emoji_import(
+        self, ctx: commands.Context, emoji: Union[PartialEmoji, str], name: str | None = None
+    ):
         """Import a custom emoji."""
         if isinstance(emoji, PartialEmoji):
             image = await emoji.read()
             name = name or emoji.name
         else:
             if name is None:
-                raise commands.CommandError("Name is required.")
+                raise commands.CommandError('Name is required.')
             async with get_session().get(emoji) as resp:
                 image = await resp.read()
 
@@ -340,45 +349,46 @@ class BasicCommands(Cog, name='Basic Commands'):
             imported = await ctx.guild.create_custom_emoji(name=name, image=image)
             await ctx.reply(str(imported))
         except Exception:
-            raise commands.CommandError("Only JPEG, PNG, and GIF are supported.")
+            raise commands.CommandError('Only JPEG, PNG, and GIF are supported.')
 
-    @nana_command(name="tldr",
-                  description="Show the tl;dr page of a terminal command")
+    @nana_command(name='tldr', description='Show the tl;dr page of a terminal command')
     @legacy_command()
     async def tldr(self, ctx: LegacyCommandContext, command_name: str):
         page = await tldr_get_page(command_name)
         if page:
-            embed = Embed(title=command_name,
-                          description=page)
+            embed = Embed(title=command_name, description=page)
             await ctx.reply(embed=embed)
         else:
-            raise commands.CommandError(f"No tl;dr page found for {command_name}.")
+            raise commands.CommandError(f'No tl;dr page found for {command_name}.')
 
     @nana_command(description='Make me remind you something in the future')
     @app_commands.guild_only()
-    @app_commands.describe(time="Reminder time",
-                           message="Reminder description")
+    @app_commands.describe(time='Reminder time', message='Reminder description')
     async def remindme(self, interaction: Interaction, time: str, message: str):
         cal = pdt.Calendar()
         try:
             holdTime = cal.parse(time, datetime.now(TZ))
         except (ValueError, OverflowError):
             # year too long
-            holdTime = cal.parse("9999-12-31")
+            holdTime = cal.parse('9999-12-31')
         if holdTime[1] == 0:
             # parsing failed
-            await interaction.response.send_message(f'Could not parse "{time}" as a valid time',
-                                                    ephemeral=True)
+            await interaction.response.send_message(
+                f'Could not parse "{time}" as a valid time', ephemeral=True
+            )
             return
 
         dt = datetime(*(holdTime[0])[:6], tzinfo=TZ)
         assert interaction.channel_id is not None
         resp = await get_nanapi().reminder.reminder_new_reminder(
-            NewReminderBody(discord_id=interaction.user.id,
-                            discord_username=str(interaction.user),
-                            channel_id=interaction.channel_id,
-                            message=message,
-                            timestamp=dt))
+            NewReminderBody(
+                discord_id=interaction.user.id,
+                discord_username=str(interaction.user),
+                channel_id=interaction.channel_id,
+                message=message,
+                timestamp=dt,
+            )
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         reminder = resp.result
@@ -386,8 +396,9 @@ class BasicCommands(Cog, name='Basic Commands'):
         if self.reminders_processor_task_sleep:
             self.reminders_processor_task_sleep.cancel()
 
-        await interaction.response.send_message(f'Reminder "{message}" set for {dt}',
-                                                ephemeral=True)
+        await interaction.response.send_message(
+            f'Reminder "{message}" set for {dt}', ephemeral=True
+        )
 
     @commands.has_permissions(administrator=True)
     @commands.command()
@@ -395,14 +406,11 @@ class BasicCommands(Cog, name='Basic Commands'):
         """Prune messages from a channel."""
         assert isinstance(ctx.channel, TextChannel | VoiceChannel | Thread)
         await ctx.channel.purge(limit=amount)
-        await ctx.send(f"{amount} messages pruned.")
+        await ctx.send(f'{amount} messages pruned.')
 
     @nana_command()
     @app_commands.guild_only()
-    async def now(self,
-                  interaction: Interaction,
-                  name: str,
-                  description: str | None = None):
+    async def now(self, interaction: Interaction, name: str, description: str | None = None):
         """Start an online event now"""
         assert interaction.channel is not None
         guild = interaction.channel.guild
@@ -411,7 +419,8 @@ class BasicCommands(Cog, name='Basic Commands'):
         member = await guild.fetch_member(interaction.user.id)
         if member.voice is None:
             await interaction.response.send_message(
-                "You must be in a voice channel to start an event.")
+                'You must be in a voice channel to start an event.'
+            )
             return
 
         voice_ch = member.voice.channel
@@ -421,14 +430,14 @@ class BasicCommands(Cog, name='Basic Commands'):
             name=name,
             channel=voice_ch,
             start_time=discord.utils.utcnow() + timedelta(hours=1),
-            description=description or "",
+            description=description or '',
             privacy_level=PrivacyLevel.guild_only,
         )
 
         try:
-            await event.start(reason="/now")
+            await event.start(reason='/now')
             await interaction.response.send_message(
-                f"[*{event.name}*]({event.url}) started in {voice_ch.mention}."
+                f'[*{event.name}*]({event.url}) started in {voice_ch.mention}.'
             )
         except Exception:
             await event.delete()
@@ -436,13 +445,13 @@ class BasicCommands(Cog, name='Basic Commands'):
 
 
 def message_quote(cog: BasicCommands):
-
     @app_commands.context_menu(name='Quote')
     async def message_quote_menu(interaction: Interaction, message: Message):
         cog.to_be_quoted_messages[interaction.user.id] = message
-        await interaction.response.send_message(f"Message selected, use `/{SLASH_PREFIX}quote` to "
-                                                f"quote it somewhere else",
-                                                ephemeral=True)
+        await interaction.response.send_message(
+            f'Message selected, use `/{SLASH_PREFIX}quote` to ' f'quote it somewhere else',
+            ephemeral=True,
+        )
 
     return message_quote_menu
 
@@ -474,16 +483,16 @@ async def cmd_saucenao(interaction: Interaction[Bot], message: Message):
         if result.index_id not in [5, 21, 37]:
             continue
 
-        sauce = [f"`[{result.index}]`"]
+        sauce = [f'`[{result.index}]`']
 
         if result.index_id == 5:  # Pixiv
-            sauce.append(f"**{result.author_name}** - {result.title}")
+            sauce.append(f'**{result.author_name}** - {result.title}')
         elif result.index_id == 21:  # Anime
             result = cast(pysaucenao.AnimeSource, result)
-            sauce.append(f"**{result.title}** - Episode {result.episode}")
+            sauce.append(f'**{result.title}** - Episode {result.episode}')
         elif result.index_id == 37:  # Mangadex
             result = cast(pysaucenao.MangaSource, result)
-            sauce.append(f"**{result.title}** ({result.author_name}){result.chapter}")
+            sauce.append(f'**{result.title}** ({result.author_name}){result.chapter}')
             # Dumb dedupe translated chapters
             if any(['\n'.join(sauce) in s for s in sauces]):
                 continue
@@ -502,7 +511,8 @@ async def cmd_saucenao(interaction: Interaction[Bot], message: Message):
         interaction.followup.send,
         title='SauceNAO results',
         description='\n\n'.join(sauces),
-        thumbnail_url=resp.results[0].thumbnail)
+        thumbnail_url=resp.results[0].thumbnail,
+    )
 
 
 @app_commands.context_menu(name='Avatar link')

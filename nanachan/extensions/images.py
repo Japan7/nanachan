@@ -72,16 +72,15 @@ class WaifuPicsChoice(Enum):
 
 
 @app_commands.guild_only()
-class Images(NanaGroupCog, group_name="image"):
-
+class Images(NanaGroupCog, group_name='image'):
     async def send_image(self, ctx: LegacyCommandContext, option, user, url):
         optstr = option.value
 
         e = 'e' if optstr[-1] == 's' else ''
-        hype = ctx.bot.get_nana_emoji("hype")
-        content = f"{ctx.author.mention} **{optstr}{e}s** {user.mention}!"
+        hype = ctx.bot.get_nana_emoji('hype')
+        content = f'{ctx.author.mention} **{optstr}{e}s** {user.mention}!'
         if hype is not None:
-            content = f"{hype} {content}"
+            content = f'{hype} {content}'
 
         embed = Embed()
         embed.set_image(url=url)
@@ -90,21 +89,19 @@ class Images(NanaGroupCog, group_name="image"):
 
     @app_commands.command()
     @legacy_command()
-    async def nekos(self, ctx: LegacyCommandContext, option: NekosChoice,
-                    user: discord.User):
+    async def nekos(self, ctx: LegacyCommandContext, option: NekosChoice, user: discord.User):
         """Hugs, kisses, pats and many more from nekos.life"""
-        async with get_session().get(
-                f'https://nekos.life/api/v2/img/{option.value}') as r:
+        async with get_session().get(f'https://nekos.life/api/v2/img/{option.value}') as r:
             data = await r.json()
         await self.send_image(ctx, option, user, data['url'])
 
     @app_commands.command()
     @legacy_command()
-    async def waifupics(self, ctx: LegacyCommandContext,
-                        option: WaifuPicsChoice, user: discord.User):
+    async def waifupics(
+        self, ctx: LegacyCommandContext, option: WaifuPicsChoice, user: discord.User
+    ):
         """waifu.pics random image"""
-        async with get_session().get(
-                f'https://api.waifu.pics/sfw/{option.value}') as r:
+        async with get_session().get(f'https://api.waifu.pics/sfw/{option.value}') as r:
             data = await r.json()
         await self.send_image(ctx, option, user, data['url'])
 

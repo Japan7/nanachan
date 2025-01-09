@@ -1,5 +1,5 @@
 CHANGELOG = [
-    '''
+    """
 (2021-07-12)
 Par amour de la 2D
 ------------------
@@ -24,15 +24,15 @@ Votre liste de perso (et celle des autres) est dispo via `7waifu list [player]` 
 A tout moment vous pouvez consulter les infos d'un perso et les personnes qui l'ont grâce à `7waifu search <nom du perso>`  :OhISeeRin:
 
 *Les personnes qui s'enregistreront cette semaine auront droit à un set de départ de 10 waifus/husbando* :hype:
-''',
-    '''
+""",
+    """
 (2021-03-26)
 Roles, but this time you don't have to ping anyone
 --------------------------------------------------
 
 React to the message in #roles, ain't no need for social interaction for such small matters.
-''',
-    '''
+""",
+    """
 (2021-02-19)
 
 V2: Codebase so slick you could lick it
@@ -41,8 +41,8 @@ V2: Codebase so slick you could lick it
 You can't see much but the devs are happy.
 When you need help Nana-chan will send messages that look so pretty I could die for it.
 She seems to be catching up on anime lately.
-''',
-    '''
+""",
+    """
 (2021-02-06)
 
 Des animes/manga lists plus sociales
@@ -63,8 +63,8 @@ Make Image Quizz Great Again Part 2
 
 Stockage en bdd, mises en proxy des commandes de quizz, rajout du stock, automatisation des louis-quizz : tant de nouveautés dans cette mise à jour !
 Consultez les messages épinglés de #anime-image-quizz et #louis-quizz[...] pour savoir comment ça se passe maintenant !
-''',
-    '''
+""",
+    """
 (2021-01-17)
 
 *Aww* Reddit
@@ -82,8 +82,8 @@ Make Image Quizz Great Again Part 1b
 
 Le quiz end est désormais automatique après une réaction :FubukiGO:. Aussi si SauceNAO ne trouve pas la source, elle vous est maintenant demandée en DM.
 Finalement pratiquement tout est automatisé, vous pouvez oublier les commandes pas-si-compliquées (sauf indice) et vous focus sur le jeu comme avant ^^'
-''',
-    '''
+""",
+    """
 (2021-01-13)
 
 Make Image Quizz Great Again Part 1
@@ -108,8 +108,8 @@ Author & admins only : un nombre peut être passé en argument pour forcer de no
 Refresh l'embed du dernier quiz. Au cas où
 
 (*) https://discord.com/channels/297436883883917312/323558928736583680/798467663416131595
-''',
-    '''
+""",
+    """
 (2020-11-11)
 
 Comment utiliser une pomme de terre pour gagner la Seconde Guerre mondiale ?
@@ -122,8 +122,8 @@ Les Japonais, croyant à des grenades tentent de d'échapper et ne peuvent pas t
 Ainsi, ils ne remarquent pas que l'USS O'Bannon s'éloigne petit à petit, positionnant alors le sous-marin dans leur zone de tir.
 Ils font feu et détruisent alors le massif du sous-marin avant de l'achever avec des grenades anti-sous-marines (des véritables cette-fois).
 Après cette victoire, une plaque commémorative est exposé au Maine Maritime Museum avant de disparaître mystérieusement dans les années 70. Pourtant, elle reste l'une des histoires mythiques de la marine Américaine, bien qu'elle soit apocryphe.
-''',
-    '''
+""",
+    """
 (2020-06-27)
 
 Projection
@@ -139,8 +139,8 @@ Collect some money for the poor
 -------------------------------
 
 Everything is in the title
-''',
-    '''
+""",
+    """
 (2019-07-27)
 
 Playlists! And more! Yay!
@@ -176,8 +176,8 @@ AMQ everyday at 21
 
 You can now let a bot take care of your settings on AMQ
 (and let everybody know that tu n'es pas venu en projection)!
-''',
-    '''
+""",
+    """
 (2019-05-11)
 
 Level-Up shimashita!
@@ -186,8 +186,8 @@ Level-Up shimashita!
 Nana-chan is now in version 1.x
 The whole bot has been completely rewritten, with the new version of the discord lib.
 The `help` command propose now a complete and well presented documentation of the commands!
-''',
-    '''
+""",
+    """
 (2019-03-22)
 
 You got the power!
@@ -196,8 +196,8 @@ You got the power!
 Or, at least, you are made to think so :3
 Give the power to decide things to other members with the brand new command `7poll`.
 This is not a strawpoll ripoff, this is most definitely another step towards a better future!
-''',
-    '''
+""",
+    """
 (2019-03-02)
 
 Notice me Senpai!
@@ -218,8 +218,8 @@ Anime tracking management
 
 The anime command has exploded! There are now 5 new subcommands, go and check them by typing `7help anime`.
 With all that stuff, you'll now be able to manage your anime tracking notifications by yourself!
-''',
-    '''
+""",
+    """
 (2019-01-27)
 
 Who the hell is that guy?
@@ -246,8 +246,8 @@ Misc
 - PAY MORE RESPEK ON <whatever_you_want>
 - Docker image build is now cleaner and faster than ever
 - Nana-chan will tell you if you use a non DM command in DM
-''',
-    '''
+""",
+    """
 (2018-11-21)
 
 Harder, Better, Faster, Stronger
@@ -272,8 +272,8 @@ Bug fixes
 ---
 
 - F
-''',
-    '''
+""",
+    """
 (2018-11-01)
 
 Your wish is my command!
@@ -286,8 +286,8 @@ Additional Info
 ---------------
 
 Fix a little bug on Masterani.me scrapper refresh feature.
-''',
-    '''
+""",
+    """
 (2018-10-20)
 
 Database Management System
@@ -314,16 +314,16 @@ You can check your active subscriptions at any moment with the command 'animesub
 
 Also, messages posted in the anime_feed channel can now be refreshed.
 This is useful when a picture is missing or when a video is down or low resolution.
-''',
-    '''
+""",
+    """
 (2018-10-17)
 
 Volume management
 -----------------
 
 It is now possible to edit the volume by using reactions when playing a song.
-''',
-    '''
+""",
+    """
 (2018-10-16)
 
 Hachi-chan ga umareta!
@@ -331,8 +331,8 @@ Hachi-chan ga umareta!
 
 A beta version of the bot, named Hachi-chan, is now up.
 The production tests will not continue on Nana-chan, so you'll be less spammed from now ;)
-''',
-    '''
+""",
+    """
 (2018-10-09)
 
 Episode search
@@ -348,16 +348,16 @@ Nana-chan now has a command 'dailyanimes'.
 This command will send a DM to the user with a direct link for every anime episode released during the last 24 hours.
 
 Nana-chan will also do a check every 15 minutes and make a post for each new release.
-''',
-    '''
+""",
+    """
 (2018-09-30)
 
 Changelog
 ---------
 
 Changelog feature now supports multiple pages changelog
-''',
-    '''
+""",
+    """
 (2018-09-29)
 
 Wasabi
@@ -383,5 +383,5 @@ DEBUG mode
 ----------
 
 Also added a DEBUG setting variable for stopping the spam due to reloading when testing, and other stuff.
-''',
+""",
 ]

@@ -83,7 +83,7 @@ EMOJI_REG = re.compile(r':([^ :]+):')
 def get_command_prefix(bot, message):
     if multiplexing_level := get_multiplexing_level(message):
         opening, closing = multiplexing_level
-        text = message.content[len(opening):-len(closing)]
+        text = message.content[len(opening) : -len(closing)]
     else:
         text = message.content
         opening, closing = '', ''
@@ -94,7 +94,6 @@ def get_command_prefix(bot, message):
 
 
 class Bot(commands.AutoShardedBot):
-
     def __init__(self):
         intents = Intents.default()
         intents.members = True
@@ -104,12 +103,14 @@ class Bot(commands.AutoShardedBot):
         self._cogs: dict[str, commands.Cog] = {}
         self.commands_ready = asyncio.Event()
 
-        super().__init__(command_prefix=get_command_prefix,
-                         intents=intents,
-                         description=framed_header("Nana-chan commands manual"),
-                         help_command=CustomHelpCommand(help='Show this message'),
-                         allowed_mentions=AllowedMentions(everyone=False, roles=False),
-                         case_insensitive=True)
+        super().__init__(
+            command_prefix=get_command_prefix,
+            intents=intents,
+            description=framed_header('Nana-chan commands manual'),
+            help_command=CustomHelpCommand(help='Show this message'),
+            allowed_mentions=AllowedMentions(everyone=False, roles=False),
+            case_insensitive=True,
+        )
         self.tree.error(self.on_app_command_error)
 
     async def start(self, token: str, *, reconnect: bool = True):
@@ -181,10 +182,12 @@ class Bot(commands.AutoShardedBot):
         else:
             assert self.user is not None
             webhook = Webhook.from_url(ERROR_WEBHOOK, session=get_session())
-            webhook_reply = partial(webhook.send,
-                                    wait=True,
-                                    username=self.user.display_name,
-                                    avatar_url=self.user.display_avatar.url)
+            webhook_reply = partial(
+                webhook.send,
+                wait=True,
+                username=self.user.display_name,
+                avatar_url=self.user.display_avatar.url,
+            )
 
         try:
             assert reply is not None
@@ -217,8 +220,9 @@ class Bot(commands.AutoShardedBot):
         if not force and hasattr(getattr(ctx, 'command', None), 'on_error'):
             return
 
-        if (isinstance(error, commands.CommandError)
-                and not isinstance(error, commands.CommandInvokeError)):
+        if isinstance(error, commands.CommandError) and not isinstance(
+            error, commands.CommandInvokeError
+        ):
             try:
                 await ctx.reply(error)
             except Exception:
@@ -243,7 +247,7 @@ class Bot(commands.AutoShardedBot):
     async def on_error(self, event_method, *args, **kwargs):
         trace = get_traceback_exc()
         error_msg = get_traceback_str(trace)
-        console.print(f'Ignoring exception in "{event_method}"', trace, sep="\n")
+        console.print(f'Ignoring exception in "{event_method}"', trace, sep='\n')
         await self.send_error(error_msg)
 
     async def on_member_join(self, member):
@@ -288,9 +292,14 @@ class Bot(commands.AutoShardedBot):
                     path = Path(change[1])
                     extension = path.stem
 
-                    if any((path.is_dir(), extension.startswith('_'),
-                            extension.startswith('.'), extension
-                            in DISABLED_EXTENSIONS)):
+                    if any(
+                        (
+                            path.is_dir(),
+                            extension.startswith('_'),
+                            extension.startswith('.'),
+                            extension in DISABLED_EXTENSIONS,
+                        )
+                    ):
                         continue
 
                     module_name = f'nanachan.extensions.{extension}'
@@ -298,15 +307,11 @@ class Bot(commands.AutoShardedBot):
                     try:
                         with suppress(ExtensionNotLoaded):
                             await self.unload_extension(module_name)
-                            log.info(
-                                f"Extension '{module_name}' unloaded ({change[0].name})"
-                            )
+                            log.info(f"Extension '{module_name}' unloaded ({change[0].name})")
 
                         if change[0] != Change.deleted:
                             await self.load_extension(module_name)
-                            log.info(
-                                f"Extension '{module_name}' loaded ({change[0].name})"
-                            )
+                            log.info(f"Extension '{module_name}' loaded ({change[0].name})")
                     except ExtensionError as e:
                         log.exception(e)
 
@@ -315,10 +320,10 @@ class Bot(commands.AutoShardedBot):
                 log.info('Finished reloading application commands')
 
     async def sync_commands(self):
-        log.info("syncing global commands")
+        log.info('syncing global commands')
         await self.tree.sync()
         async for guild in self.fetch_guilds():
-            log.info(f"syncing commands in {guild}")
+            log.info(f'syncing commands in {guild}')
             await self.tree.sync(guild=guild)
 
     async def invoke(self, ctx: MultiplexingContext):  # type: ignore # trust me bro
@@ -334,16 +339,15 @@ class Bot(commands.AutoShardedBot):
 
         except Exception as e:
             trace = get_traceback(e)
-            msg = get_traceback_str(trace) + f"\n{ctx.message}"
+            msg = get_traceback_str(trace) + f'\n{ctx.message}'
             await self.send_error(msg)
             raise
 
         await super().invoke(ctx)
 
-    async def webhook_message(self,
-                              ctx: MultiplexingContext,
-                              content: str | None = None,
-                              **kwargs) -> MultiplexingContext:
+    async def webhook_message(
+        self, ctx: MultiplexingContext, content: str | None = None, **kwargs
+    ) -> MultiplexingContext:
         if content is None:
             content = ctx.message.content
 
@@ -382,7 +386,7 @@ class Bot(commands.AutoShardedBot):
             if webhook.token is not None:
                 return webhook
 
-        return await channel.create_webhook(name="bananas")
+        return await channel.create_webhook(name='bananas')
 
     @override
     async def add_cog(
@@ -400,7 +404,7 @@ class Bot(commands.AutoShardedBot):
                 )
                 return
         else:
-            log.debug(f"{cog.__class__.__name__} is not an instance of {Cog.__name__}")
+            log.debug(f'{cog.__class__.__name__} is not an instance of {Cog.__name__}')
 
         await super().add_cog(cog, override=override, guild=guild, guilds=guilds)
         self._cogs[cog.qualified_name.casefold()] = cog
@@ -415,9 +419,9 @@ class Bot(commands.AutoShardedBot):
             if all(c1 == c2 for c1, c2 in zip(name, key)):
                 return cog
 
-    async def register_reaction_listener(self,
-                                         message_id: int,
-                                         reaction_listener: ReactionListener):
+    async def register_reaction_listener(
+        self, message_id: int, reaction_listener: ReactionListener
+    ):
         if old_listener := self.reaction_listeners.get(message_id):
             reactions_old = list(old_listener.get_cls_handlers()['add'].keys())
             reactions_new = list(reaction_listener.get_cls_handlers()['add'].keys())
@@ -461,7 +465,7 @@ class Bot(commands.AutoShardedBot):
         if emoji := self.get_nana_emoji(name):
             return str(emoji)
         else:
-            return f":{name}:"
+            return f':{name}:'
 
     def get_emojied_str(self, content: str) -> str:
         return EMOJI_REG.sub(lambda m: self.get_emoji_str(m.group(1)), content)

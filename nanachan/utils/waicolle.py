@@ -76,28 +76,26 @@ class WaifuDropReactionListener(ReactionListener):
 
     async def add_reactions(self):
         await super().add_reactions()
-        logger.info(f"starting drop {self}")
-        asyncio.get_running_loop().call_later(WaifuDropReactionListener.timeout,
-                                              self.unregister)
+        logger.info(f'starting drop {self}')
+        asyncio.get_running_loop().call_later(WaifuDropReactionListener.timeout, self.unregister)
 
     def unregister(self):
-        logger.info(f"unregistering {self}")
+        logger.info(f'unregistering {self}')
         return super().unregister()
 
     @ReactionHandler.on_add_reaction(WC_EMOJI)
     async def drop(self, user: discord.User):
         if user not in self.users:
-            logger.info(f"waifu drop: {user}")
+            logger.info(f'waifu drop: {user}')
             self.users.add(user)
             await self.queue.put(user)
 
 
 class WaifuSelectorView(CompositeNavigatorView):
-
-    def __init__(self, bot: Bot, pages: Pages, waifus: list[WaifuSelectResult],
-                 lock: discord.User):
-        self.confirmation_view = ConfirmationView(
-            bot, yes_user=lock, delete_after=True)
+    def __init__(
+        self, bot: Bot, pages: Pages, waifus: list[WaifuSelectResult], lock: discord.User
+    ):
+        self.confirmation_view = ConfirmationView(bot, yes_user=lock, delete_after=True)
         self.confirmation_view.accept_bt.row = 3
         self.confirmation_view.refuse_bt.row = 3
         components = [self.confirmation_view, LockedView(bot, lock=lock)]
@@ -122,16 +120,16 @@ class WaifuSelectorView(CompositeNavigatorView):
         return self.confirmation_view.confirmation
 
     async def _chara_select_refresh(self, displayed_page: int):
-        displayed_waifus = self.waifus[PER_PAGE_SELECTOR *
-                                       displayed_page:PER_PAGE_SELECTOR *
-                                       (displayed_page + 1)]
+        displayed_waifus = self.waifus[
+            PER_PAGE_SELECTOR * displayed_page : PER_PAGE_SELECTOR * (displayed_page + 1)
+        ]
 
         async with asyncio.TaskGroup() as tg:
             chara_ids = [w.character.id_al for w in displayed_waifus]
             resp_task = tg.create_task(
-                get_nanapi().anilist.anilist_get_charas(','.join(map(str, chara_ids))))
-            edge_tasks = [(cid, tg.create_task(WaifuHelper.get_edges(cid)))
-                          for cid in chara_ids]
+                get_nanapi().anilist.anilist_get_charas(','.join(map(str, chara_ids)))
+            )
+            edge_tasks = [(cid, tg.create_task(WaifuHelper.get_edges(cid))) for cid in chara_ids]
 
         resp = await resp_task
         if not success(resp):
@@ -140,8 +138,9 @@ class WaifuSelectorView(CompositeNavigatorView):
         charas = {c.id_al: c for c in resp.result}
         edges = {cid: await task for cid, task in edge_tasks}
 
-        waifu_range = range(PER_PAGE_SELECTOR * displayed_page,
-                            PER_PAGE_SELECTOR * (displayed_page + 1))
+        waifu_range = range(
+            PER_PAGE_SELECTOR * displayed_page, PER_PAGE_SELECTOR * (displayed_page + 1)
+        )
 
         options_tasks = []
         async with asyncio.TaskGroup() as tg:
@@ -184,16 +183,16 @@ class WaifuSelectorView(CompositeNavigatorView):
 
 
 class RollSelectorView(CompositeView):
-
-    def __init__(self,
-                 bot: Bot,
-                 yes_user: UserType,
-                 rolls: list[RollData],
-                 timeout: float | int | None = None):
-        self.confirmation_view = ConfirmationView(bot,
-                                                  yes_user=yes_user,
-                                                  timeout=timeout,
-                                                  delete_after=True)
+    def __init__(
+        self,
+        bot: Bot,
+        yes_user: UserType,
+        rolls: list[RollData],
+        timeout: float | int | None = None,
+    ):
+        self.confirmation_view = ConfirmationView(
+            bot, yes_user=yes_user, timeout=timeout, delete_after=True
+        )
         views = [self.confirmation_view, LockedView(bot, lock=yes_user)]
         super().__init__(bot, *views)
 
@@ -202,20 +201,20 @@ class RollSelectorView(CompositeView):
         self.rolls = rolls
 
         self.options = [
-            discord.SelectOption(emoji=LETTERS_EMOJIS[i],
-                                 label=roll.name,
-                                 description=f"{roll.price} moecoins",
-                                 value=str(i))
+            discord.SelectOption(
+                emoji=LETTERS_EMOJIS[i],
+                label=roll.name,
+                description=f'{roll.price} moecoins',
+                value=str(i),
+            )
             for i, roll in enumerate(self.rolls)
         ]
-        self.roll_select = Select(placeholder='Select roll option',
-                                  options=self.options)
+        self.roll_select = Select(placeholder='Select roll option', options=self.options)
         self.roll_select.callback = self._select_callback
         self.add_item(self.roll_select)
 
     async def _select_callback(self, interaction: discord.Interaction):
-        self.confirmation_view.accept_bt.disabled = len(
-            self.roll_select.values) == 0
+        self.confirmation_view.accept_bt.disabled = len(self.roll_select.values) == 0
         for opt in self.options:
             opt.default = opt.value in self.roll_select.values
         await interaction.response.edit_message(view=self)
@@ -412,11 +411,12 @@ class RollResultsView(CompositeNavigatorView):
 
 
 class TradeConfirmationView(BaseConfirmationView):
-
     def __init__(self, bot: Bot, trade: 'TradeHelper'):
-        super().__init__(bot,
-                         accept_custom_id=f"waifu_trade_accept_{trade.id}",
-                         refuse_custom_id=f"waifu_trade_refuse_{trade.id}")
+        super().__init__(
+            bot,
+            accept_custom_id=f'waifu_trade_accept_{trade.id}',
+            refuse_custom_id=f'waifu_trade_refuse_{trade.id}',
+        )
         self.trade = trade
 
     async def accept(self, interaction: discord.Interaction):
@@ -431,7 +431,6 @@ class TradeConfirmationView(BaseConfirmationView):
 
 
 class TradeOfferView(CompositeAutoNavigatorView):
-
     def __init__(self, bot: Bot, pages, trade: 'TradeHelper'):
         confirmation_view = TradeConfirmationView(bot, trade)
         super().__init__(bot, confirmation_view, pages=pages)
@@ -452,66 +451,63 @@ class WaifuOwnershipTypes:
         return self.count > 0
 
     def __str__(self):
-        out = f"{self.context_char}"
+        out = f'{self.context_char}'
         if self.count == 1 and self.simple == 1:
             return out
 
-        out += " ("
+        out += ' ('
 
         if self.double_ascended > 1:
-            out += f"**{self.double_ascended}**"
+            out += f'**{self.double_ascended}**'
         if self.double_ascended > 0:
             out += '🌟'
 
             if self.ascended or self.simple:
-                out += "+"
+                out += '+'
 
         if self.ascended > 1:
-            out += f"**{self.ascended}**"
+            out += f'**{self.ascended}**'
         if self.ascended > 0:
             out += '⭐'
 
             if self.simple:
-                out += "+"
+                out += '+'
 
         if self.simple and self.count > 1:
-            out += f"**{self.simple}**"
+            out += f'**{self.simple}**'
 
-        out += ")"
+        out += ')'
         return out
 
 
 @dataclass
 class WaifuOwnership:
-    unlocked: WaifuOwnershipTypes = field(
-        default_factory=partial(WaifuOwnershipTypes, '🔓'))
-    locked: WaifuOwnershipTypes = field(
-        default_factory=partial(WaifuOwnershipTypes, '🔒'))
-    in_trade: WaifuOwnershipTypes = field(
-        default_factory=partial(WaifuOwnershipTypes, '🔀'))
+    unlocked: WaifuOwnershipTypes = field(default_factory=partial(WaifuOwnershipTypes, '🔓'))
+    locked: WaifuOwnershipTypes = field(default_factory=partial(WaifuOwnershipTypes, '🔒'))
+    in_trade: WaifuOwnershipTypes = field(default_factory=partial(WaifuOwnershipTypes, '🔀'))
 
 
 async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
-    title = STAFF_GARBAGE.sub(" ", chara.name_user_preferred)
+    title = STAFF_GARBAGE.sub(' ', chara.name_user_preferred)
     if chara.name_native is not None:
-        title += f" ({chara.name_native})"
+        title += f' ({chara.name_native})'
 
     rank = await RankHelper.get(chara.rank)
     embed = Embed(title=title, url=chara.site_url, color=rank.color)
     embed.set_author(
         name='AniList',
         url='https://anilist.co/',
-        icon_url='https://anilist.co/img/icons/msapplication-icon-144x144.png')
+        icon_url='https://anilist.co/img/icons/msapplication-icon-144x144.png',
+    )
     embed.set_thumbnail(url=chara.image_large)
 
-    embed.add_field(name='Favourites',
-                    value=f"{chara.favourites} [**{chara.rank.name}**]")
+    embed.add_field(name='Favourites', value=f'{chara.favourites} [**{chara.rank.name}**]')
 
     birth = None
     if chara.date_of_birth_month is not None:
         birth = calendar.month_name[chara.date_of_birth_month]
         if chara.date_of_birth_day is not None:
-            birth += f" {chara.date_of_birth_day}"
+            birth += f' {chara.date_of_birth_day}'
     if birth is not None:
         embed.add_field(name='Birthday', value=birth)
 
@@ -537,9 +533,9 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
                 seiyuu_obj = edge.voice_actors[0]
                 seiyuu = seiyuu_obj.name_user_preferred
                 if seiyuu_obj.name_native is not None:
-                    seiyuu = f"{seiyuu} ({seiyuu_obj.name_native})"
+                    seiyuu = f'{seiyuu} ({seiyuu_obj.name_native})'
 
-                seiyuu = STAFF_GARBAGE.sub(" ", seiyuu)
+                seiyuu = STAFF_GARBAGE.sub(' ', seiyuu)
         else:
             mangas.append(edge.media.title_user_preferred)
 
@@ -547,13 +543,9 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         embed.add_field(name='Character Voice', value=seiyuu, inline=False)
 
     if len(animes) > 0:
-        embed.add_field(name='Animeography Top 5',
-                        value=' • '.join(animes[:5]),
-                        inline=False)
+        embed.add_field(name='Animeography Top 5', value=' • '.join(animes[:5]), inline=False)
     if len(mangas) > 0:
-        embed.add_field(name='Mangaography Top 5',
-                        value=' • '.join(mangas[:5]),
-                        inline=False)
+        embed.add_field(name='Mangaography Top 5', value=' • '.join(mangas[:5]), inline=False)
 
     resp2 = await get_nanapi().waicolle.waicolle_get_waifus(chara_id_al=chara.id_al)
     if not success(resp2):
@@ -587,11 +579,11 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     for id, entry in owners.items():
         subtext = str(bot.get_user(id))
         if entry.locked:
-            subtext += f" {entry.locked}"
+            subtext += f' {entry.locked}'
         if entry.unlocked:
-            subtext += f" {entry.unlocked}"
+            subtext += f' {entry.unlocked}'
         if entry.in_trade:
-            subtext += f" {entry.in_trade}"
+            subtext += f' {entry.in_trade}'
 
         if subtext:
             text.append(subtext)
@@ -648,9 +640,9 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         text.append(str(blooded))
 
     if text:
-        embed.add_field(name='Owned by',
-                        value=' • '.join(sorted(text, key=str.casefold)),
-                        inline=False)
+        embed.add_field(
+            name='Owned by', value=' • '.join(sorted(text, key=str.casefold)), inline=False
+        )
 
     resp3 = await get_nanapi().waicolle.waicolle_get_players(chara_id_al=chara.id_al)
     if not success(resp3):
@@ -664,12 +656,15 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     )
     members = list(members)
     if members:
-        embed.add_field(name='In tracking list of',
-                        value=' • '.join(sorted(members, key=str.casefold)),
-                        inline=False)
+        embed.add_field(
+            name='In tracking list of',
+            value=' • '.join(sorted(members, key=str.casefold)),
+            inline=False,
+        )
 
-    embed.set_footer(text=f"ID {chara.id_al} • Costs {rank.blood_price} "
-                     f"• Worth {rank.blood_shards}")
+    embed.set_footer(
+        text=f'ID {chara.id_al} • Costs {rank.blood_price} ' f'• Worth {rank.blood_shards}'
+    )
 
     return embed
 
@@ -680,20 +675,22 @@ async def chara_page(bot: Bot, chara: CharaSelectResult) -> dict[str, Embed]:
 
 
 def chara_autocomplete(id_al_as_value: bool = False):
-
     async def autocomplete(interaction: discord.Interaction, current: str):
-        resp = await get_nanapi().anilist.anilist_chara_name_autocomplete(
-            current)
+        resp = await get_nanapi().anilist.anilist_chara_name_autocomplete(current)
         if not success(resp):
             raise RuntimeError(resp.result)
         results = resp.result
         choices: list[Choice[str]] = []
         for r in results:
-            native = f" ({r.name_native})" if r.name_native else ''
+            native = f' ({r.name_native})' if r.name_native else ''
             choice = Choice(
-                name=autocomplete_truncate(f"{r.name_user_preferred}{native}"),
-                value=(str(r.id_al) if id_al_as_value else
-                       autocomplete_truncate(r.name_user_preferred)))
+                name=autocomplete_truncate(f'{r.name_user_preferred}{native}'),
+                value=(
+                    str(r.id_al)
+                    if id_al_as_value
+                    else autocomplete_truncate(r.name_user_preferred)
+                ),
+            )
             choices.append(choice)
 
         return choices
@@ -702,20 +699,18 @@ def chara_autocomplete(id_al_as_value: bool = False):
 
 
 def collection_autocomplete():
-
     async def autocomplete(interaction: discord.Interaction, current: str):
         bot = interaction.client
-        resp = await get_nanapi(
-        ).waicolle.waicolle_collection_name_autocomplete(current)
+        resp = await get_nanapi().waicolle.waicolle_collection_name_autocomplete(current)
         if not success(resp):
             raise RuntimeError(resp.result)
         results = resp.result
         return [
             Choice(
-                name=autocomplete_truncate(
-                    f"{r.name} ({bot.get_user(r.author_discord_id)})"),
+                name=autocomplete_truncate(f'{r.name} ({bot.get_user(r.author_discord_id)})'),
                 value=str(r.id),
-            ) for r in results
+            )
+            for r in results
         ]
 
     return autocomplete
@@ -737,7 +732,7 @@ class WaifuHelper:
         else:
             name = self.chara.name_user_preferred
 
-        return STAFF_GARBAGE.sub(" ", name)
+        return STAFF_GARBAGE.sub(' ', name)
 
     async def get_rank(self):
         return await RankHelper.get(self.chara.rank)
@@ -766,9 +761,9 @@ class WaifuTextHelper(WaifuHelper):
 
     @property
     def modifiers(self) -> str:
-        mods = ""
+        mods = ''
         if self.waifu.trade_locked:
-            mods += "🔀"
+            mods += '🔀'
         if self.waifu.frozen:
             mods += '🧊'
         if self.waifu.locked:
@@ -797,8 +792,9 @@ class WaifuTextHelper(WaifuHelper):
 
         rank = self.chara.rank.name
         return (
-            f"[**{rank}**]{modifiers} **[{self.name}]({self.chara.site_url})**{seiyuu}\n"
-            f"{space}*{title}*")
+            f'[**{rank}**]{modifiers} **[{self.name}]({self.chara.site_url})**{seiyuu}\n'
+            f'{space}*{title}*'
+        )
 
     async def get_select_option(self, nb: int, **kwargs) -> SelectOption:
         title = self.edges[0].media.title_user_preferred.strip()
@@ -809,24 +805,21 @@ class WaifuTextHelper(WaifuHelper):
         if modifiers:
             modifiers = ' ' + modifiers
 
-        label = f"[{self.chara.rank.name}]{modifiers} {self.name}{seiyuu}"
-        desc = f"#{nb} • {title}"
+        label = f'[{self.chara.rank.name}]{modifiers} {self.name}{seiyuu}'
+        desc = f'#{nb} • {title}'
 
         rank = await self.get_rank()
-        return SelectOption(emoji=rank.emoji,
-                            label=label[:100],
-                            description=desc[:100],
-                            **kwargs)
+        return SelectOption(emoji=rank.emoji, label=label[:100], description=desc[:100], **kwargs)
 
     @staticmethod
     def main_seiyuu(edges: list[CEdgeSelectFilterCharaResult]):
-        seiyuu = ""
+        seiyuu = ''
         for edge in edges:
             if len(edge.voice_actors) > 0:
                 seiyuu_obj = edge.voice_actors[0]
                 seiyuu = seiyuu_obj.name_user_preferred
-                seiyuu = STAFF_GARBAGE.sub(" ", seiyuu)
-                seiyuu = f" (CV: {seiyuu})"
+                seiyuu = STAFF_GARBAGE.sub(' ', seiyuu)
+                seiyuu = f' (CV: {seiyuu})'
                 break
         return seiyuu
 
@@ -899,11 +892,11 @@ class TradeHelper:
                 (self.trade_data.received, None),
             ),
         ):
-            desc += f"**From {user}**\n"
+            desc += f'**From {user}**\n'
 
             suppl = ''
             if blood_shards:
-                suppl += f"{blood_shards} :drop_of_blood:"
+                suppl += f'{blood_shards} :drop_of_blood:'
             if len(waifus) > 0:
                 ids_al = [w.character.id_al for w in waifus]
                 tot_ids_al += ids_al
@@ -913,9 +906,11 @@ class TradeHelper:
 
                 async with asyncio.TaskGroup() as tg:
                     resp_task = tg.create_task(
-                        get_nanapi().anilist.anilist_get_charas(ids_al=ids_al_str))
-                    edge_tasks = [(cid, tg.create_task(WaifuHelper.get_edges(cid)))
-                                  for cid in ids_al]
+                        get_nanapi().anilist.anilist_get_charas(ids_al=ids_al_str)
+                    )
+                    edge_tasks = [
+                        (cid, tg.create_task(WaifuHelper.get_edges(cid))) for cid in ids_al
+                    ]
 
                 resp3 = await resp_task
                 if not success(resp3):
@@ -932,14 +927,13 @@ class TradeHelper:
                         waifu = WaifuTextHelper(
                             cast(WaifuSelectResult, waifu_data),
                             charas[waifu_data.character.id_al],
-                            edges[waifu_data.character.id_al]
+                            edges[waifu_data.character.id_al],
                         )
-                        text_tasks.append(tg.create_task(
-                            waifu.get_str(padding=padding)))
+                        text_tasks.append(tg.create_task(waifu.get_str(padding=padding)))
 
                 text = []
                 for i, waifu_str in enumerate(text_tasks):
-                    text.append(f"`{i+1:{padding}}.` {await waifu_str}")
+                    text.append(f'`{i+1:{padding}}.` {await waifu_str}')
 
                 suppl += '\n'.join(text)
 
@@ -948,18 +942,19 @@ class TradeHelper:
             else:
                 desc += f"Nothing. {self.bot.get_emoji_str('saladedefruits')}"
 
-            desc += "\n\n"
+            desc += '\n\n'
 
-        content = (f"{self.offeree.mention}\n"
-                   f"**Trade offer from {self.author.mention}**\n"
-                   f"You can accept by reacting with "
-                   f"{self.bot.get_emoji_str(ConfirmationView.ACCEPT_EMOTE)}")
+        content = (
+            f'{self.offeree.mention}\n'
+            f'**Trade offer from {self.author.mention}**\n'
+            f'You can accept by reacting with '
+            f'{self.bot.get_emoji_str(ConfirmationView.ACCEPT_EMOTE)}'
+        )
 
         thumbnail_url = None
         if len(tot_ids_al) > 0:
             ids_al_str = ','.join(map(str, tot_ids_al))
-            url = URL(f"{NANAPI_PUBLIC_URL}/anilist/charas/collages").with_query(
-                ids_al=ids_al_str)
+            url = URL(f'{NANAPI_PUBLIC_URL}/anilist/charas/collages').with_query(ids_al=ids_al_str)
             if len(str(url)) <= 2048:
                 thumbnail_url = str(url)
 
@@ -1006,18 +1001,22 @@ class TradeHelper:
             case Success():
                 result = resp.result
 
-                await self.cog.drop_alert(self.author,
-                                          result.received,
-                                          'Trade',
-                                          interaction.followup,
-                                          spoiler=False,
-                                          silent=self.author_silent)
-                await self.cog.drop_alert(self.offeree,
-                                          result.offered,
-                                          'Trade',
-                                          interaction.followup,
-                                          spoiler=False,
-                                          silent=self.offeree_silent)
+                await self.cog.drop_alert(
+                    self.author,
+                    result.received,
+                    'Trade',
+                    interaction.followup,
+                    spoiler=False,
+                    silent=self.author_silent,
+                )
+                await self.cog.drop_alert(
+                    self.offeree,
+                    result.offered,
+                    'Trade',
+                    interaction.followup,
+                    spoiler=False,
+                    silent=self.offeree_silent,
+                )
 
     async def release(self):
         resp = await get_nanapi().waicolle.waicolle_cancel_trade(self.id)

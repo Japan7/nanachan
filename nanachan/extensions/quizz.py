@@ -104,14 +104,13 @@ def fuzzy_jp_match(reference: str, answer: str):
 
 
 class QuizzBase(ABC):
-
     def __init__(self, bot: Bot, channel_id: int):
         self.bot = bot
         self.channel_id = channel_id
 
-    async def _parse_media(self,
-                           message: discord.Message,
-                           force_image: bool = False) -> tuple[str | None, str]:
+    async def _parse_media(
+        self, message: discord.Message, force_image: bool = False
+    ) -> tuple[str | None, str]:
         url = None
         content = message.content
         image_check = False
@@ -131,7 +130,8 @@ class QuizzBase(ABC):
 
         if force_image and not image_check:
             raise commands.CommandError(
-                'Message does not contain an image nor an image message ID')
+                'Message does not contain an image nor an image message ID'
+            )
 
         return url, content
 
@@ -146,21 +146,25 @@ class QuizzBase(ABC):
         wait_msg = None
         if not private:
             wait_msg = await channel.send(
-                f"*Waiting for {author.mention} to provide answer in DM (120s).*\n"
-                "*Do not send any proposition until the embed is created and pinned!*",
-                mention_author=False)
+                f'*Waiting for {author.mention} to provide answer in DM (120s).*\n'
+                '*Do not send any proposition until the embed is created and pinned!*',
+                mention_author=False,
+            )
             desc = (
-                f"Send `{PREFIX}quizz setanswer` "
-                f"in `#{str(channel)}` if you need to change it afterwards.")
+                f'Send `{PREFIX}quizz setanswer` '
+                f'in `#{str(channel)}` if you need to change it afterwards.'
+            )
         else:
-            desc = (f"Send `{PREFIX}quizz stock setanswer {quizz_id}` "
-                    "here if you need to change it afterwards.")
+            desc = (
+                f'Send `{PREFIX}quizz stock setanswer {quizz_id}` '
+                'here if you need to change it afterwards.'
+            )
 
         ask_embed = Embed(
             title='Please provide quizz answer in the next 120s.',
-            description='If you do not want to give the answer, send `skip` now.\n\n' +
-            desc,
-            colour=COLOR_BANANA)
+            description='If you do not want to give the answer, send `skip` now.\n\n' + desc,
+            colour=COLOR_BANANA,
+        )
 
         with suppress(Exception):
             await author.send(embed=ask_embed)
@@ -169,7 +173,8 @@ class QuizzBase(ABC):
             answer = await self.bot.wait_for(
                 'user_message',
                 check=lambda m: m.author == author and m.channel == author.dm_channel,
-                timeout=120)
+                timeout=120,
+            )
             answer = answer.message
         except asyncio.TimeoutError:
             if not private:
@@ -181,29 +186,30 @@ class QuizzBase(ABC):
             if answer.content != 'skip':
                 resp = await get_nanapi().quizz.quizz_set_quizz_answer(
                     quizz_id,
-                    SetQuizzAnswerBody(answer=answer.clean_content.replace(
-                        '`', "'"), answer_source='Provided answer'))
+                    SetQuizzAnswerBody(
+                        answer=answer.clean_content.replace('`', "'"),
+                        answer_source='Provided answer',
+                    ),
+                )
                 if not success(resp):
                     raise RuntimeError(resp.result)
             else:
                 if not private:
                     await channel.send(
-                        f"*{author.mention} chose to not give the answer.*",
+                        f'*{author.mention} chose to not give the answer.*',
                         mention_author=False,
-                        delete_after=5)
+                        delete_after=5,
+                    )
                 resp = await get_nanapi().quizz.quizz_set_quizz_answer(
-                    quizz_id, SetQuizzAnswerBody(answer=None,
-                                                 answer_source=None))
+                    quizz_id, SetQuizzAnswerBody(answer=None, answer_source=None)
+                )
                 if not success(resp):
                     raise RuntimeError(resp.result)
 
         if wait_msg is not None:
             await wait_msg.delete()
 
-    async def set_answer(self,
-                         quizz_id: UUID,
-                         author: UserType,
-                         private: bool = False):
+    async def set_answer(self, quizz_id: UUID, author: UserType, private: bool = False):
         await self._set_answer_dm(quizz_id, author, private)
 
     async def get_embed(self, game_id: UUID):
@@ -216,25 +222,23 @@ class QuizzBase(ABC):
         author = channel.guild.get_member(game.quizz.author.discord_id)
 
         if author is not None:
-            embed = Embed(colour=author.color,
-                          description=game.quizz.description)
+            embed = Embed(colour=author.color, description=game.quizz.description)
             embed.set_author(name=author, icon_url=author.display_avatar)
         else:
             embed = Embed(description=game.quizz.description)
 
-        embed.set_footer(
-            text=f"[{game_id}] #{channel} — {game.status.capitalize()}")
+        embed.set_footer(text=f'[{game_id}] #{channel} — {game.status.capitalize()}')
 
         if game.quizz.answer is not None:
-            answer = (game.answer_bananed if game.status
-                      is not QuizzStatus.ENDED else game.quizz.answer)
-            embed.add_field(name=game.quizz.answer_source,
-                            value=f"||`{answer}`||")
+            answer = (
+                game.answer_bananed if game.status is not QuizzStatus.ENDED else game.quizz.answer
+            )
+            embed.add_field(name=game.quizz.answer_source, value=f'||`{answer}`||')
 
         if game.winner is not None:
             winner = self.bot.get_user(game.winner.discord_id)
             assert winner is not None
-            embed.add_field(name='Solved by', value=f"{winner.mention}")
+            embed.add_field(name='Solved by', value=f'{winner.mention}')
 
         if game.quizz.is_image:
             embed.set_image(url=game.quizz.url)
@@ -260,27 +264,29 @@ class QuizzBase(ABC):
         author_nb = min(author_nb, REWARD)
         answer_nb = REWARD - author_nb
 
-        waifu_cog = cast(WaifuCollection,
-                         self.bot.get_cog(WaifuCollection.__cog_name__))
+        waifu_cog = cast(WaifuCollection, self.bot.get_cog(WaifuCollection.__cog_name__))
 
         quizz_author = self.bot.get_user(game.quizz.author.discord_id)
         if quizz_author is not None:
-            await waifu_cog.reward_coins(quizz_author, max(5, author_nb) * GLOBAL_COIN_MULTIPLIER,
-                                         'Quizz author')
-        await waifu_cog.reward_coins(message.author, max(5, answer_nb) * GLOBAL_COIN_MULTIPLIER,
-                                     'Quizz answer')
+            await waifu_cog.reward_coins(
+                quizz_author, max(5, author_nb) * GLOBAL_COIN_MULTIPLIER, 'Quizz author'
+            )
+        await waifu_cog.reward_coins(
+            message.author, max(5, answer_nb) * GLOBAL_COIN_MULTIPLIER, 'Quizz answer'
+        )
 
 
 class AnimeMangaQuizz(QuizzBase):
-
     async def create_quizz(self, message: discord.Message):
         url, content = await self._parse_media(message, force_image=True)
-        body = NewQuizzBody(channel_id=self.channel_id,
-                            description=content,
-                            url=url,
-                            is_image=True,
-                            author_discord_id=message.author.id,
-                            author_discord_username=str(message.author))
+        body = NewQuizzBody(
+            channel_id=self.channel_id,
+            description=content,
+            url=url,
+            is_image=True,
+            author_discord_id=message.author.id,
+            author_discord_username=str(message.author),
+        )
         resp = await get_nanapi().quizz.quizz_new_quizz(body)
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -298,9 +304,9 @@ class AnimeMangaQuizz(QuizzBase):
         if SAUCENAO_API_KEY is None:
             raise commands.CommandError('SauceNAO is not set up')
 
-        saucenao = pysaucenao.SauceNao(min_similarity=60,
-                                       priority=[21, 37],
-                                       api_key=SAUCENAO_API_KEY)
+        saucenao = pysaucenao.SauceNao(
+            min_similarity=60, priority=[21, 37], api_key=SAUCENAO_API_KEY
+        )
         selected_sauce = None
         try:
             assert quizz.url is not None
@@ -311,33 +317,39 @@ class AnimeMangaQuizz(QuizzBase):
 
         for sauce in sauces:
             if sauce.title is not None and isinstance(
-                    sauce, (pysaucenao.AnimeSource, pysaucenao.MangaSource)):
+                sauce, (pysaucenao.AnimeSource, pysaucenao.MangaSource)
+            ):
                 selected_sauce = sauce
                 break
 
         if selected_sauce is not None:
             if not private:
                 await channel.send(
-                    f"*SauceNAO returned a result with {selected_sauce.similarity}% similarity.*",
-                    delete_after=5)
-                desc = (f"\n\nSend `{PREFIX}quizz setanswer` "
-                        f"in `#{str(channel)}` if you want to manually set it.")
+                    f'*SauceNAO returned a result with {selected_sauce.similarity}% similarity.*',
+                    delete_after=5,
+                )
+                desc = (
+                    f'\n\nSend `{PREFIX}quizz setanswer` '
+                    f'in `#{str(channel)}` if you want to manually set it.'
+                )
             else:
-                desc = (f"\n\nSend `{PREFIX}stock setanswer {quizz_id}` "
-                        "here if you want to manually set it.")
+                desc = (
+                    f'\n\nSend `{PREFIX}stock setanswer {quizz_id}` '
+                    'here if you want to manually set it.'
+                )
 
             assert selected_sauce.title is not None
             sauce = selected_sauce.title.replace('`', "'")
-            embed = Embed(title='SauceNAO result',
-                          description='`' + sauce +
-                          f"`\n({selected_sauce.similarity}% similarity)" +
-                          desc,
-                          colour=COLOR_BANANA)
+            embed = Embed(
+                title='SauceNAO result',
+                description='`' + sauce + f'`\n({selected_sauce.similarity}% similarity)' + desc,
+                colour=COLOR_BANANA,
+            )
             await author.send(embed=embed)
 
             resp = await get_nanapi().quizz.quizz_set_quizz_answer(
-                quizz_id,
-                SetQuizzAnswerBody(answer=sauce, answer_source='SauceNAO'))
+                quizz_id, SetQuizzAnswerBody(answer=sauce, answer_source='SauceNAO')
+            )
             if not success(resp):
                 raise RuntimeError(resp.result)
         else:
@@ -346,8 +358,8 @@ class AnimeMangaQuizz(QuizzBase):
     @classmethod
     async def _image(cls, message: discord.Message | MultiplexingMessage, nb: int = 1):
         with Image.open(
-                resources.open_binary(
-                    nanachan.resources, f"image{random.randint(1,3):02}.jpg")) as image:
+            resources.open_binary(nanachan.resources, f'image{random.randint(1,3):02}.jpg')
+        ) as image:
             with io.BytesIO() as pp_binary, suppress(IndexError):
                 mention = message.mentions[0]
                 asset = mention.display_avatar.with_format('png')
@@ -363,25 +375,23 @@ class AnimeMangaQuizz(QuizzBase):
             with font_res:
                 font = ImageFont.truetype(font_res, size=150)
                 A = nb * 'A'
-                draw.text((632, 620),
-                          f"IM{A}GE",
-                          fill='white',
-                          stroke_fill='black',
-                          stroke_width=10,
-                          anchor='ms',
-                          font=font)
+                draw.text(
+                    (632, 620),
+                    f'IM{A}GE',
+                    fill='white',
+                    stroke_fill='black',
+                    stroke_width=10,
+                    anchor='ms',
+                    font=font,
+                )
                 with io.BytesIO() as image_binary:
                     image.save(image_binary, 'PNG')
                     image_binary.seek(0)
                     await message.channel.send(
-                        file=discord.File(
-                            fp=image_binary, filename='IMAGE.png')
+                        file=discord.File(fp=image_binary, filename='IMAGE.png')
                     )
 
-    async def set_answer(self,
-                         quizz_id: UUID,
-                         author: UserType,
-                         private: bool = False):
+    async def set_answer(self, quizz_id: UUID, author: UserType, private: bool = False):
         try:
             await self._saucenao(quizz_id, author, private)
         except Exception as e:
@@ -394,21 +404,21 @@ class AnimeMangaQuizz(QuizzBase):
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         await super().post_end(game_id, message)
         nb = random.randint(1, 12)
-        reply = await message.reply(
-            f"{PREFIX}im{nb*'a'}ge {message.author.mention}")
+        reply = await message.reply(f"{PREFIX}im{nb*'a'}ge {message.author.mention}")
         await self._image(reply, nb)
 
 
 class LouisQuizz(QuizzBase):
-
     async def create_quizz(self, message: discord.Message):
         url, content = await self._parse_media(message)
-        body = NewQuizzBody(channel_id=self.channel_id,
-                            description=content,
-                            url=url,
-                            is_image=False,
-                            author_discord_id=message.author.id,
-                            author_discord_username=str(message.author))
+        body = NewQuizzBody(
+            channel_id=self.channel_id,
+            description=content,
+            url=url,
+            is_image=False,
+            author_discord_id=message.author.id,
+            author_discord_username=str(message.author),
+        )
         resp = await get_nanapi().quizz.quizz_new_quizz(body)
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -417,18 +427,18 @@ class LouisQuizz(QuizzBase):
 
     @classmethod
     async def _kininarimasu(cls, channel: 'MessageableChannel'):
-        with resources.path(nanachan.resources, f"hyouka{random.randint(1,7):02}.gif") as path:
+        with resources.path(nanachan.resources, f'hyouka{random.randint(1,7):02}.gif') as path:
             await channel.send(file=discord.File(path))
 
-    async def post_end(self, game_id: UUID,
-                       message: discord.Message | MultiplexingMessage):
+    async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         await super().post_end(game_id, message)
-        await message.reply(f"{PREFIX}kininarimasu {message.author.mention}")
+        await message.reply(f'{PREFIX}kininarimasu {message.author.mention}')
         await self._kininarimasu(message.channel)
 
 
 class Quizz(Cog, required_settings=RequiresQuizz):
-    """ Ask questions and get hints for quizzes """
+    """Ask questions and get hints for quizzes"""
+
     emoji = '🃏'
 
     def __init__(self, bot: Bot):
@@ -478,7 +488,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                     case _:
                         raise RuntimeError(resp.result)
             else:
-                raise commands.CommandError("There is a pending quizz")
+                raise commands.CommandError('There is a pending quizz')
 
             channel = self.bot.get_text_channel(channel_id)
             assert channel is not None
@@ -515,18 +525,17 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                 kwargs['reference'] = last_game
 
             new_quizz_msg = await channel.send(
-                content="unknown" if author is None else author.mention,
+                content='unknown' if author is None else author.mention,
                 allowed_mentions=discord.AllowedMentions(replied_user=False),
-                **kwargs
+                **kwargs,
             )
 
             await new_quizz_msg.pin()
 
             body = NewGameBody(
                 message_id=new_quizz_msg.id,
-                answer_bananed='🍌' *
-                len(quizz.answer) if quizz.answer is not None else None,
-                quizz_id=quizz_id
+                answer_bananed='🍌' * len(quizz.answer) if quizz.answer is not None else None,
+                quizz_id=quizz_id,
             )
 
             resp = await get_nanapi().quizz.quizz_new_game(body)
@@ -562,8 +571,12 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                 raise commands.CommandError('No quiz started')
 
             resp = await get_nanapi().quizz.quizz_end_game(
-                game.id, EndGameBody(winner_discord_id=message.author.id,
-                                     winner_discord_username=str(message.author)))
+                game.id,
+                EndGameBody(
+                    winner_discord_id=message.author.id,
+                    winner_discord_username=str(message.author),
+                ),
+            )
             if not success(resp):
                 raise RuntimeError(resp.result)
             game = resp.result
@@ -607,8 +620,9 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         quizz_msg = await ctx.fetch_message(game.message_id)
 
         answer: list[str] = list(game.quizz.answer.casefold())
-        answer_bananed: list[str] = (list(game.answer_bananed)
-                                     if game.answer_bananed else ['🍌'] * len(answer))
+        answer_bananed: list[str] = (
+            list(game.answer_bananed) if game.answer_bananed else ['🍌'] * len(answer)
+        )
 
         max_unbananed = len(answer) // 2
         cooldown = (24 * 60 * 60) / max_unbananed
@@ -618,24 +632,22 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             if letter_og == letter_bananed:
                 unbananed += 1
 
-        elapsed_time = (ctx.message.created_at -
-                        game.started_at).total_seconds()
-        theorical_unbananed_atm = min(int(elapsed_time // cooldown),
-                                      max_unbananed)
+        elapsed_time = (ctx.message.created_at - game.started_at).total_seconds()
+        theorical_unbananed_atm = min(int(elapsed_time // cooldown), max_unbananed)
         to_unbanane_now = theorical_unbananed_atm - unbananed
 
         for _ in range(to_unbanane_now):
-            r = random.choice(
-                [i for i, c in enumerate(answer_bananed) if c == '🍌'])
+            r = random.choice([i for i, c in enumerate(answer_bananed) if c == '🍌'])
             answer_bananed[r] = answer[r]
 
         # New embed for reply
         unbananed += to_unbanane_now
         remaining_cd = (1 + unbananed - theorical_unbananed_atm) * cooldown - (
-            elapsed_time % cooldown)
+            elapsed_time % cooldown
+        )
         remaining_time = datetime.fromtimestamp(remaining_cd)
         if to_unbanane_now > 0:
-            text = f"{to_unbanane_now} 🍌 eaten! "
+            text = f'{to_unbanane_now} 🍌 eaten! '
             if unbananed < max_unbananed:
                 text += f"Next 🍌 lunch in {remaining_time.strftime('%Hh%Mm%Ss')}"
             elif unbananed == max_unbananed:
@@ -649,24 +661,19 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                 text = 'I am full of 🍌'
 
         answer_bananed_str = ''.join(answer_bananed)
-        embed = Embed(title=text,
-                      description=f"`{answer_bananed_str}`",
-                      colour=COLOR_BANANA)
-        embed.set_footer(
-            text=f"{unbananed}/{max_unbananed} 🍌 eaten ({len(answer)} in total)"
+        embed = Embed(title=text, description=f'`{answer_bananed_str}`', colour=COLOR_BANANA)
+        embed.set_footer(text=f'{unbananed}/{max_unbananed} 🍌 eaten ({len(answer)} in total)')
+        await ctx.send(
+            content=ctx.author.mention, embed=embed, reference=quizz_msg, mention_author=False
         )
-        await ctx.send(content=ctx.author.mention,
-                       embed=embed,
-                       reference=quizz_msg,
-                       mention_author=False)
 
         await ctx.message.delete()
 
         # Update quizz embed and db value
         if to_unbanane_now > 0:
             resp = await get_nanapi().quizz.quizz_set_game_bananed_answer(
-                game.id,
-                SetGameBananedAnswerBody(answer_bananed=answer_bananed_str))
+                game.id, SetGameBananedAnswerBody(answer_bananed=answer_bananed_str)
+            )
             if not success(resp):
                 raise RuntimeError(resp.result)
 
@@ -688,13 +695,15 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         game = resp.result
 
         assert isinstance(ctx.author, Member)
-        if not (ctx.channel.permissions_for(ctx.author).administrator or
-                ctx.author.id == game.quizz.author.discord_id):
+        if not (
+            ctx.channel.permissions_for(ctx.author).administrator
+            or ctx.author.id == game.quizz.author.discord_id
+        ):
             raise commands.CommandError('Not the author or an admin')
 
-        embed = Embed(title='Current answer',
-                      description=f"`{game.quizz.answer}`",
-                      colour=COLOR_BANANA)
+        embed = Embed(
+            title='Current answer', description=f'`{game.quizz.answer}`', colour=COLOR_BANANA
+        )
         await ctx.author.send(embed=embed)
         await ctx.message.delete()
 
@@ -712,8 +721,10 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         game = resp.result
 
         assert isinstance(ctx.author, Member)
-        if not (ctx.channel.permissions_for(ctx.author).administrator or
-                ctx.author.id == game.quizz.author.discord_id):
+        if not (
+            ctx.channel.permissions_for(ctx.author).administrator
+            or ctx.author.id == game.quizz.author.discord_id
+        ):
             raise commands.CommandError('Not the author or an admin')
 
         cls = self.quizz_cls[game.quizz.channel_id]
@@ -733,8 +744,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         if not success(resp):
             match resp.code:
                 case 404:
-                    raise commands.CommandError(
-                        'No stock found for this channel')
+                    raise commands.CommandError('No stock found for this channel')
                 case _:
                     raise RuntimeError(resp.result)
         quizz = resp.result
@@ -764,9 +774,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                 case _:
                     raise RuntimeError(resp.result)
         quizz = resp.result
-        embed = Embed(title=f"[{id}] Answer",
-                      description=f"`{quizz.answer}`",
-                      colour=COLOR_BANANA)
+        embed = Embed(title=f'[{id}] Answer', description=f'`{quizz.answer}`', colour=COLOR_BANANA)
         await ctx.author.send(embed=embed)
 
     @commands.dm_only()
@@ -840,20 +848,19 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             cls = self.quizz_cls[game.quizz.channel_id]
             casefolded = ctx.message.clean_content.casefold()
             if (casefolded == game.quizz.answer.casefold()) or (
-                    await cls.fuzzy_validation(game.quizz.answer, casefolded)):
+                await cls.fuzzy_validation(game.quizz.answer, casefolded)
+            ):
                 await self._end(ctx.message)
 
     @Cog.listener()
-    async def on_raw_message_delete(self,
-                                    payload: discord.RawMessageDeleteEvent):
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
         if payload.channel_id in self.quizz_cls:
             resp = await get_nanapi().quizz.quizz_delete_game(payload.message_id)
             if not success(resp):
                 raise RuntimeError(resp.result)
 
     @Cog.listener()
-    async def on_raw_reaction_add(self,
-                                  payload: discord.RawReactionActionEvent):
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.member is None or payload.member.bot:
             return
 
@@ -878,9 +885,10 @@ class Quizz(Cog, required_settings=RequiresQuizz):
 
             view = ConfirmationView(self.bot, payload.member)
             msg = await message.reply(
-                f"{payload.member.mention} Should I end the quizz?",
+                f'{payload.member.mention} Should I end the quizz?',
                 view=view,
-                allowed_mentions=discord.AllowedMentions(replied_user=False))
+                allowed_mentions=discord.AllowedMentions(replied_user=False),
+            )
 
             if await view.confirmation:
                 await self._end(message)
@@ -889,10 +897,8 @@ class Quizz(Cog, required_settings=RequiresQuizz):
 
 
 def context_menu_start(cog: Quizz):
-
     @app_commands.context_menu(name='Quizz start')
-    async def msg_cmd_start(interaction: discord.Interaction[Bot],
-                            message: discord.Message):
+    async def msg_cmd_start(interaction: discord.Interaction[Bot], message: discord.Message):
         ctx = await LegacyCommandContext.from_interaction(interaction)
         await ctx.defer(ephemeral=True)
         await cog._start(message)
@@ -902,10 +908,8 @@ def context_menu_start(cog: Quizz):
 
 
 def context_menu_end(cog: Quizz):
-
     @app_commands.context_menu(name='Quizz end')
-    async def msg_cmd_end(interaction: discord.Interaction[Bot],
-                          message: discord.Message):
+    async def msg_cmd_end(interaction: discord.Interaction[Bot], message: discord.Message):
         ctx = await LegacyCommandContext.from_interaction(interaction)
         await ctx.defer(ephemeral=True)
         await cog._end(message)

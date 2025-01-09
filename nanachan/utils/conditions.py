@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-REDIS_KEY = make_redis_key("drop_conditions")
+REDIS_KEY = make_redis_key('drop_conditions')
 
 
 class ConditionStatus(Enum):
@@ -36,7 +36,6 @@ class ConditionStatus(Enum):
 
 
 class Conditions:
-
     def __init__(self, condition_classes: dict[str, Type[Condition]] | None = None):
         self.condition_classes: dict[str, Type[Condition]]
         if condition_classes is None:
@@ -128,9 +127,7 @@ class Condition(abc.ABC):
         cls._condition_name = cls.__name__ if name is None else name
 
     def serialize(self) -> dict[str, Any]:
-        return {
-            "condition_name": self._condition_name
-        }
+        return {'condition_name': self._condition_name}
 
     @classmethod
     @abc.abstractmethod
@@ -157,14 +154,14 @@ class Condition(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    async def instanciate(cls, ctx: MultiplexingContext,
-                          waifu_cog: WaifuCollection) -> Condition:
+    async def instanciate(cls, ctx: MultiplexingContext, waifu_cog: WaifuCollection) -> Condition:
         pass
 
     @classmethod
     @abc.abstractmethod
-    async def instanciation_condition(cls, ctx: MultiplexingContext,
-                                      waifu_cog: WaifuCollection) -> bool:
+    async def instanciation_condition(
+        cls, ctx: MultiplexingContext, waifu_cog: WaifuCollection
+    ) -> bool:
         pass
 
     @abc.abstractmethod
@@ -195,92 +192,98 @@ class Word:
 
     @classmethod
     def simple(cls, word: str):
-        return cls(fr"\b{word}\b", f"says '{word}'", f"said '{word}'")
-
+        return cls(rf'\b{word}\b', f"says '{word}'", f"said '{word}'")
 
     @classmethod
     def singular(cls, word: str):
-        return cls(fr"\b{word}s?\b", f"says '{word}'", f"said '{word}'")
+        return cls(rf'\b{word}s?\b', f"says '{word}'", f"said '{word}'")
+
+
+UNLIMITED_DROP_WORKS = 'I am the Bone of my Roll Steel is my Body and Fire is my Blood. I have created over a Thousand moecoins, Unknown to Death, Nor known to Life. Have withstood Pain to create many Collages Yet those Hands will never hold Mai Waifu. So, as I Pray-- Unlimited Drop Works'  # noqa: E501
+
 
 @conditional_drop.condition
 class StringCondition(Condition):
-
     instances_lock = asyncio.Lock()
     available_instances = 18
     words = [
-        Word(r"NAAA+M", "prays to the God of Waicolle", "prayed to the God of Waicolle"),
-        Word("a(ya){5}(ya)*", "says ayaya like Bao would", "said ayaya like Bao would"),
-        Word.simple("cringe"),
-        Word(r"copium", "inhales copium", "inhaled copium"),
-        Word.simple("Jeanjean"),
-        Word.singular("pizza"),
-        Word.singular("situation"),
-        Word.simple("peepoShake"),
-        Word.simple("Linux"),
-        Word.singular("stream"),
-        Word.simple("anas"),
-        Word("I am the Bone of my Roll Steel is my Body and Fire is my Blood. I have created over a Thousand moecoins, Unknown to Death, Nor known to Life. Have withstood Pain to create many Collages Yet those Hands will never hold Mai Waifu. So, as I Pray-- Unlimited Drop Works".replace(' ', r"\s"), "invokes the Unlimited Drop Works", "invoked the Unlimited Drop Works"),  # noqa: E501
-        Word.simple("NamHappy"),
-        Word(re.escape("?"), "says '?'", "said '?'"),
-        Word(re.escape("."), "says '.'", "said '.'"),
-        Word(r":\w*oof:", "uses a oof emote", "used a oof emote"),
-        Word.simple("du coup"),
-        Word.simple("en vrai"),
-        Word.singular("drop"),
-        Word.simple("well"),
-        Word(r"\bmonkey\b|🐒", "says 'monkey'", "said 'monkey'"),
-        Word(r":(?:deadinside|(?:nana|eilene)ded):", "is dead", "is dead"),
-        Word(r":\w*clap\w*:|👏", "claps", "clapped"),
-        Word.simple("yuniiZOOM"),
-        Word.simple("OkayuSad"),
-        Word.simple("pepeLoser"),
-        Word.simple("hype"),
-        Word.simple("1"),
-        Word.singular("edge"),
-        Word.singular("genre"),
-        Word(r"proj(?:o|ection)", "talks about a projection", "talked about a projection"),
-        Word.simple("mahjong"),
-        Word(r"kara(?:\b|oke)", "talks about a karaoke", "talked about a karaoke"),
-        Word.simple("quizz"),
-        Word(r"g[iî]te|🏚️|house_abandoned", "says 'gîte'", "said 'gîte'"),
-        Word.simple("nice"),
-        Word.singular("waifu"),
-        Word(r"curry", "says 'curry'", "said 'curry'"),
-        Word.simple("Kek"),
-        Word.singular("pied"),
-        Word("loli", "says the forbidden word", "said the forbidden word"),
-        Word.simple("AMQ"),
-        Word.simple("Odrian"),
-        Word.simple("45minutes"),
-        Word(r":(?:poggies|Crab(?:heart|agarre)):", "summons a Crab", "summoned a mighty Crab"),
-        Word.singular("ascend"),
-        Word.simple("statistiquement"),
-        Word.simple("littéralement"),
-        Word.simple("n7"),
-        Word(r"\bmp\b", "says 'MP'", "said 'MP'"),
-        Word(r"b[eé]bou", "says 'bébou'", "said 'bébou'"),
-        Word.simple("RetourneParDomien"),
-        Word(r"herbe", "touches grass", "touched grass"),
-        Word.singular("flemme"),
-        Word.singular("moecoin"),
-        Word(r":(?:saladedefruits|slddfrts):", "orders an ice cream", "ordered an ice cream"),
-        Word.simple("terrible"),
-        Word.simple("Umineko"),
-        Word.simple("Xenoblade"),
+        Word(r'NAAA+M', 'prays to the God of Waicolle', 'prayed to the God of Waicolle'),
+        Word('a(ya){5}(ya)*', 'says ayaya like Bao would', 'said ayaya like Bao would'),
+        Word.simple('cringe'),
+        Word(r'copium', 'inhales copium', 'inhaled copium'),
+        Word.simple('Jeanjean'),
+        Word.singular('pizza'),
+        Word.singular('situation'),
+        Word.simple('peepoShake'),
+        Word.simple('Linux'),
+        Word.singular('stream'),
+        Word.simple('anas'),
+        Word(
+            UNLIMITED_DROP_WORKS.replace(' ', r'\s'),
+            'invokes the Unlimited Drop Works',
+            'invoked the Unlimited Drop Works',
+        ),
+        Word.simple('NamHappy'),
+        Word(re.escape('?'), "says '?'", "said '?'"),
+        Word(re.escape('.'), "says '.'", "said '.'"),
+        Word(r':\w*oof:', 'uses a oof emote', 'used a oof emote'),
+        Word.simple('du coup'),
+        Word.simple('en vrai'),
+        Word.singular('drop'),
+        Word.simple('well'),
+        Word(r'\bmonkey\b|🐒', "says 'monkey'", "said 'monkey'"),
+        Word(r':(?:deadinside|(?:nana|eilene)ded):', 'is dead', 'is dead'),
+        Word(r':\w*clap\w*:|👏', 'claps', 'clapped'),
+        Word.simple('yuniiZOOM'),
+        Word.simple('OkayuSad'),
+        Word.simple('pepeLoser'),
+        Word.simple('hype'),
+        Word.simple('1'),
+        Word.singular('edge'),
+        Word.singular('genre'),
+        Word(r'proj(?:o|ection)', 'talks about a projection', 'talked about a projection'),
+        Word.simple('mahjong'),
+        Word(r'kara(?:\b|oke)', 'talks about a karaoke', 'talked about a karaoke'),
+        Word.simple('quizz'),
+        Word(r'g[iî]te|🏚️|house_abandoned', "says 'gîte'", "said 'gîte'"),
+        Word.simple('nice'),
+        Word.singular('waifu'),
+        Word(r'curry', "says 'curry'", "said 'curry'"),
+        Word.simple('Kek'),
+        Word.singular('pied'),
+        Word('loli', 'says the forbidden word', 'said the forbidden word'),
+        Word.simple('AMQ'),
+        Word.simple('Odrian'),
+        Word.simple('45minutes'),
+        Word(r':(?:poggies|Crab(?:heart|agarre)):', 'summons a Crab', 'summoned a mighty Crab'),
+        Word.singular('ascend'),
+        Word.simple('statistiquement'),
+        Word.simple('littéralement'),
+        Word.simple('n7'),
+        Word(r'\bmp\b', "says 'MP'", "said 'MP'"),
+        Word(r'b[eé]bou', "says 'bébou'", "said 'bébou'"),
+        Word.simple('RetourneParDomien'),
+        Word(r'herbe', 'touches grass', 'touched grass'),
+        Word.singular('flemme'),
+        Word.singular('moecoin'),
+        Word(r':(?:saladedefruits|slddfrts):', 'orders an ice cream', 'ordered an ice cream'),
+        Word.simple('terrible'),
+        Word.simple('Umineko'),
+        Word.simple('Xenoblade'),
         Word.simple("Don't."),
-        Word.singular("rousse"),
-        Word.simple("lewd"),
-        Word.simple("bad"),
-        Word.simple("escalade"),
-        Word(r"\brats*\b|surmulot", "says 'rat'", "said 'rat'"),
-        Word(r"race_car|raced|🏎", "gets raced", "got raced"),
-        Word(r"\bsus\w*\b|among us|amogus", "is sus", "was sus"),
-        Word(r"sub(?:\b|way)", "talks about a sub", "talked about a sub"),
-        Word.simple("Milgram"),
-        Word.simple("NamFist"),
-        Word.simple("Symphogear"),
-        Word(r"jo(gogo|dodo)", "claps with one hand", "clapped with one hand"),
-        Word(r":\w*sip:", "drinks a tasty beverage", "drank a tasty beverage"),
+        Word.singular('rousse'),
+        Word.simple('lewd'),
+        Word.simple('bad'),
+        Word.simple('escalade'),
+        Word(r'\brats*\b|surmulot', "says 'rat'", "said 'rat'"),
+        Word(r'race_car|raced|🏎', 'gets raced', 'got raced'),
+        Word(r'\bsus\w*\b|among us|amogus', 'is sus', 'was sus'),
+        Word(r'sub(?:\b|way)', 'talks about a sub', 'talked about a sub'),
+        Word.simple('Milgram'),
+        Word.simple('NamFist'),
+        Word.simple('Symphogear'),
+        Word(r'jo(gogo|dodo)', 'claps with one hand', 'clapped with one hand'),
+        Word(r':\w*sip:', 'drinks a tasty beverage', 'drank a tasty beverage'),
         Word(
             r'\b(?:'
             r'(?:Open)?(?<!j\')AI|IA|ML|(?:Chat)?GPT|Mistral|'
@@ -308,10 +311,9 @@ class StringCondition(Condition):
         return obj
 
     @classmethod
-    async def deserialize(cls, waifu_cog: WaifuCollection, *,
-                          user_id: int,
-                          word: dict[str, str],
-                          **kwargs) -> StringCondition:
+    async def deserialize(
+        cls, waifu_cog: WaifuCollection, *, user_id: int, word: dict[str, str], **kwargs
+    ) -> StringCondition:
         user = waifu_cog.bot.get_user(user_id)
         if user is None:
             user = await waifu_cog.bot.fetch_user(user_id)
@@ -324,23 +326,24 @@ class StringCondition(Condition):
 
     @property
     def rules(self):
-        return (f"**[WaiColle]** If another player {self.word.rule} you get 1 drop.\n"
-                "(If you say it yourself you lose the drop)")
+        return (
+            f'**[WaiColle]** If another player {self.word.rule} you get 1 drop.\n'
+            '(If you say it yourself you lose the drop)'
+        )
 
     @classmethod
     async def instanciation_condition(cls, ctx, *args, **kwargs) -> bool:
-        return random.random() < 1/250 and cls.available_instances > 0
+        return random.random() < 1 / 250 and cls.available_instances > 0
 
     @classmethod
-    async def instanciate(cls, ctx: MultiplexingContext,
-                          waifu_cog: WaifuCollection):
+    async def instanciate(cls, ctx: MultiplexingContext, waifu_cog: WaifuCollection):
         async with cls.instances_lock:
             if cls.words:
                 i = random.randrange(len(cls.words))
                 w = cls.words[i]
                 return cls(user=ctx.author, word=w, waifu_cog=waifu_cog)
             else:
-                raise RuntimeError("No more conditional words available")
+                raise RuntimeError('No more conditional words available')
 
     async def check(self, ctx: MultiplexingContext):
         if self.disabled:
@@ -360,8 +363,7 @@ class StringCondition(Condition):
     async def send_reward(self, ctx: MultiplexingContext, nb: int):
         bot_room = self.waifu_cog.bot.get_bot_room()
         bot_room = cast(Messageable, bot_room)
-        await bot_room.send(f"**{ctx.author}** {self.word.action}",
-                            embed=ctx.message.quote_embed)
+        await bot_room.send(f'**{ctx.author}** {self.word.action}', embed=ctx.message.quote_embed)
         await self.waifu_cog._drop(
             self.user,
             f'Conditional drop: {ctx.author} {self.word.action}',
@@ -373,7 +375,7 @@ class StringCondition(Condition):
 
     async def fail(self, ctx: MultiplexingContext):
         with suppress(Exception):
-            await ctx.author.send(f"You {self.word.action}.\nYou lost the drop.")
+            await ctx.author.send(f'You {self.word.action}.\nYou lost the drop.')
         await self.send_reward(ctx, 0)
 
     async def reward(self, ctx: MultiplexingContext):

@@ -28,8 +28,7 @@ from nanachan.settings import (
 )
 from nanachan.utils.misc import list_display
 
-MUGEN_DOMAIN = "kara.moe"
-
+MUGEN_DOMAIN = 'kara.moe'
 
 
 @dataclass
@@ -40,7 +39,6 @@ class KaraSong:
 
 
 class CancellableMessage(ConfirmationView):
-
     def __init__(self, bot, user):
         super().__init__(bot, no_user=user)
         self.remove_item(self.accept_bt)
@@ -61,10 +59,10 @@ class Date(date):
         )
 
 
-class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke):
+class Karaoke(NanaGroupCog, group_name='kara', required_settings=RequiresKaraoke):
     emoji = '🎤'
 
-    @app_commands.command(description="Play a karaoke (with lyrics!)")
+    @app_commands.command(description='Play a karaoke (with lyrics!)')
     @legacy_command()
     async def play(self, ctx, *, search_tags: str):
         audio = Audio.get_cog(ctx.bot)
@@ -83,8 +81,8 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
 
         async with ctx.typing():
             karaokes = list(
-                sorted(await self._find_karaokes(regex=search_tags),
-                       key=attrgetter('name')))
+                sorted(await self._find_karaokes(regex=search_tags), key=attrgetter('name'))
+            )
             if not karaokes:
                 await ctx.send(f'Cannot find karaoke with tags "{search_tags}"')
             elif len(karaokes) == 1:
@@ -104,8 +102,8 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
                 await ctx.send(page)
 
     @app_commands.command(description='Display the evolution of someone’s timing across time')
-    @app_commands.describe(begin_str="YYYY-MM-DD")
-    @app_commands.rename(begin_str="begin")
+    @app_commands.describe(begin_str='YYYY-MM-DD')
+    @app_commands.rename(begin_str='begin')
     @legacy_command()
     async def graph(
         self, ctx, username: str, begin_str: str | None = None, end_str: str | None = None
@@ -117,14 +115,14 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
             try:
                 begin = datetime.fromisoformat(begin_str)
             except ValueError:
-                await ctx.send("begin format should be YYYY-MM-DD")
+                await ctx.send('begin format should be YYYY-MM-DD')
                 return
 
         if end_str is not None:
             try:
                 end = datetime.fromisoformat(end_str)
             except ValueError:
-                await ctx.send("end format should be YYYY-MM-DD")
+                await ctx.send('end format should be YYYY-MM-DD')
                 return
 
         if begin is not None and begin >= (end or date.today()):
@@ -134,8 +132,7 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
         async with ctx.typing():
             await self._send_karagraph(ctx, username, begin, end)
 
-    timing_reg = re.compile(
-        r'^(?:Original Timing|Script Updated By): ([^,\n]*)(?:,.*)?$', re.M)
+    timing_reg = re.compile(r'^(?:Original Timing|Script Updated By): ([^,\n]*)(?:,.*)?$', re.M)
 
     async def _get_timer(self, file_path: str, fut: asyncio.Future[tuple[str, set[str]]]):
         try:
@@ -175,8 +172,7 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
                 for timer in file_timers:
                     timers[timer].append(file)
             else:
-                errors.append(
-                    re.sub('/', ' / ', re.sub(f'^{path}/', '', file)))
+                errors.append(re.sub('/', ' / ', re.sub(f'^{path}/', '', file)))
 
         return timers, errors
 
@@ -195,8 +191,7 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
         for index, (timer, score) in enumerate(ranking, start=1):
             space = ' ' * (4 - len(str(index)))
             if score == old_score:
-                rows.append(
-                    f'{" " * len(str(index))} {space}{timer} ({score})')
+                rows.append(f'{" " * len(str(index))} {space}{timer} ({score})')
             else:
                 rows.append(f'{index}:{space}{timer} ({score})')
             old_score = score
@@ -209,8 +204,9 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
 
         return list_display('Japan7 Ultimate Karaoke Timing Leaderboard (J7UKTL)', rows)
 
-    async def _send_karagraph(self, ctx, username: str,
-                              begin: date | None = None, end: date | None = None):
+    async def _send_karagraph(
+        self, ctx, username: str, begin: date | None = None, end: date | None = None
+    ):
         timers, errors = await self._get_karas_by_timers()
 
         if username not in timers:
@@ -298,8 +294,7 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
             assert minor_fmt is not None
             ax.xaxis.set_minor_formatter(minor_fmt)
 
-        ax.yaxis.set_major_locator(
-            ticker.MaxNLocator(integer=True, min_n_ticks=1))
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, min_n_ticks=1))
 
         pyplot.setp(ax.xaxis.get_minorticklabels(), rotation=270)
         ax.autoscale_view()
@@ -307,13 +302,11 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
         ax.grid(True, which='both', linestyle=':')
 
         file = BytesIO()
-        filename = f"{username}_karastats.png"
-        pyplot.savefig(file, transparent=True,
-                       bbox_inches='tight', format="png")
+        filename = f'{username}_karastats.png'
+        pyplot.savefig(file, transparent=True, bbox_inches='tight', format='png')
         file.seek(0)
 
-        await ctx.send(f'Stats of {username}:',
-                       file=File(file, filename=filename))
+        await ctx.send(f'Stats of {username}:', file=File(file, filename=filename))
 
     async def _find_karaokes(self, path=None, regex=''):
         if path is None:
@@ -347,8 +340,7 @@ class Karaoke(NanaGroupCog, group_name="kara", required_settings=RequiresKaraoke
                             cache.append(line_id)
 
             kara_name = os.path.splitext(os.path.basename(file_path))[0]
-            file_name_reg = re.compile(
-                rf'(?i:{re.escape(kara_name)})\.(?!ass|ssa)[^.]*$')
+            file_name_reg = re.compile(rf'(?i:{re.escape(kara_name)})\.(?!ass|ssa)[^.]*$')
             file_path = None
             for root, _, file_names in os.walk(path):
                 for file_name in file_names:

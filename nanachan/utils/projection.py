@@ -17,7 +17,8 @@ from nanachan.utils.anilist import MediaNavigator
 
 async def get_active_projo(channel_id: int):
     resp = await get_nanapi().projection.projection_get_projections(
-        channel_id=channel_id, status=ProjectionStatus.ONGOING.value)
+        channel_id=channel_id, status=ProjectionStatus.ONGOING.value
+    )
     if not success(resp):
         raise RuntimeError(resp.result)
     projos = resp.result
@@ -51,8 +52,9 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
         al_medias_dict = {media.id_al: media for media in al_medias}
 
     all_medias = projection.medias + projection.external_medias
-    for media in sorted(all_medias,
-                        key=lambda m: m.added_alias if m.added_alias is not None else 0):
+    for media in sorted(
+        all_medias, key=lambda m: m.added_alias if m.added_alias is not None else 0
+    ):
         if isinstance(media, ProjoSelectResultMedias):
             anime = al_medias_dict[media.id_al]
 
@@ -73,27 +75,22 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
         else:
             description.append(media.title)
 
-    embed = Embed(title=projection.name,
-                  description="\n".join(description),
-                  color=0x9966cc)
+    embed = Embed(title=projection.name, description='\n'.join(description), color=0x9966CC)
 
     if ids_al_str is not None:
-        embed.set_thumbnail(url=f"{NANAPI_PUBLIC_URL}/anilist/medias/collages?ids_al={ids_al_str}")
+        embed.set_thumbnail(url=f'{NANAPI_PUBLIC_URL}/anilist/medias/collages?ids_al={ids_al_str}')
 
-    embed.add_field(name="Thread", value=thread.mention)
+    embed.add_field(name='Thread', value=thread.mention)
 
     members = await thread.fetch_members()
-    users = [u
-             for u in map(bot.get_user, (m.id for m in members))
-             if u is not None and not u.bot]
+    users = [u for u in map(bot.get_user, (m.id for m in members)) if u is not None and not u.bot]
 
     names = [str(u) for u in users]
-    footer = " | ".join(sorted(names, key=str.casefold))
+    footer = ' | '.join(sorted(names, key=str.casefold))
     embed.set_footer(text=footer)
 
     if duration > 0:
-        embed.add_field(name="Duration",
-                        value=f"{duration//60:02}h{duration%60:02}")
+        embed.add_field(name='Duration', value=f'{duration//60:02}h{duration%60:02}')
 
     if len(projection.guild_events) > 0:
         now = datetime.now(tz=TZ)
@@ -103,7 +100,7 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
             if e.start_time >= now
         )
         if value:
-            embed.add_field(name="Upcoming Events", value=value, inline=False)
+            embed.add_field(name='Upcoming Events', value=value, inline=False)
 
     view = ProjectionView(bot, projection.id)
     view.infos_bt.disabled = len(projection.medias) == 0
@@ -112,19 +109,19 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
 
 
 class ProjectionInfosButton(Button):
-
     def __init__(self, bot: Bot, projo_id: UUID):
         self.bot = bot
         self.projo_id = projo_id
-        super().__init__(emoji=self.bot.get_nana_emoji("AquaInspect"),
-                         label="AniList search",
-                         style=discord.ButtonStyle.blurple,
-                         custom_id=f"projo-infos-{self.projo_id}")
+        super().__init__(
+            emoji=self.bot.get_nana_emoji('AquaInspect'),
+            label='AniList search',
+            style=discord.ButtonStyle.blurple,
+            custom_id=f'projo-infos-{self.projo_id}',
+        )
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        resp = await get_nanapi().projection.projection_get_projection(
-            self.projo_id)
+        resp = await get_nanapi().projection.projection_get_projection(self.projo_id)
         if not success(resp):
             raise RuntimeError(resp.result)
         projo = resp.result
@@ -143,16 +140,18 @@ class ProjectionInfosButton(Button):
 
 
 class ProjectionView(BaseView):
-    JOIN_EMOTE = "\N{CALENDAR}"
+    JOIN_EMOTE = '\N{CALENDAR}'
 
     def __init__(self, bot: Bot, projo_id: UUID):
         super().__init__(bot)
         self.projo_id = projo_id
 
-        self.join_bt = Button(emoji=self.JOIN_EMOTE,
-                              label="Join thread",
-                              style=discord.ButtonStyle.green,
-                              custom_id=f"projo-join-{self.projo_id}")
+        self.join_bt = Button(
+            emoji=self.JOIN_EMOTE,
+            label='Join thread',
+            style=discord.ButtonStyle.green,
+            custom_id=f'projo-join-{self.projo_id}',
+        )
         self.join_bt.callback = self.join
         self.add_item(self.join_bt)
 
@@ -160,8 +159,7 @@ class ProjectionView(BaseView):
         self.add_item(self.infos_bt)
 
     async def join(self, interaction: discord.Interaction):
-        resp = await get_nanapi().projection.projection_get_projection(
-            self.projo_id)
+        resp = await get_nanapi().projection.projection_get_projection(self.projo_id)
         if not success(resp):
             raise RuntimeError(resp.result)
         projo = resp.result

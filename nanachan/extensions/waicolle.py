@@ -118,12 +118,13 @@ def is_admin_or_bureau(interaction: discord.Interaction):
     checks = Checks()
     app_commands.checks.has_permissions(administrator=True)(checks)
     app_commands.checks.has_role(BUREAU_ROLE_ID)(checks)
-    return any(check_failure_suppress(check)(interaction)
-               for check in checks.__discord_app_commands_checks__)
+    return any(
+        check_failure_suppress(check)(interaction)
+        for check in checks.__discord_app_commands_checks__
+    )
 
 
 def check_failure_suppress(check: Check) -> Check:
-
     def wrapper(interaction):
         try:
             return check(interaction)
@@ -134,19 +135,19 @@ def check_failure_suppress(check: Check) -> Check:
 
 
 class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings=RequiresWaicolle):
-    """ The best gacha game ever made """
+    """The best gacha game ever made"""
+
     emoji = WC_EMOJI
 
-    slash_waifu = NanaGroup(name="waifu",
-                            guild_ids=[ALL_GUILDS],
-                            description="WaiColle guild commands")
+    slash_waifu = NanaGroup(
+        name='waifu', guild_ids=[ALL_GUILDS], description='WaiColle guild commands'
+    )
 
-    slash_waifu_global = NanaGroup(name="waifu",
-                                   description="WaiColle global commands")
+    slash_waifu_global = NanaGroup(name='waifu', description='WaiColle global commands')
 
-    slash_waifu_utils = app_commands.Group(name="utils",
-                                           parent=slash_waifu_global,
-                                           description="WaiColle utils")
+    slash_waifu_utils = app_commands.Group(
+        name='utils', parent=slash_waifu_global, description='WaiColle utils'
+    )
 
     def __init__(self, bot: Bot):
         super().__init__(bot)
@@ -168,7 +169,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         assert self.bot.user is not None
         resp1 = await get_nanapi().waicolle.waicolle_upsert_player(
             self.bot.user.id,
-            UpsertPlayerBody(discord_username=str(self.bot.user), game_mode='ALL'))
+            UpsertPlayerBody(discord_username=str(self.bot.user), game_mode='ALL'),
+        )
         if not success(resp1):
             raise RuntimeError(resp1.result)
 
@@ -185,7 +187,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         for trade in trades:
             # TODO: should be a TradeOfferView
             self.bot.add_view(TradeConfirmationView(self.bot, TradeHelper(self, trade)))
-        logger.info("trades ready")
+        logger.info('trades ready')
 
     @tasks.loop(hours=24)
     async def purge_task(self):
@@ -209,36 +211,27 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Register as a new player or change game mode"""
         view = LockedView(self.bot, interaction.user)
 
-        button = Button(emoji='👰‍♀️',
-                        label='Waifu (female, non-binary)',
-                        style=ButtonStyle.green)
+        button = Button(emoji='👰‍♀️', label='Waifu (female, non-binary)', style=ButtonStyle.green)
         button.callback = partial(self._register_mode, 'WAIFU')
         view.add_item(button)
 
-        button = Button(emoji='👰‍♂️',
-                        label='Husbando (male, non-binary)',
-                        style=ButtonStyle.red)
+        button = Button(emoji='👰‍♂️', label='Husbando (male, non-binary)', style=ButtonStyle.red)
         button.callback = partial(self._register_mode, 'HUSBANDO')
         view.add_item(button)
 
-        button = Button(emoji='👰',
-                        label='All (no filter)',
-                        style=ButtonStyle.blurple)
+        button = Button(emoji='👰', label='All (no filter)', style=ButtonStyle.blurple)
         button.callback = partial(self._register_mode, 'ALL')
         view.add_item(button)
 
         await interaction.response.edit_message(view=None)
 
         await interaction.followup.send(
-            content=f"{interaction.user.mention}\nSelect your game mode",
-            view=view)
+            content=f'{interaction.user.mention}\nSelect your game mode', view=view
+        )
 
-    async def _register_mode(self, mode: PLAYER_MERGE_GAME_MODE,
-                             interaction: discord.Interaction):
-        body = UpsertPlayerBody(discord_username=str(
-            interaction.user), game_mode=mode)
-        resp1 = await get_nanapi().waicolle.waicolle_upsert_player(
-            interaction.user.id, body)
+    async def _register_mode(self, mode: PLAYER_MERGE_GAME_MODE, interaction: discord.Interaction):
+        body = UpsertPlayerBody(discord_username=str(interaction.user), game_mode=mode)
+        resp1 = await get_nanapi().waicolle.waicolle_upsert_player(interaction.user.id, body)
         if not success(resp1):
             raise RuntimeError(resp1.result)
 
@@ -254,7 +247,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         await interaction.followup.send(content=self.bot.get_emoji_str('FubukiGO'))
 
         resp2 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=interaction.user.id, as_og=1)
+            discord_id=interaction.user.id, as_og=1
+        )
         if not success(resp2):
             raise RuntimeError(resp2.result)
         waifus = resp2.result
@@ -268,11 +262,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     raise RuntimeError(resp3.result)
                 assert resp3.code == 201
                 waifus = resp3.result
-                await self.drop_alert(interaction.user,
-                                      waifus,
-                                      'Register',
-                                      messageable=interaction.followup)
-
+                await self.drop_alert(
+                    interaction.user, waifus, 'Register', messageable=interaction.followup
+                )
 
     @slash_waifu_utils.command()
     @app_commands.check(is_admin_or_bureau)
@@ -299,9 +291,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     @slash_waifu_global.command()
     @legacy_command()
-    async def coins(self,
-                    ctx: LegacyCommandContext,
-                    member: discord.User | discord.Member | None = None):
+    async def coins(
+        self, ctx: LegacyCommandContext, member: discord.User | discord.Member | None = None
+    ):
         """wow how moe much cute so waifu"""
         if member is None:
             member = ctx.author
@@ -318,24 +310,24 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         player = resp.result
 
         moecoin = self.bot.get_emoji_str('moecoin')
-        await ctx.reply(f"{member.mention} has **{player.moecoins}** {moecoin} "
-                        f"and **{player.blood_shards}** :drop_of_blood:! " +
-                        self.bot.get_emoji_str('hype'),
-                        allowed_mentions=discord.AllowedMentions(users=False))
+        await ctx.reply(
+            f'{member.mention} has **{player.moecoins}** {moecoin} '
+            f'and **{player.blood_shards}** :drop_of_blood:! ' + self.bot.get_emoji_str('hype'),
+            allowed_mentions=discord.AllowedMentions(users=False),
+        )
 
     @slash_waifu.command()
     @legacy_command()
-    async def donate(self, ctx: LegacyCommandContext, nb: int,
-                     other_member: discord.User):
+    async def donate(self, ctx: LegacyCommandContext, nb: int, other_member: discord.User):
         """Donate moecoins"""
         body = DonatePlayerCoinsBody(moecoins=nb)
         resp = await get_nanapi().waicolle.waicolle_donate_player_coins(
-            ctx.author.id, other_member.id, body)
+            ctx.author.id, other_member.id, body
+        )
         if not success(resp):
             match resp.code:
                 case 404:
-                    raise commands.CommandError(
-                        'One of the players does not exist')
+                    raise commands.CommandError('One of the players does not exist')
                 case 409:
                     raise commands.CommandError('Not enough moecoins')
                 case _:
@@ -345,17 +337,16 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             f"{other_member.mention} "
             f"You received **{nb}** {self.bot.get_emoji_str('moecoin')} "
             f"from {ctx.author.mention}! "
-            f"{self.bot.get_emoji_str('hype')}")
+            f"{self.bot.get_emoji_str('hype')}"
+        )
 
     @slash_waifu_utils.command()
     @app_commands.check(is_admin_or_bureau)
     @legacy_command()
-    async def reward(self, ctx: LegacyCommandContext, nb: int,
-                     member: discord.User):
+    async def reward(self, ctx: LegacyCommandContext, nb: int, member: discord.User):
         """Reward (or punish) any player wallet"""
         body = AddPlayerCoinsBody(moecoins=nb)
-        resp = await get_nanapi().waicolle.waicolle_add_player_coins(
-            member.id, body)
+        resp = await get_nanapi().waicolle.waicolle_add_player_coins(member.id, body)
         if not success(resp):
             match resp.code:
                 case 404:
@@ -369,12 +360,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             await ctx.reply(
                 f"{member.mention} "
                 f"You received **{nb}** {self.bot.get_emoji_str('moecoin')}! "
-                f"{self.bot.get_emoji_str('hype')}")
+                f"{self.bot.get_emoji_str('hype')}"
+            )
         else:
             await ctx.reply(
                 f"{member.mention} "
                 f"You lost **{-nb}** {self.bot.get_emoji_str('moecoin')}... "
-                f"{self.bot.get_emoji_str('amoesip')}")
+                f"{self.bot.get_emoji_str('amoesip')}"
+            )
 
     ##########
     # Search #
@@ -391,7 +384,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         results = resp.result
 
         if len(results) == 0:
-            raise commands.CommandError("No results found")
+            raise commands.CommandError('No results found')
 
         pages = [chara_page(self.bot, chara) for chara in results]
         await NavigatorView.create(self.bot, ctx.reply, pages=pages)
@@ -402,10 +395,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @slash_waifu.command()
     @app_commands.check(is_admin_or_bureau)
     @legacy_command()
-    async def drop(self,
-                   ctx: LegacyCommandContext,
-                   nb: app_commands.Range[int, 0, None],
-                   members: Members | None = None):
+    async def drop(
+        self,
+        ctx: LegacyCommandContext,
+        nb: app_commands.Range[int, 0, None],
+        members: Members | None = None,
+    ):
         """Drop characters to players attending an event"""
         async with ctx.typing():
             if members is None:
@@ -414,30 +409,31 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     assert ctx.author.voice.channel is not None
                     members = ctx.author.voice.channel.members
                 else:
-                    raise commands.CommandError(
-                        'You must be in a voice channel or list members')
+                    raise commands.CommandError('You must be in a voice channel or list members')
 
             members = [m for m in set(members) if not m.bot]
 
             await ctx.reply(
                 f"Event drop for **{'**, **'.join(str(m) for m in members)}**! "
-                f"{self.bot.get_emoji_str('hype')}")
+                f"{self.bot.get_emoji_str('hype')}"
+            )
 
             for member in members:
                 asyncio.create_task(
                     self._drop(member, 'Event drop', replyable=ctx, nb=nb, rollop_reason='event')
                 )
 
-    async def _drop(self,
-                    member: UserType,
-                    reason: str,
-                    replyable: (LegacyCommandContext |
-                                discord.TextChannel | None) = None,
-                    roll_id: str | None = None,
-                    coupon_code: str | None = None,
-                    nb: int | None = 1,
-                    pool_player: UserType | None = None,
-                    rollop_reason: str | None = None):
+    async def _drop(
+        self,
+        member: UserType,
+        reason: str,
+        replyable: (LegacyCommandContext | discord.TextChannel | None) = None,
+        roll_id: str | None = None,
+        coupon_code: str | None = None,
+        nb: int | None = 1,
+        pool_player: UserType | None = None,
+        rollop_reason: str | None = None,
+    ):
         if member.bot:
             return
 
@@ -456,7 +452,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 coupon_code=coupon_code,
                 nb=nb,
                 pool_discord_id=pool_player.id,
-                reason=rollop_reason)
+                reason=rollop_reason,
+            )
 
             match resp:
                 case Error(code=404 | 409):
@@ -475,18 +472,21 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     waifus = resp.result
                     await self.drop_alert(member, waifus, reason, messageable=replyable)
 
-    async def drop_alert(self,
-                         user: UserType,
-                         waifus: list[WaifuSelectResult],
-                         reason: str,
-                         messageable: discord.abc.Messageable | discord.Webhook | None = None,
-                         spoiler: bool = True,
-                         silent: bool = False):
+    async def drop_alert(
+        self,
+        user: UserType,
+        waifus: list[WaifuSelectResult],
+        reason: str,
+        messageable: discord.abc.Messageable | discord.Webhook | None = None,
+        spoiler: bool = True,
+        silent: bool = False,
+    ):
         pages = []
         nb = len(waifus)
 
-        resp = await get_nanapi().anilist.anilist_get_charas(ids_al=','.join(
-            str(w.character.id_al) for w in waifus))
+        resp = await get_nanapi().anilist.anilist_get_charas(
+            ids_al=','.join(str(w.character.id_al) for w in waifus)
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         charas = {c.id_al: c for c in resp.result}
@@ -498,12 +498,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             f"{user.mention}"
             f" [**{reason}**] You received **{nb}** "
             f"character{'s' if nb > 1 else ''}! "
-            f"{self.bot.get_emoji_str('hype' if nb else 'saladedefruits')}")
+            f"{self.bot.get_emoji_str('hype' if nb else 'saladedefruits')}"
+        )
 
-        summary_pages = self.list_paginator(user,
-                                            waifus,
-                                            title='Summary',
-                                            spoiler=spoiler)
+        summary_pages = self.list_paginator(user, waifus, title='Summary', spoiler=spoiler)
 
         allowed_mentions = discord.AllowedMentions(users=not silent)
 
@@ -548,10 +546,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     @slash_waifu_global.command(name='list')
     @legacy_command()
-    async def slash_list(self,
-                         ctx: LegacyCommandContext,
-                         filter: ListChoice,
-                         member: discord.User | discord.Member | None = None):
+    async def slash_list(
+        self,
+        ctx: LegacyCommandContext,
+        filter: ListChoice,
+        member: discord.User | discord.Member | None = None,
+    ):
         """List a player owned characters"""
         if member is None:
             member = ctx.author
@@ -568,16 +568,18 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         elif filter is self.ListChoice.edged:
             kwargs['edged'] = 1
         else:
-            raise RuntimeError("How did you get there?")
+            raise RuntimeError('How did you get there?')
 
         resp = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=member.id, client_id=None, ids=None, **kwargs)
+            discord_id=member.id, client_id=None, ids=None, **kwargs
+        )
         if not success(resp):
             match resp.code:
                 case 404:
                     raise commands.CommandError(
                         f"**{member}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
+                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                    )
                 case _:
                     raise RuntimeError(resp.result)
         waifus = resp.result
@@ -585,20 +587,22 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if len(waifus) == 0:
             raise commands.CommandError(
                 f"**{member}** has no **{filter.value}** character"
-                f"{self.bot.get_emoji_str('saladedefruits')}")
+                f"{self.bot.get_emoji_str('saladedefruits')}"
+            )
 
-        title = f"{filter.name.capitalize()} character list"
+        title = f'{filter.name.capitalize()} character list'
 
         pages = self.list_paginator(member, waifus, title=title)
         await NavigatorView.create(self.bot, ctx.reply, pages=pages)
 
     def list_paginator(
-            self,
-            owner: UserType | discord.Guild,
-            waifus: list[WaifuSelectResult],
-            title: str = 'Character list',
-            spoiler: bool = False,
-            custom_lines: Iterable[str] | None = None) -> list[Coroutine]:
+        self,
+        owner: UserType | discord.Guild,
+        waifus: list[WaifuSelectResult],
+        title: str = 'Character list',
+        spoiler: bool = False,
+        custom_lines: Iterable[str] | None = None,
+    ) -> list[Coroutine]:
         total = len(waifus)
         if total == 0:
             return [self._list_page(0, [], owner, title, spoiler, 0)]
@@ -610,24 +614,27 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         partition = partial(batched, n=PER_PAGE)
         iterator = zip_longest(
             cast(Iterable[Iterable[WaifuSelectResult]], partition(waifus)),
-            cast(Iterable[Iterable[str]], partition(custom_lines)))
+            cast(Iterable[Iterable[str]], partition(custom_lines)),
+        )
         for i, (sublist, sub_custom_lines) in enumerate(iterator):
             sub_custom_lines = [] if sub_custom_lines is None else sub_custom_lines
             pages.append(
-                self._list_page(i, list(sublist), owner, title, spoiler, total,
-                                list(sub_custom_lines)))
+                self._list_page(
+                    i, list(sublist), owner, title, spoiler, total, list(sub_custom_lines)
+                )
+            )
 
         return pages
 
     async def _list_page(
-            self,
-            i: int,
-            waifus: list[WaifuSelectResult],
-            owner: UserType | discord.Guild,
-            title: str,
-            spoiler: bool,
-            total: int,
-            sub_custom_lines: list[str] | None = None
+        self,
+        i: int,
+        waifus: list[WaifuSelectResult],
+        owner: UserType | discord.Guild,
+        title: str,
+        spoiler: bool,
+        total: int,
+        sub_custom_lines: list[str] | None = None,
     ) -> dict[str, Embed | Any]:
         if sub_custom_lines is None:
             sub_custom_lines = []
@@ -639,10 +646,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             async with asyncio.TaskGroup() as tg:
                 chara_ids = [w.character.id_al for w in waifus]
                 resp_task = tg.create_task(
-                    get_nanapi().anilist.anilist_get_charas(ids_al=','.join(map(str, chara_ids))))
+                    get_nanapi().anilist.anilist_get_charas(ids_al=','.join(map(str, chara_ids)))
+                )
 
-                edge_tasks = [(cid, tg.create_task(WaifuHelper.get_edges(cid)))
-                              for cid in chara_ids]
+                edge_tasks = [
+                    (cid, tg.create_task(WaifuHelper.get_edges(cid))) for cid in chara_ids
+                ]
 
             resp = await resp_task
             if not success(resp):
@@ -656,32 +665,32 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             async with asyncio.TaskGroup() as tg:
                 for waifu in waifus:
                     chara_str_tasks.append(
-                        tg.create_task(WaifuTextHelper(
-                            waifu, charas[waifu.character.id_al], edges[waifu.character.id_al]
-                        ).get_str(padding=padding))
+                        tg.create_task(
+                            WaifuTextHelper(
+                                waifu, charas[waifu.character.id_al], edges[waifu.character.id_al]
+                            ).get_str(padding=padding)
+                        )
                     )
 
             for j, (chara_str_task, custom_add) in enumerate(
-                    zip_longest(chara_str_tasks, sub_custom_lines)):
+                zip_longest(chara_str_tasks, sub_custom_lines)
+            ):
                 chara_str = await chara_str_task
 
-                line = f"`{(i * PER_PAGE + j + 1):{padding}}.` {chara_str}"
+                line = f'`{(i * PER_PAGE + j + 1):{padding}}.` {chara_str}'
 
                 if custom_add is not None:
                     line += f"\n`{' ' * (padding + 1)}` {custom_add}"
 
                 text.append(line)
 
-        desc = '\n'.join(
-            text
-        ) if text else f"Nothing. {self.bot.get_emoji_str('saladedefruits')}"
+        desc = '\n'.join(text) if text else f"Nothing. {self.bot.get_emoji_str('saladedefruits')}"
         if spoiler and text:
             desc = '||' + desc + '||'
 
         embed = Embed(title=title, description=desc, color=WC_COLOR)
 
-        if isinstance(owner,
-                      (discord.User, discord.Member, discord.ClientUser)):
+        if isinstance(owner, (discord.User, discord.Member, discord.ClientUser)):
             embed.set_author(name=owner, icon_url=owner.display_avatar.url)
         if isinstance(owner, discord.Guild) and owner.icon is not None:
             embed.set_author(name=owner, icon_url=owner.icon.url)
@@ -692,16 +701,19 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if not spoiler and len(waifus) > 0:
             page = await self._page_add_chara_collage(
-                page, [w.character.id_al for w in waifus], as_thumbnail=True)
+                page, [w.character.id_al for w in waifus], as_thumbnail=True
+            )
 
         return page
 
-    async def waifus_selector(self,
-                              ctx: LegacyCommandContext,
-                              waifus: list[WaifuSelectResult],
-                              action: str,
-                              owner: discord.User | discord.Member,
-                              skip_empty: bool = True):
+    async def waifus_selector(
+        self,
+        ctx: LegacyCommandContext,
+        waifus: list[WaifuSelectResult],
+        action: str,
+        owner: discord.User | discord.Member,
+        skip_empty: bool = True,
+    ):
         if skip_empty and len(waifus) == 0:
             await ctx.send('*Empty list, skipping selection*', ephemeral=True)
             return []
@@ -711,15 +723,16 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             for group in batched(waifus, PER_PAGE_SELECTOR)
         ]
 
-        content = f"{ctx.author.mention}\nSelect the characters you want to **{action}**."
+        content = f'{ctx.author.mention}\nSelect the characters you want to **{action}**.'
 
-        _, view = await WaifuSelectorView.create(self.bot,
-                                                 partial(ctx.send,
-                                                         ephemeral=True),
-                                                 pages=pages,
-                                                 waifus=waifus,
-                                                 lock=ctx.author,
-                                                 static_content=content)
+        _, view = await WaifuSelectorView.create(
+            self.bot,
+            partial(ctx.send, ephemeral=True),
+            pages=pages,
+            waifus=waifus,
+            lock=ctx.author,
+            static_content=content,
+        )
 
         if not await view.confirmation:
             raise commands.CommandError('Aborting.')
@@ -727,23 +740,22 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         selected = view.selected
         return selected
 
-    async def _waifu_selector_page(self, owner: discord.User | discord.Member,
-                                   waifus: Iterable[WaifuSelectResult], total: int):
+    async def _waifu_selector_page(
+        self, owner: discord.User | discord.Member, waifus: Iterable[WaifuSelectResult], total: int
+    ):
         embed = Embed(title='Character list', color=WC_COLOR)
         embed.set_author(name=owner, icon_url=owner.display_avatar.url)
         embed.set_footer(text=f"{total} character{'s' if total > 1 else ''}")
         page = dict(embed=embed)
-        page = await self._page_add_chara_collage(
-            page, [w.character.id_al for w in waifus])
+        page = await self._page_add_chara_collage(page, [w.character.id_al for w in waifus])
         return page
 
     @staticmethod
-    async def _page_add_chara_collage(page: dict[str, Any],
-                                      ids_al: list[int],
-                                      as_thumbnail: bool = False):
+    async def _page_add_chara_collage(
+        page: dict[str, Any], ids_al: list[int], as_thumbnail: bool = False
+    ):
         ids_al_str = ','.join(map(str, ids_al))
-        url = URL(f"{NANAPI_PUBLIC_URL}/anilist/charas/collages").with_query(
-            ids_al=ids_al_str)
+        url = URL(f'{NANAPI_PUBLIC_URL}/anilist/charas/collages').with_query(ids_al=ids_al_str)
         if as_thumbnail:
             page['embed'].set_thumbnail(url=url)
         else:
@@ -756,35 +768,38 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     @slash_waifu_global.command()
     @legacy_command()
-    async def lock(self, ctx: LegacyCommandContext, prioritize_singles: bool=False):
+    async def lock(self, ctx: LegacyCommandContext, prioritize_singles: bool = False):
         """Lock your characters to avoid accidentally killing them"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
+                f'**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.'
+            )
 
         async with self.trade_lock[ctx.author.id]:
             owned_waifus_resp = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0)
+                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0
+            )
             if not success(owned_waifus_resp):
                 match owned_waifus_resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(owned_waifus_resp.result)
             waifus = owned_waifus_resp.result
 
             tracked_waifus_resp = await get_nanapi().waicolle.waicolle_get_player_track_unlocked(
-                discord_id=ctx.author.id, hide_singles=0 if prioritize_singles else 1,
+                discord_id=ctx.author.id,
+                hide_singles=0 if prioritize_singles else 1,
             )
             if not success(tracked_waifus_resp):
                 raise RuntimeError(tracked_waifus_resp.result)
             tracked_waifus_ids = [w.id for w in tracked_waifus_resp.result]
 
             waifus = sorted(
-                waifus,
-                key=lambda w: (w.id not in tracked_waifus_ids, -w.timestamp.timestamp())
+                waifus, key=lambda w: (w.id not in tracked_waifus_ids, -w.timestamp.timestamp())
             )
 
             notice = await ctx.reply('Locking characters...')
@@ -795,12 +810,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             if nb > 0:
                 ids_str = ','.join(str(w.id) for w in selected)
                 update_resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
-                    ids_str, BulkUpdateWaifusBody(locked=True))
+                    ids_str, BulkUpdateWaifusBody(locked=True)
+                )
                 if not success(update_resp):
                     raise RuntimeError(update_resp.result)
 
-            await notice.edit(
-                content=f"**{nb}** character{'s' if nb > 1 else ''} locked.")
+            await notice.edit(content=f"**{nb}** character{'s' if nb > 1 else ''} locked.")
 
     @slash_waifu_global.command()
     @legacy_command()
@@ -808,17 +823,20 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Unlock your accidentally locked characters in order to kill them"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
+                f'**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.'
+            )
 
         async with self.trade_lock[ctx.author.id]:
             resp = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=1, trade_locked=0, blooded=0)
+                discord_id=ctx.author.id, locked=1, trade_locked=0, blooded=0
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(resp.result)
             waifus = resp.result
@@ -827,19 +845,18 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             notice = await ctx.reply('Unlocking characters...')
 
-            selected = await self.waifus_selector(ctx, waifus, 'unlock',
-                                                  ctx.author)
+            selected = await self.waifus_selector(ctx, waifus, 'unlock', ctx.author)
 
             nb = len(selected)
             if nb > 0:
                 ids_str = ','.join(str(w.id) for w in selected)
                 resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
-                    ids_str, BulkUpdateWaifusBody(locked=False))
+                    ids_str, BulkUpdateWaifusBody(locked=False)
+                )
                 if not success(resp):
                     raise RuntimeError(resp.result)
 
-            await notice.edit(
-                content=f"**{nb}** character{'s' if nb > 1 else ''} unlocked.")
+            await notice.edit(content=f"**{nb}** character{'s' if nb > 1 else ''} unlocked.")
 
     ##########
     # Ascend #
@@ -851,57 +868,56 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Ascend your characters to a higher level"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
+                f'**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.'
+            )
 
         async with self.trade_lock[ctx.author.id]:
             notice = await ctx.reply('Ascending characters...')
 
             resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, ascendable=1)
+                discord_id=ctx.author.id, ascendable=1
+            )
             if not success(resp1):
                 match resp1.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(resp1.result)
             waifus = resp1.result
 
-            selected = await self.waifus_selector(ctx, waifus, 'ascend',
-                                                  ctx.author)
+            selected = await self.waifus_selector(ctx, waifus, 'ascend', ctx.author)
 
             await notice.edit(
                 content=f"**{len(selected)}** character{'s' if len(selected) > 1 else ''} "
-                f"ascended.")
+                f"ascended."
+            )
 
             for waifu in selected:
-                resp2 = await get_nanapi().waicolle.waicolle_ascend_waifu(
-                    waifu.id)
+                resp2 = await get_nanapi().waicolle.waicolle_ascend_waifu(waifu.id)
                 if not success(resp2):
                     raise RuntimeError(resp2.result)
                 ascended = resp2.result
 
                 await self._ascend_alert(ctx, ascended)
 
-    async def _ascend_alert(self,
-                            ctx: LegacyCommandContext,
-                            ascended: WaifuSelectResult,
-                            user: UserType | None = None):
+    async def _ascend_alert(
+        self, ctx: LegacyCommandContext, ascended: WaifuSelectResult, user: UserType | None = None
+    ):
         if user is None:
             user = ctx.author
 
-        resp3 = await get_nanapi().anilist.anilist_get_charas(
-            str(ascended.character.id_al))
+        resp3 = await get_nanapi().anilist.anilist_get_charas(str(ascended.character.id_al))
         if not success(resp3):
             raise RuntimeError(resp3.result)
         chara = resp3.result[0]
 
-        embed = Embed(title=f'{chara.name_user_preferred} ascended!',
-                      color=WC_COLOR)
+        embed = Embed(title=f'{chara.name_user_preferred} ascended!', color=WC_COLOR)
         embed.set_image(url=chara.image_large)
         embed.set_author(name=user, icon_url=user.display_avatar.url)
-        embed.set_footer(text=f"ID {chara.id_al}")
+        embed.set_footer(text=f'ID {chara.id_al}')
 
         await ctx.reply(embed=embed)
 
@@ -915,25 +931,27 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Extract blood from your characters"""
         if self.trade_lock[ctx.author.id].locked():
             raise commands.CommandError(
-                f"**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.")
+                f'**{ctx.author}** has a pending trade/reroll/lock/unlock/ascend.'
+            )
 
         async with self.trade_lock[ctx.author.id]:
             notice = await ctx.reply('Blooding characters...')
 
             resp = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0)
+                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(resp.result)
             waifus = resp.result
 
-            selected = await self.waifus_selector(ctx, waifus, 'blood',
-                                                  ctx.author)
+            selected = await self.waifus_selector(ctx, waifus, 'blood', ctx.author)
 
             await notice.edit(
                 content=f"**{len(selected)}** character{'s' if len(selected) > 1 else ''} blooded."
@@ -951,15 +969,17 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 embed = Embed(
                     title=f'{chara.name_user_preferred} died horribly...',
                     description=f'**{rank.blood_shards}** :drop_of_blood: recovered',
-                    color=WC_COLOR)
-                embed.set_author(name=ctx.author,
-                                 icon_url=ctx.author.display_avatar.url)
+                    color=WC_COLOR,
+                )
+                embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
                 embed.set_footer(
-                    text=f"ID {chara.id_al} • Costs {rank.blood_price} "
-                    f"• Worth {rank.blood_shards}")
+                    text=f'ID {chara.id_al} • Costs {rank.blood_price} '
+                    f'• Worth {rank.blood_shards}'
+                )
 
-                url = URL(f"{NANAPI_PUBLIC_URL}/anilist/charas/collages").with_query(
-                    ids_al=str(chara.id_al), blooded=1)
+                url = URL(f'{NANAPI_PUBLIC_URL}/anilist/charas/collages').with_query(
+                    ids_al=str(chara.id_al), blooded=1
+                )
                 embed.set_image(url=url)
                 await ctx.reply(embed=embed)
 
@@ -970,20 +990,21 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         assert self.bot.user is not None
         if self.trade_lock[self.bot.user.id].locked():
             raise commands.CommandError(
-                f"**{self.bot.user}** has a pending trade/reroll/lock/unlock/ascend."
+                f'**{self.bot.user}** has a pending trade/reroll/lock/unlock/ascend.'
             )
 
         await self.trade_lock[self.bot.user.id].acquire()
 
         try:
-            body = NewOfferingBody(player_discord_id=ctx.author.id,
-                                   chara_id_al=character_id,
-                                   bot_discord_id=self.bot.user.id)
+            body = NewOfferingBody(
+                player_discord_id=ctx.author.id,
+                chara_id_al=character_id,
+                bot_discord_id=self.bot.user.id,
+            )
             resp = await get_nanapi().waicolle.waicolle_new_offering(body)
             match resp:
                 case Error(code=404):
-                    raise commands.CommandError(
-                        'This character is not available for offering.')
+                    raise commands.CommandError('This character is not available for offering.')
                 case Error():
                     raise RuntimeError(resp.result)
 
@@ -1029,26 +1050,26 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def reroll(self, ctx: LegacyCommandContext):
         """Reroll characters (3 -> 1)"""
         if self.trade_lock[ctx.author.id].locked():
-            raise commands.CommandError(
-                'You have a pending trade/reroll/lock/unlock/ascend.')
+            raise commands.CommandError('You have a pending trade/reroll/lock/unlock/ascend.')
 
         async with self.trade_lock[ctx.author.id]:
             notice = await ctx.reply('Rerolling characters...')
 
             resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0)
+                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0
+            )
             if not success(resp1):
                 match resp1.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(resp1.result)
             waifus = resp1.result
 
-            rerolled = await self.waifus_selector(ctx, waifus, 'reroll',
-                                                  ctx.author)
+            rerolled = await self.waifus_selector(ctx, waifus, 'reroll', ctx.author)
 
             if len(rerolled) < 1:
                 raise commands.CommandError(
@@ -1056,33 +1077,28 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 )
 
             async with ctx.typing():
-
                 if (nb := len(rerolled)) > 1:
-                    content = f"In exchange for these **{nb}** characters..."
+                    content = f'In exchange for these **{nb}** characters...'
                 else:
                     content = 'In exchange for this **1** character...'
 
-                pages = self.list_paginator(ctx.author,
-                                            rerolled,
-                                            title='Rerolled characters')
+                pages = self.list_paginator(ctx.author, rerolled, title='Rerolled characters')
 
-                await NavigatorView.create(self.bot,
-                                           notice.edit,
-                                           pages=pages,
-                                           static_content=content)
+                await NavigatorView.create(
+                    self.bot, notice.edit, pages=pages, static_content=content
+                )
 
-                body = RerollBody(player_discord_id=ctx.author.id,
-                                  waifus_ids=[str(r.id) for r in rerolled],
-                                  bot_discord_id=self.bot.bot_id)
+                body = RerollBody(
+                    player_discord_id=ctx.author.id,
+                    waifus_ids=[str(r.id) for r in rerolled],
+                    bot_discord_id=self.bot.bot_id,
+                )
                 resp2 = await get_nanapi().waicolle.waicolle_reroll(body)
                 if not success(resp2):
                     raise RuntimeError(resp2.result)
                 result = resp2.result
 
-                await self.drop_alert(ctx.author,
-                                      result.obtained,
-                                      'Reroll',
-                                      messageable=ctx)
+                await self.drop_alert(ctx.author, result.obtained, 'Reroll', messageable=ctx)
 
         for ascended in result.nanascends:
             nana = cast(discord.User, self.bot.user)
@@ -1098,7 +1114,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         self,
         ctx: LegacyCommandContext,
         other_member: discord.User,
-        prioritize_singles: bool=False
+        prioritize_singles: bool = False,
     ):
         """Trade your characters with other players"""
         return await self._trade(ctx, other_member, prioritize_singles)
@@ -1107,28 +1123,32 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         self,
         ctx: LegacyCommandContext,
         other_member: discord.User | discord.Member,
-        prioritize_singles: bool=False,
+        prioritize_singles: bool = False,
     ):
         async with self.trade_lock_context(ctx.author, other_member):
-            await ctx.reply(f"Trading with **{other_member}**...")
+            await ctx.reply(f'Trading with **{other_member}**...')
 
             async with asyncio.TaskGroup() as tg:
                 other_track_unlocked_task = tg.create_task(
                     get_nanapi().waicolle.waicolle_get_player_track_unlocked(
-                        discord_id=other_member.id,
-                        hide_singles=0 if prioritize_singles else 1
+                        discord_id=other_member.id, hide_singles=0 if prioritize_singles else 1
                     )
                 )
                 player_track_unlocked_task = tg.create_task(
                     get_nanapi().waicolle.waicolle_get_player_track_unlocked(
-                        discord_id=ctx.author.id,
-                        hide_singles=0 if prioritize_singles else 1
+                        discord_id=ctx.author.id, hide_singles=0 if prioritize_singles else 1
                     )
                 )
-                player_waifus_task = tg.create_task(get_nanapi().waicolle.waicolle_get_waifus(
-                    discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0))
-                other_waifus_task = tg.create_task(get_nanapi().waicolle.waicolle_get_waifus(
-                    discord_id=other_member.id, locked=0, trade_locked=0, blooded=0))
+                player_waifus_task = tg.create_task(
+                    get_nanapi().waicolle.waicolle_get_waifus(
+                        discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0
+                    )
+                )
+                other_waifus_task = tg.create_task(
+                    get_nanapi().waicolle.waicolle_get_waifus(
+                        discord_id=other_member.id, locked=0, trade_locked=0, blooded=0
+                    )
+                )
 
             player_waifus_resp = await player_waifus_task
             if not success(player_waifus_resp):
@@ -1136,7 +1156,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     case 404:
                         raise commands.CommandError(
                             f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(player_waifus_resp.result)
             player_waifus = player_waifus_resp.result
@@ -1147,7 +1168,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     case 404:
                         raise commands.CommandError(
                             f"**{other_member}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(other_waifus_resp.result)
             other_waifus = other_waifus_resp.result
@@ -1177,19 +1199,20 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 ),
             )
 
-            chousen_player_coro = self.waifus_selector(ctx, player_waifus,
-                                                       'give', ctx.author)
+            chousen_player_coro = self.waifus_selector(ctx, player_waifus, 'give', ctx.author)
 
-            chousen_other_coro = self.waifus_selector(ctx, other_waifus,
-                                                      'receive', other_member)
+            chousen_other_coro = self.waifus_selector(ctx, other_waifus, 'receive', other_member)
 
             chousen_player, chousen_other = await asyncio.gather(
-                chousen_player_coro, chousen_other_coro)
+                chousen_player_coro, chousen_other_coro
+            )
 
-            trade_waifus = OrderedDict([
-                (ctx.author.id, [w.id for w in chousen_player]),
-                (other_member.id, [w.id for w in chousen_other])
-            ])
+            trade_waifus = OrderedDict(
+                [
+                    (ctx.author.id, [w.id for w in chousen_player]),
+                    (other_member.id, [w.id for w in chousen_other]),
+                ]
+            )
 
             trade = await TradeHelper.create(self, trade_waifus)
             try:
@@ -1215,8 +1238,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             member = interaction.user
 
         user_trades = [
-            TradeHelper(self, t) for t in trades
-            if t.offeree.user.discord_id == member.id
+            TradeHelper(self, t) for t in trades if t.offeree.user.discord_id == member.id
         ]
 
         for trade in user_trades:
@@ -1226,7 +1248,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             )
             await trade.send(send)
         if len(user_trades) == 0:
-            await interaction.followup.send(f"No trades for {member}")
+            await interaction.followup.send(f'No trades for {member}')
 
     @asynccontextmanager
     async def trade_lock_context(
@@ -1236,10 +1258,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     ):
         if self.trade_lock[self_member.id].locked():
             raise commands.CommandError(
-                f"**{self_member}** has a pending trade/reroll/lock/unlock/ascend.")
+                f'**{self_member}** has a pending trade/reroll/lock/unlock/ascend.'
+            )
         if self.trade_lock[other_member.id].locked():
             raise commands.CommandError(
-                f"**{other_member}** has a pending trade/reroll/lock/unlock/ascend."
+                f'**{other_member}** has a pending trade/reroll/lock/unlock/ascend.'
             )
 
         if other_member == self_member:
@@ -1270,7 +1293,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 case 404:
                     raise commands.CommandError(
                         f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
+                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                    )
                 case _:
                     raise RuntimeError(resp1.result)
         player = resp1.result
@@ -1281,11 +1305,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         embed = Embed(
             title='WaiColle rolls',
-            description=f"You have **{player.moecoins}** {moecoin}! {hype}",
-            color=WC_COLOR)
+            description=f'You have **{player.moecoins}** {moecoin}! {hype}',
+            color=WC_COLOR,
+        )
 
-        embed.set_author(name=ctx.author,
-                         icon_url=ctx.author.display_avatar.url)
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
 
         resp2 = await get_nanapi().waicolle.waicolle_get_rolls(ctx.author.id)
         if not success(resp2):
@@ -1301,15 +1325,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         await self._roll(ctx, ctx.author, view.selected_roll, notice)
 
-    async def _roll(self, ctx, user: UserType, roll_data: RollData,
-                    notice: discord.Message):
+    async def _roll(self, ctx, user: UserType, roll_data: RollData, notice: discord.Message):
         await notice.edit(
             content=f"Rolling **{roll_data.name}** for **{roll_data.price}** "
-            f"{self.bot.get_emoji_str('moecoin')}.")
-        await self._drop(user,
-                         f"Roll: {roll_data.name}",
-                         replyable=ctx,
-                         roll_id=roll_data.id)
+            f"{self.bot.get_emoji_str('moecoin')}."
+        )
+        await self._drop(user, f'Roll: {roll_data.name}', replyable=ctx, roll_id=roll_data.id)
 
     @slash_waifu_global.command()
     @legacy_command()
@@ -1327,11 +1348,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         client = resp2.result
 
         await ctx.reply(
-            f"[{datetime.now(TZ):%Y-%m-%d}] **Daily Roll**\n"
-            f"```\n"
-            f"{daily.name}\n"
-            f"```"
-            f"{WC_WEB}/{client.id}/daily")
+            f'[{datetime.now(TZ):%Y-%m-%d}] **Daily Roll**\n'
+            f'```\n'
+            f'{daily.name}\n'
+            f'```'
+            f'{WC_WEB}/{client.id}/daily'
+        )
 
     #############
     # Customize #
@@ -1342,21 +1364,22 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def customize(self, ctx: LegacyCommandContext):
         """Customize your ascended characters"""
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=ctx.author.id, ascended=1, blooded=0)
+            discord_id=ctx.author.id, ascended=1, blooded=0
+        )
         if not success(resp1):
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
                         f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
+                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                    )
                 case _:
                     raise RuntimeError(resp1.result)
         waifus = resp1.result
 
         notice = await ctx.reply('Customizing characters...')
 
-        selected = await self.waifus_selector(ctx, waifus, 'customize',
-                                              ctx.author)
+        selected = await self.waifus_selector(ctx, waifus, 'customize', ctx.author)
 
         ids_al = ','.join([str(w.character.id_al) for w in selected])
         resp2 = await get_nanapi().anilist.anilist_get_charas(ids_al)
@@ -1369,14 +1392,18 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             old_name = helper.name
             await ctx.reply(
                 f"Please send a PNG file for {old_name}, 'None' to reset, "
-                f"or any other message to skip",
-                ephemeral=True)
+                f'or any other message to skip',
+                ephemeral=True,
+            )
 
             def check(message):
-                return all([
-                    message.command is None, message.author == ctx.author,
-                    message.channel == ctx.channel
-                ])
+                return all(
+                    [
+                        message.command is None,
+                        message.author == ctx.author,
+                        message.channel == ctx.channel,
+                    ]
+                )
 
             resp = await MultiplexingContext.set_will_delete(check=check)
             resp = resp.message
@@ -1387,15 +1414,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             elif len(resp.attachments) > 0:
                 attachment = resp.attachments[0]
                 if attachment.content_type == 'image/png':
-                    custom_image = base64.b64encode(await
-                                                    attachment.read()).decode()
+                    custom_image = base64.b64encode(await attachment.read()).decode()
                 else:
                     await resp.reply('Not a valid PNG file!')
 
             await resp.delete()
 
-            await ctx.reply("Select the new name for this character",
-                            ephemeral=True)
+            await ctx.reply('Select the new name for this character', ephemeral=True)
 
             names = [helper.chara.name_user_preferred]
             if helper.chara.name_alternative is not None:
@@ -1408,10 +1433,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                         names.append(alt)
 
             _, name_selector = await StringSelectorView.create(
-                ctx.bot, partial(ctx.send, ephemeral=True),
+                ctx.bot,
+                partial(ctx.send, ephemeral=True),
                 strings=names,
-                kind="name",
-                owner=ctx.author
+                kind='name',
+                owner=ctx.author,
             )
 
             if not await name_selector.confirmation:
@@ -1425,16 +1451,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 else:
                     custom_name = ''
 
-            body = CustomizeWaifuBody(custom_image=custom_image,
-                                      custom_name=custom_name)
-            resp3 = await get_nanapi().waicolle.waicolle_customize_waifu(
-                waifu.id, body)
+            body = CustomizeWaifuBody(custom_image=custom_image, custom_name=custom_name)
+            resp3 = await get_nanapi().waicolle.waicolle_customize_waifu(waifu.id, body)
             if not success(resp3):
                 raise RuntimeError(resp3.result)
 
         s = 's' if len(selected) > 1 else ''
-        await notice.edit(
-            content=f"**{len(selected)}** character{s} customized.")
+        await notice.edit(content=f'**{len(selected)}** character{s} customized.')
 
     ###########
     # Reorder #
@@ -1447,19 +1470,20 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         notice = await ctx.reply('Reordering characters...')
 
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=ctx.author.id, ascended=1, blooded=0)
+            discord_id=ctx.author.id, ascended=1, blooded=0
+        )
         if not success(resp1):
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
                         f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
+                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                    )
                 case _:
                     raise RuntimeError(resp1.result)
         waifus = resp1.result
 
-        selected = await self.waifus_selector(ctx, waifus, 'reorder',
-                                              ctx.author)
+        selected = await self.waifus_selector(ctx, waifus, 'reorder', ctx.author)
 
         ids_al = ','.join([str(w.character.id_al) for w in selected])
         resp2 = await get_nanapi().anilist.anilist_get_charas(ids_al)
@@ -1470,7 +1494,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         COLLAGE_POSITIONS: dict[str, Literal['DEFAULT', 'LEFT_OF', 'RIGHT_OF']] = {
             'Default': 'DEFAULT',
             'Left of': 'LEFT_OF',
-            'Right of': 'RIGHT_OF'
+            'Right of': 'RIGHT_OF',
         }
 
         for waifu in selected:
@@ -1481,9 +1505,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 ctx.bot,
                 partial(ctx.send, ephemeral=True),
                 strings=list(COLLAGE_POSITIONS.keys()),
-                kind=f'{waifu_name}\'s position',
+                kind=f"{waifu_name}'s position",
                 owner=ctx.author,
-                capitalize=False)
+                capitalize=False,
+            )
 
             if not await position_selector.confirmation:
                 raise commands.CommandError('Aborting.')
@@ -1497,26 +1522,26 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                         relatives,
                         f'place {waifu_name} {position_selector.selected[0].lower()}',
                         ctx.author,
-                        skip_empty=False)
+                        skip_empty=False,
+                    )
 
                     if len(selected2) == 0:
-                        raise commands.CommandError(
-                            "You have to select another waifu.")
+                        raise commands.CommandError('You have to select another waifu.')
 
                     waifu_relative = selected2[0]
                 else:
                     waifu_relative = None
 
-                body = ReorderWaifuBody(custom_position=selected_position,
-                                        other_waifu_id=waifu_relative.id
-                                        if waifu_relative else None)
-                resp3 = await get_nanapi().waicolle.waicolle_reorder_waifu(
-                    waifu.id, body)
+                body = ReorderWaifuBody(
+                    custom_position=selected_position,
+                    other_waifu_id=waifu_relative.id if waifu_relative else None,
+                )
+                resp3 = await get_nanapi().waicolle.waicolle_reorder_waifu(waifu.id, body)
                 if not success(resp3):
                     raise RuntimeError(resp3.result)
 
         s = 's' if len(selected) > 1 else ''
-        await notice.edit(content=f"**{len(selected)}** character{s} reordered.")
+        await notice.edit(content=f'**{len(selected)}** character{s} reordered.')
 
     ###########
     # Collage #
@@ -1531,10 +1556,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     @slash_waifu_global.command(name='collage')
     @legacy_command()
-    async def slash_collage(self,
-                            ctx: LegacyCommandContext,
-                            filter: CollageChoice,
-                            member: UserType | None = None):
+    async def slash_collage(
+        self, ctx: LegacyCommandContext, filter: CollageChoice, member: UserType | None = None
+    ):
         """Collage - Sangatsu no Phantasia"""
         if member is None:
             member = ctx.author
@@ -1563,7 +1587,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         embed = Embed(title=f'{filter.value.capitalize()} collage', color=WC_COLOR)
         embed.set_image(url=collage.url)
         embed.set_author(name=member, icon_url=member.display_avatar.url)
-        embed.set_footer(text=f"{collage.total} characters")
+        embed.set_footer(text=f'{collage.total} characters')
 
         await ctx.reply(embed=embed)
 
@@ -1572,9 +1596,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     ##################
 
     slash_collage_custom = app_commands.Group(
-        name="collage-custom",
-        parent=slash_waifu_global,
-        description="Edit your custom collage")
+        name='collage-custom', parent=slash_waifu_global, description='Edit your custom collage'
+    )
 
     @slash_collage_custom.command(name='add')
     @legacy_command()
@@ -1583,32 +1606,32 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         notice = await ctx.reply('Selecting characters...')
 
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=ctx.author.id, custom_collage=0, blooded=0)
+            discord_id=ctx.author.id, custom_collage=0, blooded=0
+        )
         if not success(resp1):
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
                         f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
+                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                    )
                 case _:
                     raise RuntimeError(resp1.result)
         waifus = resp1.result
 
-        selected = await self.waifus_selector(ctx, waifus,
-                                              'display in custom collage',
-                                              ctx.author)
+        selected = await self.waifus_selector(ctx, waifus, 'display in custom collage', ctx.author)
 
         if selected:
             ids = ','.join([str(w.id) for w in selected])
             body = BulkUpdateWaifusBody(custom_collage=True)
-            resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
-                ids, body)
+            resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(ids, body)
             if not success(resp2):
                 raise RuntimeError(resp2.result)
 
         await notice.edit(
             content=f"**{len(selected)}** character{'s' if len(selected) > 1 else ''} "
-            f"added to custom collage.")
+            f"added to custom collage."
+        )
 
     @slash_collage_custom.command(name='remove')
     @legacy_command()
@@ -1617,32 +1640,32 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         notice = await ctx.reply('Selecting characters...')
 
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=ctx.author.id, custom_collage=1, blooded=0)
+            discord_id=ctx.author.id, custom_collage=1, blooded=0
+        )
         if not success(resp1):
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
                         f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
+                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                    )
                 case _:
                     raise RuntimeError(resp1.result)
         waifus = resp1.result
 
-        selected = await self.waifus_selector(ctx, waifus,
-                                              'hide in custom collage',
-                                              ctx.author)
+        selected = await self.waifus_selector(ctx, waifus, 'hide in custom collage', ctx.author)
 
         if selected:
             ids = ','.join([str(w.id) for w in selected])
             body = BulkUpdateWaifusBody(custom_collage=False)
-            resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
-                ids, body)
+            resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(ids, body)
             if not success(resp2):
                 raise RuntimeError(resp2.result)
 
         await notice.edit(
             content=f"**{len(selected)}** character{'s' if len(selected) > 1 else ''} "
-            f"removes from custom collage.")
+            f"removes from custom collage."
+        )
 
     #########
     # Album #
@@ -1653,11 +1676,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         staff = 'staff'
         collection = 'collection'
 
-    async def track_autocomplete(self, interaction: discord.Interaction,
-                                 current: str) -> list[app_commands.Choice[str]]:
-        track_type = get_option(interaction,
-                                'track_type',
-                                cast_func=partial(getitem, self.TrackChoice))
+    async def track_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        track_type = get_option(
+            interaction, 'track_type', cast_func=partial(getitem, self.TrackChoice)
+        )
         if track_type is self.TrackChoice.media:
             fn = media_autocomplete(id_al_as_value=True)
         elif track_type is self.TrackChoice.staff:
@@ -1671,12 +1695,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @slash_waifu_global.command(name='album')
     @app_commands.autocomplete(item=track_autocomplete)
     @legacy_command()
-    async def slash_album(self,
-                          ctx: LegacyCommandContext,
-                          track_type: TrackChoice,
-                          item: str,
-                          member: UserType | None = None,
-                          owned_only: bool = False):
+    async def slash_album(
+        self,
+        ctx: LegacyCommandContext,
+        track_type: TrackChoice,
+        item: str,
+        member: UserType | None = None,
+        owned_only: bool = False,
+    ):
         """Panini but with waifus"""
         if member is None:
             member = ctx.author
@@ -1687,61 +1713,65 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             media_id = await autocomplete_cast(ctx.interaction, self.track_autocomplete, int, item)
 
             resp = await get_nanapi().waicolle.waicolle_get_player_media_album(
-                member.id, media_id, owned_only=1 if owned_only else 0)
+                member.id, media_id, owned_only=1 if owned_only else 0
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{member}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(resp.result)
             collage = resp.result
 
             collage_type = collage.media.type
-            media_str = f"[{collage.media.title_user_preferred}]({collage.media.site_url})"
-            collage_desc = f"**{media_str}**"
+            media_str = f'[{collage.media.title_user_preferred}]({collage.media.site_url})'
+            collage_desc = f'**{media_str}**'
             collage_id = collage.media.id_al
 
         elif track_type is self.TrackChoice.staff:
             staff_id = await autocomplete_cast(ctx.interaction, self.track_autocomplete, int, item)
             resp = await get_nanapi().waicolle.waicolle_get_player_staff_album(
-                member.id, staff_id, owned_only=1 if owned_only else 0)
+                member.id, staff_id, owned_only=1 if owned_only else 0
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{member}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(resp.result)
             collage = resp.result
 
             collage_type = 'Staff'
-            native = f" ({collage.staff.name_native})" if collage.staff.name_native else ''
-            staff_str = f"[{collage.staff.name_user_preferred}{native}]({collage.staff.site_url})"
-            collage_desc = f"**{staff_str}**"
+            native = f' ({collage.staff.name_native})' if collage.staff.name_native else ''
+            staff_str = f'[{collage.staff.name_user_preferred}{native}]({collage.staff.site_url})'
+            collage_desc = f'**{staff_str}**'
             collage_id = collage.staff.id_al
 
         elif track_type is self.TrackChoice.collection:
             collec_id = await autocomplete_cast(
                 ctx.interaction, self.track_autocomplete, UUID, item
             )
-            resp = await get_nanapi(
-            ).waicolle.waicolle_get_player_collection_album(
-                member.id, collec_id, owned_only=1 if owned_only else 0)
+            resp = await get_nanapi().waicolle.waicolle_get_player_collection_album(
+                member.id, collec_id, owned_only=1 if owned_only else 0
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
                             f"**{member}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}")
+                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                        )
                     case _:
                         raise RuntimeError(resp.result)
             collage = resp.result
 
-            medias_ids_str = ','.join(
-                map(str, collage.collection.medias_ids_al))
+            medias_ids_str = ','.join(map(str, collage.collection.medias_ids_al))
             resp2 = await get_nanapi().anilist.anilist_get_medias(medias_ids_str)
             if not success(resp2):
                 raise RuntimeError(resp2.result)
@@ -1751,11 +1781,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             for m_id in collage.collection.medias_ids_al:
                 _media = media_map[m_id]
                 media_str.append(
-                    f"`[{_media.type[0]}-{_media.id_al}]` "
-                    f"[{_media.title_user_preferred}]({_media.site_url})")
+                    f'`[{_media.type[0]}-{_media.id_al}]` '
+                    f'[{_media.title_user_preferred}]({_media.site_url})'
+                )
 
-            staff_ids_str = ','.join(
-                map(str, collage.collection.staffs_ids_al))
+            staff_ids_str = ','.join(map(str, collage.collection.staffs_ids_al))
             resp3 = await get_nanapi().anilist.anilist_get_staffs(staff_ids_str)
             if not success(resp3):
                 raise RuntimeError(resp3.result)
@@ -1764,34 +1794,37 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             staff_str = []
             for m_id in collage.collection.staffs_ids_al:
                 _staff = staff_map[m_id]
-                name_native = f" ({_staff.name_native})" if _staff.name_native else ''
+                name_native = f' ({_staff.name_native})' if _staff.name_native else ''
                 staff_str.append(
-                    f"`[S-{_staff.id_al}]` "
-                    f"[{_staff.name_user_preferred}{name_native}]({_staff.site_url})")
+                    f'`[S-{_staff.id_al}]` '
+                    f'[{_staff.name_user_preferred}{name_native}]({_staff.site_url})'
+                )
 
             collage_type = 'Collection'
             collage_desc = (
-                f"**{collage.collection.name}** "
-                f"({self.bot.get_user(collage.collection.author.user.discord_id)})\n"
-                + ' • '.join(media_str + staff_str))
+                f'**{collage.collection.name}** '
+                f'({self.bot.get_user(collage.collection.author.user.discord_id)})\n'
+                + ' • '.join(media_str + staff_str)
+            )
             collage_id = None
 
         else:
-            raise RuntimeError("How did you get there?")
+            raise RuntimeError('How did you get there?')
 
         embed = Embed(
             title=f"{collage_type.capitalize()} {'collage' if owned_only else 'album'}",
             description=collage_desc,
-            color=WC_COLOR)
+            color=WC_COLOR,
+        )
         embed.set_image(url=collage.url)
         embed.set_author(name=member, icon_url=member.display_avatar.url)
 
-        text = f"ID {collage_id} • " if collage_id else ''
+        text = f'ID {collage_id} • ' if collage_id else ''
         if owned_only:
-            text += f"{collage.owned} characters"
+            text += f'{collage.owned} characters'
         else:
-            text += f"{collage.owned}/{collage.total} characters"
-            text += f" • {(100 * collage.owned / collage.total):.2f}% completed"
+            text += f'{collage.owned}/{collage.total} characters'
+            text += f' • {(100 * collage.owned / collage.total):.2f}% completed'
         embed.set_footer(text=text)
 
         await ctx.reply(embed=embed)
@@ -1801,15 +1834,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     #########
 
     slash_track = app_commands.Group(
-        name="track",
-        description="Track your favorite albums progress",
-        parent=slash_waifu_global)
+        name='track', description='Track your favorite albums progress', parent=slash_waifu_global
+    )
 
     @slash_track.command(name='list')
     @legacy_command()
-    async def slash_track_list(self,
-                               ctx: LegacyCommandContext,
-                               member: UserType | None = None):
+    async def slash_track_list(self, ctx: LegacyCommandContext, member: UserType | None = None):
         """Track your favorite albums progress"""
         if member is None:
             member = ctx.author
@@ -1846,17 +1876,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         for media in tracks.tracked_medias:
             stats_tasks.append(
                 asyncio.create_task(
-                    get_nanapi().waicolle.waicolle_get_player_media_stats(
-                        member.id, media.id_al
-                    )
+                    get_nanapi().waicolle.waicolle_get_player_media_stats(member.id, media.id_al)
                 )
             )
         for staff in tracks.tracked_staffs:
             stats_tasks.append(
                 asyncio.create_task(
-                    get_nanapi().waicolle.waicolle_get_player_staff_stats(
-                        member.id, staff.id_al
-                    )
+                    get_nanapi().waicolle.waicolle_get_player_staff_stats(member.id, staff.id_al)
                 )
             )
         for collection in tracks.tracked_collections:
@@ -1875,13 +1901,17 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp:
                 case Success(200, PlayerMediaStatsResult()):
                     stat = resp.result
-                    desc = (f"`[{stat.media.type[0]}-{stat.media.id_al}]` "
-                            f"**{stat.media.title_user_preferred}**")
+                    desc = (
+                        f'`[{stat.media.type[0]}-{stat.media.id_al}]` '
+                        f'**{stat.media.title_user_preferred}**'
+                    )
                 case Success(200, PlayerStaffStatsResult()):
                     stat = resp.result
-                    name_native = f" ({stat.staff.name_native})" if stat.staff.name_native else ''
-                    desc = (f"`[S-{stat.staff.id_al}]` "
-                            f"**{stat.staff.name_user_preferred}{name_native}**")
+                    name_native = f' ({stat.staff.name_native})' if stat.staff.name_native else ''
+                    desc = (
+                        f'`[S-{stat.staff.id_al}]` '
+                        f'**{stat.staff.name_user_preferred}{name_native}**'
+                    )
                 case Success(200, PlayerCollectionStatsResult()):
                     stat = resp.result
 
@@ -1891,11 +1921,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                         )
 
                     for staff in stat.collection.staffs:
-                        name_native = f" ({staff.name_native})" if staff.name_native else ''
+                        name_native = f' ({staff.name_native})' if staff.name_native else ''
                         sub_lines.append(
-                            f"​　　`[S-{staff.id_al}]` {staff.name_user_preferred}{name_native}")
+                            f'​　　`[S-{staff.id_al}]` {staff.name_user_preferred}{name_native}'
+                        )
 
-                    desc = f"`[C]` **{stat.collection.name}**"
+                    desc = f'`[C]` **{stat.collection.name}**'
                 case Error():
                     raise RuntimeError(resp.result)
 
@@ -1915,30 +1946,33 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             description='\n'.join(map(itemgetter(1), elems)),
             color=WC_COLOR,
             author_name=str(member),
-            author_icon_url=member.display_avatar.url)
+            author_icon_url=member.display_avatar.url,
+        )
 
     @staticmethod
     def _format_line(nb_owned: int, nb_charas: int, *components: str):
-        components = *components, f"**{nb_owned}/{nb_charas}** characters"
+        components = *components, f'**{nb_owned}/{nb_charas}** characters'
         if nb_charas > 0:
             percent = 100 * nb_owned / nb_charas
-            completion = f"**{percent:.2f}%** completed"
+            completion = f'**{percent:.2f}%** completed'
             components = *components, completion
         else:
             percent = 0
-        return " • ".join(components), percent
+        return ' • '.join(components), percent
 
     @slash_track.command(name='add')
     @app_commands.autocomplete(id=track_autocomplete)
-    async def slash_track_add(self, interaction: Interaction[Bot],
-                              track_type: TrackChoice, id: str):
+    async def slash_track_add(
+        self, interaction: Interaction[Bot], track_type: TrackChoice, id: str
+    ):
         """Add a track"""
         await interaction.response.defer()
 
         if track_type is self.TrackChoice.media:
             media_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_media(
-                interaction.user.id, media_id)
+                interaction.user.id, media_id
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
@@ -1948,13 +1982,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                         raise RuntimeError(resp.result)
             track = resp.result
             await interaction.followup.send(
-                f"**{track.media.title_user_preferred}** ({track.media.type.casefold()}) "
-                f"added to track list")
+                f'**{track.media.title_user_preferred}** ({track.media.type.casefold()}) '
+                f'added to track list'
+            )
 
         elif track_type is self.TrackChoice.staff:
             staff_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_staff(
-                interaction.user.id, staff_id)
+                interaction.user.id, staff_id
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
@@ -1963,48 +1999,54 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     case _:
                         raise RuntimeError(resp.result)
             track = resp.result
-            name_native = f" ({track.staff.name_native})" if track.staff.name_native else ''
+            name_native = f' ({track.staff.name_native})' if track.staff.name_native else ''
             await interaction.followup.send(
-                f"Staff **{track.staff.name_user_preferred}{name_native}** added to track list")
+                f'Staff **{track.staff.name_user_preferred}{name_native}** added to track list'
+            )
 
         elif track_type is self.TrackChoice.collection:
             collec_id = await autocomplete_cast(interaction, self.track_autocomplete, UUID, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_collection(
-                interaction.user.id, collec_id)
+                interaction.user.id, collec_id
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
-                        await interaction.followup.send(
-                            'Not a player or collection not found')
+                        await interaction.followup.send('Not a player or collection not found')
                         return
                     case _:
                         raise RuntimeError(resp.result)
             track = resp.result
             await interaction.followup.send(
-                f"Collection **{track.collection.name}** added to track list")
+                f'Collection **{track.collection.name}** added to track list'
+            )
         else:
-            raise RuntimeError("How did you get there?")
+            raise RuntimeError('How did you get there?')
 
     @slash_track.command(name='remove')
     @app_commands.autocomplete(id=track_autocomplete)
-    async def slash_track_remove(self, interaction: Interaction[Bot],
-                                 track_type: TrackChoice, id: str):
+    async def slash_track_remove(
+        self, interaction: Interaction[Bot], track_type: TrackChoice, id: str
+    ):
         """Remove a track"""
         await interaction.response.defer()
         if track_type is self.TrackChoice.media:
             media_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_media(
-                interaction.user.id, media_id)
+                interaction.user.id, media_id
+            )
         elif track_type is self.TrackChoice.staff:
             staff_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_staff(
-                interaction.user.id, staff_id)
+                interaction.user.id, staff_id
+            )
         elif track_type is self.TrackChoice.collection:
             collec_id = await autocomplete_cast(interaction, self.track_autocomplete, UUID, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_collection(
-                interaction.user.id, collec_id)
+                interaction.user.id, collec_id
+            )
         else:
-            raise RuntimeError("How did you get there?")
+            raise RuntimeError('How did you get there?')
 
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -2018,11 +2060,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @slash_track.command(name='unlocked')
     @legacy_command()
     async def slash_track_unlocked(
-            self,
-            ctx: LegacyCommandContext,
-            hide_singles: bool,
-            member: UserType | None = None,
-            sort_by: TrackUnlockedSort = TrackUnlockedSort.RECENT):
+        self,
+        ctx: LegacyCommandContext,
+        hide_singles: bool,
+        member: UserType | None = None,
+        sort_by: TrackUnlockedSort = TrackUnlockedSort.RECENT,
+    ):
         """List unlocked characters who are in your tracked medias that other own"""
         await ctx.defer()
 
@@ -2030,13 +2073,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             member = ctx.author
 
         resp1 = await get_nanapi().waicolle.waicolle_get_player_track_unlocked(
-            member.id, 1 if hide_singles else 0)
+            member.id, 1 if hide_singles else 0
+        )
         if not success(resp1):
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
                         f"**{member}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}")
+                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                    )
                 case _:
                     raise RuntimeError(resp1.result)
         waifus = resp1.result
@@ -2044,7 +2089,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if len(waifus) == 0:
             raise commands.CommandError(
                 f"No unlocked tracklisted character found "
-                f"{self.bot.get_emoji_str('saladedefruits')}")
+                f"{self.bot.get_emoji_str('saladedefruits')}"
+            )
 
         chara_ids = ','.join(str(w.character.id_al) for w in waifus)
         resp2 = await get_nanapi().anilist.anilist_get_charas(chara_ids)
@@ -2055,19 +2101,19 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         title = 'Unlocked tracklisted character list'
         if sort_by is self.TrackUnlockedSort.RANK:
             waifus = list(
-                sorted(waifus,
-                       key=lambda w:
-                       (chara_map[w.character.id_al].favourites, w.timestamp),
-                       reverse=True))
+                sorted(
+                    waifus,
+                    key=lambda w: (chara_map[w.character.id_al].favourites, w.timestamp),
+                    reverse=True,
+                )
+            )
 
         custom_lines = (
-            f"🏷 {self.bot.get_user(w.owner.user.discord_id)} • ID {w.character.id_al} • "
-            for w in waifus)
+            f'🏷 {self.bot.get_user(w.owner.user.discord_id)} • ID {w.character.id_al} • '
+            for w in waifus
+        )
 
-        pages = self.list_paginator(member,
-                                    waifus,
-                                    title=title,
-                                    custom_lines=custom_lines)
+        pages = self.list_paginator(member, waifus, title=title, custom_lines=custom_lines)
         await NavigatorView.create(self.bot, ctx.reply, pages=pages)
 
     @slash_track.command(name='reversed')
@@ -2147,9 +2193,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     ###############
 
     slash_collec = app_commands.Group(
-        name="collection",
-        description="Track your favorite albums progress",
-        parent=slash_waifu_global)
+        name='collection',
+        description='Track your favorite albums progress',
+        parent=slash_waifu_global,
+    )
 
     @slash_collec.command(name='new')
     @legacy_command()
@@ -2160,8 +2207,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if not success(resp):
             match resp.code:
                 case 409:
-                    raise commands.CommandError(
-                        "You already have a collection with this name.")
+                    raise commands.CommandError('You already have a collection with this name.')
                 case _:
                     raise RuntimeError(resp.result)
 
@@ -2170,9 +2216,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     @slash_collec.command(name='delete')
     @app_commands.autocomplete(coll=collection_autocomplete())
-    @app_commands.rename(coll="collection")
-    async def slash_track_colle_delete(self, interaction: Interaction[Bot],
-                                       coll: str):
+    @app_commands.rename(coll='collection')
+    async def slash_track_colle_delete(self, interaction: Interaction[Bot], coll: str):
         """Delete a collection"""
         await interaction.response.defer()
         cid = await autocomplete_cast(interaction, collection_autocomplete(), UUID, coll)
@@ -2181,14 +2226,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if not success(resp1):
             match resp1.code:
                 case 404:
-                    await interaction.followup.send("Collection not found.")
+                    await interaction.followup.send('Collection not found.')
                     return
                 case _:
                     raise RuntimeError(resp1.result)
         collec = resp1.result
 
         if collec.author.user.discord_id != interaction.user.id:
-            await interaction.followup.send("You can only delete your own collections")
+            await interaction.followup.send('You can only delete your own collections')
             return
 
         resp2 = await get_nanapi().waicolle.waicolle_delete_collection(cid)
@@ -2201,11 +2246,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         staff = 'staff'
 
     @slash_collec.command(name='add')
-    @app_commands.autocomplete(coll=collection_autocomplete(),
-                               item=track_autocomplete)
-    @app_commands.rename(coll="collection")
-    async def slash_track_colle_add(self, interaction: Interaction[Bot], coll: str,
-                                    track_type: CollecTrackChoice, item: str):
+    @app_commands.autocomplete(coll=collection_autocomplete(), item=track_autocomplete)
+    @app_commands.rename(coll='collection')
+    async def slash_track_colle_add(
+        self, interaction: Interaction[Bot], coll: str, track_type: CollecTrackChoice, item: str
+    ):
         """Add a media AniList ID to collection"""
         await interaction.response.defer()
         cid = await autocomplete_cast(interaction, collection_autocomplete(), UUID, coll)
@@ -2215,56 +2260,54 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if not success(resp1):
             match resp1.code:
                 case 404:
-                    raise commands.CommandError("Collection not found.")
+                    raise commands.CommandError('Collection not found.')
                 case _:
                     raise RuntimeError(resp1.result)
         collec = resp1.result
         if collec.author.user.discord_id != interaction.user.id:
-            await interaction.followup.send("You can only edit your own collections")
+            await interaction.followup.send('You can only edit your own collections')
             return
 
         if track_type is self.CollecTrackChoice.media:
-            resp2 = await get_nanapi().waicolle.waicolle_collection_track_media(
-                cid, id_al)
+            resp2 = await get_nanapi().waicolle.waicolle_collection_track_media(cid, id_al)
             if not success(resp2):
                 match resp2.code:
                     case 404:
-                        await interaction.followup.send("Media not found.")
+                        await interaction.followup.send('Media not found.')
                         return
                     case _:
                         raise RuntimeError(resp2.result)
 
             updated = resp2.result
             await interaction.followup.send(
-                f"**{updated.media.title_user_preferred}** ({updated.media.type.casefold()}) "
-                f"added to track collection {updated.collection.id} – {updated.collection.name}"
+                f'**{updated.media.title_user_preferred}** ({updated.media.type.casefold()}) '
+                f'added to track collection {updated.collection.id} – {updated.collection.name}'
             )
         elif track_type is self.CollecTrackChoice.staff:
-            resp2 = await get_nanapi().waicolle.waicolle_collection_track_staff(
-                cid, id_al)
+            resp2 = await get_nanapi().waicolle.waicolle_collection_track_staff(cid, id_al)
             if not success(resp2):
                 match resp2.code:
                     case 404:
-                        await interaction.followup.send("Staff not found.")
+                        await interaction.followup.send('Staff not found.')
                         return
                     case _:
                         raise RuntimeError(resp2.result)
 
             updated = resp2.result
-            name_native = f" ({updated.staff.name_native})" if updated.staff.name_native else ''
+            name_native = f' ({updated.staff.name_native})' if updated.staff.name_native else ''
             await interaction.followup.send(
-                f"**{updated.staff.name_user_preferred}{name_native}** "
-                f"added to track collection {updated.collection.id} – {updated.collection.name}"
+                f'**{updated.staff.name_user_preferred}{name_native}** '
+                f'added to track collection {updated.collection.id} – {updated.collection.name}'
             )
         else:
-            raise RuntimeError("How did you get there?")
+            raise RuntimeError('How did you get there?')
 
     @slash_collec.command(name='remove')
-    @app_commands.autocomplete(coll=collection_autocomplete(),
-                               item=track_autocomplete)
-    @app_commands.rename(coll="collection")
-    async def slash_track_colle_remove(self, interaction: Interaction[Bot], coll: str,
-                                       track_type: CollecTrackChoice, item: str):
+    @app_commands.autocomplete(coll=collection_autocomplete(), item=track_autocomplete)
+    @app_commands.rename(coll='collection')
+    async def slash_track_colle_remove(
+        self, interaction: Interaction[Bot], coll: str, track_type: CollecTrackChoice, item: str
+    ):
         """Remove a media AniList ID from collection"""
         await interaction.response.defer()
         cid = await autocomplete_cast(interaction, collection_autocomplete(), UUID, coll)
@@ -2274,23 +2317,20 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if not success(resp1):
             match resp1.code:
                 case 404:
-                    await interaction.followup.send("Collection not found.")
+                    await interaction.followup.send('Collection not found.')
                     return
                 case _:
                     raise RuntimeError(resp1.result)
         collec = resp1.result
 
         if collec.author.user.discord_id != interaction.user.id:
-            raise commands.CommandError(
-                "You can only edit your own collections")
+            raise commands.CommandError('You can only edit your own collections')
         if track_type is self.CollecTrackChoice.media:
-            resp2 = await get_nanapi().waicolle.waicolle_collection_untrack_media(
-                cid, id_al)
+            resp2 = await get_nanapi().waicolle.waicolle_collection_untrack_media(cid, id_al)
         elif track_type is self.CollecTrackChoice.staff:
-            resp2 = await get_nanapi().waicolle.waicolle_collection_untrack_staff(
-                cid, id_al)
+            resp2 = await get_nanapi().waicolle.waicolle_collection_untrack_staff(cid, id_al)
         else:
-            raise RuntimeError("How did you get there?")
+            raise RuntimeError('How did you get there?')
 
         if not success(resp2):
             raise RuntimeError(resp2.result)
@@ -2300,9 +2340,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     ##########
     # Coupon #
     ##########
-    slash_waifu_coupon = app_commands.Group(name="coupon",
-                                            description="Coupon commands",
-                                            parent=slash_waifu)
+    slash_waifu_coupon = app_commands.Group(
+        name='coupon', description='Coupon commands', parent=slash_waifu
+    )
 
     @slash_waifu_coupon.command(name='list')
     @app_commands.check(is_admin_or_bureau)
@@ -2314,11 +2354,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             raise RuntimeError(resp.result)
         coupons = resp.result
         fields = [
-            EmbedField(c.code,
-                       ' • '.join(
-                           str(self.bot.get_user(cc.user.discord_id))
-                           for cc in c.claimed_by) or '*Empty*',
-                       inline=False)
+            EmbedField(
+                c.code,
+                ' • '.join(str(self.bot.get_user(cc.user.discord_id)) for cc in c.claimed_by)
+                or '*Empty*',
+                inline=False,
+            )
             for c in coupons
         ]
         await AutoNavigatorView.create(self.bot, ctx.reply, fields=fields)
@@ -2326,20 +2367,17 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @slash_waifu_coupon.command(name='create')
     @app_commands.check(is_admin_or_bureau)
     @legacy_command(ephemeral=True)
-    async def coupon_create(self,
-                            ctx: LegacyCommandContext,
-                            custom_code: str | None = None):
+    async def coupon_create(self, ctx: LegacyCommandContext, custom_code: str | None = None):
         """Create a new coupon"""
-        resp = await get_nanapi().waicolle.waicolle_new_coupon(
-            NewCouponBody(code=custom_code))
+        resp = await get_nanapi().waicolle.waicolle_new_coupon(NewCouponBody(code=custom_code))
         if not success(resp):
             match resp.code:
                 case 409:
-                    raise commands.CommandError("Code already exists.")
+                    raise commands.CommandError('Code already exists.')
                 case _:
                     raise RuntimeError(resp.result)
         coupon = resp.result
-        await ctx.reply(f"New coupon created: {coupon.code}")
+        await ctx.reply(f'New coupon created: {coupon.code}')
 
     @slash_waifu_coupon.command(name='delete')
     @app_commands.check(is_admin_or_bureau)
@@ -2349,7 +2387,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp = await get_nanapi().waicolle.waicolle_delete_coupon(code)
         if not success(resp):
             raise RuntimeError(resp.result)
-        await ctx.reply(f"Coupon {code} deleted")
+        await ctx.reply(f'Coupon {code} deleted')
 
     @slash_waifu_coupon.command(name='claim')
     @legacy_command(ephemeral=True)
@@ -2368,11 +2406,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         await self._drop(user, reason, nb=nb, rollop_reason=reason.casefold())
 
-    async def reward_coins(self,
-                           user: UserType,
-                           nb: int,
-                           reason: str,
-                           room_id: int = BOT_ROOM_ID):
+    async def reward_coins(self, user: UserType, nb: int, reason: str, room_id: int = BOT_ROOM_ID):
         if user.bot:
             return
 
@@ -2381,8 +2415,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if nb > 0:
             body = AddPlayerCoinsBody(moecoins=nb)
-            resp = await get_nanapi().waicolle.waicolle_add_player_coins(
-                user.id, body)
+            resp = await get_nanapi().waicolle.waicolle_add_player_coins(user.id, body)
             if not success(resp):
                 match resp.code:
                     case 404:
@@ -2392,12 +2425,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             await room.send(
                 f"{user} [**{reason}**] "
                 f"You received **{nb}** {self.bot.get_emoji_str('moecoin')}! "
-                f"{self.bot.get_emoji_str('hype')}")
+                f"{self.bot.get_emoji_str('hype')}"
+            )
         else:
             await room.send(
                 f"{user} [**{reason}**] "
                 f"You received **{nb}** {self.bot.get_emoji_str('moecoin')}... "
-                f"{self.bot.get_emoji_str('saladedefruits')}")
+                f"{self.bot.get_emoji_str('saladedefruits')}"
+            )
 
     ##############
     # On message #
@@ -2426,7 +2461,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             async with asyncio.timeout(1):
                 spam = await run_coro(is_spam(ctx))
         except Exception:
-            logger.info("spam check failed horribly")
+            logger.info('spam check failed horribly')
             print_exc()
             spam = False
 
@@ -2436,8 +2471,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if spam:
             self.ignored_messages[ctx.author.id] += 1
-            logger.info(
-                f"ignoring ({delta}) {ctx.author}: {ctx.message.content}")
+            logger.info(f'ignoring ({delta}) {ctx.author}: {ctx.message.content}')
             return
 
         self.accounted_messages[ctx.author.id] += 1
@@ -2456,7 +2490,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if ctx.bananased:
             self.next_drop[ctx.guild.id] += self.speed
             resp = await get_nanapi().waicolle.waicolle_add_player_coins(
-                ctx.author.id, AddPlayerCoinsBody(moecoins=-moecoin_gain))
+                ctx.author.id, AddPlayerCoinsBody(moecoins=-moecoin_gain)
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
@@ -2466,7 +2501,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         else:
             self.next_drop[ctx.guild.id] -= self.speed
             resp = await get_nanapi().waicolle.waicolle_add_player_coins(
-                ctx.author.id, AddPlayerCoinsBody(moecoins=moecoin_gain))
+                ctx.author.id, AddPlayerCoinsBody(moecoins=moecoin_gain)
+            )
             if not success(resp):
                 match resp.code:
                     case 404:
@@ -2502,8 +2538,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     async def user_delta(self, ctx: MultiplexingContext):
         latest_message = await user_latest_message.get(str(ctx.author.id))
-        await user_latest_message.set(ctx.message.created_at.timestamp(),
-                                      sub_key=str(ctx.author.id))
+        await user_latest_message.set(
+            ctx.message.created_at.timestamp(), sub_key=str(ctx.author.id)
+        )
 
         if latest_message is None:
             latest_message = self.start_time
@@ -2517,10 +2554,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         return weekday >= 5 or (weekday == 4 and now.hour >= 18)
 
     def log_user_messages(self, user: discord.User | discord.Member):
-        total = self.ignored_messages[user.id] + \
-            self.accounted_messages[user.id]
-        logger.info(
-            f"{user} ignored messages: {self.ignored_messages[user.id]}/{total}")
+        total = self.ignored_messages[user.id] + self.accounted_messages[user.id]
+        logger.info(f'{user} ignored messages: {self.ignored_messages[user.id]}/{total}')
 
     async def drp_factory(self, guild_id: int) -> int | float:
         if (redis_val := await next_drop.get(str(guild_id))) is not None:
@@ -2542,8 +2577,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
                 with suppress(asyncio.TimeoutError):
                     while True:
-                        async with asyncio.timeout(
-                                WaifuDropReactionListener.timeout):
+                        async with asyncio.timeout(WaifuDropReactionListener.timeout):
                             user = await listener.queue.get()
 
                         dropped = True
@@ -2552,18 +2586,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                         )
 
                 if dropped:
-                    self.next_drop[ctx.guild.id] = RNG.integers(1,
-                                                                DROP_RATE,
-                                                                endpoint=True)
+                    self.next_drop[ctx.guild.id] = RNG.integers(1, DROP_RATE, endpoint=True)
 
 
 def user_menu_trade(cog: WaifuCollection):
-
     @app_commands.context_menu(name='Waifu trade')
     @app_commands.guild_only()
     @handle_command_errors
-    async def user_trade(interaction: discord.Interaction[Bot],
-                         member: discord.Member):
+    async def user_trade(interaction: discord.Interaction[Bot], member: discord.Member):
         ctx = await LegacyCommandContext.from_interaction(interaction)
         await cog._trade(ctx, member)
 
