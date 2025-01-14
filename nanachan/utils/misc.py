@@ -67,7 +67,7 @@ default_backoff = timeout_backoff(conn_backoff(response_backoff))
 
 
 def framed_header(header):
-    return f'┌─{"─" * len(header)}─┐\n' f'│ {header} │\n' f'└─{"─" * len(header)}─┘'
+    return f'┌─{"─" * len(header)}─┐\n│ {header} │\n└─{"─" * len(header)}─┘'
 
 
 def list_display(header, elems):

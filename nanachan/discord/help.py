@@ -22,8 +22,8 @@ class HelpReactionListener(NavigatorView):
         next_pages = chain(pages[1:], [pages[0]])
         for previous_page, page, next_page in zip(prev_pages, pages, next_pages):
             page['embed'].set_footer(
-                text=f"{cls.PREV_EMOJI} {previous_page['embed'].title} | "
-                f"{next_page['embed'].title} {cls.NEXT_EMOJI}"
+                text=f'{cls.PREV_EMOJI} {previous_page["embed"].title} | '
+                f'{next_page["embed"].title} {cls.NEXT_EMOJI}'
             )
         return await super().create(bot, send_function, pages=pages, **kwargs)
 

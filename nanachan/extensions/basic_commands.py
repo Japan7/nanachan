@@ -449,7 +449,7 @@ def message_quote(cog: BasicCommands):
     async def message_quote_menu(interaction: Interaction, message: Message):
         cog.to_be_quoted_messages[interaction.user.id] = message
         await interaction.response.send_message(
-            f'Message selected, use `/{SLASH_PREFIX}quote` to ' f'quote it somewhere else',
+            f'Message selected, use `/{SLASH_PREFIX}quote` to quote it somewhere else',
             ephemeral=True,
         )
 

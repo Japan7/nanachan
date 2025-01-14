@@ -276,7 +276,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{member}** is not a player {self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp.result)
@@ -303,7 +303,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{member}** is not a player {self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp.result)
@@ -334,10 +334,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     raise RuntimeError(resp.result)
 
         await ctx.reply(
-            f"{other_member.mention} "
-            f"You received **{nb}** {self.bot.get_emoji_str('moecoin')} "
-            f"from {ctx.author.mention}! "
-            f"{self.bot.get_emoji_str('hype')}"
+            f'{other_member.mention} '
+            f'You received **{nb}** {self.bot.get_emoji_str("moecoin")} '
+            f'from {ctx.author.mention}! '
+            f'{self.bot.get_emoji_str("hype")}'
         )
 
     @slash_waifu_utils.command()
@@ -358,15 +358,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if nb >= 0:
             await ctx.reply(
-                f"{member.mention} "
-                f"You received **{nb}** {self.bot.get_emoji_str('moecoin')}! "
-                f"{self.bot.get_emoji_str('hype')}"
+                f'{member.mention} '
+                f'You received **{nb}** {self.bot.get_emoji_str("moecoin")}! '
+                f'{self.bot.get_emoji_str("hype")}'
             )
         else:
             await ctx.reply(
-                f"{member.mention} "
-                f"You lost **{-nb}** {self.bot.get_emoji_str('moecoin')}... "
-                f"{self.bot.get_emoji_str('amoesip')}"
+                f'{member.mention} '
+                f'You lost **{-nb}** {self.bot.get_emoji_str("moecoin")}... '
+                f'{self.bot.get_emoji_str("amoesip")}'
             )
 
     ##########
@@ -414,8 +414,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             members = [m for m in set(members) if not m.bot]
 
             await ctx.reply(
-                f"Event drop for **{'**, **'.join(str(m) for m in members)}**! "
-                f"{self.bot.get_emoji_str('hype')}"
+                f'Event drop for **{"**, **".join(str(m) for m in members)}**! '
+                f'{self.bot.get_emoji_str("hype")}'
             )
 
             for member in members:
@@ -458,8 +458,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp:
                 case Error(code=404 | 409):
                     await replyable.send(
-                        f"{member} {resp.result.detail} "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'{member} {resp.result.detail} {self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case Error():
                     raise RuntimeError(resp.result)
@@ -495,10 +494,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             pages.append(chara_page(self.bot, charas[waifu.character.id_al]))
 
         content = (
-            f"{user.mention}"
-            f" [**{reason}**] You received **{nb}** "
-            f"character{'s' if nb > 1 else ''}! "
-            f"{self.bot.get_emoji_str('hype' if nb else 'saladedefruits')}"
+            f'{user.mention}'
+            f' [**{reason}**] You received **{nb}** '
+            f'character{"s" if nb > 1 else ""}! '
+            f'{self.bot.get_emoji_str("hype" if nb else "saladedefruits")}'
         )
 
         summary_pages = self.list_paginator(user, waifus, title='Summary', spoiler=spoiler)
@@ -577,8 +576,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{member}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp.result)
@@ -586,8 +584,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if len(waifus) == 0:
             raise commands.CommandError(
-                f"**{member}** has no **{filter.value}** character"
-                f"{self.bot.get_emoji_str('saladedefruits')}"
+                f'**{member}** has no **{filter.value}** character'
+                f'{self.bot.get_emoji_str("saladedefruits")}'
             )
 
         title = f'{filter.name.capitalize()} character list'
@@ -680,11 +678,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 line = f'`{(i * PER_PAGE + j + 1):{padding}}.` {chara_str}'
 
                 if custom_add is not None:
-                    line += f"\n`{' ' * (padding + 1)}` {custom_add}"
+                    line += f'\n`{" " * (padding + 1)}` {custom_add}'
 
                 text.append(line)
 
-        desc = '\n'.join(text) if text else f"Nothing. {self.bot.get_emoji_str('saladedefruits')}"
+        desc = '\n'.join(text) if text else f'Nothing. {self.bot.get_emoji_str("saladedefruits")}'
         if spoiler and text:
             desc = '||' + desc + '||'
 
@@ -695,7 +693,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if isinstance(owner, discord.Guild) and owner.icon is not None:
             embed.set_author(name=owner, icon_url=owner.icon.url)
 
-        embed.set_footer(text=f"{total} character{'s' if total > 1 else ''}")
+        embed.set_footer(text=f'{total} character{"s" if total > 1 else ""}')
 
         page: dict[str, Any] = dict(embed=embed)
 
@@ -745,7 +743,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     ):
         embed = Embed(title='Character list', color=WC_COLOR)
         embed.set_author(name=owner, icon_url=owner.display_avatar.url)
-        embed.set_footer(text=f"{total} character{'s' if total > 1 else ''}")
+        embed.set_footer(text=f'{total} character{"s" if total > 1 else ""}')
         page = dict(embed=embed)
         page = await self._page_add_chara_collage(page, [w.character.id_al for w in waifus])
         return page
@@ -783,8 +781,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match owned_waifus_resp.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{ctx.author}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(owned_waifus_resp.result)
@@ -815,7 +813,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 if not success(update_resp):
                     raise RuntimeError(update_resp.result)
 
-            await notice.edit(content=f"**{nb}** character{'s' if nb > 1 else ''} locked.")
+            await notice.edit(content=f'**{nb}** character{"s" if nb > 1 else ""} locked.')
 
     @slash_waifu_global.command()
     @legacy_command()
@@ -834,8 +832,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{ctx.author}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(resp.result)
@@ -856,7 +854,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 if not success(resp):
                     raise RuntimeError(resp.result)
 
-            await notice.edit(content=f"**{nb}** character{'s' if nb > 1 else ''} unlocked.")
+            await notice.edit(content=f'**{nb}** character{"s" if nb > 1 else ""} unlocked.')
 
     ##########
     # Ascend #
@@ -881,8 +879,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match resp1.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{ctx.author}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(resp1.result)
@@ -891,8 +889,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             selected = await self.waifus_selector(ctx, waifus, 'ascend', ctx.author)
 
             await notice.edit(
-                content=f"**{len(selected)}** character{'s' if len(selected) > 1 else ''} "
-                f"ascended."
+                content=f'**{len(selected)}** character{"s" if len(selected) > 1 else ""} '
+                f'ascended.'
             )
 
             for waifu in selected:
@@ -944,8 +942,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{ctx.author}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(resp.result)
@@ -954,7 +952,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             selected = await self.waifus_selector(ctx, waifus, 'blood', ctx.author)
 
             await notice.edit(
-                content=f"**{len(selected)}** character{'s' if len(selected) > 1 else ''} blooded."
+                content=f'**{len(selected)}** character{"s" if len(selected) > 1 else ""} blooded.'
             )
 
             for waifu in selected:
@@ -973,8 +971,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 )
                 embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
                 embed.set_footer(
-                    text=f'ID {chara.id_al} • Costs {rank.blood_price} '
-                    f'• Worth {rank.blood_shards}'
+                    text=f'ID {chara.id_al} • Costs {rank.blood_price} • Worth {rank.blood_shards}'
                 )
 
                 url = URL(f'{NANAPI_PUBLIC_URL}/anilist/charas/collages').with_query(
@@ -1062,8 +1059,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match resp1.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{ctx.author}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(resp1.result)
@@ -1073,7 +1070,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             if len(rerolled) < 1:
                 raise commands.CommandError(
-                    f"You must make at least 1 offer... {self.bot.get_emoji_str('coram')}"
+                    f'You must make at least 1 offer... {self.bot.get_emoji_str("coram")}'
                 )
 
             async with ctx.typing():
@@ -1155,8 +1152,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match player_waifus_resp.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{ctx.author}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{ctx.author}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(player_waifus_resp.result)
@@ -1167,8 +1164,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match other_waifus_resp.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{other_member}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{other_member}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(other_waifus_resp.result)
@@ -1292,8 +1289,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp1.result)
@@ -1327,8 +1324,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     async def _roll(self, ctx, user: UserType, roll_data: RollData, notice: discord.Message):
         await notice.edit(
-            content=f"Rolling **{roll_data.name}** for **{roll_data.price}** "
-            f"{self.bot.get_emoji_str('moecoin')}."
+            content=f'Rolling **{roll_data.name}** for **{roll_data.price}** '
+            f'{self.bot.get_emoji_str("moecoin")}.'
         )
         await self._drop(user, f'Roll: {roll_data.name}', replyable=ctx, roll_id=roll_data.id)
 
@@ -1370,8 +1367,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp1.result)
@@ -1476,8 +1473,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp1.result)
@@ -1572,7 +1569,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         match resp:
             case Error(404):
                 raise commands.CommandError(
-                    f"**{member}** is not a player {self.bot.get_emoji_str('saladedefruits')}"
+                    f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
                 )
             case Error():
                 raise RuntimeError(resp.result)
@@ -1581,7 +1578,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if collage.url is None:
             raise commands.CommandError(
-                f"**{member}** has no character {self.bot.get_emoji_str('saladedefruits')}"
+                f'**{member}** has no character {self.bot.get_emoji_str("saladedefruits")}'
             )
 
         embed = Embed(title=f'{filter.value.capitalize()} collage', color=WC_COLOR)
@@ -1612,8 +1609,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp1.result)
@@ -1629,8 +1626,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 raise RuntimeError(resp2.result)
 
         await notice.edit(
-            content=f"**{len(selected)}** character{'s' if len(selected) > 1 else ''} "
-            f"added to custom collage."
+            content=f'**{len(selected)}** character{"s" if len(selected) > 1 else ""} '
+            f'added to custom collage.'
         )
 
     @slash_collage_custom.command(name='remove')
@@ -1646,8 +1643,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{ctx.author}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp1.result)
@@ -1663,8 +1660,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 raise RuntimeError(resp2.result)
 
         await notice.edit(
-            content=f"**{len(selected)}** character{'s' if len(selected) > 1 else ''} "
-            f"removes from custom collage."
+            content=f'**{len(selected)}** character{"s" if len(selected) > 1 else ""} '
+            f'removes from custom collage.'
         )
 
     #########
@@ -1719,8 +1716,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{member}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{member}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(resp.result)
@@ -1740,8 +1737,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{member}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{member}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(resp.result)
@@ -1764,8 +1761,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 match resp.code:
                     case 404:
                         raise commands.CommandError(
-                            f"**{member}** is not a player "
-                            f"{self.bot.get_emoji_str('saladedefruits')}"
+                            f'**{member}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
                         )
                     case _:
                         raise RuntimeError(resp.result)
@@ -1812,7 +1809,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             raise RuntimeError('How did you get there?')
 
         embed = Embed(
-            title=f"{collage_type.capitalize()} {'collage' if owned_only else 'album'}",
+            title=f'{collage_type.capitalize()} {"collage" if owned_only else "album"}',
             description=collage_desc,
             color=WC_COLOR,
         )
@@ -1849,7 +1846,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{member}** is not a player {self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp.result)
@@ -2079,8 +2076,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{member}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp1.result)
@@ -2088,8 +2084,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if len(waifus) == 0:
             raise commands.CommandError(
-                f"No unlocked tracklisted character found "
-                f"{self.bot.get_emoji_str('saladedefruits')}"
+                f'No unlocked tracklisted character found '
+                f'{self.bot.get_emoji_str("saladedefruits")}'
             )
 
         chara_ids = ','.join(str(w.character.id_al) for w in waifus)
@@ -2134,8 +2130,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             match resp1.code:
                 case 404:
                     raise commands.CommandError(
-                        f"**{member}** is not a player "
-                        f"{self.bot.get_emoji_str('saladedefruits')}"
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
                     )
                 case _:
                     raise RuntimeError(resp1.result)
@@ -2143,8 +2138,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if len(results) == 0:
             raise commands.CommandError(
-                f"No one wants your unlocked characters "
-                f"{self.bot.get_emoji_str('saladedefruits')}"
+                f'No one wants your unlocked characters {self.bot.get_emoji_str("saladedefruits")}'
             )
 
         chara_ids = ','.join(str(r.waifu.character.id_al) for r in results)
@@ -2423,15 +2417,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     case _:
                         raise RuntimeError(resp.result)
             await room.send(
-                f"{user} [**{reason}**] "
-                f"You received **{nb}** {self.bot.get_emoji_str('moecoin')}! "
-                f"{self.bot.get_emoji_str('hype')}"
+                f'{user} [**{reason}**] '
+                f'You received **{nb}** {self.bot.get_emoji_str("moecoin")}! '
+                f'{self.bot.get_emoji_str("hype")}'
             )
         else:
             await room.send(
-                f"{user} [**{reason}**] "
-                f"You received **{nb}** {self.bot.get_emoji_str('moecoin')}... "
-                f"{self.bot.get_emoji_str('saladedefruits')}"
+                f'{user} [**{reason}**] '
+                f'You received **{nb}** {self.bot.get_emoji_str("moecoin")}... '
+                f'{self.bot.get_emoji_str("saladedefruits")}'
             )
 
     ##############

@@ -358,7 +358,7 @@ class AnimeMangaQuizz(QuizzBase):
     @classmethod
     async def _image(cls, message: discord.Message | MultiplexingMessage, nb: int = 1):
         with Image.open(
-            resources.open_binary(nanachan.resources, f'image{random.randint(1,3):02}.jpg')
+            resources.open_binary(nanachan.resources, f'image{random.randint(1, 3):02}.jpg')
         ) as image:
             with io.BytesIO() as pp_binary, suppress(IndexError):
                 mention = message.mentions[0]
@@ -404,7 +404,7 @@ class AnimeMangaQuizz(QuizzBase):
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         await super().post_end(game_id, message)
         nb = random.randint(1, 12)
-        reply = await message.reply(f"{PREFIX}im{nb*'a'}ge {message.author.mention}")
+        reply = await message.reply(f'{PREFIX}im{nb * "a"}ge {message.author.mention}')
         await self._image(reply, nb)
 
 
@@ -427,7 +427,7 @@ class LouisQuizz(QuizzBase):
 
     @classmethod
     async def _kininarimasu(cls, channel: 'MessageableChannel'):
-        with resources.path(nanachan.resources, f'hyouka{random.randint(1,7):02}.gif') as path:
+        with resources.path(nanachan.resources, f'hyouka{random.randint(1, 7):02}.gif') as path:
             await channel.send(file=discord.File(path))
 
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
@@ -649,14 +649,14 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         if to_unbanane_now > 0:
             text = f'{to_unbanane_now} 🍌 eaten! '
             if unbananed < max_unbananed:
-                text += f"Next 🍌 lunch in {remaining_time.strftime('%Hh%Mm%Ss')}"
+                text += f'Next 🍌 lunch in {remaining_time.strftime("%Hh%Mm%Ss")}'
             elif unbananed == max_unbananed:
                 text += 'I am now full of 🍌'
             else:
                 text += '🍌 addiction'
         else:
             if unbananed < max_unbananed:
-                text = f"Next 🍌 lunch in {remaining_time.strftime('%Hh%Mm%Ss')}"
+                text = f'Next 🍌 lunch in {remaining_time.strftime("%Hh%Mm%Ss")}'
             else:
                 text = 'I am full of 🍌'
 

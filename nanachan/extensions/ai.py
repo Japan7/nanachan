@@ -66,7 +66,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             f"the use of the word 'title': {content}"
         )
         gen = await self.ollama.generate(OLLAMA_MODEL, prompt)
-        logger.info(f"generated title: {gen['response']}")
+        logger.info(f'generated title: {gen["response"]}')
         resp_match = match_title.search(gen['response'])
         if resp_match is not None:
             title = resp_match.group(1).strip()

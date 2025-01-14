@@ -110,9 +110,7 @@ class Ignored(Cog):
         bot._connection.dispatch = self._dispatch
 
     @has_permissions(administrator=True)
-    @command(
-        hidden=True, help='A tyrant command\n' 'Ignore this member for 5 minutes (by default)'
-    )
+    @command(hidden=True, help='A tyrant command\nIgnore this member for 5 minutes (by default)')
     async def ignore(self, ctx, anas: Member | None = None, period: int = 5):
         if anas is None:
             anas = self.bot.get_anas(ctx.guild)
@@ -141,7 +139,7 @@ class Ignored(Cog):
         await ctx.send(':ok_hand:')
 
     @has_permissions(administrator=True)
-    @command(hidden=True, help='A tyrant command\n' 'Unignore an ignored member')
+    @command(hidden=True, help='A tyrant command\nUnignore an ignored member')
     async def unignore(self, ctx, anas: Member | None = None):
         if anas is None:
             anas = self.bot.get_anas(ctx.guild)
@@ -193,7 +191,7 @@ class Bananas(Cog):
 
         return True
 
-    @command(hidden=True, help='A tyrant command\n' 'Bananas for 5 minutes (by default)')
+    @command(hidden=True, help='A tyrant command\nBananas for 5 minutes (by default)')
     async def bananas(self, ctx, anas: Optional[Member] = None, period: int = 5):
         if anas is None:
             anas = self.bot.get_anas(ctx.guild)
@@ -206,7 +204,7 @@ class Bananas(Cog):
             await ctx.send(':ok_hand:')
 
     @has_permissions(administrator=True)
-    @command(hidden=True, help='A tyrant command\n' 'Unbananas')
+    @command(hidden=True, help='A tyrant command\nUnbananas')
     async def unbananas(self, ctx, anas: Member | None = None):
         if anas is None:
             anas = self.bot.get_anas(ctx.guild)

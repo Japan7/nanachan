@@ -307,7 +307,7 @@ class RollResultsView(CompositeNavigatorView):
                 raise RuntimeError(resp.result)
 
             await interaction.followup.send(
-                f"Locked {self.bot.get_emoji_str('FubukiGO')}", ephemeral=True
+                f'Locked {self.bot.get_emoji_str("FubukiGO")}', ephemeral=True
             )
 
     async def _trade_callback(self, interaction: discord.Interaction):
@@ -342,8 +342,8 @@ class RollResultsView(CompositeNavigatorView):
                     match resp2.code:
                         case 404:
                             raise commands.CommandError(
-                                f"**{interaction.user}** is not a player "
-                                f"{self.bot.get_emoji_str('saladedefruits')}"
+                                f'**{interaction.user}** is not a player '
+                                f'{self.bot.get_emoji_str("saladedefruits")}'
                             )
                         case _:
                             raise RuntimeError(resp2.result)
@@ -663,7 +663,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         )
 
     embed.set_footer(
-        text=f'ID {chara.id_al} • Costs {rank.blood_price} ' f'• Worth {rank.blood_shards}'
+        text=f'ID {chara.id_al} • Costs {rank.blood_price} • Worth {rank.blood_shards}'
     )
 
     return embed
@@ -782,7 +782,7 @@ class WaifuTextHelper(WaifuHelper):
         seiyuu = self.main_seiyuu(self.edges)
 
         if padding:
-            space = f"`{' ' * (padding + 1)}` "
+            space = f'`{" " * (padding + 1)}` '
         else:
             space = ''
 
@@ -933,14 +933,14 @@ class TradeHelper:
 
                 text = []
                 for i, waifu_str in enumerate(text_tasks):
-                    text.append(f'`{i+1:{padding}}.` {await waifu_str}')
+                    text.append(f'`{i + 1:{padding}}.` {await waifu_str}')
 
                 suppl += '\n'.join(text)
 
             if suppl:
                 desc += suppl
             else:
-                desc += f"Nothing. {self.bot.get_emoji_str('saladedefruits')}"
+                desc += f'Nothing. {self.bot.get_emoji_str("saladedefruits")}'
 
             desc += '\n\n'
 

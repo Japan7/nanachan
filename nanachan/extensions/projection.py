@@ -196,8 +196,8 @@ class ProjectionCog(
             raise RuntimeError(resp1.result)
 
         await ctx.reply(
-            f"New **{name}** [projection]({info_msg.jump_url}) started. "
-            f"{self.bot.get_emoji_str('FubukiGO')}"
+            f'New **{name}** [projection]({info_msg.jump_url}) started. '
+            f'{self.bot.get_emoji_str("FubukiGO")}'
         )
         await self.add_projo_leader_role(ctx.author)
 
@@ -225,7 +225,7 @@ class ProjectionCog(
                     raise RuntimeError(resp.result)
 
         embed = await self.update_projo_embed(projo)
-        await ctx.reply(f"Projection renamed. {self.bot.get_emoji_str('FubukiGO')}", embed=embed)
+        await ctx.reply(f'Projection renamed. {self.bot.get_emoji_str("FubukiGO")}', embed=embed)
 
     @app_commands.command()
     @legacy_command()
@@ -244,7 +244,7 @@ class ProjectionCog(
         assert projo.message_id is not None
         info_msg = await self.fetch_message(projo.message_id)
         await info_msg.delete()
-        await ctx.reply(f"The projection was cancelled. {self.bot.get_emoji_str('FubukiGO')}")
+        await ctx.reply(f'The projection was cancelled. {self.bot.get_emoji_str("FubukiGO")}')
 
     class MediaChoice(Enum):
         anime = 'anime'
@@ -291,7 +291,7 @@ class ProjectionCog(
 
         embed = await self.update_projo_embed(projo)
         await ctx.reply(
-            f"**{name}** added to the projection. {self.bot.get_emoji_str('FubukiGO')}",
+            f'**{name}** added to the projection. {self.bot.get_emoji_str("FubukiGO")}',
             embed=embed,
         )
 
@@ -389,7 +389,7 @@ class ProjectionCog(
 
         embed = await self.update_projo_embed(projo)
         await ctx.reply(
-            f"Media removed from the projection. " f"{self.bot.get_emoji_str('FubukiGO')}",
+            f'Media removed from the projection. {self.bot.get_emoji_str("FubukiGO")}',
             embed=embed,
         )
 
@@ -413,7 +413,7 @@ class ProjectionCog(
         info_msg = await self.fetch_message(projo.message_id)
         await info_msg.delete()
         await ctx.reply(
-            f"The projection was marked as completed. {self.bot.get_emoji_str('FubukiGO')}"
+            f'The projection was marked as completed. {self.bot.get_emoji_str("FubukiGO")}'
         )
 
     slash_projo_event = app_commands.Group(name='event', description='Commands related to events')
@@ -469,9 +469,7 @@ class ProjectionCog(
 
         await self.update_projo_embed(projection)
 
-        await ctx.reply(
-            f"[New event]({event.url}) added. " f"{self.bot.get_emoji_str('FubukiGO')}"
-        )
+        await ctx.reply(f'[New event]({event.url}) added. {self.bot.get_emoji_str("FubukiGO")}')
         await self.add_projo_leader_role(ctx.author)
 
     async def create_guild_event(
@@ -562,7 +560,7 @@ class ProjectionCog(
                 await discord_event.delete()
 
         await ctx.reply(
-            f"Upcoming events cleared. {self.bot.get_emoji_str('FubukiGO')}", embed=embed
+            f'Upcoming events cleared. {self.bot.get_emoji_str("FubukiGO")}', embed=embed
         )
 
     @app_commands.command()

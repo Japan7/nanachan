@@ -618,7 +618,7 @@ class StringSelectorView(CompositeNavigatorView):
         options = []
         for string, i in zip(displayed_strings, string_range):
             is_default = str(i) in self.selected_per_page.get(displayed_page, [])
-            option = SelectOption(label=string[:100], description=f'#{i+1}', default=is_default)
+            option = SelectOption(label=string[:100], description=f'#{i + 1}', default=is_default)
             options.append(option)
 
         self.string_select.options = options

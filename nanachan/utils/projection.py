@@ -59,9 +59,9 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
             anime = al_medias_dict[media.id_al]
 
             description.append(
-                f"{anime.title_user_preferred} "
-                f"({anime.episodes or '??'} eps, "
-                f"[{anime.id_al}](https://anilist.co/anime/{anime.id_al}))"
+                f'{anime.title_user_preferred} '
+                f'({anime.episodes or "??"} eps, '
+                f'[{anime.id_al}](https://anilist.co/anime/{anime.id_al}))'
             )
 
             if duration != -1:
@@ -90,7 +90,7 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
     embed.set_footer(text=footer)
 
     if duration > 0:
-        embed.add_field(name='Duration', value=f'{duration//60:02}h{duration%60:02}')
+        embed.add_field(name='Duration', value=f'{duration // 60:02}h{duration % 60:02}')
 
     if len(projection.guild_events) > 0:
         now = datetime.now(tz=TZ)

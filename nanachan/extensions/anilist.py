@@ -125,7 +125,7 @@ class Anilist(Cog):
             color=AL_COLOR,
             author_name=str(ctx.guild),
             author_icon_url=getattr(getattr(ctx.guild, 'icon', None), 'url', None),
-            footer_text=f"{len(llist)} users • {', '.join(services)}",
+            footer_text=f'{len(llist)} users • {", ".join(services)}',
         )
 
     async def media_search(self, search: str, media_type: MediaType):
