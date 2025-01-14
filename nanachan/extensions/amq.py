@@ -284,7 +284,7 @@ class AMQBot(metaclass=MetaAMQBot):
 
     async def create_room(self):
         settings = await self.default_settings
-        await self.send_command('roombrowser', 'host room', **settings)
+        await self.send_command('roombrowser', 'host room', settings=settings)
 
     async def invite(self, name):
         logger.info('inviting ' + name)
@@ -476,7 +476,7 @@ class AMQBot(metaclass=MetaAMQBot):
                 else:
                     self.players[slot] = player
 
-            message = f"Successfully joined {self.settings['roomName']}"
+            message = f'Successfully joined {self.settings["roomName"]}'
             self.room_id = data['gameId']
 
         except KeyError:
@@ -790,7 +790,7 @@ class AMQBot(metaclass=MetaAMQBot):
         )
 
         if self.settings.gamemode_extras:
-            gamemode = f"{self.settings.gamemode} ({', '.join(self.settings.gamemode_extras)})"
+            gamemode = f'{self.settings.gamemode} ({", ".join(self.settings.gamemode_extras)})'
         else:
             gamemode = self.settings.gamemode
 
@@ -830,7 +830,7 @@ class Settings(dict):
         if Settings.scoring.get(self['scoreType']) == 'Lives':
             lives = self['lives']
             if lives > 1:
-                extras.append(f"{self['lives']} lives")
+                extras.append(f'{self["lives"]} lives')
             else:
                 extras.append('Sudden Death')
 
@@ -842,7 +842,7 @@ class Settings(dict):
 
     @property
     def songs(self):
-        return f"{self['numberOfSongs']} songs"
+        return f'{self["numberOfSongs"]} songs'
 
     @property
     def songs_extras(self):
@@ -860,12 +860,12 @@ class Settings(dict):
 
     def __str__(self):
         if self.gamemode_extras:
-            gm = f"{self.gamemode} ({', '.join(self.gamemode_extras)})"
+            gm = f'{self.gamemode} ({", ".join(self.gamemode_extras)})'
         else:
             gm = f'{self.gamemode}'
 
         if self.songs_extras:
-            songs = f"{self.songs} ({', '.join(self.songs_extras)})"
+            songs = f'{self.songs} ({", ".join(self.songs_extras)})'
         else:
             songs = f'{self.songs}'
 
@@ -1006,7 +1006,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         if len(amq_players) == 1:
             await ctx.send(f'invited player {amq_players[0]}')
         else:
-            await ctx.send(f"invited players {', '.join(amq_players)}")
+            await ctx.send(f'invited players {", ".join(amq_players)}')
 
     @amq_group.command()
     @legacy_command()
@@ -1110,7 +1110,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         amq_room = self.bot.get_text_channel(AMQ_ROOM)
         if amq_room is not None:
             self.song_embed = await amq_room.send(
-                f"**Round {self.round_infos['songNumber']} song**", file=file
+                f'**Round {self.round_infos["songNumber"]} song**', file=file
             )
 
     async def on_quiz_next_video_info(self, data):
@@ -1237,16 +1237,16 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         answers_dict = {a['gamePlayerId']: a['answer'] for a in answers['answers']}
 
         desc = (
-            f"**{results['songInfo']['songName']}** — {results['songInfo']['artist']}\n"
-            f"*{results['songInfo']['animeNames']['romaji']}*\n"
-            f"{AMQ_THEME_TYPE[results['songInfo']['type']]}"
+            f'**{results["songInfo"]["songName"]}** — {results["songInfo"]["artist"]}\n'
+            f'*{results["songInfo"]["animeNames"]["romaji"]}*\n'
+            f'{AMQ_THEME_TYPE[results["songInfo"]["type"]]}'
         )
 
         if (nb := results['songInfo']['typeNumber']) > 0:
             desc += f' {nb}'
 
         assert self.round_infos is not None
-        embed = Embed(title=f"Round {self.round_infos['songNumber']}", description=desc)
+        embed = Embed(title=f'Round {self.round_infos["songNumber"]}', description=desc)
         embed.set_author(
             name='AMQ',
             url='https://animemusicquiz.com',
@@ -1295,10 +1295,10 @@ class AMQ(Cog, required_settings=RequiresAMQ):
                 value = self._player_stats(player)
 
                 if (player.get('correctGuesses', None) or player['score']) == 0:
-                    value = f"{self.bot.get_emoji_str('saladedefruits')} " + value
+                    value = f'{self.bot.get_emoji_str("saladedefruits")} ' + value
 
                 if player['position'] == 1:
-                    value = f"{self.bot.get_emoji_str('chousen')} " + value
+                    value = f'{self.bot.get_emoji_str("chousen")} ' + value
 
                 embed.add_field(name=str(d_user or username), value=value)
 
@@ -1307,15 +1307,15 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         return embed
 
     def _player_stats(self, player) -> str:
-        stats = f"**#{player['position']}** @ "
+        stats = f'**#{player["position"]}** @ '
 
         if 'correctGuesses' in player:
             stats += (
-                f"{player['score']} ❤️ • "
-                f"{player['correctGuesses']} {self.bot.get_emoji_str('FubukiGO')}"
+                f'{player["score"]} ❤️ • '
+                f'{player["correctGuesses"]} {self.bot.get_emoji_str("FubukiGO")}'
             )
         else:
-            stats += f"{player['score']} {self.bot.get_emoji_str('FubukiGO')}"
+            stats += f'{player["score"]} {self.bot.get_emoji_str("FubukiGO")}'
 
         return stats
 
@@ -1355,11 +1355,11 @@ class AMQ(Cog, required_settings=RequiresAMQ):
 
             async with NamedTemporaryFile() as f_out:
                 ffmpeg_cmd = (
-                    f"ffmpeg -y -i {f.name} "
-                    f"-ss {startPoint} "
-                    f"-t {data['playLength']} "
-                    f"{AMQ_FFMPEG_SPEED_FILTERS[data['playbackSpeed']]} "
-                    f"-f mp3 -c:a libmp3lame {f_out.name}"
+                    f'ffmpeg -y -i {f.name} '
+                    f'-ss {startPoint} '
+                    f'-t {data["playLength"]} '
+                    f'{AMQ_FFMPEG_SPEED_FILTERS[data["playbackSpeed"]]} '
+                    f'-f mp3 -c:a libmp3lame {f_out.name}'
                 )
 
                 async with NamedTemporaryFile() as err_out:
