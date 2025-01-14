@@ -724,7 +724,7 @@ requires-dist = [
     { name = "html2text", specifier = "==2024.2.26" },
     { name = "matplotlib", specifier = "==3.10.0" },
     { name = "numpy", specifier = "==2.2.1" },
-    { name = "ollama", specifier = "==0.4.5" },
+    { name = "ollama", specifier = "==0.4.6" },
     { name = "parsedatetime", specifier = "==2.6" },
     { name = "pillow", specifier = "==11.1.0" },
     { name = "pydantic", specifier = "==2.10.5" },
@@ -789,15 +789,15 @@ wheels = [
 
 [[package]]
 name = "ollama"
-version = "0.4.5"
+version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/16/fd/a130173a62fd6dc7f7875919593b1e7a47bf3870a913c35d51ea013cfe41/ollama-0.4.5.tar.gz", hash = "sha256:e7fb71a99147046d028ab8b75e51e09437099aea6f8f9a0d91a71f787e97439e", size = 13104 }
+sdist = { url = "https://files.pythonhosted.org/packages/75/d6/2bd7cffbabc81282576051ebf66ebfaa97e6b541975cd4e886bfd6c0f83d/ollama-0.4.6.tar.gz", hash = "sha256:b00717651c829f96094ed4231b9f0d87e33cc92dc235aca50aeb5a2a4e6e95b7", size = 12710 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/71/44e508b6be7cc12efc498217bf74f443dbc1a31b145c87421d20fe61b70b/ollama-0.4.5-py3-none-any.whl", hash = "sha256:74936de89a41c87c9745f09f2e1db964b4783002188ac21241bfab747f46d925", size = 13205 },
+    { url = "https://files.pythonhosted.org/packages/4a/60/ac0e47c4c400fbd1a72a3c6e4a76cf5ef859d60677e7c4b9f0203c5657d3/ollama-0.4.6-py3-none-any.whl", hash = "sha256:cbb4ebe009e10dd12bdd82508ab415fd131945e185753d728a7747c9ebe762e9", size = 13086 },
 ]
 
 [[package]]
