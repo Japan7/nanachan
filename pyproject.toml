@@ -41,7 +41,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pyright==1.1.391",
+    "pyright==1.1.392.post0",
     "ruff==0.9.1",
     "mahou-py",
     "requests==2.32.3",
