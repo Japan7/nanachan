@@ -2552,8 +2552,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         logger.info(f'{user} ignored messages: {self.ignored_messages[user.id]}/{total}')
 
     async def drp_factory(self, guild_id: int) -> int | float:
-        if (redis_val := await next_drop.get(str(guild_id))) is not None:
-            return redis_val
+        # ignore redis connection errors, does mean we lose our progress
+        try:
+            if (redis_val := await next_drop.get(str(guild_id))) is not None:
+                return redis_val
+        except Exception:
+            pass
 
         return self._drp_factory()
 
