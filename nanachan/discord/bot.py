@@ -8,7 +8,7 @@ from contextlib import suppress
 from functools import partial
 from operator import itemgetter as get
 from pathlib import Path
-from typing import Any, Literal, cast, override
+from typing import Any, Callable, Literal, cast, override
 
 from discord import (
     AllowedMentions,
@@ -166,7 +166,12 @@ class Bot(commands.AutoShardedBot):
     async def on_command(self, ctx):
         log.info(f'{ctx.message.author} used `{ctx.view.buffer}`')
 
-    async def send_error(self, error_msg, reply=None, itai: bool = True):
+    async def send_error(
+        self,
+        error_msg: str,
+        reply: Callable[[str], Coroutine[Any, Any, Any]] | None = None,
+        itai: bool = True,
+    ):
         if reply is None:
             bot_room = self.get_channel(BOT_ROOM_ID)
             assert isinstance(bot_room, TextChannel)
@@ -244,7 +249,7 @@ class Bot(commands.AutoShardedBot):
 
         await self.send_error(error_msg, interaction_reply)
 
-    async def on_error(self, event_method, *args, **kwargs):
+    async def on_error(self, event_method: str, /, *args: Any, **kwargs: Any):
         trace = get_traceback_exc()
         error_msg = get_traceback_str(trace)
         console.print(f'Ignoring exception in "{event_method}"', trace, sep='\n')
