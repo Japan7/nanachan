@@ -6,7 +6,7 @@ from datetime import datetime, time, timedelta
 from enum import Enum
 from functools import partial
 from operator import getitem
-from typing import Iterable, MutableSequence, cast
+from typing import Iterable, MutableSequence, cast, override
 from uuid import UUID
 
 import discord
@@ -85,7 +85,12 @@ class ProjectionCog(
 
         asyncio.create_task(self.sync_participants(projos))
 
-        self.remind_projo.start()
+        if not self.remind_projo.is_running():
+            self.remind_projo.start()
+
+    @override
+    async def cog_unload(self):
+        self.remind_projo.cancel()
 
     @tasks.loop(time=time(hour=9, minute=0, tzinfo=TZ))
     async def remind_projo(self):
