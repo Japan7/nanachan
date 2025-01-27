@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import bisect
+import copy
 import logging
 import math
 from collections import OrderedDict, defaultdict
@@ -61,6 +62,8 @@ from nanachan.nanapi.model import (
     WaifuSelectResult,
 )
 from nanachan.redis.waifu import next_drop, user_latest_message
+from nanachan.rpg_model import expedition_collection
+from nanachan.rpg_model.Player import Player as RPGPlayer
 from nanachan.settings import (
     BOT_ROOM_ID,
     BUREAU_ROLE_ID,
@@ -733,7 +736,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         action: str,
         owner: discord.User | discord.Member,
         skip_empty: bool = True,
-    ):
+    ) -> list[WaifuSelectResult]:
         if skip_empty and len(waifus) == 0:
             await ctx.send('*Empty list, skipping selection*', ephemeral=True)
             return []
@@ -936,6 +939,103 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         embed.set_footer(text=f'ID {chara.id_al}')
 
         await ctx.reply(embed=embed)
+
+    ###############
+    # Waidventure #
+    ###############
+
+    def not_a_player(self, user: discord.User | discord.Member) -> str:
+        return f'**{user}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+
+    @slash_waifu.command()
+    async def herofied(self, interaction: Interaction[Bot]):
+        if self.trade_lock[interaction.user.id].locked():
+            # refactor some day
+            await interaction.response.send_message(
+                f'**{interaction.user}** has a pending trade/reroll/lock/unlock/ascend.'
+            )
+            return
+
+        async with self.trade_lock[interaction.user.id]:
+            await interaction.response.send_message('Selecting characters...')
+
+            resp_waifus = await get_nanapi().waicolle.waicolle_get_waifus(
+                discord_id=interaction.user.id,
+                locked=0,
+                trade_locked=0,
+                blooded=0,
+                ascended=1,
+            )
+            match resp_waifus:
+                case Success():
+                    pass
+                case Error(code=404):
+                    await interaction.followup.send(self.not_a_player(interaction.user))
+                    return
+                case _:
+                    raise RuntimeError(resp_waifus.result)
+
+            waifus = resp_waifus.result
+
+            ctx = await LegacyCommandContext.from_interaction(interaction)
+            selected = await self.waifus_selector(ctx, waifus, 'herofied', interaction.user)
+
+            nb = len(selected)
+            notice = await interaction.original_response()
+            _ = await notice.edit(content=f'**{nb}** characters Herofied.')
+
+            if nb == 0:
+                return
+
+            p = RPGPlayer()
+            for i, w in enumerate(selected):
+                p.addNewHero(w, 'Hero')
+                h = p.heroList[i]
+                h.goToLevel(50)
+                herolog = (
+                    f'new hero created : {h.name}\n'
+                    f'Hero class : {h.heroClass.name}\n'
+                    f'Hero level : {h.level}\n'
+                    f'STR = {h.stats[0]}\n'
+                    f'DEX = {h.stats[1]}\n'
+                    f'INT = {h.stats[2]}\n'
+                    f'LUK = {h.stats[3]}\n'
+                    f'skills : \n'
+                )
+                for s in h.skillSet.skills:
+                    if h.skillSet.skills[s].have:
+                        herolog += f'    {s.value}\n'
+                await interaction.followup.send(herolog)
+                axe = copy.deepcopy(expedition_collection.twoHandedAxe)
+                axe.rarity = 2
+                axe.roll()
+                h.equipMainHand(axe)
+                weaponString = ''
+                weaponString += (
+                    f'the weapon : {h.main_hand.name}\n'
+                    f'Damage : {h.main_hand.totalAttackRange}\n'
+                    f'STR multiplicator : {h.main_hand.multiplierSTR[0]}\n'
+                    f'DEX multiplicator : {h.main_hand.multiplierDEX[0]}\n'
+                    f'INT multiplicator : {h.main_hand.multiplierINT[0]}\n'
+                )
+
+                if len(h.main_hand.prefixes) > 0 or len(h.main_hand.suffixes) > 0:
+                    weaponString += 'modifier :\n'
+
+                for pr in h.main_hand.prefixes:
+                    weaponString += f'    {pr.value} : {axe.prefixes[pr].value}\n'
+                for sf in h.main_hand.suffixes:
+                    weaponString += f'    {sf.value} : {axe.suffixes[sf].value}\n'
+                await ctx.reply(weaponString)
+                p.explorationKart[0].addHeroToTeam(h)
+
+            expe = copy.deepcopy(expedition_collection.expedition13)
+            expe.launch(p, p.explorationKart[0])
+            #rewards = expe.getRewards(p, p.explorationKart[0])
+
+            for encounter in expe.encounters:
+                for m in encounter.encounterLog:
+                    await ctx.reply(m)
 
     #########
     # Blood #
