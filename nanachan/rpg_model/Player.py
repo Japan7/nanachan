@@ -15,11 +15,11 @@ class Player:
         self.team: list[Hero] = []
         self.explorationKart: list[ExplorationKart] = [ExplorationKart()]
 
-    def addNewHero(self, waifu: WaifuSelectResult, name: str):
+    async def addNewHero(self, waifu: WaifuSelectResult, name: str):
         # If the waifu is ascend and not already a hero
         # mark the waifu as Herofied (that it can't be a hero again)
         h = Hero(waifu, name)
-        h.setHeroRank()
+        await h.setHeroRank()
         self.heroList.append(h)
 
     def unequipWeaponToHero(self, hero: Hero):
