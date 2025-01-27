@@ -964,7 +964,6 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 locked=0,
                 trade_locked=0,
                 blooded=0,
-                ascended=1,
             )
             match resp_waifus:
                 case Success():
@@ -989,7 +988,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             p = RPGPlayer()
             for i, w in enumerate(selected):
-                p.addNewHero(w, 'Hero')
+                await p.addNewHero(w, 'Hero')
                 h = p.heroList[i]
                 h.goToLevel(50)
                 herolog = (

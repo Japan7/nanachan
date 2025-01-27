@@ -554,7 +554,7 @@ class Hero(Character):
         super().__init__(waifu=waifu, name=name)
         self.level = 1
         self.xp = 0
-        self.heroClassClass = chooseHeroClass(waifu)
+        self.heroClass = chooseHeroClass(waifu)
         self.stats = self.heroClass.stats
         self.main_hand = collection.fist
 
