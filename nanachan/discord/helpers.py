@@ -326,7 +326,9 @@ class MultiplexingContext(commands.Context['Bot']):
                 await asyncio.wait(modifiers_tasks)
 
     @classmethod
-    def set_will_delete(cls, *, check: Callable[[MultiplexingContext], bool]):
+    def set_will_delete(
+        cls, *, check: Callable[[MultiplexingContext], bool]
+    ) -> asyncio.Future[MultiplexingContext]:
         fut = asyncio.get_running_loop().create_future()
         cls.listeners.append((check, fut))
         return fut
