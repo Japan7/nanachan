@@ -53,7 +53,7 @@ dev = [
 
 [tool.uv.sources]
 discord-py = { git = "https://github.com/Japan7/discord.py.git", rev = "de39725b2a3c2fc582c1e049a17a3ef555723d91" }
-mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "151ba6586b79b8ce376c7dc5dfa08e13bd40cdf2" }
+mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "9e040f6975a0ce6be75cf3402cad208b6d3d3203" }
 yappi = { git = "https://github.com/odrling/yappi.git", rev = "c1ea539c831ad0c46f7b0b463025688d7db05c14" }
 
 [project.urls]
