@@ -12,11 +12,7 @@ from dateutil.parser import parse
 from discord import Interaction, Member, Role, SelectOption, User, app_commands, ui
 from discord.ui import Button
 
-from nanachan.discord.application_commands import (
-    LegacyCommandContext,
-    legacy_command,
-    nana_command,
-)
+from nanachan.discord.application_commands import nana_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import Embed, MultiplexingContext
@@ -121,7 +117,7 @@ class Profiles(Cog):
             if p.birthday
         ]
         birthdays.sort()
-        message_text = [f"**{b[0].strftime("%d/%m")}** • {b[1]}" for b in birthdays]
+        message_text = [f'**{b[0].strftime("%d/%m")}** • {b[1]}' for b in birthdays]
         icon_url = None if guild.icon is None else guild.icon.url
         await AutoNavigatorView.create(
             self.bot,
@@ -220,46 +216,46 @@ class Profiles(Cog):
         return embed
 
     @nana_command()
-    @legacy_command()
-    async def register(self, ctx: LegacyCommandContext):
+    async def register(self, interaction: Interaction[Bot]):
         """Register yourself into Nana-chan"""
         registrars = sorted(self.registrars.items(), key=itemgetter(0))
 
         desc = []
-        view = LockedView(self.bot, ctx.author)
+        view = LockedView(self.bot, interaction.user)
         for name, callback in registrars:
-            emoji = callback.__self__.__class__.emoji  # type: ignore
+            emoji: str = callback.__self__.__class__.emoji  # type: ignore
             desc.append(f'{emoji} **{name}**\n{callback.__doc__}')
             button = Button(label=name, emoji=emoji)
             button.callback = callback
             view.add_item(button)
 
         embed = Embed(title=f'{self.emoji} Register', description='\n\n'.join(desc))
-        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
-        await ctx.reply(
-            content=f"React with the {self.bot.get_emoji_str('chousen')} option",
+        embed.set_author(name=interaction.user, icon_url=interaction.user.display_avatar.url)
+
+        _ = await interaction.response.send_message(
+            content=f'React with the {self.bot.get_emoji_str("chousen")} option',
             embed=embed,
             view=view,
         )
 
     @nana_command(description='Edit your own profile.')
-    @legacy_command()
-    async def iam(self, ctx: LegacyCommandContext):
-        assert ctx.guild
-        member = ctx.guild.get_member(ctx.author.id)
-        profile_resp = await get_nanapi().user.user_get_profile(ctx.author.id)
+    async def iam(self, interaction: Interaction[Bot]):
+        _ = asyncio.create_task(interaction.response.defer())
+        profile_resp = await get_nanapi().user.user_get_profile(interaction.user.id)
         match profile_resp:
             case Success():
                 profile = profile_upsert_body_from_search_result(
-                    ctx.author.name, profile_resp.result
+                    interaction.user.name, profile_resp.result
                 )
             case Error(code=404):
-                profile = UpsertProfileBody(discord_username=ctx.author.name)
+                profile = UpsertProfileBody(discord_username=interaction.user.name)
             case _:
                 raise RuntimeError(profile_resp.result)
-        assert member
-        embed = self.create_embed(member, profile)
-        await ctx.send(embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile))
+
+        embed = self.create_embed(interaction.user, profile)
+        await interaction.followup.send(
+            embed=embed, view=ProfileCreateOrChangeView(self.bot, interaction.user, profile)
+        )
 
     @nana_command(description="Display other user's profile.")
     async def whois(self, interaction: Interaction[Bot], other: discord.User):
@@ -377,9 +373,9 @@ class ProfileModal(ui.Modal):
 
 
 class ProfileCreateOrChangeView(BaseView):
-    def __init__(self, bot: Bot, member: Member, profile: UpsertProfileBody):
+    def __init__(self, bot: Bot, member: Member | User, profile: UpsertProfileBody):
         super().__init__(bot)
-        self.member = member
+        self.member: Member | User = member
         self.profile = profile
 
         n7_major_select = ui.Select[ProfileCreateOrChangeView](
