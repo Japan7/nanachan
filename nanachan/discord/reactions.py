@@ -4,9 +4,9 @@ import asyncio
 import logging
 from collections import OrderedDict
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import partial
-from typing import TYPE_CHECKING, Any, Literal, Optional, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 import discord
 from discord.abc import PrivateChannel
@@ -111,7 +111,7 @@ class ReactionListener(metaclass=MetaReactionListener):
     def __init__(
         self,
         bot,
-        message: Union[discord.Message, WebhookMessage, discord.WebhookMessage, int],
+        message: discord.Message | WebhookMessage | discord.WebhookMessage | int,
         channel_id: int | None = None,
         first_handlers=None,
     ):
@@ -279,14 +279,17 @@ class ReactionListener(metaclass=MetaReactionListener):
 @dataclass
 class Pages:
     pages: list[Any]
-    static_content: Optional[str] = None
+    static_content: str | None = None
     start_at: int = 1
     prefetch_min_batch_size: int = 5
     prefetch_pages: int = 12
+    _page_cache: dict[int, Any] = field(init=False, default_factory=dict)
+    _prefetched_upto: int = field(init=False, default=0)
 
     def __post_init__(self):
-        self.page_cache = {}
-        self._prefetched_upto = 0
+        if len(self.pages) == 0:
+            raise ValueError('No pages set (handle that case appropriately)')
+
         if self.prefetch_pages:
             self.prefetch(self.prefetch_pages)
 
@@ -295,41 +298,38 @@ class Pages:
         from_ = around - self.prefetch_pages
 
         for i in (i % len(self.pages) for i in range(from_, upto + 1)):
-            if i not in self.page_cache:
+            if i not in self._page_cache:
                 asyncio.create_task(self.get_page(i, prefetch=False))
 
-    async def get_page(self, i: int, prefetch=True):
+    async def get_page(self, i: int, prefetch: bool = True):
         if prefetch:
             self.prefetch(i)
 
-        if i not in self.page_cache:
+        if i not in self._page_cache:
             loop = asyncio.get_running_loop()
-            self.page_cache[i] = loop.create_future()
+            self._page_cache[i] = loop.create_future()
             try:
                 page = await run_coro(self.pages[i])
                 if len(self) > 1:
-                    page['content'] = '\n'.join(
-                        filter(
-                            None,
-                            [
-                                self.static_content,
-                                page.get(
-                                    'content',
-                                    f'#{self.start_at + i}/{len(self.pages) + self.start_at - 1}',
-                                ),
-                            ],
-                        )
+                    page_content = page.get(
+                        'content',
+                        f'#{self.start_at + i}/{len(self.pages) + self.start_at - 1}',
                     )
+                    if self.static_content:
+                        page['content'] = f'{self.static_content}\n{page_content}'
+                    else:
+                        page['content'] = page_content
+
                 else:
                     page['content'] = self.static_content
 
-                self.page_cache[i].set_result(page)
+                self._page_cache[i].set_result(page)
             except Exception as e:
-                self.page_cache[i].set_exception(e)
+                self._page_cache[i].set_exception(e)
 
-        return await self.page_cache[i]
+        return await self._page_cache[i]
 
-    async def get_name(self, i):
+    async def get_name(self, i: int):
         page = await self.get_page(i, prefetch=False)
 
         embed = None
