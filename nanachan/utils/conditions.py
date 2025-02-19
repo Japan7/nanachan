@@ -108,7 +108,7 @@ class Conditions:
 
             self.ready.set()
         except Exception:
-            await waifu_cog.bot.on_error("load_conditions")
+            await waifu_cog.bot.on_error('load_conditions')
 
     def condition(self, condition_class: Type[Condition]):
         name = condition_class._condition_name
