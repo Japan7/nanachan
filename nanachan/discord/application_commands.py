@@ -6,7 +6,7 @@ import logging
 from functools import wraps
 from typing import Any, Callable, Concatenate, ParamSpec, TypeVar, override
 
-from discord import Interaction, app_commands
+from discord import Interaction, InteractionCallbackResponse, app_commands
 from discord.ext.commands import CommandError, Context
 from discord.interactions import InteractionMessage
 from discord.webhook import WebhookMessage
@@ -72,7 +72,7 @@ class LegacyCommandContext(Context[Bot]):
                 del kwargs[key]
 
             message = await send(**kwargs)
-            if message is None:
+            if isinstance(message, InteractionCallbackResponse) or message is None:
                 self._message = await self.interaction.original_response()
                 return self._message
 
