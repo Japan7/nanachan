@@ -32,7 +32,6 @@ class LegacyCommandContext(Context[Bot]):
     async def from_interaction(cls, interaction: Interaction[Bot], ephemeral: bool = False):
         inst = await super().from_interaction(interaction)
         inst.ephemeral = ephemeral
-        asyncio.create_task(inst.send_initial_message())
         return inst
 
     async def send_initial_message(self):
@@ -132,8 +131,9 @@ def legacy_command(ephemeral: bool = False):
         func: Callable[Concatenate[Any, LegacyCommandContext, P], T],
     ) -> Callable[Concatenate[Any, Interaction, P], T]:
         @wraps(func)
-        async def decorated(cog, interaction: Interaction[Bot], *args, **kwargs):
+        async def decorated(cog, interaction: Interaction[Bot], *args, **kwargs) -> T | None:
             ctx = await LegacyCommandContext.from_interaction(interaction, ephemeral=ephemeral)
+            _ = asyncio.create_task(ctx.send_initial_message())
             try:
                 return await func(cog, ctx, *args, **kwargs)  # type: ignore
             except CommandError as e:
