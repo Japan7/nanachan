@@ -95,8 +95,7 @@ class Profiles(Cog):
     @staticmethod
     def next_birthday(birthdate: datetime):
         today = date.today()
-        today = today.replace()
-        birthday = birthdate.date()
+        birthday = birthdate.date().replace(year=today.year)
         if birthday < today:
             birthday = birthday.replace(year=today.year + 1)
         return birthday
@@ -116,7 +115,7 @@ class Profiles(Cog):
         birthdays = [
             (
                 self.next_birthday(p.birthday),
-                p.full_name if p.full_name else guild.get_member(p.user.discord_id),
+                p.full_name or guild.get_member(p.user.discord_id),
             )
             for p in profiles
             if p.birthday
@@ -330,7 +329,7 @@ class ProfileModal(ui.Modal):
         )
         self.pronouns = TextInput(
             label='Pronouns',
-            placeholder='Enter your prnouns',
+            placeholder='Enter your pronouns',
             style=discord.TextStyle.short,
             required=False,
             default=self.profile.pronouns,
