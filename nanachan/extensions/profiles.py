@@ -9,7 +9,7 @@ from typing import Protocol, TypedDict, override
 import discord
 import discord.ext
 from dateutil.parser import parse
-from discord import Interaction, Member, Role, SelectOption, app_commands, ui
+from discord import Interaction, Member, Role, SelectOption, User, app_commands, ui
 from discord.ui import Button
 
 from nanachan.discord.application_commands import (
@@ -192,9 +192,9 @@ class Profiles(Cog):
         return profile
 
     @staticmethod
-    def create_embed(member: Member, profile: ProfileSearchResult | UpsertProfileBody):
+    def create_embed(member: Member | User, profile: ProfileSearchResult | UpsertProfileBody):
         embed = Embed(colour=getattr(member, 'colour', None))
-        embed.set_author(name=member, icon_url=member.display_avatar.url)
+        _ = embed.set_author(name=member, icon_url=member.display_avatar.url)
 
         if profile.full_name is not None:
             embed = embed.add_field(name='氏名', value=profile.full_name)
@@ -262,23 +262,20 @@ class Profiles(Cog):
         await ctx.send(embed=embed, view=ProfileCreateOrChangeView(self.bot, member, profile))
 
     @nana_command(description="Display other user's profile.")
-    @legacy_command()
-    async def whois(self, ctx: LegacyCommandContext, other: discord.User):
+    async def whois(self, interaction: Interaction[Bot], other: discord.User):
+        _ = asyncio.create_task(interaction.response.defer())
         profile_resp = await get_nanapi().user.user_get_profile(other.id)
         match profile_resp:
             case Success():
                 pass
             case Error(code=404):
-                await ctx.reply('User has no registered profile.')
+                await interaction.followup.send('User has no registered profile.')
                 return
             case _:
                 raise RuntimeError(profile_resp.result)
 
         profile = profile_resp.result
-        assert ctx.guild
-        member = ctx.guild.get_member(other.id)
-        assert member
-        await ctx.send(embed=self.create_embed(member, profile))
+        _ = await interaction.followup.send(embed=self.create_embed(other, profile))
 
 
 class ModalDict(TypedDict):
