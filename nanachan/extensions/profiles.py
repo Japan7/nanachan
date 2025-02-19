@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from functools import partial
 from operator import itemgetter
 from typing import Protocol, TypedDict, override
@@ -90,7 +90,48 @@ class Profiles(Cog):
             await member.remove_roles(*year_roles)
             await member.add_roles(target_role)
 
-        logger.info("done syncing member year roles")
+        logger.info('done syncing member year roles')
+
+    @staticmethod
+    def next_birthday(birthdate: datetime):
+        today = date.today()
+        today = today.replace()
+        birthday = birthdate.date()
+        if birthday < today:
+            birthday = birthday.replace(year=today.year + 1)
+        return birthday
+
+    @nana_command(description='Display birthdays of registered Japan7 members')
+    @app_commands.guild_only()
+    async def birthdays(self, interaction: Interaction):
+        await interaction.response.defer()
+        guild = interaction.guild
+        assert guild is not None
+        resp = await get_nanapi().user.user_profile_search(
+            ','.join(str(m.id) for m in guild.members)
+        )
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        profiles = resp.result
+        birthdays = [
+            (
+                self.next_birthday(p.birthday),
+                p.full_name if p.full_name else guild.get_member(p.user.discord_id),
+            )
+            for p in profiles
+            if p.birthday
+        ]
+        birthdays.sort()
+        message_text = [f"**{b[0].strftime("%d/%m")}** • {b[1]}" for b in birthdays]
+        icon_url = None if guild.icon is None else guild.icon.url
+        await AutoNavigatorView.create(
+            self.bot,
+            interaction.followup.send,
+            title='Japan7 birthdays',
+            description='\n'.join(message_text),
+            author_name=str(guild),
+            author_icon_url=icon_url,
+        )
 
     @nana_command(description='refresh promo roles')
     @app_commands.guild_only()
