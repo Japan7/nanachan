@@ -4,7 +4,8 @@ import asyncio
 import itertools
 import logging
 import unicodedata
-from dataclasses import asdict
+from collections.abc import Coroutine, Iterable, Sequence
+from dataclasses import asdict, dataclass, field
 from functools import partial
 from inspect import signature
 from itertools import batched, zip_longest
@@ -13,9 +14,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Coroutine,
-    Iterable,
-    Sequence,
     override,
 )
 
@@ -25,8 +23,7 @@ from discord.enums import ButtonStyle
 from discord.ui import Button, Item, Select, View
 
 from nanachan.discord.helpers import Embed, EmbedField, UserType
-from nanachan.discord.reactions import Pages
-from nanachan.utils.misc import async_all
+from nanachan.utils.misc import async_all, run_coro
 
 if TYPE_CHECKING:
     from nanachan.discord.bot import Bot
@@ -106,8 +103,8 @@ class ConfirmationView(BaseConfirmationView):
         super().__init__(bot=bot, timeout=timeout)
         self.yes_user = yes_user
         self.no_user = no_user
-        self.confirmation: asyncio.Future = self.bot.loop.create_future()
-        self.interaction: asyncio.Future = self.bot.loop.create_future()
+        self.confirmation: asyncio.Future[bool] = self.bot.loop.create_future()
+        self.interaction: asyncio.Future[discord.Interaction] = self.bot.loop.create_future()
         self.delete_after = delete_after
 
     async def accept(self, interaction: discord.Interaction):
@@ -137,6 +134,79 @@ class ConfirmationView(BaseConfirmationView):
 ##############
 # Navigators #
 ##############
+
+
+@dataclass
+class Pages:
+    pages: list[Any]
+    static_content: str | None = None
+    start_at: int = 1
+    prefetch_min_batch_size: int = 5
+    prefetch_pages: int = 12
+    _page_cache: dict[int, Any] = field(init=False, default_factory=dict)
+    _prefetched_upto: int = field(init=False, default=0)
+
+    def __post_init__(self):
+        if len(self.pages) == 0:
+            raise ValueError('No pages set (handle that case appropriately)')
+
+        if self.prefetch_pages:
+            self.prefetch(self.prefetch_pages)
+
+    def prefetch(self, around: int):
+        upto = around + self.prefetch_pages
+        from_ = around - self.prefetch_pages
+
+        for i in (i % len(self.pages) for i in range(from_, upto + 1)):
+            if i not in self._page_cache:
+                asyncio.create_task(self.get_page(i, prefetch=False))
+
+    async def get_page(self, i: int, prefetch: bool = True):
+        if prefetch:
+            self.prefetch(i)
+
+        if i not in self._page_cache:
+            loop = asyncio.get_running_loop()
+            self._page_cache[i] = loop.create_future()
+            try:
+                page = await run_coro(self.pages[i])
+                if len(self) > 1:
+                    page_content = page.get(
+                        'content',
+                        f'#{self.start_at + i}/{len(self.pages) + self.start_at - 1}',
+                    )
+                    if self.static_content:
+                        page['content'] = f'{self.static_content}\n{page_content}'
+                    else:
+                        page['content'] = page_content
+
+                else:
+                    page['content'] = self.static_content
+
+                self._page_cache[i].set_result(page)
+            except Exception as e:
+                self._page_cache[i].set_exception(e)
+
+        return await self._page_cache[i]
+
+    async def get_name(self, i: int):
+        page = await self.get_page(i, prefetch=False)
+
+        embed = None
+        if 'embed' in page:
+            embed = page['embed']
+        elif 'embeds' in page:
+            embed = page['embeds'][0]
+
+        if embed is not None:
+            return getattr(embed, 'title', None)
+        else:
+            return None
+
+    def __len__(self):
+        return len(self.pages)
+
+
 class Refreshable:
     refresh: Callable[[int], Coroutine[Any, Any, None]]
 

@@ -4,7 +4,6 @@ import asyncio
 import logging
 from collections import OrderedDict
 from contextlib import suppress
-from dataclasses import dataclass, field
 from functools import partial
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
@@ -12,7 +11,7 @@ import discord
 from discord.abc import PrivateChannel
 
 from nanachan.discord.helpers import WebhookMessage
-from nanachan.utils.misc import fake_method, ignore, run_coro
+from nanachan.utils.misc import fake_method, ignore
 
 if TYPE_CHECKING:
     from nanachan.discord.bot import Bot
@@ -274,74 +273,3 @@ class ReactionListener(metaclass=MetaReactionListener):
             self._reaction_handlers_order.remove(handler)
         if reaction_emoji in self._reaction_handlers['remove']:
             del self._reaction_handlers['remove'][reaction_emoji]
-
-
-@dataclass
-class Pages:
-    pages: list[Any]
-    static_content: str | None = None
-    start_at: int = 1
-    prefetch_min_batch_size: int = 5
-    prefetch_pages: int = 12
-    _page_cache: dict[int, Any] = field(init=False, default_factory=dict)
-    _prefetched_upto: int = field(init=False, default=0)
-
-    def __post_init__(self):
-        if len(self.pages) == 0:
-            raise ValueError('No pages set (handle that case appropriately)')
-
-        if self.prefetch_pages:
-            self.prefetch(self.prefetch_pages)
-
-    def prefetch(self, around: int):
-        upto = around + self.prefetch_pages
-        from_ = around - self.prefetch_pages
-
-        for i in (i % len(self.pages) for i in range(from_, upto + 1)):
-            if i not in self._page_cache:
-                asyncio.create_task(self.get_page(i, prefetch=False))
-
-    async def get_page(self, i: int, prefetch: bool = True):
-        if prefetch:
-            self.prefetch(i)
-
-        if i not in self._page_cache:
-            loop = asyncio.get_running_loop()
-            self._page_cache[i] = loop.create_future()
-            try:
-                page = await run_coro(self.pages[i])
-                if len(self) > 1:
-                    page_content = page.get(
-                        'content',
-                        f'#{self.start_at + i}/{len(self.pages) + self.start_at - 1}',
-                    )
-                    if self.static_content:
-                        page['content'] = f'{self.static_content}\n{page_content}'
-                    else:
-                        page['content'] = page_content
-
-                else:
-                    page['content'] = self.static_content
-
-                self._page_cache[i].set_result(page)
-            except Exception as e:
-                self._page_cache[i].set_exception(e)
-
-        return await self._page_cache[i]
-
-    async def get_name(self, i: int):
-        page = await self.get_page(i, prefetch=False)
-
-        embed = None
-        if 'embed' in page:
-            embed = page['embed']
-        elif 'embeds' in page:
-            embed = page['embeds'][0]
-
-        if embed is not None:
-            return getattr(embed, 'title', None)
-        else:
-            return None
-
-    def __len__(self):
-        return len(self.pages)

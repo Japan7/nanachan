@@ -21,7 +21,7 @@ from yarl import URL
 
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import Embed, UserType
-from nanachan.discord.reactions import Pages, ReactionHandler, ReactionListener
+from nanachan.discord.reactions import ReactionHandler, ReactionListener
 from nanachan.discord.views import (
     LETTERS_EMOJIS,
     BaseConfirmationView,
@@ -30,6 +30,7 @@ from nanachan.discord.views import (
     CompositeView,
     ConfirmationView,
     LockedView,
+    Pages,
     RefreshableButton,
     RefreshableSelect,
 )
