@@ -16,7 +16,7 @@ from nanachan.discord.application_commands import nana_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import Embed, MultiplexingContext
-from nanachan.discord.views import AutoNavigatorView, BaseView, LockedView
+from nanachan.discord.views import AutoNavigatorView, BaseView, LockedView, NavigatorView
 from nanachan.nanapi._client import Error, Success
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
@@ -130,7 +130,7 @@ class Profiles(Cog):
 
     @nana_command(description='refresh promo roles')
     @app_commands.guild_only()
-    async def promo(self, interaction: Interaction):
+    async def promo(self, interaction: Interaction, year_filter: int | None = None):
         """Refresh promo roles"""
         await interaction.response.defer()
 
@@ -160,24 +160,34 @@ class Profiles(Cog):
             new_roles.append(year_roles[role_index])
             members.append(member)
 
-        asyncio.create_task(self._update_year_roles(members, year_roles, new_roles))
+        if not year_filter:
+            asyncio.create_task(self._update_year_roles(members, year_roles, new_roles))
+            text = [
+                f'**{member}** • *({profile.graduation_year})* [**{role}**] {profile.full_name}'
+                for member, profile, role in zip(members, profiles, new_roles)
+            ]
+            text.sort(key=str.casefold)
 
-        text = [
-            f'**{member}** • [**{role}**] {profile.full_name}'
-            for member, profile, role in zip(members, profiles, new_roles)
-        ]
-        text.sort(key=str.casefold)
-
-        icon_url = None if guild.icon is None else guild.icon.url
-        await AutoNavigatorView.create(
-            self.bot,
-            interaction.followup.send,
-            title='ENSEEIHT members',
-            description='\n'.join(text),
-            author_name=str(guild),
-            author_icon_url=icon_url,
-            footer_text=f'{len(text)} members',
-        )
+            icon_url = None if guild.icon is None else guild.icon.url
+            await AutoNavigatorView.create(
+                self.bot,
+                interaction.followup.send,
+                title='ENSEEIHT members',
+                description='\n'.join(text),
+                author_name=str(guild),
+                author_icon_url=icon_url,
+                footer_text=f'{len(text)} members',
+            )
+        else:
+            pages = [{'embed': self.create_embed(m, p)} for m, p in zip(members, profiles)]
+            if len(pages) > 0:
+                await NavigatorView.create(
+                    self.bot,
+                    interaction.followup.send,
+                    pages=pages,
+                )
+            else:
+                await interaction.followup.send('分かりません :confounded:')
 
     @staticmethod
     async def _create_or_update_profile(member: Member | discord.User, payload: UpsertProfileBody):
@@ -272,6 +282,59 @@ class Profiles(Cog):
 
         profile = profile_resp.result
         _ = await interaction.followup.send(embed=self.create_embed(other, profile))
+
+    @nana_command(description='Display information about someone')
+    async def profile_search(self, interaction: Interaction, *, search_tags: str):
+        await interaction.response.defer()
+        members_and_profiles: dict[int, tuple[Member, ProfileSearchResult]] = {}
+
+        guild = interaction.guild
+        assert guild
+
+        # search in the discord names
+        for member in guild.members:
+            magic_string = '\0'.join(
+                {
+                    member.name,
+                    member.nick or member.name,
+                    str(member.id),
+                    member.mention,
+                }
+            )
+            if re.search(re.escape(search_tags), magic_string, re.IGNORECASE):
+                resp = await get_nanapi().user.user_get_profile(member.id)
+                if not success(resp):
+                    match resp.code:
+                        case 404:
+                            continue
+                        case _:
+                            raise RuntimeError(resp.result)
+                profile = resp.result
+                members_and_profiles[member.id] = (member, profile)
+
+        # search in the cards information
+        search = f'%{search_tags}%'
+        resp = await get_nanapi().user.user_profile_search(pattern=search)
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        profiles = resp.result
+
+        for profile in profiles:
+            member = guild.get_member(profile.user.discord_id)
+            if member is None:
+                continue
+
+            members_and_profiles[member.id] = (member, profile)
+
+        # display all what we found
+        pages = [
+            {'embed': self.create_embed(member, profile)}
+            for member, profile in members_and_profiles.values()
+        ]
+        if len(pages) > 0:
+            await NavigatorView.create(self.bot, interaction.followup.send, pages=pages)
+        else:
+            await interaction.followup.send('分かりません :confounded:')
 
 
 class ModalDict(TypedDict):
