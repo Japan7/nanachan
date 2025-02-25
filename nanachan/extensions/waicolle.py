@@ -806,10 +806,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             nb = len(selected)
             if nb > 0:
-                ids_str = ','.join(str(w.id) for w in selected)
-                update_resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
-                    ids_str, BulkUpdateWaifusBody(locked=True)
-                )
+                body = BulkUpdateWaifusBody(ids=[str(w.id) for w in selected], locked=True)
+                update_resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
                 if not success(update_resp):
                     raise RuntimeError(update_resp.result)
 
@@ -847,10 +845,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             nb = len(selected)
             if nb > 0:
-                ids_str = ','.join(str(w.id) for w in selected)
-                resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
-                    ids_str, BulkUpdateWaifusBody(locked=False)
-                )
+                body = BulkUpdateWaifusBody(ids=[str(w.id) for w in selected], locked=False)
+                resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
                 if not success(resp):
                     raise RuntimeError(resp.result)
 
@@ -1619,9 +1615,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         selected = await self.waifus_selector(ctx, waifus, 'display in custom collage', ctx.author)
 
         if selected:
-            ids = ','.join([str(w.id) for w in selected])
-            body = BulkUpdateWaifusBody(custom_collage=True)
-            resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(ids, body)
+            body = BulkUpdateWaifusBody(ids=[str(w.id) for w in selected], custom_collage=True)
+            resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
             if not success(resp2):
                 raise RuntimeError(resp2.result)
 
@@ -1653,9 +1648,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         selected = await self.waifus_selector(ctx, waifus, 'hide in custom collage', ctx.author)
 
         if selected:
-            ids = ','.join([str(w.id) for w in selected])
-            body = BulkUpdateWaifusBody(custom_collage=False)
-            resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(ids, body)
+            body = BulkUpdateWaifusBody(ids=[str(w.id) for w in selected], custom_collage=False)
+            resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
             if not success(resp2):
                 raise RuntimeError(resp2.result)
 

@@ -136,6 +136,7 @@ class Body_client_login(BaseModel):
 
 class BulkUpdateWaifusBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    ids: list[str]
     locked: bool | None = None
     blooded: bool | None = None
     nanaed: bool | None = None
@@ -765,17 +766,17 @@ class GuildEventDeleteResult(BaseModel):
     description: str | None
     discord_id: int
     id: UUID
+    projection: 'GuildEventDeleteResultProjection | None'
     organizer: 'GuildEventDeleteResultOrganizer'
     participants: list['GuildEventDeleteResultParticipants']
-    projection: 'GuildEventDeleteResultProjection | None'
     client: 'GuildEventDeleteResultClient'
 
 
 class GuildEventDeleteResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    username: str
     id: UUID
     password_hash: str
-    username: str
 
 
 class GuildEventDeleteResultOrganizer(BaseModel):
@@ -798,11 +799,11 @@ class GuildEventDeleteResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
-    channel_id_str: str
     message_id: int | None
-    message_id_str: str | None
     name: str
     status: 'ProjectionStatus'
+    channel_id_str: str
+    message_id_str: str | None
 
 
 class GuildEventMergeResult(BaseModel):
@@ -818,16 +819,16 @@ class GuildEventMergeResult(BaseModel):
     start_time: datetime
     url: str | None
     client: 'GuildEventMergeResultClient'
-    projection: 'GuildEventMergeResultProjection | None'
     participants: list['GuildEventMergeResultParticipants']
     organizer: 'GuildEventMergeResultOrganizer'
+    projection: 'GuildEventMergeResultProjection | None'
 
 
 class GuildEventMergeResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    username: str
     id: UUID
     password_hash: str
-    username: str
 
 
 class GuildEventMergeResultOrganizer(BaseModel):
@@ -850,11 +851,11 @@ class GuildEventMergeResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
-    channel_id_str: str
     message_id: int | None
-    message_id_str: str | None
     name: str
     status: 'ProjectionStatus'
+    channel_id_str: str
+    message_id_str: str | None
 
 
 class GuildEventParticipantAddResult(BaseModel):
@@ -880,16 +881,16 @@ class GuildEventSelectResult(BaseModel):
     start_time: datetime
     url: str | None
     client: 'GuildEventSelectResultClient'
-    projection: 'GuildEventSelectResultProjection | None'
     participants: list['GuildEventSelectResultParticipants']
     organizer: 'GuildEventSelectResultOrganizer'
+    projection: 'GuildEventSelectResultProjection | None'
 
 
 class GuildEventSelectResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    username: str
     id: UUID
     password_hash: str
-    username: str
 
 
 class GuildEventSelectResultOrganizer(BaseModel):
@@ -912,11 +913,11 @@ class GuildEventSelectResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     channel_id: int
-    channel_id_str: str
     message_id: int | None
-    message_id_str: str | None
     name: str
     status: 'ProjectionStatus'
+    channel_id_str: str
+    message_id_str: str | None
 
 
 class HTTPExceptionModel(BaseModel):
@@ -1432,11 +1433,11 @@ class ProjoSelectResult(BaseModel):
     external_medias: list['ProjoSelectResultExternalMedias']
     participants: list['ProjoSelectResultParticipants']
     guild_events: list['ProjoSelectResultGuildEvents']
+    message_id_str: str | None
+    channel_id_str: str
     status: 'ProjectionStatus'
     name: str
-    message_id_str: str | None
     message_id: int | None
-    channel_id_str: str
     channel_id: int
     id: UUID
 

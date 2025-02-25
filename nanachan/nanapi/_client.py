@@ -4865,7 +4865,7 @@ class WaicolleModule:
             )
 
     async def waicolle_bulk_update_waifus(
-        self, ids: str, body: BulkUpdateWaifusBody, client_id: UUID | None = None
+        self, body: BulkUpdateWaifusBody, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], list[WaifuBulkUpdateResult]]
         | Error[Literal[401], HTTPExceptionModel]
@@ -4874,7 +4874,6 @@ class WaicolleModule:
     ):
         url = f'{self.server_url}/waicolle/waifus'
         params = {
-            'ids': ids,
             'client_id': client_id,
         }
         params = prep_serialization(params)

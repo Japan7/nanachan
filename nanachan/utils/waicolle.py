@@ -300,10 +300,11 @@ class RollResultsView(CompositeNavigatorView):
             return
 
         async with self.cog.trade_lock[interaction.user.id]:
-            resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(
-                str(self.waifus[self.displayed_page - 1].id),
-                BulkUpdateWaifusBody(locked=True),
+            body = BulkUpdateWaifusBody(
+                ids=[str(self.waifus[self.displayed_page - 1].id)],
+                locked=True,
             )
+            resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
             if not success(resp):
                 raise RuntimeError(resp.result)
 
