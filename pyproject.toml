@@ -42,7 +42,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pyright==1.1.396",
-    "ruff==0.9.9",
+    "ruff==0.9.10",
     "mahou-py",
     "requests==2.32.3",
     # FIXME: https://pypi.org/project/types-redis/#description
