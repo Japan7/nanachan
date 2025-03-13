@@ -42,7 +42,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pyright==1.1.396",
-    "ruff==0.9.10",
+    "ruff==0.10.0",
     "mahou-py",
     "requests==2.32.3",
     # FIXME: https://pypi.org/project/types-redis/#description
@@ -83,6 +83,8 @@ ignore = [
     "SIM105",
     # Use ternary operator `{contents}` instead of if-else-block
     "SIM108",
+    # `itertools.batched()` without an explicit `strict` parameter
+    "B911"
 ]
 
 [tool.ruff.lint.per-file-ignores]
