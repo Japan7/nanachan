@@ -1,7 +1,16 @@
 #!/bin/sh
-uv run --frozen ruff check nanachan/ || exit 1
-uv run --frozen ruff format --check --diff nanachan/ || exit 1
-uv run --frozen fawltydeps || exit 1
-if [ -n "$HOOKS_PYRIGHT_CHECK" ]; then
-    uv run --frozen pyright || exit 1
+res=0
+
+die() {
+    [ -z "${HOOKS_KEEP_GOING}" ] && exit 1
+    res=1
+}
+
+uv run --frozen ruff check nanachan/ || die
+uv run --frozen ruff format --check --diff nanachan/ || die
+uv run --frozen fawltydeps || die
+if [ -n "${HOOKS_PYRIGHT_CHECK}" ]; then
+    uv run --frozen pyright || die
 fi
+
+exit ${res}
