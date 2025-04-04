@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 import discord
 from discord import AllowedMentions, app_commands
-from ollama import AsyncClient, Message
+from ollama import AsyncClient, Image, Message
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
@@ -42,11 +42,21 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
 
     @app_commands.command(name='chat')
     @legacy_command()
-    async def new_chat(self, ctx: LegacyCommandContext, content: str):
+    async def new_chat(
+        self, ctx: LegacyCommandContext, content: str, image: discord.Attachment | None = None
+    ):
         """Chat with AI"""
         embed = Embed(description=content, color=ctx.author.accent_color)
         embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
+        if image:
+            embed.set_image(url=image.url)
         resp = await ctx.reply(embed=embed)
+
+        images: list[Image] = []
+        if image and image.content_type and image.content_type.startswith('image/'):
+            data = await image.read()
+            images.append(Image(value=data))
+
         if isinstance(ctx.channel, discord.Thread):
             thread = ctx.channel
             reply_to = resp
@@ -56,11 +66,12 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                 thread = await resp.create_thread(name=name, auto_archive_duration=60)
                 await thread.add_user(ctx.author)
                 reply_to = None
-        await self.chat(thread, content, reply_to=reply_to)
+
+        await self.chat(thread, content, images, reply_to=reply_to)
 
     async def generate_discussion_title(self, content: str):
         prompt = (
-            f'Create a concise, 100 characters phrase '
+            f'Create a single, concise, 100 characters phrase '
             f'as a header for the following query, '
             f'strictly adhering to the 100 characters limit and avoiding '
             f"the use of the word 'title': {content}"
@@ -78,6 +89,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
         self,
         thread: discord.Thread,
         content: str,
+        images: list[Image],
         reply_to: discord.Message | MultiplexingMessage | None = None,
     ):
         send = reply_to.reply if reply_to is not None else thread.send
@@ -85,7 +97,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
         allowed_mentions.replied_user = True
         chat_ctx = self.chats[thread.id]
         async with chat_ctx.lock, thread.typing():
-            chat_ctx.messages.append(Message(role='user', content=content))
+            chat_ctx.messages.append(Message(role='user', content=content, images=images))
             full_content = ''
             async for block in self.chat_stream_blocks(chat_ctx.messages):
                 full_content += block
@@ -119,7 +131,13 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             content = ctx.message.stripped_content
             if ctx.bot.user is not None:
                 content = content.replace(ctx.bot.user.mention, '')
-            await self.chat(ctx.channel, content, reply_to=ctx.message)
+            images: list[Image] = []
+            if ctx.message.attachments:
+                for file in ctx.message.attachments:
+                    if file.content_type and file.content_type.startswith('image/'):
+                        data = await file.read()
+                        images.append(Image(value=data))
+            await self.chat(ctx.channel, content, images, reply_to=ctx.message)
 
 
 async def setup(bot: Bot):
