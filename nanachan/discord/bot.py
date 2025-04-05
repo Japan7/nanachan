@@ -34,8 +34,8 @@ from discord.errors import IHateThe3SecondsTimeout
 from discord.ext import commands
 from discord.ext.commands import Context, Paginator
 from discord.ext.commands.errors import ExtensionError, ExtensionNotLoaded
-from watchgod import awatch
-from watchgod.watcher import Change, PythonWatcher
+from watchfiles import Change, awatch
+from watchfiles.filters import PythonFilter
 
 import nanachan.extensions
 from nanachan.discord.cog import Cog
@@ -292,7 +292,7 @@ class Bot(commands.AutoShardedBot):
         # Cog hot reload
         if DEBUG:
             ext_path = Path(nanachan.extensions.__file__).parent
-            async for changes in awatch(ext_path, watcher_cls=PythonWatcher):
+            async for changes in awatch(ext_path, watch_filter=PythonFilter()):
                 for change in changes:
                     path = Path(change[1])
                     extension = path.stem
