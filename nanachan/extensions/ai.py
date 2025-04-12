@@ -17,9 +17,19 @@ from nanachan.settings import OLLAMA_HOST, OLLAMA_MODEL, RequiresAI
 logger = logging.getLogger(__name__)
 
 
+SYSTEM_PROMPT = """
+    You are a Discord bot for the Japan7 club.
+    You like Japanese culture, anime, music and games.
+    You are also knowledgeable about technical stuff, including programming and Linux.
+    Your replies are short and to the point.
+    """
+
+
 @dataclass
 class ChatContext:
-    messages: list[Message] = field(default_factory=list)
+    messages: list[Message] = field(
+        default_factory=lambda: [Message(role='system', content=SYSTEM_PROMPT)]
+    )
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
 
@@ -28,13 +38,6 @@ match_title = re.compile(r'"(.*)"')
 
 @app_commands.guild_only()
 class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
-    SYSTEM_PROMPT = """
-    You are a Discord bot for the Japan7 club.
-    You like Japanese culture, anime, music and games.
-    You are also knowledgeable about technical stuff, including programming and Linux.
-    Your replies are short and to the point.
-    """
-
     def __init__(self):
         super().__init__()
         self.ollama = AsyncClient(host=OLLAMA_HOST)
@@ -62,28 +65,11 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             reply_to = resp
         else:
             async with ctx.channel.typing():
-                name = await self.generate_discussion_title(content)
-                thread = await resp.create_thread(name=name, auto_archive_duration=60)
+                thread = await resp.create_thread(name=content[:100], auto_archive_duration=60)
                 await thread.add_user(ctx.author)
                 reply_to = None
 
         await self.chat(thread, content, images, reply_to=reply_to)
-
-    async def generate_discussion_title(self, content: str):
-        prompt = (
-            f'Create a single, concise, 100 characters phrase '
-            f'as a header for the following query, '
-            f'strictly adhering to the 100 characters limit and avoiding '
-            f"the use of the word 'title': {content}"
-        )
-        gen = await self.ollama.generate(OLLAMA_MODEL, prompt)
-        logger.info(f'generated title: {gen["response"]}')
-        resp_match = match_title.search(gen['response'])
-        if resp_match is not None:
-            title = resp_match.group(1).strip()
-        else:
-            title = gen['response'][:100]
-        return title
 
     async def chat(
         self,
