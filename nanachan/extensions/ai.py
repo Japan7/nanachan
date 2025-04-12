@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 
@@ -17,23 +16,10 @@ from nanachan.settings import OLLAMA_HOST, OLLAMA_MODEL, RequiresAI
 logger = logging.getLogger(__name__)
 
 
-SYSTEM_PROMPT = """
-    You are a Discord bot for the Japan7 club.
-    You like Japanese culture, anime, music and games.
-    You are also knowledgeable about technical stuff, including programming and Linux.
-    Your replies are short and to the point.
-    """
-
-
 @dataclass
 class ChatContext:
-    messages: list[Message] = field(
-        default_factory=lambda: [Message(role='system', content=SYSTEM_PROMPT)]
-    )
+    messages: list[Message] = field(default_factory=list)
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
-
-
-match_title = re.compile(r'"(.*)"')
 
 
 @app_commands.guild_only()
