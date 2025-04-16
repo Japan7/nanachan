@@ -35,7 +35,7 @@ dependencies = [
     "yt-dlp[default]==2025.3.31",
     "aiojobs==1.4.0",
     "tzdata==2025.2",
-    "ollama==0.4.7",
+    "ollama==0.4.8",
     "python-dateutil==2.9.0.post0",
 ]
 
