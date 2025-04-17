@@ -102,8 +102,7 @@ class AccountSelectAllResult(BaseModel):
 
 class AccountSelectAllResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class AccountSelectResult(BaseModel):
@@ -114,8 +113,7 @@ class AccountSelectResult(BaseModel):
 
 class AccountSelectResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class AddPlayerCoinsBody(BaseModel):
@@ -406,8 +404,7 @@ class CollectionGetByIdResultAuthor(BaseModel):
 
 class CollectionGetByIdResultAuthorUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class CollectionInsertResult(BaseModel):
@@ -424,15 +421,14 @@ class CollectionInsertResultAuthor(BaseModel):
 
 class CollectionInsertResultAuthorUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class CollectionNameAutocompleteResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     name: str
-    author_discord_id: int
+    author_discord_id: str
 
 
 class CollectionRemoveMediaResult(BaseModel):
@@ -474,8 +470,7 @@ class CouponSelectAllResultClaimedBy(BaseModel):
 
 class CouponSelectAllResultClaimedByUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class CustomizeWaifuBody(BaseModel):
@@ -491,7 +486,7 @@ class DonatePlayerCoinsBody(BaseModel):
 
 class EndGameBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    winner_discord_id: int
+    winner_discord_id: str
     winner_discord_username: str
 
 
@@ -511,8 +506,7 @@ class EntrySelectAllResultAccount(BaseModel):
 
 class EntrySelectAllResultAccountUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class EntrySelectAllResultMedia(BaseModel):
@@ -535,8 +529,7 @@ class EntrySelectFilterMediaResultAccount(BaseModel):
 
 class EntrySelectFilterMediaResultAccountUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameDeleteByMessageIdResult(BaseModel):
@@ -548,8 +541,7 @@ class GameEndResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
-    message_id: int
-    message_id_str: str
+    message_id: str
     answer_bananed: str | None
     started_at: datetime
     ended_at: datetime | None
@@ -560,8 +552,7 @@ class GameEndResult(BaseModel):
 class GameEndResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     description: str | None
     url: str | None
     is_image: bool
@@ -574,22 +565,19 @@ class GameEndResultQuizz(BaseModel):
 
 class GameEndResultQuizzAuthor(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameEndResultWinner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameGetByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
-    message_id: int
-    message_id_str: str
+    message_id: str
     answer_bananed: str | None
     started_at: datetime
     ended_at: datetime | None
@@ -600,8 +588,7 @@ class GameGetByIdResult(BaseModel):
 class GameGetByIdResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     description: str | None
     url: str | None
     is_image: bool
@@ -614,22 +601,19 @@ class GameGetByIdResultQuizz(BaseModel):
 
 class GameGetByIdResultQuizzAuthor(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameGetByIdResultWinner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameGetCurrentResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
-    message_id: int
-    message_id_str: str
+    message_id: str
     answer_bananed: str | None
     started_at: datetime
     ended_at: datetime | None
@@ -640,8 +624,7 @@ class GameGetCurrentResult(BaseModel):
 class GameGetCurrentResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     description: str | None
     url: str | None
     is_image: bool
@@ -654,22 +637,19 @@ class GameGetCurrentResultQuizz(BaseModel):
 
 class GameGetCurrentResultQuizzAuthor(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameGetCurrentResultWinner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameGetLastResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
-    message_id: int
-    message_id_str: str
+    message_id: str
     answer_bananed: str | None
     started_at: datetime
     ended_at: datetime | None
@@ -680,8 +660,7 @@ class GameGetLastResult(BaseModel):
 class GameGetLastResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     description: str | None
     url: str | None
     is_image: bool
@@ -694,14 +673,12 @@ class GameGetLastResultQuizz(BaseModel):
 
 class GameGetLastResultQuizzAuthor(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameGetLastResultWinner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameNewResult(BaseModel):
@@ -713,8 +690,7 @@ class GameSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     status: 'QuizzStatus'
-    message_id: int
-    message_id_str: str
+    message_id: str
     answer_bananed: str | None
     started_at: datetime
     ended_at: datetime | None
@@ -725,8 +701,7 @@ class GameSelectResult(BaseModel):
 class GameSelectResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     description: str | None
     url: str | None
     is_image: bool
@@ -739,14 +714,12 @@ class GameSelectResultQuizz(BaseModel):
 
 class GameSelectResultQuizzAuthor(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameSelectResultWinner(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class GameUpdateBananedResult(BaseModel):
@@ -762,56 +735,50 @@ class GuildEventDeleteResult(BaseModel):
     location: str | None
     image: str | None
     end_time: datetime
-    discord_id_str: str
     description: str | None
-    discord_id: int
+    discord_id: str
     id: UUID
-    projection: 'GuildEventDeleteResultProjection | None'
     organizer: 'GuildEventDeleteResultOrganizer'
     participants: list['GuildEventDeleteResultParticipants']
+    projection: 'GuildEventDeleteResultProjection | None'
     client: 'GuildEventDeleteResultClient'
 
 
 class GuildEventDeleteResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    username: str
     id: UUID
     password_hash: str
+    username: str
 
 
 class GuildEventDeleteResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
 class GuildEventDeleteResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
 class GuildEventDeleteResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    message_id: int | None
+    channel_id: str
+    message_id: str | None
     name: str
     status: 'ProjectionStatus'
-    channel_id_str: str
-    message_id_str: str | None
 
 
 class GuildEventMergeResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
+    discord_id: str
     description: str | None
-    discord_id_str: str
     end_time: datetime
     image: str | None
     location: str | None
@@ -819,43 +786,39 @@ class GuildEventMergeResult(BaseModel):
     start_time: datetime
     url: str | None
     client: 'GuildEventMergeResultClient'
+    projection: 'GuildEventMergeResultProjection | None'
     participants: list['GuildEventMergeResultParticipants']
     organizer: 'GuildEventMergeResultOrganizer'
-    projection: 'GuildEventMergeResultProjection | None'
 
 
 class GuildEventMergeResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    username: str
     id: UUID
     password_hash: str
+    username: str
 
 
 class GuildEventMergeResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
 class GuildEventMergeResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
 class GuildEventMergeResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    message_id: int | None
+    channel_id: str
+    message_id: str | None
     name: str
     status: 'ProjectionStatus'
-    channel_id_str: str
-    message_id_str: str | None
 
 
 class GuildEventParticipantAddResult(BaseModel):
@@ -871,9 +834,8 @@ class GuildEventParticipantRemoveResult(BaseModel):
 class GuildEventSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
+    discord_id: str
     description: str | None
-    discord_id_str: str
     end_time: datetime
     image: str | None
     location: str | None
@@ -881,43 +843,39 @@ class GuildEventSelectResult(BaseModel):
     start_time: datetime
     url: str | None
     client: 'GuildEventSelectResultClient'
+    projection: 'GuildEventSelectResultProjection | None'
     participants: list['GuildEventSelectResultParticipants']
     organizer: 'GuildEventSelectResultOrganizer'
-    projection: 'GuildEventSelectResultProjection | None'
 
 
 class GuildEventSelectResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    username: str
     id: UUID
     password_hash: str
+    username: str
 
 
 class GuildEventSelectResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
 class GuildEventSelectResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
 class GuildEventSelectResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    message_id: int | None
+    channel_id: str
+    message_id: str | None
     name: str
     status: 'ProjectionStatus'
-    channel_id_str: str
-    message_id_str: str | None
 
 
 class HTTPExceptionModel(BaseModel):
@@ -1015,7 +973,7 @@ class NewClientBody(BaseModel):
 
 class NewCollectionBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
+    discord_id: str
     name: str
 
 
@@ -1026,7 +984,7 @@ class NewCouponBody(BaseModel):
 
 class NewGameBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    message_id: int
+    message_id: str
     quizz_id: UUID
     answer_bananed: str | None = None
 
@@ -1039,15 +997,15 @@ class NewHistoireBody(BaseModel):
 
 class NewLootBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    player_discord_id: int
+    player_discord_id: str
     chara_id_al: int
 
 
 class NewOfferingBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    player_discord_id: int
+    player_discord_id: str
     chara_id_al: int
-    bot_discord_id: int
+    bot_discord_id: str
 
 
 class NewPresenceBody(BaseModel):
@@ -1059,39 +1017,39 @@ class NewPresenceBody(BaseModel):
 class NewProjectionBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     name: str
-    channel_id: int
+    channel_id: str
 
 
 class NewQuizzBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    channel_id: int
+    channel_id: str
     description: str
     is_image: bool
-    author_discord_id: int
+    author_discord_id: str
     author_discord_username: str
     url: str | None = None
 
 
 class NewReminderBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
+    discord_id: str
     discord_username: str
-    channel_id: int
+    channel_id: str
     message: str
     timestamp: datetime
 
 
 class NewRoleBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    role_id: int
+    role_id: str
     emoji: str
 
 
 class NewTradeBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    author_discord_id: int
+    author_discord_id: str
     received_ids: list[str]
-    offeree_discord_id: int
+    offeree_discord_id: str
     offered_ids: list[str]
     blood_shards: int | None = None
 
@@ -1104,17 +1062,16 @@ class ParticipantAddBody(BaseModel):
 class PlayerAddCoinsResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     user: 'PlayerAddCoinsResultUser'
-    frozen_at: datetime | None
     moecoins: int
     game_mode: 'WaicolleGameMode'
     blood_shards: int
+    frozen_at: datetime | None
     id: UUID
 
 
 class PlayerAddCoinsResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class PlayerAddCollectionResult(BaseModel):
@@ -1193,8 +1150,7 @@ class PlayerCollectionStatsResultCollectionAuthor(BaseModel):
 
 class PlayerCollectionStatsResultCollectionAuthorUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class PlayerCollectionStatsResultCollectionMedias(BaseModel):
@@ -1220,16 +1176,15 @@ class PlayerGetByUserResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     user: 'PlayerGetByUserResultUser'
     id: UUID
+    frozen_at: datetime | None
     blood_shards: int
     game_mode: 'WaicolleGameMode'
     moecoins: int
-    frozen_at: datetime | None
 
 
 class PlayerGetByUserResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class PlayerMediaStatsResult(BaseModel):
@@ -1268,18 +1223,17 @@ class PlayerRemoveStaffResult(BaseModel):
 
 class PlayerSelectAllResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class PlayerSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     user: 'PlayerSelectAllResultUser'
     id: UUID
+    frozen_at: datetime | None
     blood_shards: int
     game_mode: 'WaicolleGameMode'
     moecoins: int
-    frozen_at: datetime | None
 
 
 class PlayerStaffStatsResult(BaseModel):
@@ -1356,8 +1310,7 @@ class PresenceSelectAllResult(BaseModel):
 
 class ProfileGetByDiscordIdResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class ProfileSearchResult(BaseModel):
@@ -1433,12 +1386,10 @@ class ProjoSelectResult(BaseModel):
     external_medias: list['ProjoSelectResultExternalMedias']
     participants: list['ProjoSelectResultParticipants']
     guild_events: list['ProjoSelectResultGuildEvents']
-    message_id_str: str | None
-    channel_id_str: str
     status: 'ProjectionStatus'
     name: str
-    message_id: int | None
-    channel_id: int
+    message_id: str | None
+    channel_id: str
     id: UUID
 
 
@@ -1452,9 +1403,8 @@ class ProjoSelectResultExternalMedias(BaseModel):
 class ProjoSelectResultGuildEvents(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
+    discord_id: str
     description: str | None
-    discord_id_str: str
     end_time: datetime
     image: str | None
     location: str | None
@@ -1473,8 +1423,7 @@ class ProjoSelectResultMedias(BaseModel):
 class ProjoSelectResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
@@ -1501,8 +1450,7 @@ class QuizzDeleteByIdResult(BaseModel):
 class QuizzGetByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     description: str | None
     url: str | None
     is_image: bool
@@ -1515,15 +1463,13 @@ class QuizzGetByIdResult(BaseModel):
 
 class QuizzGetByIdResultAuthor(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class QuizzGetOldestResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     description: str | None
     url: str | None
     is_image: bool
@@ -1536,8 +1482,7 @@ class QuizzGetOldestResult(BaseModel):
 
 class QuizzGetOldestResultAuthor(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class QuizzInsertResult(BaseModel):
@@ -1569,8 +1514,7 @@ class ReminderDeleteByIdResult(BaseModel):
 class ReminderInsertSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     message: str
     timestamp: datetime
     user: 'ReminderInsertSelectResultUser'
@@ -1578,15 +1522,13 @@ class ReminderInsertSelectResult(BaseModel):
 
 class ReminderInsertSelectResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class ReminderSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    channel_id: int
-    channel_id_str: str
+    channel_id: str
     message: str
     timestamp: datetime
     user: 'ReminderSelectAllResultUser'
@@ -1594,8 +1536,7 @@ class ReminderSelectAllResult(BaseModel):
 
 class ReminderSelectAllResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class ReorderWaifuBody(BaseModel):
@@ -1606,9 +1547,9 @@ class ReorderWaifuBody(BaseModel):
 
 class RerollBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    player_discord_id: int
+    player_discord_id: str
     waifus_ids: list[str]
-    bot_discord_id: int
+    bot_discord_id: str
 
 
 class RerollResponse(BaseModel):
@@ -1624,15 +1565,13 @@ class RoleDeleteByRoleIdResult(BaseModel):
 
 class RoleInsertSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    role_id: int
-    role_id_str: str
+    role_id: str
     emoji: str
 
 
 class RoleSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    role_id: int
-    role_id_str: str
+    role_id: str
     emoji: str
 
 
@@ -1650,7 +1589,7 @@ class SetGameBananedAnswerBody(BaseModel):
 
 class SetProjectionMessageIdBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    message_id: int
+    message_id: str
 
 
 class SetProjectionNameBody(BaseModel):
@@ -1726,10 +1665,10 @@ class TradeSelectResult(BaseModel):
     received: list['TradeSelectResultReceived']
     offeree: 'TradeSelectResultOfferee'
     offered: list['TradeSelectResultOffered']
-    blood_shards: int
-    completed_at: datetime | None
-    created_at: datetime
     id: UUID
+    created_at: datetime
+    completed_at: datetime | None
+    blood_shards: int
 
 
 class TradeSelectResultAuthor(BaseModel):
@@ -1739,8 +1678,7 @@ class TradeSelectResultAuthor(BaseModel):
 
 class TradeSelectResultAuthorUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class TradeSelectResultOffered(BaseModel):
@@ -1750,6 +1688,8 @@ class TradeSelectResultOffered(BaseModel):
     original_owner: 'TradeSelectResultOfferedOriginalOwner | None'
     custom_position_waifu: 'TradeSelectResultOfferedCustomPositionWaifu | None'
     id: UUID
+    frozen: bool
+    disabled: bool
     blooded: bool
     custom_collage: bool
     custom_image: str | None
@@ -1760,8 +1700,6 @@ class TradeSelectResultOffered(BaseModel):
     nanaed: bool
     timestamp: datetime
     trade_locked: bool
-    disabled: bool
-    frozen: bool
 
 
 class TradeSelectResultOfferedCharacter(BaseModel):
@@ -1781,8 +1719,7 @@ class TradeSelectResultOfferedOriginalOwner(BaseModel):
 
 class TradeSelectResultOfferedOriginalOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class TradeSelectResultOfferedOwner(BaseModel):
@@ -1792,8 +1729,7 @@ class TradeSelectResultOfferedOwner(BaseModel):
 
 class TradeSelectResultOfferedOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class TradeSelectResultOfferee(BaseModel):
@@ -1803,8 +1739,7 @@ class TradeSelectResultOfferee(BaseModel):
 
 class TradeSelectResultOffereeUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class TradeSelectResultReceived(BaseModel):
@@ -1814,6 +1749,8 @@ class TradeSelectResultReceived(BaseModel):
     original_owner: 'TradeSelectResultReceivedOriginalOwner | None'
     custom_position_waifu: 'TradeSelectResultReceivedCustomPositionWaifu | None'
     id: UUID
+    frozen: bool
+    disabled: bool
     blooded: bool
     custom_collage: bool
     custom_image: str | None
@@ -1824,8 +1761,6 @@ class TradeSelectResultReceived(BaseModel):
     nanaed: bool
     timestamp: datetime
     trade_locked: bool
-    disabled: bool
-    frozen: bool
 
 
 class TradeSelectResultReceivedCharacter(BaseModel):
@@ -1845,8 +1780,7 @@ class TradeSelectResultReceivedOriginalOwner(BaseModel):
 
 class TradeSelectResultReceivedOriginalOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class TradeSelectResultReceivedOwner(BaseModel):
@@ -1856,8 +1790,7 @@ class TradeSelectResultReceivedOwner(BaseModel):
 
 class TradeSelectResultReceivedOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class UpdateAMQSettingsBody(BaseModel):
@@ -1880,7 +1813,7 @@ class UpsertAnilistAccountBody(BaseModel):
 
 class UpsertDiscordAccountBodyItem(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
+    discord_id: str
     discord_username: str
 
 
@@ -1889,7 +1822,7 @@ class UpsertGuildEventBody(BaseModel):
     name: str
     start_time: datetime
     end_time: datetime
-    organizer_id: int
+    organizer_id: str
     organizer_username: str
     description: str | None = None
     location: str | None = None
@@ -1946,8 +1879,7 @@ class UserCalendarSelectAllResult(BaseModel):
 class UserCalendarSelectAllResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
@@ -1961,15 +1893,13 @@ class UserCalendarSelectResult(BaseModel):
 class UserCalendarSelectResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
 class UserSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
     discord_username: str
 
 
@@ -1986,8 +1916,6 @@ class WaifuBulkUpdateResult(BaseModel):
     owner: 'WaifuBulkUpdateResultOwner'
     original_owner: 'WaifuBulkUpdateResultOriginalOwner | None'
     custom_position_waifu: 'WaifuBulkUpdateResultCustomPositionWaifu | None'
-    frozen: bool
-    disabled: bool
     trade_locked: bool
     timestamp: datetime
     nanaed: bool
@@ -1998,6 +1926,8 @@ class WaifuBulkUpdateResult(BaseModel):
     custom_image: str | None
     custom_collage: bool
     blooded: bool
+    disabled: bool
+    frozen: bool
     id: UUID
 
 
@@ -2018,8 +1948,7 @@ class WaifuBulkUpdateResultOriginalOwner(BaseModel):
 
 class WaifuBulkUpdateResultOriginalOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class WaifuBulkUpdateResultOwner(BaseModel):
@@ -2029,8 +1958,7 @@ class WaifuBulkUpdateResultOwner(BaseModel):
 
 class WaifuBulkUpdateResultOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class WaifuExportResult(BaseModel):
@@ -2080,6 +2008,8 @@ class WaifuSelectResult(BaseModel):
     original_owner: 'WaifuSelectResultOriginalOwner | None'
     custom_position_waifu: 'WaifuSelectResultCustomPositionWaifu | None'
     id: UUID
+    frozen: bool
+    disabled: bool
     blooded: bool
     custom_collage: bool
     custom_image: str | None
@@ -2090,8 +2020,6 @@ class WaifuSelectResult(BaseModel):
     nanaed: bool
     timestamp: datetime
     trade_locked: bool
-    disabled: bool
-    frozen: bool
 
 
 class WaifuSelectResultCharacter(BaseModel):
@@ -2111,8 +2039,7 @@ class WaifuSelectResultOriginalOwner(BaseModel):
 
 class WaifuSelectResultOriginalOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class WaifuSelectResultOwner(BaseModel):
@@ -2122,8 +2049,7 @@ class WaifuSelectResultOwner(BaseModel):
 
 class WaifuSelectResultOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: int
-    discord_id_str: str
+    discord_id: str
 
 
 class WaifuUpdateCustomImageNameResult(BaseModel):

@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "nanapi": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "${workspaceFolder}/mcpserver.py"],
+      "env": {
+        "UV_PROJECT": "${workspaceFolder}"
+      }
+    }
+  }
+}
