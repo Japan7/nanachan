@@ -28,17 +28,19 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
     @app_commands.command(name='chat')
     @legacy_command()
     async def new_chat(
-        self, ctx: LegacyCommandContext, prompt: str, image: discord.Attachment | None = None
+        self, ctx: LegacyCommandContext, prompt: str, attachment: discord.Attachment | None = None
     ):
         """Chat with AI"""
         embed = Embed(description=prompt, color=ctx.author.accent_color)
         embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
-        if image:
-            embed.set_image(url=image.url)
+        if attachment and attachment.content_type and attachment.content_type.startswith('image/'):
+            embed.set_image(url=attachment.url)
         embed.set_footer(text=self.model.model_name)
         resp = await ctx.reply(embed=embed)
 
-        attachments = [image] if image else []
+        attachments = []
+        if attachment:
+            attachments.append(attachment)
 
         if isinstance(ctx.channel, discord.Thread):
             thread = ctx.channel
@@ -62,7 +64,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
         async with thread.typing():
             content: list[UserContent] = [prompt]
             for attachment in attachments:
-                if attachment.content_type and attachment.content_type.startswith('image/'):
+                if attachment.content_type:
                     data = await attachment.read()
                     content.append(BinaryContent(data, media_type=attachment.content_type))
 
