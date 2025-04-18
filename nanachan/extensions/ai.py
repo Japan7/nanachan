@@ -119,7 +119,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                     resp = await send(block, allowed_mentions=allowed_mentions)
                     send = resp.reply
             except Exception as e:
-                await send(f'An error occured while streaming the response:\n```{e}```')
+                await send(f'An error occured while streaming the response:\n```\n{e}\n```')
                 logger.exception(e)
 
     async def agent_iter(
@@ -166,7 +166,9 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                     async with node.stream(run.ctx) as handle_stream:
                         async for event in handle_stream:
                             if isinstance(event, FunctionToolCallEvent):
-                                yield (f'```[TOOL] {event.part.tool_name} {event.part.args}```')
+                                yield (
+                                    f'```\n[TOOL] {event.part.tool_name} {event.part.args}\n```'
+                                )
                             elif isinstance(event, FunctionToolResultEvent):
                                 ...
                 elif Agent.is_end_node(node):
