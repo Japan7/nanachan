@@ -32,15 +32,15 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
         self.bot = bot
         self.chats = defaultdict[int, ChatContext](ChatContext)
         self.lock = asyncio.Lock()
-        tools = [Tool(self.get_users_discord_ids)] + get_nanapi_tools()
+        tools = [Tool(self.get_members_discord_id_name)] + get_nanapi_tools()
         self.agent_multimodal = Agent(AI_MODEL_MULTIMODAL, tools=tools)
         self.agent_text = Agent(
             AI_MODEL_TEXT if AI_MODEL_TEXT else AI_MODEL_MULTIMODAL, tools=tools
         )
 
-    def get_users_discord_ids(self):
-        """Get all available Discord users. Map of their discord_id to their display name."""
-        return {str(user.id): user.display_name for user in self.bot.users}
+    async def get_members_discord_id_name(self):
+        """Get all available Discord users. Map their discord_id to their display name."""
+        return {str(member.id): member.display_name for member in self.bot.get_all_members()}
 
     @app_commands.command(name='chat')
     @legacy_command()
