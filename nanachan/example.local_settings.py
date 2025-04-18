@@ -92,7 +92,7 @@ REDIS_HOST = None
 # NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## Ollama
-# OLLAMA_HOST = ''
+# OLLAMA_HOST = 'http://localhost:11434/v1'
 # OLLAMA_MODEL = ''
 
 ## SauceNAO

@@ -35,8 +35,8 @@ dependencies = [
     "yt-dlp[default]==2025.3.31",
     "aiojobs==1.4.0",
     "tzdata==2025.2",
-    "ollama==0.4.8",
     "python-dateutil==2.9.0.post0",
+    "pydantic-ai-slim[openai]==0.1.2",
 ]
 
 [dependency-groups]
