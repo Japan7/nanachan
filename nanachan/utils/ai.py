@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import AsyncGenerator, Iterable, Sequence
+from typing import AsyncGenerator, Sequence
 
 from pydantic_ai import Agent, RunContext, Tool
 from pydantic_ai.messages import (
@@ -30,8 +30,30 @@ class RunDeps:
 
 class AgentHelper:
     def __init__(self, model: Model):
-        self.agent = Agent(model, tools=list(tools()), deps_type=RunDeps)
+        self.agent = Agent(model, tools=list(nanapi_tools()), deps_type=RunDeps)
         self.lock = asyncio.Lock()
+
+        @self.agent.tool
+        def get_current_user_infos(run_ctx: RunContext[RunDeps]):
+            """Get name and Discord ID of the current user."""
+            author = run_ctx.deps.author
+            return {
+                'id': author.id,
+                'display_name': author.display_name,
+                'global_name': author.global_name,
+            }
+
+        @self.agent.tool
+        def get_members_name_discord_id_map(run_ctx: RunContext[RunDeps]):
+            """Generate a mapping of Discord member display names to their Discord IDs."""
+            bot = run_ctx.deps.bot
+            return {member.display_name: member.id for member in bot.get_all_members()}
+
+        @self.agent.tool
+        def get_channels_name_channel_id_map(run_ctx: RunContext[RunDeps]):
+            """Generate a mapping of Discord channel names to their channel IDs."""
+            bot = run_ctx.deps.bot
+            return {channel.name: channel.id for channel in bot.get_all_channels()}
 
     async def yield_agent_output(
         self,
@@ -87,24 +109,6 @@ class AgentHelper:
                     # Once an End node is reached, the agent run is complete
                     assert run.result
                     message_history.extend(run.result.new_messages())
-
-
-def tools() -> Iterable[Tool[RunDeps]]:
-    yield Tool(get_current_user_infos)
-    yield Tool(get_members_name_discord_id_map)
-    yield from nanapi_tools()
-
-
-def get_current_user_infos(run_ctx: RunContext[RunDeps]):
-    """Get name and Discord ID of the current user."""
-    author = run_ctx.deps.author
-    return dict(id=author.id, display_name=author.display_name, global_name=author.global_name)
-
-
-def get_members_name_discord_id_map(run_ctx: RunContext[RunDeps]):
-    """Generate a mapping of Discord member display names to their Discord IDs."""
-    bot = run_ctx.deps.bot
-    return {member.display_name: member.id for member in bot.get_all_members()}
 
 
 def nanapi_tools():
