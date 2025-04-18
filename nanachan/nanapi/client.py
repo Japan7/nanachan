@@ -76,7 +76,7 @@ def wrap_request(_request):
     return _wrapped
 
 
-def get_nanapi_tools() -> list[Tool]:
+def get_nanapi_tools():
     nanapi = get_nanapi()
     tools = [
         nanapi.anilist.anilist_get_accounts,
@@ -91,6 +91,11 @@ def get_nanapi_tools() -> list[Tool]:
         nanapi.anilist.anilist_get_staffs,
         nanapi.anilist.anilist_staff_search,
         nanapi.anilist.anilist_get_staff_chara_edges,
+        nanapi.calendar.calendar_get_guild_events,
+        nanapi.histoire.histoire_histoire_index,
+        nanapi.histoire.histoire_get_histoire,
+        nanapi.projection.projection_get_projections,
+        nanapi.reminder.reminder_get_reminders,
         nanapi.user.user_get_profile,
         nanapi.waicolle.waicolle_get_players,
         nanapi.waicolle.waicolle_get_player,

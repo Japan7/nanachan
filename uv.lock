@@ -116,6 +116,24 @@ wheels = [
 ]
 
 [[package]]
+name = "anthropic"
+version = "0.49.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "distro" },
+    { name = "httpx" },
+    { name = "jiter" },
+    { name = "pydantic" },
+    { name = "sniffio" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/86/e3/a88c8494ce4d1a88252b9e053607e885f9b14d0a32273d47b727cbee4228/anthropic-0.49.0.tar.gz", hash = "sha256:c09e885b0f674b9119b4f296d8508907f6cff0009bc20d5cf6b35936c40b4398", size = 210016 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/74/5d90ad14d55fbe3f9c474fdcb6e34b4bed99e3be8efac98734a5ddce88c1/anthropic-0.49.0-py3-none-any.whl", hash = "sha256:bbc17ad4e7094988d2fa86b87753ded8dce12498f4b85fe5810f208f454a8375", size = 243368 },
+]
+
+[[package]]
 name = "anyio"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -845,7 +863,7 @@ dependencies = [
     { name = "parsedatetime" },
     { name = "pillow" },
     { name = "pydantic" },
-    { name = "pydantic-ai-slim", extra = ["mistral", "openai"] },
+    { name = "pydantic-ai-slim", extra = ["anthropic", "mistral", "openai"] },
     { name = "pysaucenao" },
     { name = "python-dateutil" },
     { name = "python-socketio", extra = ["asyncio-client"] },
@@ -883,7 +901,7 @@ requires-dist = [
     { name = "parsedatetime", specifier = "==2.6" },
     { name = "pillow", specifier = "==11.2.1" },
     { name = "pydantic", specifier = "==2.11.3" },
-    { name = "pydantic-ai-slim", extras = ["openai", "mistral"], specifier = "==0.1.2" },
+    { name = "pydantic-ai-slim", extras = ["openai", "anthropic", "mistral"], specifier = "==0.1.2" },
     { name = "pysaucenao", specifier = "==1.6.3" },
     { name = "python-dateutil", specifier = "==2.9.0.post0" },
     { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.13.0" },
@@ -1162,6 +1180,9 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+anthropic = [
+    { name = "anthropic" },
+]
 mistral = [
     { name = "mistralai" },
 ]

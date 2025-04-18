@@ -19,7 +19,7 @@ class Tsundere(commands.Cog):
 
         if self.bot.user.display_name in message.content or self.bot.user in message.mentions:
             ai_cog = AI.get_cog(self.bot)
-            if ai_cog is not None and ctx.channel.id in ai_cog.chats:
+            if ai_cog is not None and ctx.channel.id in ai_cog.messages:
                 return
 
             messages = [

@@ -97,10 +97,8 @@ REDIS_HOST = None
 # NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## AI
-# AI_MODEL_MULTIMODAL = MistralModel('pixtral-large-latest', provider=MistralProvider(api_key='myapikey'))
-# AI_MODEL_TEXT = MistralModel('mistral-large-latest', provider=MistralProvider(api_key='myapikey'))
-# AI_MODEL_MULTIMODAL = OpenAIModel('gemma3', provider=OpenAIProvider(base_url='http://localhost:11434/v1'))
-# AI_MODEL_TEXT = OpenAIModel('llama3', provider=OpenAIProvider(base_url='http://localhost:11434/v1'))
+# AI_MODEL = MistralModel('pixtral-large-latest', provider=MistralProvider(api_key='myapikey'))
+# AI_MODEL = OpenAIModel('gemma3', provider=OpenAIProvider(base_url='http://localhost:11434/v1'))
 
 ## SauceNAO
 # SAUCENAO_API_KEY = None
