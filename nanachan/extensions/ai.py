@@ -13,7 +13,7 @@ from nanachan.discord.application_commands import LegacyCommandContext, legacy_c
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed, MultiplexingContext, MultiplexingMessage
-from nanachan.settings import AI_MODEL, RequiresAI
+from nanachan.settings import AI_MODEL_TEXT, AI_MODEL_MULTIMODAL, RequiresAI
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +22,15 @@ logger = logging.getLogger(__name__)
 class ChatContext:
     history: list[ModelMessage] = field(default_factory=list)
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    multimodal: bool = False
 
 
 @app_commands.guild_only()
 class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
     def __init__(self):
         super().__init__()
-        self.agent = Agent(AI_MODEL)
+        self.agent_multimodal = Agent(AI_MODEL_MULTIMODAL)
+        self.agent_text = Agent(AI_MODEL_TEXT if AI_MODEL_TEXT else AI_MODEL_MULTIMODAL)
         self.chats = defaultdict[int, ChatContext](ChatContext)
 
     @app_commands.command(name='chat')
@@ -73,16 +75,19 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                 if attachment.content_type and attachment.content_type.startswith('image/'):
                     data = await attachment.read()
                     content.append(BinaryContent(data, media_type=attachment.content_type))
-            async for block in self._chat_stream_blocks(content, chat_ctx.history):
+            async for block in self._chat_stream_blocks(chat_ctx, content):
                 resp = await send(block, allowed_mentions=allowed_mentions)
                 send = resp.reply
 
     async def _chat_stream_blocks(
         self,
+        chat_ctx: ChatContext,
         content: Sequence[UserContent],
-        history: list[ModelMessage],
     ):
-        async with self.agent.run_stream(content, message_history=history) as resp:
+        if any(not isinstance(c, str) for c in content):
+            chat_ctx.multimodal = True
+        agent = self.agent_multimodal if chat_ctx.multimodal else self.agent_text
+        async with agent.run_stream(content, message_history=chat_ctx.history) as resp:
             buf = ''
             async for delta in resp.stream_text(delta=True):
                 buf += delta
@@ -97,7 +102,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                             buf += '\n' + block
             if buf:
                 yield buf
-            history.extend(resp.new_messages())
+            chat_ctx.history.extend(resp.new_messages())
 
     @NanaGroupCog.listener()
     async def on_user_message(self, ctx: MultiplexingContext):

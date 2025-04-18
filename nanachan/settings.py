@@ -97,7 +97,8 @@ WC_WEB = 'https://waicolle.japan7.bde.enseeiht.fr'
 NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## AI
-AI_MODEL: Model | None = None
+AI_MODEL_MULTIMODAL: Model | None = None
+AI_MODEL_TEXT: Model | None = None
 
 ## SauceNAO
 SAUCENAO_API_KEY = None
@@ -140,4 +141,4 @@ RequiresAMQ = RequiredSettings(
 RequiresProjo = RequiredSettings(PROJO_THREADS_ROOM, PROJO_ROOM, PROJO_VOICE, PROJO_LEADER_ROLE_ID)
 RequiresQuizz = RequiredSettings(ANIME_QUIZZ_CHANNEL, MANGA_QUIZZ_CHANNEL, LOUIS_QUIZZ_CHANNEL)
 RequiresWaicolle = RequiredSettings(WC_ROLE)
-RequiresAI = RequiredSettings(AI_MODEL)
+RequiresAI = RequiredSettings(AI_MODEL_MULTIMODAL)
