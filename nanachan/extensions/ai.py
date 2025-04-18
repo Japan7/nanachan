@@ -90,7 +90,6 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                     send = resp.reply
             except Exception as e:
                 await send(f'An error occured while streaming the response:\n{e}')
-                raise
 
     async def _chat_stream_blocks(
         self,
