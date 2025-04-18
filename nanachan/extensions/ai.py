@@ -8,14 +8,12 @@ import discord
 from discord import AllowedMentions, app_commands
 from pydantic_ai import Agent, BinaryContent
 from pydantic_ai.messages import ModelMessage, UserContent
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.openai import OpenAIProvider
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed, MultiplexingContext, MultiplexingMessage
-from nanachan.settings import OLLAMA_HOST, OLLAMA_MODEL, RequiresAI
+from nanachan.settings import AI_MODEL, RequiresAI
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +28,7 @@ class ChatContext:
 class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
     def __init__(self):
         super().__init__()
-        model = OpenAIModel(OLLAMA_MODEL, provider=OpenAIProvider(base_url=OLLAMA_HOST))
-        self.agent = Agent(model)
+        self.agent = Agent(AI_MODEL)
         self.chats = defaultdict[int, ChatContext](ChatContext)
 
     @app_commands.command(name='chat')

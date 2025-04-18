@@ -761,6 +761,22 @@ wheels = [
 ]
 
 [[package]]
+name = "mistralai"
+version = "1.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "eval-type-backport" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "typing-inspection" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/98/d0/11e0116a02aa88701422ccc048185ed8834754f3b94140bfad09620c9d11/mistralai-1.7.0.tar.gz", hash = "sha256:94e3eb23c1d3ed398a95352062fd8c92993cc3754ed18e9a35b60aa3db0bd103", size = 141981 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/77/eb7519ddfccb6428ac430129e7b42cc662e710cb719f82c0ffe79ab50859/mistralai-1.7.0-py3-none-any.whl", hash = "sha256:e0e75ab8508598d69ae19b14d9d7e905db6259a2de3cf9204946a27e9bf81c5d", size = 301483 },
+]
+
+[[package]]
 name = "multidict"
 version = "6.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -829,7 +845,7 @@ dependencies = [
     { name = "parsedatetime" },
     { name = "pillow" },
     { name = "pydantic" },
-    { name = "pydantic-ai-slim", extra = ["openai"] },
+    { name = "pydantic-ai-slim", extra = ["mistral", "openai"] },
     { name = "pysaucenao" },
     { name = "python-dateutil" },
     { name = "python-socketio", extra = ["asyncio-client"] },
@@ -867,7 +883,7 @@ requires-dist = [
     { name = "parsedatetime", specifier = "==2.6" },
     { name = "pillow", specifier = "==11.2.1" },
     { name = "pydantic", specifier = "==2.11.3" },
-    { name = "pydantic-ai-slim", extras = ["openai"], specifier = "==0.1.2" },
+    { name = "pydantic-ai-slim", extras = ["openai", "mistral"], specifier = "==0.1.2" },
     { name = "pysaucenao", specifier = "==1.6.3" },
     { name = "python-dateutil", specifier = "==2.9.0.post0" },
     { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.13.0" },
@@ -1146,6 +1162,9 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+mistral = [
+    { name = "mistralai" },
+]
 openai = [
     { name = "openai" },
 ]

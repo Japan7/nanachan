@@ -1,8 +1,13 @@
 # TODO: Uncommented variables must be set to work properly.
+# ruff: noqa: I001
 
 # from zoneinfo import ZoneInfo
 
 from aiohttp import BasicAuth
+# from pydantic_ai.models.mistral import MistralModel
+# from pydantic_ai.models.openai import OpenAIModel
+# from pydantic_ai.providers.mistral import MistralProvider
+# from pydantic_ai.providers.openai import OpenAIProvider
 
 # LOG_LEVEL = 'INFO'
 # DEBUG = True
@@ -91,9 +96,9 @@ REDIS_HOST = None
 ## Calendar
 # NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
-## Ollama
-# OLLAMA_HOST = 'http://localhost:11434/v1'
-# OLLAMA_MODEL = ''
+## AI
+# AI_MODEL = OpenAIModel('gemma3', provider=OpenAIProvider(base_url='http://localhost:11434/v1'))
+# AI_MODEL = MistralModel('pixtral-large-latest', provider=MistralProvider(api_key='myapikey'))
 
 ## SauceNAO
 # SAUCENAO_API_KEY = None
