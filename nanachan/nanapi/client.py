@@ -3,6 +3,7 @@ from functools import cache
 
 import backoff
 from aiohttp import ClientResponse
+from pydantic_ai.tools import Tool
 
 from nanachan.nanapi._client import Error as Error  # noqa: F401
 from nanachan.nanapi._client import Success as Success  # noqa: F401
@@ -73,3 +74,34 @@ def wrap_request(_request):
         return await _request(*args, **kwargs)
 
     return _wrapped
+
+
+def get_nanapi_tools() -> list[Tool]:
+    nanapi = get_nanapi()
+    tools = [
+        nanapi.anilist.anilist_get_accounts,
+        nanapi.anilist.anilist_get_account_entries,
+        nanapi.anilist.anilist_get_medias,
+        nanapi.anilist.anilist_media_search,
+        nanapi.anilist.anilist_get_media_list_entries,
+        nanapi.anilist.anilist_get_media_chara_edges,
+        nanapi.anilist.anilist_get_charas,
+        nanapi.anilist.anilist_chara_search,
+        nanapi.anilist.anilist_get_chara_chara_edges,
+        nanapi.anilist.anilist_get_staffs,
+        nanapi.anilist.anilist_staff_search,
+        nanapi.anilist.anilist_get_staff_chara_edges,
+        nanapi.user.user_get_profile,
+        nanapi.waicolle.waicolle_get_players,
+        nanapi.waicolle.waicolle_get_player,
+        nanapi.waicolle.waicolle_get_player_tracked_items,
+        nanapi.waicolle.waicolle_get_player_track_unlocked,
+        nanapi.waicolle.waicolle_get_player_track_reversed,
+        nanapi.waicolle.waicolle_get_player_media_stats,
+        nanapi.waicolle.waicolle_get_player_staff_stats,
+        nanapi.waicolle.waicolle_get_player_collection_stats,
+        nanapi.waicolle.waicolle_get_waifus,
+        nanapi.waicolle.waicolle_trade_index,
+        nanapi.waicolle.waicolle_get_collection,
+    ]
+    return [Tool(tool) for tool in tools]

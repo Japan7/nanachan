@@ -774,9 +774,9 @@ class GuildEventDeleteResult(BaseModel):
 
 class GuildEventDeleteResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    username: str
     id: UUID
     password_hash: str
+    username: str
 
 
 class GuildEventDeleteResultOrganizer(BaseModel):
@@ -826,9 +826,9 @@ class GuildEventMergeResult(BaseModel):
 
 class GuildEventMergeResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    username: str
     id: UUID
     password_hash: str
+    username: str
 
 
 class GuildEventMergeResultOrganizer(BaseModel):
@@ -888,9 +888,9 @@ class GuildEventSelectResult(BaseModel):
 
 class GuildEventSelectResultClient(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    username: str
     id: UUID
     password_hash: str
+    username: str
 
 
 class GuildEventSelectResultOrganizer(BaseModel):
@@ -1726,10 +1726,10 @@ class TradeSelectResult(BaseModel):
     received: list['TradeSelectResultReceived']
     offeree: 'TradeSelectResultOfferee'
     offered: list['TradeSelectResultOffered']
+    id: UUID
     blood_shards: int
     completed_at: datetime | None
     created_at: datetime
-    id: UUID
 
 
 class TradeSelectResultAuthor(BaseModel):

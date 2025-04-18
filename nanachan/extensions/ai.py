@@ -6,14 +6,15 @@ from typing import Sequence
 
 import discord
 from discord import AllowedMentions, app_commands
-from pydantic_ai import Agent, BinaryContent
+from pydantic_ai import Agent, BinaryContent, Tool
 from pydantic_ai.messages import ModelMessage, UserContent
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed, MultiplexingContext, MultiplexingMessage
-from nanachan.settings import AI_MODEL_TEXT, AI_MODEL_MULTIMODAL, RequiresAI
+from nanachan.nanapi.client import get_nanapi_tools
+from nanachan.settings import AI_MODEL_MULTIMODAL, AI_MODEL_TEXT, RequiresAI
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +22,25 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ChatContext:
     history: list[ModelMessage] = field(default_factory=list)
-    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     multimodal: bool = False
 
 
 @app_commands.guild_only()
 class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
-    def __init__(self):
+    def __init__(self, bot: Bot):
         super().__init__()
-        self.agent_multimodal = Agent(AI_MODEL_MULTIMODAL)
-        self.agent_text = Agent(AI_MODEL_TEXT if AI_MODEL_TEXT else AI_MODEL_MULTIMODAL)
+        self.bot = bot
         self.chats = defaultdict[int, ChatContext](ChatContext)
+        self.lock = asyncio.Lock()
+        tools = [Tool(self.get_users_discord_ids)] + get_nanapi_tools()
+        self.agent_multimodal = Agent(AI_MODEL_MULTIMODAL, tools=tools)
+        self.agent_text = Agent(
+            AI_MODEL_TEXT if AI_MODEL_TEXT else AI_MODEL_MULTIMODAL, tools=tools
+        )
+
+    def get_users_discord_ids(self):
+        """Get all available Discord users. Map of their discord_id to their display name."""
+        return {str(user.id): user.display_name for user in self.bot.users}
 
     @app_commands.command(name='chat')
     @legacy_command()
@@ -69,15 +78,19 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
         allowed_mentions = AllowedMentions.none()
         allowed_mentions.replied_user = True
         chat_ctx = self.chats[thread.id]
-        async with chat_ctx.lock, thread.typing():
+        async with thread.typing(), self.lock:
             content: list[UserContent] = [prompt]
             for attachment in attachments:
                 if attachment.content_type and attachment.content_type.startswith('image/'):
                     data = await attachment.read()
                     content.append(BinaryContent(data, media_type=attachment.content_type))
-            async for block in self._chat_stream_blocks(chat_ctx, content):
-                resp = await send(block, allowed_mentions=allowed_mentions)
-                send = resp.reply
+            try:
+                async for block in self._chat_stream_blocks(chat_ctx, content):
+                    resp = await send(block, allowed_mentions=allowed_mentions)
+                    send = resp.reply
+            except Exception as e:
+                await send(f'An error occured while streaming the response:\n{e}')
+                raise
 
     async def _chat_stream_blocks(
         self,
@@ -119,4 +132,4 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
 
 
 async def setup(bot: Bot):
-    await bot.add_cog(AI())
+    await bot.add_cog(AI(bot))

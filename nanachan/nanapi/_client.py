@@ -242,6 +242,7 @@ class AmqModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Retrieve AMQ accounts, optionally filtered by username."""
         url = f'{self.server_url}/amq/accounts'
         params = {
             'username': username,
@@ -279,6 +280,7 @@ class AmqModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create or update an AMQ account by Discord ID."""
         url = f'{self.server_url}/amq/accounts/{discord_id}'
 
         async with self.session.patch(
@@ -312,6 +314,7 @@ class AmqModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Retrieve all AMQ settings."""
         url = f'{self.server_url}/amq/settings'
         params = {
             'client_id': client_id,
@@ -350,6 +353,7 @@ class AmqModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Update AMQ settings."""
         url = f'{self.server_url}/amq/settings'
         params = {
             'client_id': client_id,
@@ -397,6 +401,7 @@ class AnilistModule:
         Success[Literal[200], list[AccountSelectAllResult]]
         | Error[Literal[401], HTTPExceptionModel]
     ):
+        """Get all AniList accounts."""
         url = f'{self.server_url}/anilist/accounts'
 
         async with self.session.get(
@@ -426,6 +431,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Upsert AniList account for a Discord user."""
         url = f'{self.server_url}/anilist/accounts/{discord_id}'
 
         async with self.session.patch(
@@ -463,6 +469,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all AniList entries for all accounts."""
         url = f'{self.server_url}/anilist/accounts/all/entries'
         params = {
             'type': type,
@@ -500,6 +507,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get AniList entries for a specific Discord user."""
         url = f'{self.server_url}/anilist/accounts/{discord_id}/entries'
         params = {
             'type': type,
@@ -537,6 +545,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get AniList media objects by IDs."""
         url = f'{self.server_url}/anilist/medias'
         params = {
             'ids_al': ids_al,
@@ -574,6 +583,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Search for AniList media by title."""
         url = f'{self.server_url}/anilist/medias/search'
         params = {
             'type': type,
@@ -612,6 +622,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Autocomplete AniList media titles."""
         url = f'{self.server_url}/anilist/medias/autocomplete'
         params = {
             'search': search,
@@ -651,6 +662,7 @@ class AnilistModule:
         | Error[Literal[400], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a collage image of AniList media covers."""
         url = f'{self.server_url}/anilist/medias/collages'
         params = {
             'ids_al': ids_al,
@@ -686,6 +698,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get AniList entries for a specific media."""
         url = f'{self.server_url}/anilist/medias/{id_al}/entries'
 
         async with self.session.get(
@@ -719,6 +732,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get character edges for a specific media."""
         url = f'{self.server_url}/anilist/medias/{id_al}/edges/charas'
 
         async with self.session.get(
@@ -752,6 +766,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get AniList characters by IDs."""
         url = f'{self.server_url}/anilist/charas'
         params = {
             'ids_al': ids_al,
@@ -789,6 +804,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Search for AniList characters by name."""
         url = f'{self.server_url}/anilist/charas/search'
         params = {
             'search': search,
@@ -826,6 +842,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Autocomplete AniList character names."""
         url = f'{self.server_url}/anilist/charas/autocomplete'
         params = {
             'search': search,
@@ -864,6 +881,7 @@ class AnilistModule:
         | Error[Literal[400], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a collage image of AniList character images."""
         url = f'{self.server_url}/anilist/charas/collages'
         params = {
             'ids_al': ids_al,
@@ -902,6 +920,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get character edges for a specific character."""
         url = f'{self.server_url}/anilist/charas/{id_al}/edges/charas'
 
         async with self.session.get(
@@ -939,6 +958,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get AniList staff by IDs."""
         url = f'{self.server_url}/anilist/staffs'
         params = {
             'ids_al': ids_al,
@@ -976,6 +996,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Search for AniList staff by name."""
         url = f'{self.server_url}/anilist/staffs/search'
         params = {
             'search': search,
@@ -1013,6 +1034,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Autocomplete AniList staff names."""
         url = f'{self.server_url}/anilist/staffs/autocomplete'
         params = {
             'search': search,
@@ -1052,6 +1074,7 @@ class AnilistModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get character edges for a specific staff."""
         url = f'{self.server_url}/anilist/staffs/{id_al}/edges/charas'
 
         async with self.session.get(
@@ -1094,6 +1117,7 @@ class CalendarModule:
         Success[Literal[200], list[UserCalendarSelectAllResult]]
         | Error[Literal[401], HTTPExceptionModel]
     ):
+        """Get all user calendars."""
         url = f'{self.server_url}/calendar/user_calendars'
 
         async with self.session.get(
@@ -1124,6 +1148,7 @@ class CalendarModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a user calendar by Discord ID."""
         url = f'{self.server_url}/calendar/user_calendars/{discord_id}'
 
         async with self.session.get(
@@ -1158,6 +1183,7 @@ class CalendarModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Upsert (update or insert) a user calendar."""
         url = f'{self.server_url}/calendar/user_calendars/{discord_id}'
 
         async with self.session.patch(
@@ -1192,6 +1218,7 @@ class CalendarModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a user calendar by Discord ID."""
         url = f'{self.server_url}/calendar/user_calendars/{discord_id}'
 
         async with self.session.delete(
@@ -1226,6 +1253,7 @@ class CalendarModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all guild events, optionally after a certain date."""
         url = f'{self.server_url}/calendar/guild_events'
         params = {
             'start_after': start_after,
@@ -1265,6 +1293,7 @@ class CalendarModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Upsert (update or insert) a guild event."""
         url = f'{self.server_url}/calendar/guild_events/{discord_id}'
         params = {
             'client_id': client_id,
@@ -1309,6 +1338,7 @@ class CalendarModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a guild event by Discord ID."""
         url = f'{self.server_url}/calendar/guild_events/{discord_id}'
         params = {
             'client_id': client_id,
@@ -1358,6 +1388,7 @@ class CalendarModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Add a participant to a guild event."""
         url = f'{self.server_url}/calendar/guild_events/{discord_id}/participants/{participant_id}'
         params = {
             'client_id': client_id,
@@ -1404,6 +1435,7 @@ class CalendarModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Remove a participant from a guild event."""
         url = f'{self.server_url}/calendar/guild_events/{discord_id}/participants/{participant_id}'
         params = {
             'client_id': client_id,
@@ -1447,6 +1479,7 @@ class CalendarModule:
         | Error[Literal[404], None]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get an iCalendar (ICS) file for a client and optionally a user."""
         url = f'{self.server_url}/calendar/ics'
         params = {
             'client': client,
@@ -1488,6 +1521,7 @@ class ClientModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get information about the currently authenticated client."""
         url = f'{self.server_url}/clients/'
         params = {
             'client_id': client_id,
@@ -1526,6 +1560,7 @@ class ClientModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Register a new client account."""
         url = f'{self.server_url}/clients/'
 
         async with self.session.post(
@@ -1563,6 +1598,7 @@ class ClientModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Authenticate client and return JWT access token."""
         url = f'{self.server_url}/clients/token'
 
         async with self.session.post(
@@ -1602,6 +1638,7 @@ class HistoireModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """List all histoires (id and title)."""
         url = f'{self.server_url}/histoires/'
         params = {
             'client_id': client_id,
@@ -1642,6 +1679,7 @@ class HistoireModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new histoire."""
         url = f'{self.server_url}/histoires/'
         params = {
             'client_id': client_id,
@@ -1689,6 +1727,7 @@ class HistoireModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a single histoire by ID."""
         url = f'{self.server_url}/histoires/{id}'
         params = {
             'client_id': client_id,
@@ -1732,6 +1771,7 @@ class HistoireModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a single histoire by ID."""
         url = f'{self.server_url}/histoires/{id}'
         params = {
             'client_id': client_id,
@@ -1782,6 +1822,7 @@ class PotModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get pot information for a user by Discord ID."""
         url = f'{self.server_url}/pots/{discord_id}'
         params = {
             'client_id': client_id,
@@ -1824,6 +1865,7 @@ class PotModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Collect pot for a user by Discord ID."""
         url = f'{self.server_url}/pots/{discord_id}'
         params = {
             'client_id': client_id,
@@ -1872,6 +1914,7 @@ class PresenceModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all presences."""
         url = f'{self.server_url}/presences/'
         params = {
             'client_id': client_id,
@@ -1911,6 +1954,7 @@ class PresenceModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new presence."""
         url = f'{self.server_url}/presences/'
         params = {
             'client_id': client_id,
@@ -1959,6 +2003,7 @@ class PresenceModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a presence by ID."""
         url = f'{self.server_url}/presences/{id}'
         params = {
             'client_id': client_id,
@@ -2012,6 +2057,7 @@ class ProjectionModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a list of projections."""
         url = f'{self.server_url}/projections/'
         params = {
             'status': status,
@@ -2053,6 +2099,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new projection."""
         url = f'{self.server_url}/projections/'
         params = {
             'client_id': client_id,
@@ -2096,6 +2143,7 @@ class ProjectionModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a projection by ID."""
         url = f'{self.server_url}/projections/{id}'
         params = {
             'client_id': client_id,
@@ -2139,6 +2187,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a projection by ID."""
         url = f'{self.server_url}/projections/{id}'
         params = {
             'client_id': client_id,
@@ -2184,6 +2233,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Set the name of a projection."""
         url = f'{self.server_url}/projections/{id}/name'
         params = {
             'client_id': client_id,
@@ -2232,6 +2282,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Set the status of a projection."""
         url = f'{self.server_url}/projections/{id}/status'
         params = {
             'client_id': client_id,
@@ -2280,6 +2331,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Set the message ID of a projection."""
         url = f'{self.server_url}/projections/{id}/message_id'
         params = {
             'client_id': client_id,
@@ -2328,6 +2380,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Add an AniList media to a projection."""
         url = f'{self.server_url}/projections/{id}/medias/anilist/{id_al}'
         params = {
             'client_id': client_id,
@@ -2375,6 +2428,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Remove an AniList media from a projection."""
         url = f'{self.server_url}/projections/{id}/medias/anilist/{id_al}'
         params = {
             'client_id': client_id,
@@ -2420,6 +2474,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Add an external media to a projection."""
         url = f'{self.server_url}/projections/{id}/medias/external'
         params = {
             'client_id': client_id,
@@ -2468,6 +2523,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Remove an external media from a projection."""
         url = f'{self.server_url}/projections/{id}/medias/external/{external_media_id}'
         params = {
             'client_id': client_id,
@@ -2517,6 +2573,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Add a participant to a projection."""
         url = f'{self.server_url}/projections/{id}/participants/{participant_id}'
         params = {
             'client_id': client_id,
@@ -2563,6 +2620,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Remove a participant from a projection."""
         url = f'{self.server_url}/projections/{id}/participants/{participant_id}'
         params = {
             'client_id': client_id,
@@ -2608,6 +2666,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Add a guild event to a projection."""
         url = f'{self.server_url}/projections/{id}/guild_events/{discord_id}'
         params = {
             'client_id': client_id,
@@ -2654,6 +2713,7 @@ class ProjectionModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete upcoming guild events from a projection."""
         url = f'{self.server_url}/projections/{id}/guild_events/upcoming'
         params = {
             'client_id': client_id,
@@ -2702,6 +2762,7 @@ class QuizzModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new quizz."""
         url = f'{self.server_url}/quizz/quizzes'
         params = {
             'client_id': client_id,
@@ -2745,6 +2806,7 @@ class QuizzModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get the oldest quizz for a channel."""
         url = f'{self.server_url}/quizz/quizzes/oldest'
         params = {
             'channel_id': channel_id,
@@ -2788,6 +2850,7 @@ class QuizzModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a quizz by ID."""
         url = f'{self.server_url}/quizz/quizzes/{id}'
         params = {
             'client_id': client_id,
@@ -2831,6 +2894,7 @@ class QuizzModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a quizz by ID."""
         url = f'{self.server_url}/quizz/quizzes/{id}'
         params = {
             'client_id': client_id,
@@ -2876,6 +2940,7 @@ class QuizzModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Set the answer for a quizz."""
         url = f'{self.server_url}/quizz/quizzes/{id}/answer'
         params = {
             'client_id': client_id,
@@ -2922,6 +2987,7 @@ class QuizzModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get games by status."""
         url = f'{self.server_url}/quizz/games'
         params = {
             'status': status,
@@ -2962,6 +3028,7 @@ class QuizzModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new game."""
         url = f'{self.server_url}/quizz/games'
         params = {
             'client_id': client_id,
@@ -3010,6 +3077,7 @@ class QuizzModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a game by message ID."""
         url = f'{self.server_url}/quizz/games'
         params = {
             'message_id': message_id,
@@ -3055,6 +3123,7 @@ class QuizzModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get the current game for a channel."""
         url = f'{self.server_url}/quizz/games/current'
         params = {
             'channel_id': channel_id,
@@ -3098,6 +3167,7 @@ class QuizzModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get the last game for a channel."""
         url = f'{self.server_url}/quizz/games/last'
         params = {
             'channel_id': channel_id,
@@ -3141,6 +3211,7 @@ class QuizzModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a game by ID."""
         url = f'{self.server_url}/quizz/games/{id}'
         params = {
             'client_id': client_id,
@@ -3184,6 +3255,7 @@ class QuizzModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Set the bananed answer for a game."""
         url = f'{self.server_url}/quizz/games/{id}/bananed'
         params = {
             'client_id': client_id,
@@ -3232,6 +3304,7 @@ class QuizzModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """End a game by ID."""
         url = f'{self.server_url}/quizz/games/{id}/end'
         params = {
             'client_id': client_id,
@@ -3284,6 +3357,7 @@ class ReminderModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all reminders."""
         url = f'{self.server_url}/reminders/'
         params = {
             'client_id': client_id,
@@ -3322,6 +3396,7 @@ class ReminderModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new reminder."""
         url = f'{self.server_url}/reminders/'
         params = {
             'client_id': client_id,
@@ -3366,6 +3441,7 @@ class ReminderModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a reminder by ID."""
         url = f'{self.server_url}/reminders/{id}'
         params = {
             'client_id': client_id,
@@ -3415,6 +3491,7 @@ class RoleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all roles."""
         url = f'{self.server_url}/roles/'
         params = {
             'client_id': client_id,
@@ -3454,6 +3531,7 @@ class RoleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new role."""
         url = f'{self.server_url}/roles/'
         params = {
             'client_id': client_id,
@@ -3502,6 +3580,7 @@ class RoleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a role by role_id."""
         url = f'{self.server_url}/roles/{role_id}'
         params = {
             'client_id': client_id,
@@ -3547,6 +3626,7 @@ class UserModule:
     async def user_discord_account_index(
         self,
     ) -> Success[Literal[200], list[UserSelectResult]] | Error[Literal[401], HTTPExceptionModel]:
+        """List all Discord accounts."""
         url = f'{self.server_url}/user/accounts'
 
         async with self.session.get(
@@ -3575,6 +3655,7 @@ class UserModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Bulk upsert Discord accounts."""
         url = f'{self.server_url}/user/accounts'
 
         async with self.session.patch(
@@ -3608,6 +3689,7 @@ class UserModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Search user profiles by Discord IDs or pattern."""
         url = f'{self.server_url}/user/profiles/search'
         params = {
             'discord_ids': discord_ids,
@@ -3647,6 +3729,7 @@ class UserModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a user profile by Discord ID."""
         url = f'{self.server_url}/user/profiles/{discord_id}'
 
         async with self.session.get(
@@ -3683,6 +3766,7 @@ class UserModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Upsert a user profile by Discord ID."""
         url = f'{self.server_url}/user/profiles/{discord_id}'
 
         async with self.session.patch(
@@ -3722,6 +3806,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all players or filter by character ID."""
         url = f'{self.server_url}/waicolle/players'
         params = {
             'chara_id_al': chara_id_al,
@@ -3761,6 +3846,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Upsert (merge) a player by Discord ID."""
         url = f'{self.server_url}/waicolle/players/{discord_id}'
         params = {
             'client_id': client_id,
@@ -3804,6 +3890,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a player by Discord ID."""
         url = f'{self.server_url}/waicolle/players/{discord_id}'
         params = {
             'client_id': client_id,
@@ -3847,6 +3934,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Freeze a player by Discord ID."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/freeze'
         params = {
             'client_id': client_id,
@@ -3895,6 +3983,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Add coins to a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/coins/add'
         params = {
             'client_id': client_id,
@@ -3953,6 +4042,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Donate coins from one player to another."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/coins/donate'
         params = {
             'to_discord_id': to_discord_id,
@@ -4020,6 +4110,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Perform a waifu roll for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/roll'
         params = {
             'roll_id': roll_id,
@@ -4081,6 +4172,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get tracked items for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks'
         params = {
             'client_id': client_id,
@@ -4123,6 +4215,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get unlocked waifus for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/unlocked'
         params = {
             'hide_singles': hide_singles,
@@ -4166,6 +4259,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get reversed track information for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/reversed'
         params = {
             'hide_singles': hide_singles,
@@ -4209,6 +4303,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get media stats for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
         params = {
             'client_id': client_id,
@@ -4252,6 +4347,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Track a media for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
         params = {
             'client_id': client_id,
@@ -4299,6 +4395,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Untrack a media for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
         params = {
             'client_id': client_id,
@@ -4343,6 +4440,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get staff stats for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
         params = {
             'client_id': client_id,
@@ -4386,6 +4484,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Track a staff for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
         params = {
             'client_id': client_id,
@@ -4433,6 +4532,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Untrack a staff for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
         params = {
             'client_id': client_id,
@@ -4477,6 +4577,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get collection stats for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
         params = {
             'client_id': client_id,
@@ -4520,6 +4621,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Track a collection for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
         params = {
             'client_id': client_id,
@@ -4567,6 +4669,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Untrack a collection for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
         params = {
             'client_id': client_id,
@@ -4614,6 +4717,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get waifu collage for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/collages/waifus'
         params = {
             'filter': filter,
@@ -4661,6 +4765,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get media album collage for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/collages/medias/{id_al}'
         params = {
             'owned_only': owned_only,
@@ -4708,6 +4813,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get staff album collage for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/collages/staffs/{id_al}'
         params = {
             'owned_only': owned_only,
@@ -4755,6 +4861,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get collection album collage for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/collages/collections/{id}'
         params = {
             'owned_only': owned_only,
@@ -4813,6 +4920,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get waifus with various filters."""
         url = f'{self.server_url}/waicolle/waifus'
         params = {
             'ids': ids,
@@ -4872,6 +4980,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Bulk update waifus."""
         url = f'{self.server_url}/waicolle/waifus'
         params = {
             'client_id': client_id,
@@ -4915,6 +5024,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Reroll waifus for a player."""
         url = f'{self.server_url}/waicolle/waifus/reroll'
         params = {
             'client_id': client_id,
@@ -4958,6 +5068,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Blood expired waifus for a player."""
         url = f'{self.server_url}/waicolle/waifus/expired'
         params = {
             'discord_id': discord_id,
@@ -5002,6 +5113,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Customize waifu image name."""
         url = f'{self.server_url}/waicolle/waifus/{id}/customs'
         params = {
             'client_id': client_id,
@@ -5050,6 +5162,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Reorder waifu custom position."""
         url = f'{self.server_url}/waicolle/waifus/{id}/reorder'
         params = {
             'client_id': client_id,
@@ -5099,6 +5212,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Ascend a waifu by ID."""
         url = f'{self.server_url}/waicolle/waifus/{id}/ascend'
         params = {
             'client_id': client_id,
@@ -5151,6 +5265,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Blood a waifu by ID."""
         url = f'{self.server_url}/waicolle/waifus/{id}/blood'
         params = {
             'client_id': client_id,
@@ -5200,6 +5315,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all trades."""
         url = f'{self.server_url}/waicolle/trades'
         params = {
             'client_id': client_id,
@@ -5238,6 +5354,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new trade."""
         url = f'{self.server_url}/waicolle/trades'
         params = {
             'client_id': client_id,
@@ -5282,6 +5399,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new offering trade."""
         url = f'{self.server_url}/waicolle/trades/offerings'
         params = {
             'client_id': client_id,
@@ -5330,6 +5448,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new loot trade."""
         url = f'{self.server_url}/waicolle/trades/loots'
         params = {
             'client_id': client_id,
@@ -5378,6 +5497,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Cancel a trade by ID."""
         url = f'{self.server_url}/waicolle/trades/{id}'
         params = {
             'client_id': client_id,
@@ -5424,6 +5544,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Commit a trade by ID."""
         url = f'{self.server_url}/waicolle/trades/{id}/commit'
         params = {
             'client_id': client_id,
@@ -5475,6 +5596,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new collection."""
         url = f'{self.server_url}/waicolle/collections'
         params = {
             'client_id': client_id,
@@ -5521,6 +5643,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Autocomplete collection names."""
         url = f'{self.server_url}/waicolle/collections/autocomplete'
         params = {
             'search': search,
@@ -5561,6 +5684,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get a collection by ID."""
         url = f'{self.server_url}/waicolle/collections/{id}'
         params = {
             'client_id': client_id,
@@ -5604,6 +5728,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a collection by ID."""
         url = f'{self.server_url}/waicolle/collections/{id}'
         params = {
             'client_id': client_id,
@@ -5649,6 +5774,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Track a media for a collection."""
         url = f'{self.server_url}/waicolle/collections/{id}/medias/{id_al}'
         params = {
             'client_id': client_id,
@@ -5696,6 +5822,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Untrack a media for a collection."""
         url = f'{self.server_url}/waicolle/collections/{id}/medias/{id_al}'
         params = {
             'client_id': client_id,
@@ -5741,6 +5868,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Track a staff for a collection."""
         url = f'{self.server_url}/waicolle/collections/{id}/staffs/{id_al}'
         params = {
             'client_id': client_id,
@@ -5788,6 +5916,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Untrack a staff for a collection."""
         url = f'{self.server_url}/waicolle/collections/{id}/staffs/{id_al}'
         params = {
             'client_id': client_id,
@@ -5831,6 +5960,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all coupons."""
         url = f'{self.server_url}/waicolle/coupons'
         params = {
             'client_id': client_id,
@@ -5870,6 +6000,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Create a new coupon."""
         url = f'{self.server_url}/waicolle/coupons'
         params = {
             'client_id': client_id,
@@ -5918,6 +6049,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Delete a coupon by code."""
         url = f'{self.server_url}/waicolle/coupons/{code}'
         params = {
             'client_id': client_id,
@@ -5957,6 +6089,7 @@ class WaicolleModule:
     async def waicolle_get_ranks(
         self,
     ) -> Success[Literal[200], list[Rank]] | Error[Literal[401], HTTPExceptionModel]:
+        """Get all ranks."""
         url = f'{self.server_url}/waicolle/settings/ranks'
 
         async with self.session.get(
@@ -5985,6 +6118,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Get all rolls and their data."""
         url = f'{self.server_url}/waicolle/settings/rolls'
         params = {
             'discord_id': discord_id,
@@ -6022,6 +6156,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
+        """Export all waifus."""
         url = f'{self.server_url}/waicolle/exports/waifus'
         params = {
             'client_id': client_id,
@@ -6058,6 +6193,7 @@ class WaicolleModule:
         Success[Literal[200], list[MediasPoolExportResult]]
         | Error[Literal[401], HTTPExceptionModel]
     ):
+        """Export daily media pool."""
         url = f'{self.server_url}/waicolle/exports/daily'
 
         async with self.session.get(
@@ -6081,8 +6217,8 @@ class WaicolleModule:
 
 
 class ClientSession(aiohttp.ClientSession):
-    def __init__(self, server_url: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, server_url: str, **kwargs):
+        super().__init__(**kwargs)
         self.amq: AmqModule = AmqModule(self, server_url)
         self.anilist: AnilistModule = AnilistModule(self, server_url)
         self.calendar: CalendarModule = CalendarModule(self, server_url)
