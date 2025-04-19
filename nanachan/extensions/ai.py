@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass, field
+from inspect import get_annotations
 from typing import get_args
 
 import discord
@@ -7,7 +8,6 @@ from discord import AllowedMentions, app_commands
 from discord.app_commands import Choice
 from pydantic_ai import BinaryContent, ModelHTTPError
 from pydantic_ai.messages import ModelMessage, UserContent
-from typing_extensions import get_annotations
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
