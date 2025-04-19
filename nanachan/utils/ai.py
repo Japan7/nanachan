@@ -2,8 +2,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator, Iterable, Sequence
 
-from pydantic_ai import Agent, CallToolsNode, ModelRequestNode, RunContext, Tool
-from pydantic_ai._agent_graph import GraphAgentDeps, GraphAgentState  # type: ignore
+from pydantic_ai import Agent, RunContext, Tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.mcp import MCPServerStdio
 from pydantic_ai.messages import (
@@ -19,7 +18,6 @@ from pydantic_ai.messages import (
     UserContent,
 )
 from pydantic_ai.models import Model
-from pydantic_graph import GraphRunContext as _GraphRunContext
 
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import UserType
@@ -33,8 +31,6 @@ class RunDeps:
 
 
 class AgentHelper:
-    GraphRunContext = _GraphRunContext[GraphAgentState, GraphAgentDeps[RunDeps, Any]]
-
     def __init__(self, model: Model):
         self.agent = Agent(
             model,
@@ -86,59 +82,43 @@ class AgentHelper:
                 elif Agent.is_model_request_node(node):
                     # A model request node
                     # => We can stream tokens from the model's request
-                    async for part in self._model_request_stream(node, run.ctx):
-                        yield part
+                    async with node.stream(run.ctx) as request_stream:
+                        buf = ''
+                        async for event in request_stream:
+                            if isinstance(event, PartStartEvent):
+                                if isinstance(event.part, TextPart):
+                                    buf += event.part.content
+                            elif isinstance(event, PartDeltaEvent):
+                                if isinstance(event.delta, TextPartDelta):
+                                    buf += event.delta.content_delta
+                                elif isinstance(event.delta, ToolCallPartDelta):
+                                    ...
+                            elif isinstance(event, FinalResultEvent):
+                                ...
+                            if len(buf) > 2000:
+                                lines = buf.splitlines()
+                                buf = ''
+                                for line in lines:
+                                    if len(buf) + len(line) > 2000:
+                                        yield buf
+                                        buf = line
+                                    else:
+                                        buf += '\n' + line
+                        if buf:
+                            yield buf
                 elif Agent.is_call_tools_node(node):
                     # A handle-response node
                     # => The model returned some data, potentially calls a tool
-                    async for part in self._call_tools_stream(node, run.ctx):
-                        yield part
+                    async with node.stream(run.ctx) as handle_stream:
+                        async for event in handle_stream:
+                            if isinstance(event, FunctionToolCallEvent):
+                                yield f'`[TOOL] {event.part.tool_name} {event.part.args}`'
+                            elif isinstance(event, FunctionToolResultEvent):
+                                ...
                 elif Agent.is_end_node(node):
                     # Once an End node is reached, the agent run is complete
                     assert run.result
                     message_history.extend(run.result.new_messages())
-
-    async def _model_request_stream(
-        self,
-        node: ModelRequestNode[RunDeps, Any],
-        ctx: GraphRunContext,
-    ) -> AsyncGenerator[str]:
-        async with node.stream(ctx) as request_stream:
-            buf = ''
-            async for event in request_stream:
-                if isinstance(event, PartStartEvent):
-                    if isinstance(event.part, TextPart):
-                        buf += event.part.content
-                elif isinstance(event, PartDeltaEvent):
-                    if isinstance(event.delta, TextPartDelta):
-                        buf += event.delta.content_delta
-                    elif isinstance(event.delta, ToolCallPartDelta):
-                        ...
-                elif isinstance(event, FinalResultEvent):
-                    ...
-                if len(buf) > 2000:
-                    blocks = buf.split('\n')
-                    buf = ''
-                    for block in blocks:
-                        if len(buf) + len(block) > 2000:
-                            yield buf
-                            buf = block
-                        else:
-                            buf += '\n' + block
-            if buf:
-                yield buf
-
-    async def _call_tools_stream(
-        self,
-        node: CallToolsNode[RunDeps, Any],
-        ctx: GraphRunContext,
-    ) -> AsyncGenerator[str]:
-        async with node.stream(ctx) as handle_stream:
-            async for event in handle_stream:
-                if isinstance(event, FunctionToolCallEvent):
-                    yield f'`[TOOL] {event.part.tool_name} {event.part.args}`'
-                elif isinstance(event, FunctionToolResultEvent):
-                    ...
 
 
 def external_tools() -> Iterable[Tool[Any]]:
