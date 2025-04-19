@@ -17,3 +17,6 @@ redis-stack-server.out
 
 # ruff
 .ruff_cache/
+
+# AI
+/node_modules/

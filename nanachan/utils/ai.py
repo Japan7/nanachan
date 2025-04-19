@@ -5,6 +5,7 @@ from typing import Any, AsyncGenerator, Iterable, Sequence
 from pydantic_ai import Agent, CallToolsNode, ModelRequestNode, RunContext, Tool
 from pydantic_ai._agent_graph import GraphAgentDeps, GraphAgentState  # type: ignore
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
+from pydantic_ai.mcp import MCPServerStdio
 from pydantic_ai.messages import (
     FinalResultEvent,
     FunctionToolCallEvent,
@@ -35,7 +36,12 @@ class AgentHelper:
     GraphRunContext = _GraphRunContext[GraphAgentState, GraphAgentDeps[RunDeps, Any]]
 
     def __init__(self, model: Model):
-        self.agent = Agent(model, tools=list(external_tools()), deps_type=RunDeps)
+        self.agent = Agent(
+            model,
+            tools=list(external_tools()),
+            mcp_servers=[python_mcp_server],
+            deps_type=RunDeps,
+        )
         self.lock = asyncio.Lock()
 
         @self.agent.tool
@@ -69,6 +75,7 @@ class AgentHelper:
         """https://ai.pydantic.dev/agents/#streaming"""
         async with (
             self.lock,
+            self.agent.run_mcp_servers(),
             self.agent.iter(user_prompt, message_history=message_history, deps=deps) as run,
         ):
             async for node in run:
@@ -174,3 +181,17 @@ def nanapi_tools() -> Iterable[Tool[Any]]:
     ]
     for endpoint in endpoints:
         yield Tool(endpoint)
+
+
+python_mcp_server = MCPServerStdio(
+    'deno',
+    args=[
+        'run',
+        '-N',
+        '-R=node_modules',
+        '-W=node_modules',
+        '--node-modules-dir=auto',
+        'jsr:@pydantic/mcp-run-python',
+        'stdio',
+    ],
+)

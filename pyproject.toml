@@ -37,6 +37,7 @@ dependencies = [
     "tzdata==2025.2",
     "python-dateutil==2.9.0.post0",
     "pydantic-ai-slim[openai,anthropic,mistral,duckduckgo]==0.1.3",
+    "mcp==1.6.0",
 ]
 
 [dependency-groups]
