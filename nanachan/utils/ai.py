@@ -1,9 +1,10 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Sequence
+from typing import Any, AsyncGenerator, Iterable, Sequence
 
 from pydantic_ai import Agent, CallToolsNode, ModelRequestNode, RunContext, Tool
 from pydantic_ai._agent_graph import GraphAgentDeps, GraphAgentState
+from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.messages import (
     FinalResultEvent,
     FunctionToolCallEvent,
@@ -34,7 +35,7 @@ class AgentHelper:
     GraphRunContext = _GraphRunContext[GraphAgentState, GraphAgentDeps[RunDeps, Any]]
 
     def __init__(self, model: Model):
-        self.agent = Agent(model, tools=list(nanapi_tools()), deps_type=RunDeps)
+        self.agent = Agent(model, tools=list(external_tools()), deps_type=RunDeps)
         self.lock = asyncio.Lock()
 
         @self.agent.tool
@@ -133,7 +134,12 @@ class AgentHelper:
                     ...
 
 
-def nanapi_tools():
+def external_tools() -> Iterable[Tool[Any]]:
+    yield from nanapi_tools()
+    yield duckduckgo_search_tool()
+
+
+def nanapi_tools() -> Iterable[Tool[Any]]:
     nanapi = get_nanapi()
     endpoints = [
         nanapi.anilist.anilist_get_accounts,
