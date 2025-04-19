@@ -31,12 +31,11 @@ class RunDeps:
 
 
 class AgentHelper:
-    def __init__(self, model: Model):
+    def __init__(self):
         self.agent = Agent(
-            model,
+            deps_type=RunDeps,
             tools=list(external_tools()),
             mcp_servers=[python_mcp_server],
-            deps_type=RunDeps,
         )
         self.lock = asyncio.Lock()
 
@@ -64,6 +63,7 @@ class AgentHelper:
 
     async def iter_stream(
         self,
+        model: Model,
         user_prompt: Sequence[UserContent],
         message_history: list[ModelMessage],
         deps: RunDeps,
@@ -72,7 +72,12 @@ class AgentHelper:
         async with (
             self.lock,
             self.agent.run_mcp_servers(),
-            self.agent.iter(user_prompt, message_history=message_history, deps=deps) as run,
+            self.agent.iter(
+                user_prompt,
+                message_history=message_history,
+                model=model,
+                deps=deps,
+            ) as run,
         ):
             async for node in run:
                 if Agent.is_user_prompt_node(node):

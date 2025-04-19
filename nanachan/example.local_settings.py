@@ -5,9 +5,7 @@
 
 from aiohttp import BasicAuth
 # from pydantic_ai.models.mistral import MistralModel
-# from pydantic_ai.models.openai import OpenAIModel
 # from pydantic_ai.providers.mistral import MistralProvider
-# from pydantic_ai.providers.openai import OpenAIProvider
 
 # LOG_LEVEL = 'INFO'
 # DEBUG = True
@@ -97,8 +95,9 @@ REDIS_HOST = None
 # NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## AI
-# AI_MODEL = MistralModel('pixtral-large-latest', provider=MistralProvider(api_key='myapikey'))
-# AI_MODEL = OpenAIModel('gemma3', provider=OpenAIProvider(base_url='http://localhost:11434/v1'))
+# AI_MODEL_CLS = MistralModel
+# AI_DEFAULT_MODEL = 'pixtral-large-latest'
+# AI_PROVIDER = MistralProvider(api_key='myapikey')
 
 ## SauceNAO
 # SAUCENAO_API_KEY = None
