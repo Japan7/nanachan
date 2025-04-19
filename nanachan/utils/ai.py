@@ -1,9 +1,8 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Iterable, Sequence
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Iterable, Sequence
 
 from pydantic_ai import Agent, CallToolsNode, ModelRequestNode, RunContext, Tool
-from pydantic_ai._agent_graph import GraphAgentDeps, GraphAgentState
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.messages import (
     FinalResultEvent,
@@ -23,6 +22,9 @@ from pydantic_graph import GraphRunContext as _GraphRunContext
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import UserType
 from nanachan.nanapi.client import get_nanapi
+
+if TYPE_CHECKING:
+    from pydantic_ai._agent_graph import GraphAgentDeps, GraphAgentState  # type: ignore
 
 
 @dataclass
