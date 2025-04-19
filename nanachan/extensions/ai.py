@@ -1,10 +1,12 @@
 import logging
 from collections import defaultdict
+from typing import cast
 
 import discord
 from discord import AllowedMentions, app_commands
-from pydantic_ai import BinaryContent
+from pydantic_ai import BinaryContent, ModelHTTPError
 from pydantic_ai.messages import ModelMessage, UserContent
+from pydantic_ai.models import Model
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
@@ -20,15 +22,17 @@ logger = logging.getLogger(__name__)
 class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
     def __init__(self, bot: Bot):
         self.bot = bot
-        assert AI_MODEL
-        self.model = AI_MODEL
+        self.model = cast(Model, AI_MODEL)
         self.agent = AgentHelper(self.model)
         self.messages = defaultdict[int, list[ModelMessage]](list)
 
     @app_commands.command(name='chat')
     @legacy_command()
     async def new_chat(
-        self, ctx: LegacyCommandContext, prompt: str, attachment: discord.Attachment | None = None
+        self,
+        ctx: LegacyCommandContext,
+        prompt: str,
+        attachment: discord.Attachment | None = None,
     ):
         """Chat with AI"""
         embed = Embed(description=prompt, color=ctx.author.accent_color)
@@ -77,10 +81,10 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             allowed_mentions.replied_user = True
 
             try:
-                async for block in self.agent.yield_agent_output(content, history, deps):
-                    resp = await send(block, allowed_mentions=allowed_mentions)
+                async for part in self.agent.iter_stream(content, history, deps):
+                    resp = await send(part, allowed_mentions=allowed_mentions)
                     send = resp.reply
-            except Exception as e:
+            except ModelHTTPError as e:
                 await send(f'An error occured while streaming the response:\n{e}')
                 logger.exception(e)
 

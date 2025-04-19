@@ -1,8 +1,9 @@
 import asyncio
 from dataclasses import dataclass
-from typing import AsyncGenerator, Sequence
+from typing import Any, AsyncGenerator, Sequence
 
-from pydantic_ai import Agent, RunContext, Tool
+from pydantic_ai import Agent, CallToolsNode, ModelRequestNode, RunContext, Tool
+from pydantic_ai._agent_graph import GraphAgentDeps, GraphAgentState
 from pydantic_ai.messages import (
     FinalResultEvent,
     FunctionToolCallEvent,
@@ -16,6 +17,7 @@ from pydantic_ai.messages import (
     UserContent,
 )
 from pydantic_ai.models import Model
+from pydantic_graph import GraphRunContext as _GraphRunContext
 
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import UserType
@@ -29,6 +31,8 @@ class RunDeps:
 
 
 class AgentHelper:
+    GraphRunContext = _GraphRunContext[GraphAgentState, GraphAgentDeps[RunDeps, Any]]
+
     def __init__(self, model: Model):
         self.agent = Agent(model, tools=list(nanapi_tools()), deps_type=RunDeps)
         self.lock = asyncio.Lock()
@@ -55,7 +59,7 @@ class AgentHelper:
             bot = run_ctx.deps.bot
             return {channel.name: channel.id for channel in bot.get_all_channels()}
 
-    async def yield_agent_output(
+    async def iter_stream(
         self,
         user_prompt: Sequence[UserContent],
         message_history: list[ModelMessage],
@@ -68,47 +72,65 @@ class AgentHelper:
         ):
             async for node in run:
                 if Agent.is_user_prompt_node(node):
-                    # A user prompt node => The user has provided input
+                    # A user prompt node
+                    # => The user has provided input
                     ...
                 elif Agent.is_model_request_node(node):
-                    # A model request node => We can stream tokens from the model's request
-                    async with node.stream(run.ctx) as request_stream:
-                        buf = ''
-                        async for event in request_stream:
-                            if isinstance(event, PartStartEvent):
-                                if isinstance(event.part, TextPart):
-                                    buf += event.part.content
-                            elif isinstance(event, PartDeltaEvent):
-                                if isinstance(event.delta, TextPartDelta):
-                                    buf += event.delta.content_delta
-                                elif isinstance(event.delta, ToolCallPartDelta):
-                                    ...
-                            elif isinstance(event, FinalResultEvent):
-                                ...
-                            if len(buf) > 2000:
-                                blocks = buf.split('\n')
-                                buf = ''
-                                for block in blocks:
-                                    if len(buf) + len(block) > 2000:
-                                        yield buf
-                                        buf = block
-                                    else:
-                                        buf += '\n' + block
-                        if buf:
-                            yield buf
+                    # A model request node
+                    # => We can stream tokens from the model's request
+                    async for part in self._model_request_stream(node, run.ctx):
+                        yield part
                 elif Agent.is_call_tools_node(node):
                     # A handle-response node
                     # => The model returned some data, potentially calls a tool
-                    async with node.stream(run.ctx) as handle_stream:
-                        async for event in handle_stream:
-                            if isinstance(event, FunctionToolCallEvent):
-                                yield f'`[TOOL] {event.part.tool_name} {event.part.args}`'
-                            elif isinstance(event, FunctionToolResultEvent):
-                                ...
+                    async for part in self._call_tools_stream(node, run.ctx):
+                        yield part
                 elif Agent.is_end_node(node):
                     # Once an End node is reached, the agent run is complete
                     assert run.result
                     message_history.extend(run.result.new_messages())
+
+    async def _model_request_stream(
+        self,
+        node: ModelRequestNode[RunDeps, Any],
+        ctx: GraphRunContext,
+    ) -> AsyncGenerator[str]:
+        async with node.stream(ctx) as request_stream:
+            buf = ''
+            async for event in request_stream:
+                if isinstance(event, PartStartEvent):
+                    if isinstance(event.part, TextPart):
+                        buf += event.part.content
+                elif isinstance(event, PartDeltaEvent):
+                    if isinstance(event.delta, TextPartDelta):
+                        buf += event.delta.content_delta
+                    elif isinstance(event.delta, ToolCallPartDelta):
+                        ...
+                elif isinstance(event, FinalResultEvent):
+                    ...
+                if len(buf) > 2000:
+                    blocks = buf.split('\n')
+                    buf = ''
+                    for block in blocks:
+                        if len(buf) + len(block) > 2000:
+                            yield buf
+                            buf = block
+                        else:
+                            buf += '\n' + block
+            if buf:
+                yield buf
+
+    async def _call_tools_stream(
+        self,
+        node: CallToolsNode[RunDeps, Any],
+        ctx: GraphRunContext,
+    ) -> AsyncGenerator[str]:
+        async with node.stream(ctx) as handle_stream:
+            async for event in handle_stream:
+                if isinstance(event, FunctionToolCallEvent):
+                    yield f'`[TOOL] {event.part.tool_name} {event.part.args}`'
+                elif isinstance(event, FunctionToolResultEvent):
+                    ...
 
 
 def nanapi_tools():
