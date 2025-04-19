@@ -115,5 +115,7 @@ ignore_unused = [
     "discord-py",
     "redis",
     "types-redis",
+    # used by pydantic_ai.mcp
+    "mcp",
 ]
 output_format = "human_detailed"
