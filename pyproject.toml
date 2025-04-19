@@ -85,7 +85,7 @@ ignore = [
     # Use ternary operator `{contents}` instead of if-else-block
     "SIM108",
     # `itertools.batched()` without an explicit `strict` parameter
-    "B911"
+    "B911",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -96,6 +96,10 @@ ignore = [
 quote-style = "single"
 
 [tool.fawltydeps]
+ignore_undeclared = [
+    # part of pydantic-ai
+    "pydantic_graph",
+]
 ignore_unused = [
     # cchardet is used by aiohttp
     "faust-cchardet",
