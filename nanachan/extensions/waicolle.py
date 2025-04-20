@@ -2556,7 +2556,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         return self._drp_factory()
 
     def _drp_factory(self):
-        return RNG.integers(1, DROP_RATE, endpoint=True)
+        return RNG.integers(1, DROP_RATE, dtype=int, endpoint=True)
 
     async def save_drop(self, guild_id: int):
         return await next_drop.set(self.next_drop[guild_id], str(guild_id))
@@ -2578,7 +2578,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                         )
 
                 if dropped:
-                    self.next_drop[ctx.guild.id] = RNG.integers(1, DROP_RATE, endpoint=True)
+                    self.next_drop[ctx.guild.id] = self._drp_factory()
 
 
 def user_menu_trade(cog: WaifuCollection):
