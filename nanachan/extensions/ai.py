@@ -6,13 +6,13 @@ from typing import get_args
 import discord
 from discord import AllowedMentions, app_commands
 from discord.app_commands import Choice
-from pydantic_ai import BinaryContent, ModelHTTPError
+from pydantic_ai import BinaryContent
 from pydantic_ai.messages import ModelMessage, UserContent
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import NanaGroupCog
-from nanachan.discord.helpers import Embed, MultiplexingContext, MultiplexingMessage, UserType
+from nanachan.discord.helpers import Embed
 from nanachan.settings import AI_DEFAULT_MODEL, AI_MODEL_CLS, AI_PROVIDER, RequiresAI
 from nanachan.utils.ai import AgentHelper, RunDeps
 from nanachan.utils.misc import autocomplete_truncate
@@ -81,15 +81,15 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                 reply_to = None
 
         self.contexts[thread.id] = ChatContext(model_name=model_name)
-        await self.chat(ctx.author, thread, prompt, attachments, reply_to=reply_to)
+        await self.chat(ctx, thread, prompt, attachments, reply_to=reply_to)
 
     async def chat(
         self,
-        author: UserType,
+        ctx: LegacyCommandContext,
         thread: discord.Thread,
         prompt: str,
         attachments: list[discord.Attachment],
-        reply_to: discord.Message | MultiplexingMessage | None = None,
+        reply_to: discord.Message | None = None,
     ):
         async with thread.typing():
             content: list[UserContent] = [prompt]
@@ -98,37 +98,38 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                     data = await attachment.read()
                     content.append(BinaryContent(data, media_type=attachment.content_type))
 
-            ctx = self.contexts[thread.id]
+            chat_ctx = self.contexts[thread.id]
 
-            deps = RunDeps(self.bot, author)
+            assert AI_MODEL_CLS
+            assert AI_PROVIDER
+            model = AI_MODEL_CLS(chat_ctx.model_name, provider=AI_PROVIDER)  # type: ignore
 
-            send = reply_to.reply if reply_to is not None else thread.send
+            deps = RunDeps(ctx)
+
+            send = reply_to.reply if reply_to else thread.send
             allowed_mentions = AllowedMentions.none()
             allowed_mentions.replied_user = True
 
             try:
-                assert AI_MODEL_CLS
-                assert AI_PROVIDER
-                model = AI_MODEL_CLS(ctx.model_name, provider=AI_PROVIDER)  # type: ignore
-                async for part in self.agent.iter_stream(content, ctx.history, model, deps):
+                async for part in self.agent.iter_stream(content, chat_ctx.history, model, deps):
                     resp = await send(part, allowed_mentions=allowed_mentions)
                     send = resp.reply
-            except ModelHTTPError as e:
-                await send(f'An error occured while streaming the response:\n{e}')
+            except Exception as e:
+                await send(f'An error occured while running the agent:\n{e}')
                 logger.exception(e)
 
     @NanaGroupCog.listener()
-    async def on_user_message(self, ctx: MultiplexingContext):
+    async def on_message(self, message: discord.Message):
         if (
-            ctx.bot.user in ctx.message.mentions
-            and isinstance(ctx.channel, discord.Thread)
-            and ctx.channel.id in self.contexts
+            not message.author.bot
+            and self.bot.user in message.mentions
+            and isinstance(message.channel, discord.Thread)
+            and message.channel.id in self.contexts
         ):
-            prompt = ctx.message.stripped_content
-            if ctx.bot.user is not None:
-                prompt = prompt.replace(ctx.bot.user.mention, '')
+            ctx = await self.bot.get_context(message, cls=LegacyCommandContext)
+            prompt = ctx.message.content
             attachments = ctx.message.attachments
-            await self.chat(ctx.author, ctx.channel, prompt, attachments, reply_to=ctx.message)
+            await self.chat(ctx, message.channel, prompt, attachments, reply_to=ctx.message)
 
 
 async def setup(bot: Bot):

@@ -1,8 +1,11 @@
 import asyncio
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, AsyncGenerator, Iterable, Sequence
 
-from pydantic_ai import Agent, RunContext, Tool
+import discord
+from discord.utils import time_snowflake
+from pydantic_ai import Agent, ModelRetry, RunContext, Tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.mcp import MCPServerStdio
 from pydantic_ai.messages import (
@@ -20,15 +23,14 @@ from pydantic_ai.messages import (
 from pydantic_ai.models import Model
 from pydantic_ai.models.anthropic import AnthropicModel
 
-from nanachan.discord.bot import Bot
-from nanachan.discord.helpers import UserType
+from nanachan.discord.application_commands import LegacyCommandContext
 from nanachan.nanapi.client import get_nanapi
+from nanachan.settings import TZ
 
 
 @dataclass
 class RunDeps:
-    bot: Bot
-    author: UserType
+    ctx: LegacyCommandContext
 
 
 class AgentHelper:
@@ -41,9 +43,9 @@ class AgentHelper:
         self.lock = asyncio.Lock()
 
         @self.agent.tool
-        def get_current_user_infos(run_ctx: RunContext[RunDeps]):
+        def get_current_user(run_ctx: RunContext[RunDeps]):
             """Get name and Discord ID of the current user."""
-            author = run_ctx.deps.author
+            author = run_ctx.deps.ctx.author
             return {
                 'id': author.id,
                 'display_name': author.display_name,
@@ -51,16 +53,67 @@ class AgentHelper:
             }
 
         @self.agent.tool
+        def get_current_channel(run_ctx: RunContext[RunDeps]):
+            """Get name and channel ID of the current channel."""
+            channel = run_ctx.deps.ctx.channel
+            assert isinstance(
+                channel,
+                (discord.TextChannel, discord.Thread, discord.VoiceChannel),
+            )
+            resp = {
+                'id': channel.id,
+                'name': channel.name,
+                'type': channel.type,
+            }
+            if isinstance(channel, discord.Thread) and channel.parent:
+                resp['parent'] = {
+                    'id': channel.parent.id,
+                    'name': channel.parent.name,
+                    'type': channel.parent.type,
+                }
+            return resp
+
+        @self.agent.tool
+        def get_current_time(run_ctx: RunContext[RunDeps]):
+            """Get the current time."""
+            return datetime.now(TZ)
+
+        @self.agent.tool
         def get_members_name_discord_id_map(run_ctx: RunContext[RunDeps]):
             """Generate a mapping of Discord member display names to their Discord IDs."""
-            bot = run_ctx.deps.bot
+            bot = run_ctx.deps.ctx.bot
             return {member.display_name: member.id for member in bot.get_all_members()}
 
         @self.agent.tool
         def get_channels_name_channel_id_map(run_ctx: RunContext[RunDeps]):
             """Generate a mapping of Discord channel names to their channel IDs."""
-            bot = run_ctx.deps.bot
+            bot = run_ctx.deps.ctx.bot
             return {channel.name: channel.id for channel in bot.get_all_channels()}
+
+        @self.agent.tool
+        async def channel_history(
+            run_ctx: RunContext[RunDeps],
+            channel_id: int,
+            limit: int = 100,
+            before: datetime | None = None,
+            after: datetime | None = None,
+            around: datetime | None = None,
+        ):
+            """
+            Get messages in a channel.
+            The before, after, and around parameters are mutually exclusive,
+            only one may be passed at a time.
+            """
+            if sum(bool(x) for x in (before, after, around)) > 1:
+                raise ModelRetry('Only one of before, after, or around may be passed.')
+            bot = run_ctx.deps.ctx.bot
+            return await bot.http.logs_from(
+                channel_id=channel_id,
+                limit=limit,
+                before=time_snowflake(before) if before else None,
+                after=time_snowflake(after) if after else None,
+                around=time_snowflake(around) if around else None,
+            )
 
     async def iter_stream(
         self,
