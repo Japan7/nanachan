@@ -18,6 +18,7 @@ from pydantic_ai.messages import (
     UserContent,
 )
 from pydantic_ai.models import Model
+from pydantic_ai.models.anthropic import AnthropicModel
 
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import UserType
@@ -63,12 +64,15 @@ class AgentHelper:
 
     async def iter_stream(
         self,
-        model: Model,
         user_prompt: Sequence[UserContent],
         message_history: list[ModelMessage],
+        model: Model,
         deps: RunDeps,
     ) -> AsyncGenerator[str]:
         """https://ai.pydantic.dev/agents/#streaming"""
+        # Workaround to avoid rate limit errors w/ Anthropic
+        if isinstance(model, AnthropicModel):
+            model.client.max_retries = 100
         async with (
             self.lock,
             self.agent.run_mcp_servers(),

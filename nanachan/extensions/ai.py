@@ -110,7 +110,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                 assert AI_MODEL_CLS
                 assert AI_PROVIDER
                 model = AI_MODEL_CLS(ctx.model_name, provider=AI_PROVIDER)  # type: ignore
-                async for part in self.agent.iter_stream(model, content, ctx.history, deps):
+                async for part in self.agent.iter_stream(content, ctx.history, model, deps):
                     resp = await send(part, allowed_mentions=allowed_mentions)
                     send = resp.reply
             except ModelHTTPError as e:
