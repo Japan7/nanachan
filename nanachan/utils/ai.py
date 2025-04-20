@@ -174,7 +174,7 @@ class AgentHelper:
                     async with node.stream(run.ctx) as handle_stream:
                         async for event in handle_stream:
                             if isinstance(event, FunctionToolCallEvent):
-                                yield f'`[TOOL] {event.part.tool_name} {event.part.args}`'
+                                yield f'```\n[TOOL] {event.part.tool_name} {event.part.args}\n```'
                             elif isinstance(event, FunctionToolResultEvent):
                                 ...
                 elif Agent.is_end_node(node):

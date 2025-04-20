@@ -115,7 +115,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                     resp = await send(part, allowed_mentions=allowed_mentions)
                     send = resp.reply
             except Exception as e:
-                await send(f'An error occured while running the agent:\n{e}')
+                await send(f'An error occured while running the agent:\n```\n{e}\n```')
                 logger.exception(e)
 
     @NanaGroupCog.listener()
