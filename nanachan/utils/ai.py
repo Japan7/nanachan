@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, AsyncGenerator, Iterable, Sequence
 
 import discord
+from discord.ext import commands
 from discord.utils import time_snowflake
 from pydantic_ai import Agent, ModelRetry, RunContext, Tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
@@ -23,14 +24,15 @@ from pydantic_ai.messages import (
 from pydantic_ai.models import Model
 from pydantic_ai.models.anthropic import AnthropicModel
 
-from nanachan.discord.application_commands import LegacyCommandContext
+from nanachan.discord.bot import Bot
 from nanachan.nanapi.client import get_nanapi
 from nanachan.settings import TZ
 
 
 @dataclass
 class RunDeps:
-    ctx: LegacyCommandContext
+    ctx: commands.Context[Bot]
+    thread: discord.Thread
 
 
 class AgentHelper:
@@ -73,8 +75,8 @@ class AgentHelper:
                 }
             return resp
 
-        @self.agent.tool
-        def get_current_time(run_ctx: RunContext[RunDeps]):
+        @self.agent.tool_plain
+        def get_current_time():
             """Get the current time."""
             return datetime.now(TZ)
 
@@ -191,6 +193,7 @@ def external_tools() -> Iterable[Tool[Any]]:
 def nanapi_tools() -> Iterable[Tool[Any]]:
     nanapi = get_nanapi()
     endpoints = [
+        nanapi.amq.amq_get_accounts,
         nanapi.anilist.anilist_get_accounts,
         nanapi.anilist.anilist_get_account_entries,
         nanapi.anilist.anilist_get_medias,
@@ -203,6 +206,7 @@ def nanapi_tools() -> Iterable[Tool[Any]]:
         nanapi.anilist.anilist_get_staffs,
         nanapi.anilist.anilist_staff_search,
         nanapi.anilist.anilist_get_staff_chara_edges,
+        nanapi.calendar.calendar_get_user_calendar,
         nanapi.calendar.calendar_get_guild_events,
         nanapi.histoire.histoire_histoire_index,
         nanapi.histoire.histoire_get_histoire,
@@ -213,7 +217,6 @@ def nanapi_tools() -> Iterable[Tool[Any]]:
         nanapi.waicolle.waicolle_get_player,
         nanapi.waicolle.waicolle_get_player_tracked_items,
         nanapi.waicolle.waicolle_get_player_track_unlocked,
-        nanapi.waicolle.waicolle_get_player_track_reversed,
         nanapi.waicolle.waicolle_get_player_media_stats,
         nanapi.waicolle.waicolle_get_player_staff_stats,
         nanapi.waicolle.waicolle_get_player_collection_stats,

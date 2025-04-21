@@ -3806,7 +3806,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Get all players or filter by character ID."""
+        """Get all players or only the ones who track a specific character."""
         url = f'{self.server_url}/waicolle/players'
         params = {
             'chara_id_al': chara_id_al,
@@ -3846,7 +3846,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Upsert (merge) a player by Discord ID."""
+        """Upsert a player by Discord ID."""
         url = f'{self.server_url}/waicolle/players/{discord_id}'
         params = {
             'client_id': client_id,
@@ -4110,7 +4110,11 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Perform a waifu roll for a player."""
+        """Perform a waifu roll for a player.
+        roll_id, coupon_code, and nb are mutually exclusive.
+        By default, waifus are chosen from the player's pool. You can select another user's pool by
+        setting pool_discord_id.
+        reason is optional and will only be used for logging."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/roll'
         params = {
             'roll_id': roll_id,
@@ -4172,7 +4176,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Get tracked items for a player."""
+        """Get tracked items (medias, staffs, collections) for a player."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks'
         params = {
             'client_id': client_id,
@@ -4215,7 +4219,8 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Get unlocked waifus for a player."""
+        """Retrieve unlocked waifus owned by other players tracked by the player.
+        Set hide_singles to 1 to exclude waifus the player already owns at least one copy of."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/unlocked'
         params = {
             'hide_singles': hide_singles,
@@ -4259,7 +4264,8 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Get reversed track information for a player."""
+        """Retrieve unlocked waifus owned by the player that are tracked by other players.
+        Set hide_singles to 1 to exclude waifus that other players already own at least one copy of."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/reversed'
         params = {
             'hide_singles': hide_singles,
@@ -4303,7 +4309,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Get media stats for a player."""
+        """Get ownership statistics (number owned / total) for a player on a specific media."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
         params = {
             'client_id': client_id,
@@ -4347,7 +4353,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Track a media for a player."""
+        """Add a media to a player tracking list."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
         params = {
             'client_id': client_id,
@@ -4395,7 +4401,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Untrack a media for a player."""
+        """Remove a media from a player tracking list."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/medias/{id_al}'
         params = {
             'client_id': client_id,
@@ -4440,7 +4446,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Get staff stats for a player."""
+        """Get ownership statistics (number owned / total) for a player on a specific staff."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
         params = {
             'client_id': client_id,
@@ -4484,7 +4490,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Track a staff for a player."""
+        """Add a staff to a player tracking list."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
         params = {
             'client_id': client_id,
@@ -4532,7 +4538,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Untrack a staff for a player."""
+        """Remove a staff from a player tracking list."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/staffs/{id_al}'
         params = {
             'client_id': client_id,
@@ -4577,7 +4583,7 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Get collection stats for a player."""
+        """Get ownership statistics (number owned / total) for a player on a specific collection."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
         params = {
             'client_id': client_id,
@@ -4621,7 +4627,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Track a collection for a player."""
+        """Add a collection to a player tracking list."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
         params = {
             'client_id': client_id,
@@ -4669,7 +4675,7 @@ class WaicolleModule:
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Untrack a collection for a player."""
+        """Remove a collection from a player tracking list."""
         url = f'{self.server_url}/waicolle/players/{discord_id}/tracks/collections/{id}'
         params = {
             'client_id': client_id,
@@ -4920,7 +4926,21 @@ class WaicolleModule:
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Get waifus with various filters."""
+        """Get waifus with various filters:
+        ids: List of waifu IDs
+        discord_id: Owner or original owner (if as_og)
+        level: Waifu level
+        locked: Whether waifu is currently locked (0: no, 1: yes, None: ignore filter)
+        trade_locked: Whether waifu is currently in trade (0: no, 1: yes, None: ignore filter)
+        blooded: Whether waifu is blooded (0: no, 1: yes, None: ignore filter)
+        nanaed: Whether waifu can be retrieved with blood (0: no, 1: yes, None: ignore filter)
+        custom_collage: Whether waifu is part of a custom collage (0: no, 1: yes, None: ignore filter)
+        as_og: Use discord_id as original owner (0 or None: no, 1: yes)
+        ascended: Filter waifus with level >= 1 (0 or None: ignore filter, 1: yes)
+        edged: Whether waifu is close to a level upgrade (0 or None: ignore filter, 1: yes)
+        ascendable: Whether waifu can level up (0 or None: ignore filter, 1: yes)
+        chara_id_al: Waifus matching a specific character ID.
+        chara_id_al is exclusive and cannot be used with other filters."""
         url = f'{self.server_url}/waicolle/waifus'
         params = {
             'ids': ids,

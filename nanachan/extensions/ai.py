@@ -6,6 +6,7 @@ from typing import get_args
 import discord
 from discord import AllowedMentions, app_commands
 from discord.app_commands import Choice
+from discord.ext import commands
 from pydantic_ai import BinaryContent
 from pydantic_ai.messages import ModelMessage, UserContent
 
@@ -25,11 +26,12 @@ async def model_autocomplete(interaction: discord.Interaction, current: str) -> 
     # trust me bro
     model_name_type = get_annotations(AI_MODEL_CLS, eval_str=True)['_model_name']
     model_names = get_args(get_args(model_name_type)[1])
-    return [
+    choices = [
         Choice(name=autocomplete_truncate(name), value=name)
         for name in model_names
         if current.lower() in name.lower()
     ]
+    return choices[:25]
 
 
 @dataclass
@@ -85,7 +87,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
 
     async def chat(
         self,
-        ctx: LegacyCommandContext,
+        ctx: commands.Context[Bot],
         thread: discord.Thread,
         prompt: str,
         attachments: list[discord.Attachment],
@@ -104,7 +106,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             assert AI_PROVIDER
             model = AI_MODEL_CLS(chat_ctx.model_name, provider=AI_PROVIDER)  # type: ignore
 
-            deps = RunDeps(ctx)
+            deps = RunDeps(ctx, thread)
 
             send = reply_to.reply if reply_to else thread.send
             allowed_mentions = AllowedMentions.none()
@@ -126,7 +128,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             and isinstance(message.channel, discord.Thread)
             and message.channel.id in self.contexts
         ):
-            ctx = await self.bot.get_context(message, cls=LegacyCommandContext)
+            ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
             prompt = ctx.message.content
             attachments = ctx.message.attachments
             await self.chat(ctx, message.channel, prompt, attachments, reply_to=ctx.message)
