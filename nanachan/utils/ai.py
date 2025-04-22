@@ -44,36 +44,20 @@ class AgentHelper:
         )
         self.lock = asyncio.Lock()
 
-        @self.agent.tool
-        def get_current_user(run_ctx: RunContext[RunDeps]):
-            """Get name and Discord ID of the current user."""
-            author = run_ctx.deps.ctx.author
-            return {
-                'id': author.id,
-                'display_name': author.display_name,
-                'global_name': author.global_name,
-            }
-
-        @self.agent.tool
-        def get_current_channel(run_ctx: RunContext[RunDeps]):
-            """Get name and channel ID of the current channel."""
-            channel = run_ctx.deps.ctx.channel
-            assert isinstance(
-                channel,
-                (discord.TextChannel, discord.Thread, discord.VoiceChannel),
+        @self.agent.system_prompt
+        def system_prompt(run_ctx: RunContext[RunDeps]):
+            ctx = run_ctx.deps.ctx
+            bot = ctx.bot
+            assert ctx.guild and bot.user
+            return (
+                f'You are a Discord bot named {bot.user.display_name} (ID {bot.user.id}). '
+                f'You are answering requests from the members of the {ctx.guild.name} server.'
             )
-            resp = {
-                'id': channel.id,
-                'name': channel.name,
-                'type': channel.type,
-            }
-            if isinstance(channel, discord.Thread) and channel.parent:
-                resp['parent'] = {
-                    'id': channel.parent.id,
-                    'name': channel.parent.name,
-                    'type': channel.parent.type,
-                }
-            return resp
+
+        @self.agent.instructions
+        def author_instruction(run_ctx: RunContext[RunDeps]):
+            author = run_ctx.deps.ctx.author
+            return f'The user {author.display_name} (ID {author.id}) is sending you this prompt.'
 
         @self.agent.tool_plain
         def get_current_time():
