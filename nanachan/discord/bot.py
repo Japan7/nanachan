@@ -38,7 +38,7 @@ from watchfiles import Change, awatch
 from watchfiles.filters import PythonFilter
 
 import nanachan.extensions
-from nanachan.discord.cog import Cog
+from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.help import CustomHelpCommand
 from nanachan.discord.helpers import (
     ChannelListener,
@@ -402,7 +402,7 @@ class Bot(commands.AutoShardedBot):
         guild: Snowflake | None = MISSING,
         guilds: Sequence[Snowflake] = MISSING,
     ):
-        if isinstance(cog, Cog):
+        if isinstance(cog, (Cog, NanaGroupCog)):
             if cog.__required_settings__ is not None and not cog.__required_settings__:
                 log.warning(
                     f'{cog.__class__.__name__} is not configured properly and won’t be initialised'
