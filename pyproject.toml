@@ -36,8 +36,7 @@ dependencies = [
     "aiojobs==1.4.0",
     "tzdata==2025.2",
     "python-dateutil==2.9.0.post0",
-    "pydantic-ai-slim[openai,anthropic,mistral,duckduckgo]==0.1.3",
-    "mcp==1.6.0",
+    "pydantic-ai-slim[openai,anthropic,mistral,mcp,duckduckgo]==0.1.3",
 ]
 
 [dependency-groups]
@@ -98,10 +97,6 @@ ignore = [
 quote-style = "single"
 
 [tool.fawltydeps]
-ignore_undeclared = [
-    # part of pydantic-ai
-    "pydantic_graph",
-]
 ignore_unused = [
     # cchardet is used by aiohttp
     "faust-cchardet",
@@ -116,7 +111,5 @@ ignore_unused = [
     "discord-py",
     "redis",
     "types-redis",
-    # used by pydantic_ai.mcp
-    "mcp",
 ]
 output_format = "human_detailed"
