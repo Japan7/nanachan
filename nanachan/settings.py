@@ -100,6 +100,7 @@ NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 ## AI
 AI_MODEL_CLS: type[Model] | None = None
 AI_DEFAULT_MODEL: str | None = None
+AI_FAST_MODEL: str | None = None
 AI_PROVIDER: Provider | None = None
 
 ## SauceNAO
@@ -143,4 +144,4 @@ RequiresAMQ = RequiredSettings(
 RequiresProjo = RequiredSettings(PROJO_THREADS_ROOM, PROJO_ROOM, PROJO_VOICE, PROJO_LEADER_ROLE_ID)
 RequiresQuizz = RequiredSettings(ANIME_QUIZZ_CHANNEL, MANGA_QUIZZ_CHANNEL, LOUIS_QUIZZ_CHANNEL)
 RequiresWaicolle = RequiredSettings(WC_ROLE)
-RequiresAI = RequiredSettings(AI_MODEL_CLS, AI_DEFAULT_MODEL, AI_PROVIDER)
+RequiresAI = RequiredSettings(AI_MODEL_CLS, AI_DEFAULT_MODEL, AI_FAST_MODEL, AI_PROVIDER)

@@ -97,6 +97,7 @@ REDIS_HOST = None
 ## AI
 # AI_MODEL_CLS = MistralModel
 # AI_DEFAULT_MODEL = 'pixtral-large-latest'
+# AI_FAST_MODEL = 'mistral-small-latest'
 # AI_PROVIDER = MistralProvider(api_key='myapikey')
 
 ## SauceNAO
