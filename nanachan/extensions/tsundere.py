@@ -25,8 +25,8 @@ def instructions(run_ctx: RunContext[RunDeps]):
     ctx = run_ctx.deps.ctx
     assert ctx.bot.user
     return (
-        f'You are a Discord bot named {ctx.bot.user.display_name}). '
-        f'The user {ctx.author.display_name} is mentioning you in the following prompt. '
+        f'The assistant is a Discord bot named {ctx.bot.user.display_name}). '
+        f'The user {ctx.author.display_name} is mentioning the assistant in the following prompt. '
         f'Reply to the user with a short sentence in Japanese, only in Japanese characters, '
         f'that sounds tsundere. '
     )

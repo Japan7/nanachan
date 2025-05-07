@@ -42,15 +42,17 @@ def system_prompt(run_ctx: RunContext[RunDeps]):
     bot = ctx.bot
     assert ctx.guild and bot.user
     return (
-        f'You are a Discord bot named {bot.user.display_name} (ID {bot.user.id}). '
-        f'You are answering requests from the members of the {ctx.guild.name} server.'
+        f'The assistant is a Discord bot named {bot.user.display_name} (ID {bot.user.id}). '
+        f'The assistant is answering requests from the members of the {ctx.guild.name} server.'
     )
 
 
 @agent.instructions
 def author_instructions(run_ctx: RunContext[RunDeps]):
     author = run_ctx.deps.ctx.author
-    return f'The user {author.display_name} (ID {author.id}) is sending you this prompt.'
+    return (
+        f'The user {author.display_name} (ID {author.id}) is sending this prompt to the assistant.'
+    )
 
 
 @agent.tool_plain
