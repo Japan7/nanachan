@@ -35,7 +35,6 @@ from nanachan.settings import (
     PREFIX,
     SAUCENAO_API_KEY,
 )
-from nanachan.utils.mime import is_image
 from nanachan.utils.misc import to_producer
 
 if TYPE_CHECKING:
@@ -91,109 +90,33 @@ class QuizzBase(ABC):
         self.bot = bot
         self.channel_id = channel_id
 
-    async def _parse_media(
-        self, message: discord.Message, force_image: bool = False
-    ) -> tuple[str | None, str]:
-        url = None
-        content = message.content
-        image_check = False
-
-        if len(message.attachments) > 0:
-            url = message.attachments[0].url
-            url = (await to_producer(url))['url']
-            image_check = await is_image(url)
-        elif content is not None:
-            url_match = re.search(r'https://[^ ]+', content)
-            if url_match is not None:
-                url = url_match.group(0)
-                image_check = await is_image(url)
-                if image_check:
-                    url = (await to_producer(url))['url']
-                    content = re.sub(r'(https://[^ ]+) ?', '', content)
-
-        if force_image and not image_check:
-            raise commands.CommandError(
-                'Message does not contain an image nor an image message ID'
-            )
-
-        return url, content
-
     @abstractmethod
-    async def create_quizz(self, message: discord.Message) -> UUID:
+    async def create_quizz(
+        self,
+        author: UserType,
+        question: str | None,
+        attachment: discord.Attachment | None,
+    ) -> UUID:
         pass
 
-    async def _set_answer_dm(self, quizz_id: UUID, author: UserType, private: bool):
-        channel = self.bot.get_text_channel(self.channel_id)
-        assert channel is not None
-
-        wait_msg = None
-        if not private:
-            wait_msg = await channel.send(
-                f'*Waiting for {author.mention} to provide answer in DM (120s).*\n'
-                '*Do not send any proposition until the embed is created and pinned!*',
-                mention_author=False,
+    async def set_answer(
+        self,
+        quizz_id: UUID,
+        answer: str | None,
+        source: str | None = None,
+    ) -> str | None:
+        resp = await get_nanapi().quizz.quizz_set_quizz_answer(
+            quizz_id,
+            SetQuizzAnswerBody(
+                answer=answer,
+                answer_source=source if source is not None else 'Provided answer',
             )
-            desc = (
-                f'Send `{PREFIX}quizz setanswer` '
-                f'in `#{str(channel)}` if you need to change it afterwards.'
-            )
-        else:
-            desc = (
-                f'Send `{PREFIX}quizz stock setanswer {quizz_id}` '
-                'here if you need to change it afterwards.'
-            )
-
-        ask_embed = Embed(
-            title='Please provide quizz answer in the next 120s.',
-            description='If you do not want to give the answer, send `skip` now.\n\n' + desc,
-            colour=COLOR_BANANA,
+            if answer is not None
+            else SetQuizzAnswerBody(),
         )
-
-        with suppress(Exception):
-            await author.send(embed=ask_embed)
-
-        try:
-            answer = await self.bot.wait_for(
-                'user_message',
-                check=lambda m: m.author == author and m.channel == author.dm_channel,
-                timeout=120,
-            )
-            answer = answer.message
-        except asyncio.TimeoutError:
-            if not private:
-                await channel.send('*Timeout.*', delete_after=5)
-            with suppress(Exception):
-                await author.send('Timeout.')
-        else:
-            await answer.add_reaction('🍌')
-            if answer.content != 'skip':
-                resp = await get_nanapi().quizz.quizz_set_quizz_answer(
-                    quizz_id,
-                    SetQuizzAnswerBody(
-                        answer=answer.clean_content.replace('`', "'"),
-                        answer_source='Provided answer',
-                    ),
-                )
-                if not success(resp):
-                    raise RuntimeError(resp.result)
-            else:
-                if not private:
-                    await channel.send(
-                        f'*{author.mention} chose to not give the answer.*',
-                        mention_author=False,
-                        delete_after=5,
-                    )
-                resp = await get_nanapi().quizz.quizz_set_quizz_answer(
-                    quizz_id, SetQuizzAnswerBody(answer=None, answer_source=None)
-                )
-                if not success(resp):
-                    raise RuntimeError(resp.result)
-
-        if wait_msg is not None:
-            await wait_msg.delete()
-
-    async def set_answer(self, quizz_id: UUID, author: UserType, private: bool = False):
-        await self._set_answer_dm(quizz_id, author, private)
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        return answer
 
     async def get_embed(self, game_id: UUID):
         resp = await get_nanapi().quizz.quizz_get_game(game_id)
@@ -260,15 +183,28 @@ class QuizzBase(ABC):
 
 
 class AnimeMangaQuizz(QuizzBase):
-    async def create_quizz(self, message: discord.Message):
-        url, content = await self._parse_media(message, force_image=True)
+    async def create_quizz(
+        self,
+        author: UserType,
+        question: str | None,
+        attachment: discord.Attachment | None,
+    ):
+        if (
+            attachment is None
+            or attachment.content_type is None
+            or not attachment.content_type.startswith('image/')
+        ):
+            raise commands.CommandError(
+                'Message does not contain an image nor an image message ID'
+            )
+        url = (await to_producer(attachment.url))['url']
         body = NewQuizzBody(
             channel_id=self.channel_id,
-            description=content,
+            description='',
             url=url,
             is_image=True,
-            author_discord_id=message.author.id,
-            author_discord_username=str(message.author),
+            author_discord_id=author.id,
+            author_discord_username=str(author),
         )
         resp = await get_nanapi().quizz.quizz_new_quizz(body)
         if not success(resp):
@@ -276,7 +212,16 @@ class AnimeMangaQuizz(QuizzBase):
         quizz = resp.result
         return quizz.id
 
-    async def _saucenao(self, quizz_id: UUID, author: UserType, private: bool):
+    async def set_answer(self, quizz_id: UUID, answer: str | None, source: str | None = None):
+        if answer is None:
+            try:
+                answer = await self.saucenao(quizz_id)
+                source = 'SauceNAO'
+            except Exception as e:
+                logger.exception(e)
+        return await super().set_answer(quizz_id, answer, source)
+
+    async def saucenao(self, quizz_id: UUID):
         resp = await get_nanapi().quizz.quizz_get_quizz(quizz_id)
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -305,41 +250,23 @@ class AnimeMangaQuizz(QuizzBase):
                 selected_sauce = sauce
                 break
 
-        if selected_sauce is not None:
-            if not private:
-                await channel.send(
-                    f'*SauceNAO returned a result with {selected_sauce.similarity}% similarity.*',
-                    delete_after=5,
-                )
-                desc = (
-                    f'\n\nSend `{PREFIX}quizz setanswer` '
-                    f'in `#{str(channel)}` if you want to manually set it.'
-                )
-            else:
-                desc = (
-                    f'\n\nSend `{PREFIX}stock setanswer {quizz_id}` '
-                    'here if you want to manually set it.'
-                )
-
-            assert selected_sauce.title is not None
-            sauce = selected_sauce.title.replace('`', "'")
-            embed = Embed(
-                title='SauceNAO result',
-                description='`' + sauce + f'`\n({selected_sauce.similarity}% similarity)' + desc,
-                colour=COLOR_BANANA,
-            )
-            await author.send(embed=embed)
-
-            resp = await get_nanapi().quizz.quizz_set_quizz_answer(
-                quizz_id, SetQuizzAnswerBody(answer=sauce, answer_source='SauceNAO')
-            )
-            if not success(resp):
-                raise RuntimeError(resp.result)
-        else:
+        if selected_sauce is None:
             raise commands.CommandError('No SauceNAO result')
 
+        assert selected_sauce.title is not None
+        return selected_sauce.title.replace('`', "'")
+
+    async def fuzzy_validation(self, answer: str, submission: str) -> bool:
+        return await asyncio.to_thread(fuzzy_jp_match, answer, submission)
+
+    async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
+        await super().post_end(game_id, message)
+        nb = random.randint(1, 12)
+        reply = await message.reply(f'{PREFIX}im{nb * "a"}ge {message.author.mention}')
+        await self.imaaage(reply, nb)
+
     @classmethod
-    async def _image(cls, message: discord.Message | MultiplexingMessage, nb: int = 1):
+    async def imaaage(cls, message: discord.Message | MultiplexingMessage, nb: int = 1):
         with Image.open(
             resources.open_binary(nanachan.resources, f'image{random.randint(1, 3):02}.jpg')
         ) as image:
@@ -374,33 +301,22 @@ class AnimeMangaQuizz(QuizzBase):
                         file=discord.File(fp=image_binary, filename='IMAGE.png')
                     )
 
-    async def set_answer(self, quizz_id: UUID, author: UserType, private: bool = False):
-        try:
-            await self._saucenao(quizz_id, author, private)
-        except Exception as e:
-            logger.exception(e)
-            await super().set_answer(quizz_id, author, private)
-
-    async def fuzzy_validation(self, answer: str, submission: str) -> bool:
-        return await asyncio.to_thread(fuzzy_jp_match, answer, submission)
-
-    async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
-        await super().post_end(game_id, message)
-        nb = random.randint(1, 12)
-        reply = await message.reply(f'{PREFIX}im{nb * "a"}ge {message.author.mention}')
-        await self._image(reply, nb)
-
 
 class LouisQuizz(QuizzBase):
-    async def create_quizz(self, message: discord.Message):
-        url, content = await self._parse_media(message)
+    async def create_quizz(
+        self,
+        author: UserType,
+        question: str | None,
+        attachment: discord.Attachment | None,
+    ):
+        url = (await to_producer(attachment.url))['url'] if attachment is not None else None
         body = NewQuizzBody(
             channel_id=self.channel_id,
-            description=content,
+            description=question if question is not None else '',
             url=url,
             is_image=False,
-            author_discord_id=message.author.id,
-            author_discord_username=str(message.author),
+            author_discord_id=author.id,
+            author_discord_username=str(author),
         )
         resp = await get_nanapi().quizz.quizz_new_quizz(body)
         if not success(resp):
@@ -408,12 +324,12 @@ class LouisQuizz(QuizzBase):
         quizz = resp.result
         return quizz.id
 
-    @classmethod
-    async def _kininarimasu(cls, channel: 'MessageableChannel'):
-        with resources.path(nanachan.resources, f'hyouka{random.randint(1, 7):02}.gif') as path:
-            await channel.send(file=discord.File(path))
-
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         await super().post_end(game_id, message)
         await message.reply(f'{PREFIX}kininarimasu {message.author.mention}')
-        await self._kininarimasu(message.channel)
+        await self.kininarimasu(message.channel)
+
+    @classmethod
+    async def kininarimasu(cls, channel: 'MessageableChannel'):
+        with resources.path(nanachan.resources, f'hyouka{random.randint(1, 7):02}.gif') as path:
+            await channel.send(file=discord.File(path))
