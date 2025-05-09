@@ -398,13 +398,14 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                 case _:
                     raise RuntimeError(resp.result)
         game = resp.result
-        if game is not None and game.quizz.answer is not None:
-            cls = self.quizz_cls[game.quizz.channel_id]
-            casefolded = ctx.message.clean_content.casefold()
-            if (casefolded == game.quizz.answer.casefold()) or (
-                await cls.fuzzy_validation(game.quizz.answer, casefolded)
-            ):
-                await self.end_game(ctx.message)
+        question = game.quizz.description
+        answer = game.quizz.answer
+        casefolded = ctx.message.clean_content.casefold()
+        cls = self.quizz_cls[game.quizz.channel_id]
+        if (answer is not None and (casefolded == answer.casefold())) or (
+            await cls.try_validate(question, answer, casefolded)
+        ):
+            await self.end_game(ctx.message)
 
     @Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):

@@ -7,6 +7,7 @@ import string
 import unicodedata
 from abc import ABC, abstractmethod
 from contextlib import suppress
+from dataclasses import dataclass
 from importlib import resources
 from typing import TYPE_CHECKING, cast
 from uuid import UUID
@@ -15,6 +16,7 @@ import discord
 import pysaucenao
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
+from pydantic_ai import Agent, RunContext
 
 import nanachan.resources
 from nanachan.discord.bot import Bot
@@ -31,10 +33,13 @@ from nanachan.nanapi.model import (
     SetQuizzAnswerBody,
 )
 from nanachan.settings import (
+    AI_FAST_MODEL,
     GLOBAL_COIN_MULTIPLIER,
     PREFIX,
     SAUCENAO_API_KEY,
+    RequiresAI,
 )
+from nanachan.utils.ai import get_model
 from nanachan.utils.misc import to_producer
 
 if TYPE_CHECKING:
@@ -83,6 +88,25 @@ def fuzzy_jp_match(reference: str, answer: str):
     answer = answer.encode('ascii', 'ignore').decode()
 
     return bool(re.search(reference_reg, answer))
+
+
+@dataclass
+class QuizzRunDeps:
+    question: str | None
+    answer: str | None
+
+
+agent = Agent(deps_type=QuizzRunDeps)
+
+
+@agent.system_prompt
+def system_prompt(ctx: RunContext[QuizzRunDeps]) -> str:
+    prompt: list[str] = []
+    if (question := ctx.deps.question) is not None:
+        prompt.append(f'The quizz question is: {question}.')
+    if (answer := ctx.deps.answer) is not None:
+        prompt.append(f'The quizz answer is: {answer}.')
+    return '\n'.join(prompt)
 
 
 class QuizzBase(ABC):
@@ -151,8 +175,23 @@ class QuizzBase(ABC):
 
         return embed
 
-    async def fuzzy_validation(self, answer: str, submission: str) -> bool:
-        return False
+    async def try_validate(
+        self,
+        question: str | None,
+        answer: str | None,
+        submission: str,
+    ) -> bool:
+        if RequiresAI.configured and (question is not None or submission is not None):
+            assert AI_FAST_MODEL
+            run = await agent.run(
+                f'Tell whether the following submission matches the answer: {submission}',
+                output_type=bool,
+                model=get_model(AI_FAST_MODEL),
+                deps=QuizzRunDeps(question, answer),
+            )
+            return run.output
+        else:
+            return False
 
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         resp = await get_nanapi().quizz.quizz_get_game(game_id)
@@ -256,8 +295,15 @@ class AnimeMangaQuizz(QuizzBase):
         assert selected_sauce.title is not None
         return selected_sauce.title.replace('`', "'")
 
-    async def fuzzy_validation(self, answer: str, submission: str) -> bool:
-        return await asyncio.to_thread(fuzzy_jp_match, answer, submission)
+    async def try_validate(
+        self, question: str | None, answer: str | None, submission: str
+    ) -> bool:
+        fuzzy = (
+            await asyncio.to_thread(fuzzy_jp_match, answer, submission)
+            if answer is not None
+            else False
+        )
+        return fuzzy or await super().try_validate(question, answer, submission)
 
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         await super().post_end(game_id, message)
