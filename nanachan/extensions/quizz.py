@@ -1,5 +1,4 @@
 import asyncio
-import io
 import random
 import re
 from collections import defaultdict
@@ -35,7 +34,6 @@ from nanachan.settings import (
     PREFIX,
     RequiresQuizz,
 )
-from nanachan.utils.misc import get_session
 from nanachan.utils.quizz import COLOR_BANANA, AnimeMangaQuizz, LouisQuizz, QuizzBase
 
 
