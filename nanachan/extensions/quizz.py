@@ -132,15 +132,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
 
             author = self.bot.get_user(quizz.author.discord_id)
 
-            file = None
-            if not quizz.is_image and quizz.url is not None:
-                async with get_session().get(quizz.url) as resp:
-                    buffer = io.BytesIO(await resp.read())
-                file = discord.File(buffer, quizz.url.split('/')[-1])
-
             kwargs = {}
-            if file is not None:
-                kwargs['file'] = file
             if last_game is not None:
                 kwargs['reference'] = last_game
 

@@ -151,11 +151,15 @@ class QuizzBase(ABC):
         assert isinstance(channel, discord.TextChannel)
         author = channel.guild.get_member(game.quizz.author.discord_id)
 
+        description = game.quizz.description or ''
+        if not game.quizz.is_image and game.quizz.url:
+            description = f'{description}\n{game.quizz.url}'.strip()
+
         if author is not None:
-            embed = Embed(colour=author.color, description=game.quizz.description)
+            embed = Embed(colour=author.color, description=description)
             embed.set_author(name=author, icon_url=author.display_avatar)
         else:
-            embed = Embed(description=game.quizz.description)
+            embed = Embed(description=description)
 
         embed.set_footer(text=f'[{game_id}] #{channel} — {game.status.capitalize()}')
 
