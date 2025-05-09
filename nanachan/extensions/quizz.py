@@ -337,17 +337,21 @@ class Quizz(Cog, required_settings=RequiresQuizz):
 
     @slash_quizz_stock.command(name='start')
     @legacy_command(ephemeral=True)
-    async def stock_start(self, ctx: LegacyCommandContext):
+    async def stock_start(self, ctx: LegacyCommandContext, id: str | None = None):
         """Start a new game with a quizz from stock"""
-        resp = await get_nanapi().quizz.quizz_get_oldest_quizz(ctx.channel.id)
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError('No stock found for this channel')
-                case _:
-                    raise RuntimeError(resp.result)
-        quizz = resp.result
-        await self.start_game(quizz.id)
+        if id:
+            uuid = UUID(id)
+        else:
+            resp = await get_nanapi().quizz.quizz_get_oldest_quizz(ctx.channel.id)
+            if not success(resp):
+                match resp.code:
+                    case 404:
+                        raise commands.CommandError('No stock found for this channel')
+                    case _:
+                        raise RuntimeError(resp.result)
+            quizz = resp.result
+            uuid = quizz.id
+        await self.start_game(uuid)
         await ctx.reply(ctx.bot.get_emoji_str('FubukiGO'))
 
     @slash_quizz_stock.command(name='add')
@@ -365,7 +369,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         cls = self.quizz_cls[ctx.channel.id]
         quizz_id = await cls.create_quizz(ctx.author, question, attachment)
         await cls.set_answer(quizz_id, answer)
-        await ctx.reply(ctx.bot.get_emoji_str('FubukiGO'))
+        await ctx.reply(quizz_id)
 
     @commands.command()
     async def image(self, ctx: commands.Context):
