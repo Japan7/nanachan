@@ -177,8 +177,9 @@ class QuizzBase(ABC):
 
         embed.set_footer(text=f'[{game_id}] #{channel} — {game.status.capitalize()}')
 
-        if game.status is QuizzStatus.ENDED and game.quizz.answer is not None:
-            embed.add_field(name='Answer', value=f'||`{game.quizz.answer}`||')
+        if (answer := game.quizz.answer) is not None:
+            displayed_answer = answer if game.status is QuizzStatus.ENDED else '🍌' * len(answer)
+            embed.add_field(name='Answer', value=f'||`{displayed_answer}`||')
 
         if game.status is QuizzStatus.ENDED and game.winner is not None:
             winner = self.bot.get_user(game.winner.discord_id)
