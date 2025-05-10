@@ -27,12 +27,9 @@ from nanachan.discord.helpers import (
 )
 from nanachan.extensions.waicolle import WaifuCollection
 from nanachan.nanapi.client import get_nanapi, success
-from nanachan.nanapi.model import (
-    NewQuizzBody,
-    QuizzStatus,
-    SetQuizzAnswerBody,
-)
+from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
 from nanachan.settings import (
+    AI_DEFAULT_MODEL,
     AI_FAST_MODEL,
     GLOBAL_COIN_MULTIPLIER,
     PREFIX,
@@ -48,6 +45,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 COLOR_BANANA = 0xF6D68D
+HINTS_COUNT = 10
 REWARD = 25
 
 
@@ -102,10 +100,10 @@ agent = Agent(deps_type=QuizzRunDeps)
 @agent.system_prompt
 def system_prompt(ctx: RunContext[QuizzRunDeps]) -> str:
     prompt: list[str] = []
-    if (question := ctx.deps.question) is not None:
-        prompt.append(f'The quizz question is: {question}.')
-    if (answer := ctx.deps.answer) is not None:
-        prompt.append(f'The quizz answer is: {answer}.')
+    if question := ctx.deps.question:
+        prompt.append(f'The quizz question is: {question}')
+    if answer := ctx.deps.answer:
+        prompt.append(f'The quizz answer is: {answer}')
     return '\n'.join(prompt)
 
 
@@ -120,27 +118,43 @@ class QuizzBase(ABC):
         author: UserType,
         question: str | None,
         attachment: discord.Attachment | None,
-    ) -> UUID:
-        pass
-
-    async def set_answer(
-        self,
-        quizz_id: UUID,
         answer: str | None,
-        source: str | None = None,
-    ) -> str | None:
-        resp = await get_nanapi().quizz.quizz_set_quizz_answer(
-            quizz_id,
-            SetQuizzAnswerBody(
-                answer=answer,
-                answer_source=source if source is not None else 'Provided answer',
-            )
-            if answer is not None
-            else SetQuizzAnswerBody(),
+    ) -> UUID: ...
+
+    async def generate_hints(self, question: str | None, answer: str) -> list[str] | None:
+        return (
+            await self.generate_ai_hints(question, answer)
+            if RequiresAI.configured
+            else self.generate_banana_hints(answer)
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
-        return answer
+
+    async def generate_ai_hints(self, question: str | None, answer: str) -> list[str] | None:
+        assert AI_DEFAULT_MODEL
+        run = await agent.run(
+            f'Create {HINTS_COUNT} hints for the quiz answer, '
+            f'each offering gradually more assistance. '
+            f'Be careful not to disclose the answer directly, or offer any translation of it.',
+            output_type=list[str],
+            model=get_model(AI_DEFAULT_MODEL),
+            deps=QuizzRunDeps(question, answer),
+        )
+        hints = run.output
+        if len(hints) == HINTS_COUNT:
+            return hints
+
+    def generate_banana_hints(self, answer: str) -> list[str] | None:
+        max_hints = len(answer) // 2
+        if max_hints == 0:
+            return
+        hint_interval = HINTS_COUNT // max_hints
+        hints = []
+        hint = ['🍌'] * len(answer)
+        for i in range(HINTS_COUNT):
+            if (i + 1) % hint_interval == 0:
+                r = random.choice([j for j, c in enumerate(hint) if c == '🍌'])
+                hint[r] = answer[r]
+            hints.append(''.join(hint))
+        return hints
 
     async def get_embed(self, game_id: UUID):
         resp = await get_nanapi().quizz.quizz_get_game(game_id)
@@ -151,9 +165,9 @@ class QuizzBase(ABC):
         assert isinstance(channel, discord.TextChannel)
         author = channel.guild.get_member(game.quizz.author.discord_id)
 
-        description = game.quizz.description or ''
-        if not game.quizz.is_image and game.quizz.url:
-            description = f'{description}\n{game.quizz.url}'.strip()
+        description = game.quizz.question or ''
+        if game.quizz.attachment_url:
+            description = f'{description}\n{game.quizz.attachment_url}'.strip()
 
         if author is not None:
             embed = Embed(colour=author.color, description=description)
@@ -163,19 +177,15 @@ class QuizzBase(ABC):
 
         embed.set_footer(text=f'[{game_id}] #{channel} — {game.status.capitalize()}')
 
-        if game.quizz.answer is not None:
-            answer = (
-                game.answer_bananed if game.status is not QuizzStatus.ENDED else game.quizz.answer
-            )
-            embed.add_field(name=game.quizz.answer_source, value=f'||`{answer}`||')
+        if game.status is QuizzStatus.ENDED and game.quizz.answer is not None:
+            embed.add_field(name='Answer', value=f'||`{game.quizz.answer}`||')
 
-        if game.winner is not None:
+        if game.status is QuizzStatus.ENDED and game.winner is not None:
             winner = self.bot.get_user(game.winner.discord_id)
             assert winner is not None
             embed.add_field(name='Solved by', value=f'{winner.mention}')
 
-        if game.quizz.is_image:
-            embed.set_image(url=game.quizz.url)
+        embed.set_image(url=game.quizz.attachment_url)
 
         return embed
 
@@ -231,6 +241,7 @@ class AnimeMangaQuizz(QuizzBase):
         author: UserType,
         question: str | None,
         attachment: discord.Attachment | None,
+        answer: str | None,
     ):
         if (
             attachment is None
@@ -241,11 +252,14 @@ class AnimeMangaQuizz(QuizzBase):
                 'Message does not contain an image nor an image message ID'
             )
         url = (await to_producer(attachment.url))['url']
+        if answer is None and SAUCENAO_API_KEY is not None:
+            answer = await self.saucenao(url)
+        hints = await self.generate_hints(question, answer) if answer is not None else None
         body = NewQuizzBody(
             channel_id=self.channel_id,
-            description='',
-            url=url,
-            is_image=True,
+            attachment_url=url,
+            answer=answer,
+            hints=hints,
             author_discord_id=author.id,
             author_discord_username=str(author),
         )
@@ -255,49 +269,18 @@ class AnimeMangaQuizz(QuizzBase):
         quizz = resp.result
         return quizz.id
 
-    async def set_answer(self, quizz_id: UUID, answer: str | None, source: str | None = None):
-        if answer is None:
-            try:
-                answer = await self.saucenao(quizz_id)
-                source = 'SauceNAO'
-            except Exception as e:
-                logger.exception(e)
-        return await super().set_answer(quizz_id, answer, source)
-
-    async def saucenao(self, quizz_id: UUID):
-        resp = await get_nanapi().quizz.quizz_get_quizz(quizz_id)
-        if not success(resp):
-            raise RuntimeError(resp.result)
-        quizz = resp.result
-        channel = self.bot.get_text_channel(self.channel_id)
-        assert channel is not None
-
-        if SAUCENAO_API_KEY is None:
-            raise commands.CommandError('SauceNAO is not set up')
-
+    async def saucenao(self, attachment_url: str) -> str | None:
         saucenao = pysaucenao.SauceNao(
-            min_similarity=60, priority=[21, 37], api_key=SAUCENAO_API_KEY
+            min_similarity=60,
+            priority=[21, 37],
+            api_key=SAUCENAO_API_KEY,
         )
-        selected_sauce = None
-        try:
-            assert quizz.url is not None
-            sauces = await saucenao.from_url(quizz.url)
-        except Exception as e:
-            logger.exception(e)
-            raise e
-
-        for sauce in sauces:
+        resp = await saucenao.from_url(attachment_url)
+        for sauce in resp.results:
             if sauce.title is not None and isinstance(
                 sauce, (pysaucenao.AnimeSource, pysaucenao.MangaSource)
             ):
-                selected_sauce = sauce
-                break
-
-        if selected_sauce is None:
-            raise commands.CommandError('No SauceNAO result')
-
-        assert selected_sauce.title is not None
-        return selected_sauce.title.replace('`', "'")
+                return sauce.title.replace('`', "'")
 
     async def try_validate(
         self, question: str | None, answer: str | None, submission: str
@@ -358,13 +341,16 @@ class LouisQuizz(QuizzBase):
         author: UserType,
         question: str | None,
         attachment: discord.Attachment | None,
+        answer: str | None,
     ):
         url = (await to_producer(attachment.url))['url'] if attachment is not None else None
+        hints = await self.generate_hints(question, answer) if answer is not None else None
         body = NewQuizzBody(
             channel_id=self.channel_id,
-            description=question if question is not None else '',
-            url=url,
-            is_image=False,
+            question=question,
+            attachment_url=url,
+            answer=answer,
+            hints=hints,
             author_discord_id=author.id,
             author_discord_username=str(author),
         )

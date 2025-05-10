@@ -52,7 +52,6 @@ from .model import (
     GameGetLastResult,
     GameNewResult,
     GameSelectResult,
-    GameUpdateBananedResult,
     GuildEventDeleteResult,
     GuildEventMergeResult,
     GuildEventParticipantAddResult,
@@ -136,7 +135,6 @@ from .model import (
     RoleInsertSelectResult,
     RoleSelectAllResult,
     RollData,
-    SetGameBananedAnswerBody,
     SetProjectionMessageIdBody,
     SetProjectionNameBody,
     SetProjectionStatusBody,
@@ -3233,55 +3231,6 @@ class QuizzModule:
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def quizz_set_game_bananed_answer(
-        self, id: UUID, body: SetGameBananedAnswerBody, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], GameUpdateBananedResult]
-        | Error[Literal[404], HTTPExceptionModel]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        """Set the bananed answer for a game."""
-        url = f'{self.server_url}/quizz/games/{id}/bananed'
-        params = {
-            'client_id': client_id,
-        }
-        params = prep_serialization(params)
-
-        async with self.session.put(
-            url,
-            params=params,
-            json=body,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], GameUpdateBananedResult](
-                    code=200, result=GameUpdateBananedResult(**(await resp.json()))
-                )
-            if resp.status == 404:
-                return Error[Literal[404], HTTPExceptionModel](
-                    code=404, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
                 )
             if resp.status == 422:
                 return Error[Literal[422], HTTPValidationError](

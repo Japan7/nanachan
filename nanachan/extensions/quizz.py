@@ -1,5 +1,4 @@
 import asyncio
-import random
 import re
 from collections import defaultdict
 from contextlib import suppress
@@ -22,11 +21,7 @@ from nanachan.discord.helpers import (
 )
 from nanachan.discord.views import ConfirmationView
 from nanachan.nanapi.client import get_nanapi, success
-from nanachan.nanapi.model import (
-    EndGameBody,
-    NewGameBody,
-    SetGameBananedAnswerBody,
-)
+from nanachan.nanapi.model import EndGameBody, NewGameBody, SetQuizzAnswerBody
 from nanachan.settings import (
     ANIME_QUIZZ_CHANNEL,
     LOUIS_QUIZZ_CHANNEL,
@@ -87,8 +82,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         if ctx.channel.id not in self.quizz_cls:
             raise commands.CommandError('Not in a quizz channel')
         cls = self.quizz_cls[ctx.channel.id]
-        quizz_id = await cls.create_quizz(ctx.author, question, attachment)
-        await cls.set_answer(quizz_id, answer)
+        quizz_id = await cls.create_quizz(ctx.author, question, attachment, answer)
         await self.start_game(quizz_id)
         await ctx.reply(ctx.bot.get_emoji_str('FubukiGO'))
 
@@ -142,11 +136,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
 
             await new_game_msg.pin()
 
-            body = NewGameBody(
-                message_id=new_game_msg.id,
-                answer_bananed='🍌' * len(quizz.answer) if quizz.answer is not None else None,
-                quizz_id=quizz_id,
-            )
+            body = NewGameBody(message_id=new_game_msg.id, quizz_id=quizz_id)
 
             resp = await get_nanapi().quizz.quizz_new_game(body)
             if not success(resp):
@@ -201,69 +191,25 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                 case _:
                     raise RuntimeError(resp.result)
         game = resp.result
+        hints = game.quizz.hints
 
-        if game.quizz.answer is None:
-            raise commands.CommandError('No answer found')
+        if hints is None:
+            raise commands.CommandError('No hints for this quizz')
 
-        game_msg = await ctx.fetch_message(game.message_id)
-
-        answer: list[str] = list(game.quizz.answer.casefold())
-        answer_bananed: list[str] = (
-            list(game.answer_bananed) if game.answer_bananed else ['🍌'] * len(answer)
-        )
-
-        max_unbananed = len(answer) // 2
-        cooldown = (24 * 60 * 60) / max_unbananed
-
-        unbananed = 0
-        for letter_og, letter_bananed in zip(answer, answer_bananed):
-            if letter_og == letter_bananed:
-                unbananed += 1
-
+        cooldown = (24 * 60 * 60) / len(hints)
         elapsed_time = (ctx.message.created_at - game.started_at).total_seconds()
-        theorical_unbananed_atm = min(int(elapsed_time // cooldown), max_unbananed)
-        to_unbanane_now = theorical_unbananed_atm - unbananed
+        hints_now = min(int(elapsed_time // cooldown), len(hints))
 
-        for _ in range(to_unbanane_now):
-            r = random.choice([i for i, c in enumerate(answer_bananed) if c == '🍌'])
-            answer_bananed[r] = answer[r]
+        embed = Embed(description='\n'.join(hints[:hints_now]), colour=COLOR_BANANA)
 
-        # New embed for reply
-        unbananed += to_unbanane_now
-        remaining_cd = (1 + unbananed - theorical_unbananed_atm) * cooldown - (
-            elapsed_time % cooldown
-        )
-        remaining_time = datetime.fromtimestamp(remaining_cd)
-        if to_unbanane_now > 0:
-            text = f'{to_unbanane_now} 🍌 eaten! '
-            if unbananed < max_unbananed:
-                text += f'Next 🍌 lunch in {remaining_time.strftime("%Hh%Mm%Ss")}'
-            elif unbananed == max_unbananed:
-                text += 'I am now full of 🍌'
-            else:
-                text += '🍌 addiction'
+        if hints_now < len(hints) - 1:
+            remaining_cd = (hints_now + 1) * cooldown - (elapsed_time % cooldown)
+            remaining_time = datetime.fromtimestamp(remaining_cd)
+            embed.set_footer(text=f'Next hint in {remaining_time.strftime("%Hh%Mm%Ss")}')
         else:
-            if unbananed < max_unbananed:
-                text = f'Next 🍌 lunch in {remaining_time.strftime("%Hh%Mm%Ss")}'
-            else:
-                text = 'I am full of 🍌'
+            embed.set_footer(text='No more hints')
 
-        answer_bananed_str = ''.join(answer_bananed)
-        embed = Embed(title=text, description=f'`{answer_bananed_str}`', colour=COLOR_BANANA)
-        embed.set_footer(text=f'{unbananed}/{max_unbananed} 🍌 eaten ({len(answer)} in total)')
         await ctx.reply(embed=embed)
-
-        # Update quizz embed and db value
-        if to_unbanane_now > 0:
-            resp = await get_nanapi().quizz.quizz_set_game_bananed_answer(
-                game.id, SetGameBananedAnswerBody(answer_bananed=answer_bananed_str)
-            )
-            if not success(resp):
-                raise RuntimeError(resp.result)
-
-            cls = self.quizz_cls[game.quizz.channel_id]
-            embed = await cls.get_embed(game.id)
-            await game_msg.edit(embed=embed)
 
     @slash_quizz_answer.command(name='get')
     @legacy_command(ephemeral=True)
@@ -286,7 +232,9 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             raise commands.CommandError('Not the author or an admin')
 
         embed = Embed(
-            title='Current answer', description=f'`{game.quizz.answer}`', colour=COLOR_BANANA
+            title='Current answer',
+            description=f'`{game.quizz.answer}`',
+            colour=COLOR_BANANA,
         )
         await ctx.reply(embed=embed)
 
@@ -311,19 +259,22 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             raise commands.CommandError('Not the author or an admin')
 
         cls = self.quizz_cls[game.quizz.channel_id]
-        answer_set = await cls.set_answer(quizz_id=game.quizz.id, answer=answer)
-        resp = await get_nanapi().quizz.quizz_set_game_bananed_answer(
-            game.id,
-            SetGameBananedAnswerBody(
-                answer_bananed='🍌' * len(answer_set) if answer_set is not None else None
-            ),
-        )
+
+        if answer is not None:
+            hints = await cls.generate_hints(game.quizz.question, answer)
+            body = SetQuizzAnswerBody(answer=answer, hints=hints)
+        else:
+            body = SetQuizzAnswerBody()
+
+        resp = await get_nanapi().quizz.quizz_set_quizz_answer(game.quizz.id, body)
         if not success(resp):
             raise RuntimeError(resp.result)
+
         game_msg = await ctx.fetch_message(game.message_id)
         embed = await cls.get_embed(game.id)
         await game_msg.edit(embed=embed)
-        await ctx.reply('Answer removed' if answer_set is None else f'Answer set to {answer_set}')
+
+        await ctx.reply('Answer removed' if answer is None else f'Answer set to {answer}')
 
     @slash_quizz_stock.command(name='start')
     @legacy_command(ephemeral=True)
@@ -357,8 +308,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         if ctx.channel.id not in self.quizz_cls:
             raise commands.CommandError('Not in a quizz channel')
         cls = self.quizz_cls[ctx.channel.id]
-        quizz_id = await cls.create_quizz(ctx.author, question, attachment)
-        await cls.set_answer(quizz_id, answer)
+        quizz_id = await cls.create_quizz(ctx.author, question, attachment, answer)
         await ctx.reply(quizz_id)
 
     @commands.command()
@@ -388,7 +338,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                 case _:
                     raise RuntimeError(resp.result)
         game = resp.result
-        question = game.quizz.description
+        question = game.quizz.question
         answer = game.quizz.answer
         casefolded = ctx.message.clean_content.casefold()
         cls = self.quizz_cls[game.quizz.channel_id]
