@@ -157,8 +157,8 @@ class QuizzBase(ABC):
         if RequiresAI.configured and (question is not None or submission is not None):
             assert AI_FAST_MODEL
             run = await agent.run(
-                f'Indicate whether the following submission closely matches the answer: '
-                f'{submission}',
+                f'Indicate whether the following submission closely matches all elements of the '
+                f'quizz answer with very high confidence: {submission}',
                 output_type=bool,
                 model=get_model(AI_FAST_MODEL),
                 deps=RunDeps(question, answer),
