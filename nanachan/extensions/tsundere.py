@@ -7,7 +7,7 @@ from pydantic_ai import Agent, RunContext
 
 from nanachan.discord.helpers import MultiplexingContext
 from nanachan.extensions.ai import AI
-from nanachan.settings import AI_FAST_MODEL, RequiresAI
+from nanachan.settings import AI_LOW_LATENCY_MODEL, RequiresAI
 from nanachan.utils.ai import get_model
 
 agent = Agent(deps_type=MultiplexingContext)
@@ -47,10 +47,10 @@ class Tsundere(commands.Cog):
                 return
 
             if RequiresAI.configured:
-                assert AI_FAST_MODEL
+                assert AI_LOW_LATENCY_MODEL
                 run = await agent.run(
                     message.clean_content,
-                    model=get_model(AI_FAST_MODEL),
+                    model=get_model(AI_LOW_LATENCY_MODEL),
                     deps=ctx,
                 )
                 content = run.output

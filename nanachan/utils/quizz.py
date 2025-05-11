@@ -16,6 +16,7 @@ import pysaucenao
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.models.openai import OpenAIModelSettings
 
 import nanachan.resources
 from nanachan.discord.bot import Bot
@@ -25,7 +26,7 @@ from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
-    AI_FAST_MODEL,
+    AI_LOW_LATENCY_MODEL,
     GLOBAL_COIN_MULTIPLIER,
     PREFIX,
     SAUCENAO_API_KEY,
@@ -156,12 +157,12 @@ class QuizzBase(ABC):
     @classmethod
     async def try_validate(cls, question: str | None, answer: str | None, submission: str) -> bool:
         if RequiresAI.configured and (question is not None or submission is not None):
-            assert AI_FAST_MODEL
+            assert AI_LOW_LATENCY_MODEL
             run = await agent.run(
                 f'Indicate whether the following submission closely matches all elements of the '
                 f'quizz answer with very high confidence: {submission}',
                 output_type=bool,
-                model=get_model(AI_FAST_MODEL),
+                model=get_model(AI_LOW_LATENCY_MODEL),
                 deps=RunDeps(question, answer),
             )
             return run.output
