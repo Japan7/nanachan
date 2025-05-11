@@ -60,8 +60,8 @@ def instructions(run_ctx: RunContext[RunDeps]) -> str:
 
 
 class QuizzBase(ABC):
-    HINTS_COUNT = 10
-    REWARD = 25
+    HINTS_COUNT = 5
+    REWARD = 100
 
     def __init__(self, bot: Bot, channel_id: int):
         self.bot = bot
@@ -94,6 +94,7 @@ class QuizzBase(ABC):
             output_type=list[str],
             model=get_model(AI_DEFAULT_MODEL),
             deps=RunDeps(question, answer),
+            model_settings=OpenAIModelSettings(openai_reasoning_effort='high'),
         )
         hints = run.output
         if len(hints) == cls.HINTS_COUNT:
