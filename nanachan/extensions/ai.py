@@ -24,60 +24,49 @@ from nanachan.utils.misc import autocomplete_truncate
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class RunDeps:
-    ctx: commands.Context[Bot]
-
-
 agent = Agent(
-    deps_type=RunDeps,
+    deps_type=commands.Context[Bot],
     tools=(*nanapi_tools(), duckduckgo_search_tool()),  # type: ignore
     mcp_servers=[python_mcp_server],
 )
 
 
 @agent.system_prompt
-def system_prompt(run_ctx: RunContext[RunDeps]):
-    ctx = run_ctx.deps.ctx
-    bot = ctx.bot
-    assert ctx.guild and bot.user
+def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
+    ctx = run_ctx.deps
+    assert ctx.bot.user and ctx.guild
     return (
-        f'The assistant is a Discord bot named {bot.user.display_name} (ID {bot.user.id}). '
-        f'The assistant is answering requests from the members of the {ctx.guild.name} server.'
+        f'The assistant is a Discord bot named {ctx.bot.user.display_name} '
+        f'(ID {ctx.bot.user.id}).\n'
+        f'{ctx.bot.user.display_name} answers requests from the members of the {ctx.guild.name} '
+        f'server.\n'
+        f'The current date is {datetime.now(TZ)}.'
     )
 
 
 @agent.instructions
-def author_instructions(run_ctx: RunContext[RunDeps]):
-    author = run_ctx.deps.ctx.author
-    return (
-        f'The user {author.display_name} (ID {author.id}) is sending this prompt to the assistant.'
-    )
-
-
-@agent.tool_plain
-def get_current_time():
-    """Get the current time."""
-    return datetime.now(TZ)
+def author_instructions(run_ctx: RunContext[commands.Context[Bot]]):
+    ctx = run_ctx.deps
+    return f'The user {ctx.author.display_name} (ID {ctx.author.id}) is sending this prompt.'
 
 
 @agent.tool
-def get_members_name_discord_id_map(run_ctx: RunContext[RunDeps]):
+def get_members_name_discord_id_map(run_ctx: RunContext[commands.Context[Bot]]):
     """Generate a mapping of Discord member display names to their Discord IDs."""
-    bot = run_ctx.deps.ctx.bot
-    return {member.display_name: member.id for member in bot.get_all_members()}
+    ctx = run_ctx.deps
+    return {member.display_name: member.id for member in ctx.bot.get_all_members()}
 
 
 @agent.tool
-def get_channels_name_channel_id_map(run_ctx: RunContext[RunDeps]):
+def get_channels_name_channel_id_map(run_ctx: RunContext[commands.Context[Bot]]):
     """Generate a mapping of Discord channel names to their channel IDs."""
-    bot = run_ctx.deps.ctx.bot
-    return {channel.name: channel.id for channel in bot.get_all_channels()}
+    ctx = run_ctx.deps
+    return {channel.name: channel.id for channel in ctx.bot.get_all_channels()}
 
 
 @agent.tool
 async def channel_history(
-    run_ctx: RunContext[RunDeps],
+    run_ctx: RunContext[commands.Context[Bot]],
     channel_id: int,
     limit: int = 100,
     before: datetime | None = None,
@@ -93,7 +82,7 @@ async def channel_history(
         raise ModelRetry('Only one of before, after, or around may be passed.')
     if limit > 100:
         raise ModelRetry('Max limit is 100.')
-    bot = run_ctx.deps.ctx.bot
+    bot = run_ctx.deps.bot
     return await bot.http.logs_from(
         channel_id=channel_id,
         limit=limit,
@@ -185,8 +174,6 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
 
             model = get_model(chat_ctx.model_name)
 
-            deps = RunDeps(ctx)
-
             send = reply_to.reply if reply_to else thread.send
             allowed_mentions = AllowedMentions.none()
             allowed_mentions.replied_user = True
@@ -197,7 +184,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
                     user_prompt=content,
                     message_history=chat_ctx.history,
                     model=model,
-                    deps=deps,
+                    deps=ctx,
                 ):
                     resp = await send(part, allowed_mentions=allowed_mentions)
                     send = resp.reply

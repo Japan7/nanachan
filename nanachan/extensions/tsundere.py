@@ -1,5 +1,4 @@
 import random
-from dataclasses import dataclass
 
 from discord import AllowedMentions
 from discord.ext import commands
@@ -11,24 +10,17 @@ from nanachan.extensions.ai import AI
 from nanachan.settings import AI_FAST_MODEL, RequiresAI
 from nanachan.utils.ai import get_model
 
-
-@dataclass
-class RunDeps:
-    ctx: MultiplexingContext
-
-
-agent = Agent(deps_type=RunDeps)
+agent = Agent(deps_type=MultiplexingContext)
 
 
 @agent.instructions
-def instructions(run_ctx: RunContext[RunDeps]):
-    ctx = run_ctx.deps.ctx
+def instructions(run_ctx: RunContext[MultiplexingContext]):
+    ctx = run_ctx.deps
     assert ctx.bot.user
     return (
-        f'The assistant is a Discord bot named {ctx.bot.user.display_name}). '
-        f'The user {ctx.author.display_name} is mentioning the assistant in the following prompt. '
-        f'Reply to the user with a short sentence in Japanese, only in Japanese characters, '
-        f'that sounds tsundere. '
+        f'The assistant is a Discord bot named {ctx.bot.user.display_name}).\n'
+        f'{ctx.bot.user.display_name} replies to {ctx.author.display_name} with a short sentence '
+        f'in Japanese, only in Japanese characters, that sounds tsundere.'
     )
 
 
@@ -59,7 +51,7 @@ class Tsundere(commands.Cog):
                 run = await agent.run(
                     message.clean_content,
                     model=get_model(AI_FAST_MODEL),
-                    deps=RunDeps(ctx),
+                    deps=ctx,
                 )
                 content = run.output
             else:

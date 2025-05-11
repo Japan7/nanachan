@@ -89,20 +89,20 @@ def fuzzy_jp_match(reference: str, answer: str):
 
 
 @dataclass
-class QuizzRunDeps:
+class RunDeps:
     question: str | None
     answer: str | None
 
 
-agent = Agent(deps_type=QuizzRunDeps)
+agent = Agent(deps_type=RunDeps)
 
 
-@agent.system_prompt
-def system_prompt(ctx: RunContext[QuizzRunDeps]) -> str:
+@agent.instructions
+def instructions(run_ctx: RunContext[RunDeps]) -> str:
     prompt: list[str] = []
-    if question := ctx.deps.question:
+    if question := run_ctx.deps.question:
         prompt.append(f'The quizz question is: {question}')
-    if answer := ctx.deps.answer:
+    if answer := run_ctx.deps.answer:
         prompt.append(f'The quizz answer is: {answer}')
     return '\n'.join(prompt)
 
@@ -131,12 +131,12 @@ class QuizzBase(ABC):
     async def generate_ai_hints(self, question: str | None, answer: str) -> list[str] | None:
         assert AI_DEFAULT_MODEL
         run = await agent.run(
-            f'Create {HINTS_COUNT} hints for the quiz answer, '
-            f'each offering gradually more assistance. '
+            f'Create {HINTS_COUNT} hints for the quiz answer, each offering gradually more '
+            f'assistance.\n'
             f'Be careful not to disclose the answer directly, or offer any translation of it.',
             output_type=list[str],
             model=get_model(AI_DEFAULT_MODEL),
-            deps=QuizzRunDeps(question, answer),
+            deps=RunDeps(question, answer),
         )
         hints = run.output
         if len(hints) == HINTS_COUNT:
@@ -199,10 +199,11 @@ class QuizzBase(ABC):
         if RequiresAI.configured and (question is not None or submission is not None):
             assert AI_FAST_MODEL
             run = await agent.run(
-                f'Tell whether the following submission matches the answer: {submission}',
+                f'Indicate whether the following submission closely matches the answer: '
+                f'{submission}',
                 output_type=bool,
                 model=get_model(AI_FAST_MODEL),
-                deps=QuizzRunDeps(question, answer),
+                deps=RunDeps(question, answer),
             )
             return run.output
         else:
