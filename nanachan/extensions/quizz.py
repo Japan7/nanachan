@@ -203,7 +203,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         embed = Embed(description='\n'.join(hints[:hints_now]), colour=COLOR_BANANA)
 
         if hints_now < len(hints) - 1:
-            remaining_cd = (hints_now + 1) * cooldown - (elapsed_time % cooldown)
+            remaining_cd = cooldown - (elapsed_time % cooldown)
             remaining_time = datetime.fromtimestamp(remaining_cd)
             embed.set_footer(text=f'Next hint in {remaining_time.strftime("%Hh%Mm%Ss")}')
         else:
@@ -231,11 +231,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         ):
             raise commands.CommandError('Not the author or an admin')
 
-        embed = Embed(
-            title='Current answer',
-            description=f'`{game.quizz.answer}`',
-            colour=COLOR_BANANA,
-        )
+        embed = Embed(title='Current answer', description=game.quizz.answer, colour=COLOR_BANANA)
         await ctx.reply(embed=embed)
 
     @slash_quizz_answer.command(name='set')

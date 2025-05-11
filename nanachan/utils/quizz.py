@@ -1,6 +1,5 @@
 import asyncio
 import io
-import logging
 import random
 import re
 import string
@@ -20,11 +19,7 @@ from pydantic_ai import Agent, RunContext
 
 import nanachan.resources
 from nanachan.discord.bot import Bot
-from nanachan.discord.helpers import (
-    Embed,
-    MultiplexingMessage,
-    UserType,
-)
+from nanachan.discord.helpers import Embed, MultiplexingMessage, UserType
 from nanachan.extensions.waicolle import WaifuCollection
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
@@ -42,50 +37,7 @@ from nanachan.utils.misc import to_producer
 if TYPE_CHECKING:
     from discord.abc import MessageableChannel
 
-logger = logging.getLogger(__name__)
-
 COLOR_BANANA = 0xF6D68D
-HINTS_COUNT = 10
-REWARD = 25
-
-
-def romaji_regex(title: str):
-    table = [
-        ('aa', 'aa?'),
-        ('ei', 'ei?'),
-        ('ii', 'ii?'),
-        ('ou', 'ou?'),
-        ('oo', 'oo?'),
-        ('uu', 'uu?'),
-        (r'\bo\b', 'w?o'),
-        ('wo', 'w?o'),
-        (r'\bwa\b', '[wh]a'),
-        ('he', 'h?e'),
-        ('mu', 'mu?'),
-        (r'\?\?', '?'),
-    ]
-    for i, j in table:
-        title = re.sub(i, j, title)
-    return title
-
-
-def fuzzy_jp_match(reference: str, answer: str):
-    """Black magic, I don't remember how it worked"""
-    reference = re.sub(r'\(\d+\)', '', reference)
-    reference = reference.translate(str.maketrans('', '', string.punctuation))
-    reference = reference.casefold()
-    reference = unicodedata.normalize('NFKD', reference)
-    reference = reference.encode('ascii', 'ignore').decode()
-
-    reference_reg = romaji_regex(reference)
-    reference_reg = reference_reg.replace(' ', '')
-
-    answer = answer.translate(str.maketrans('', '', string.punctuation + ' '))
-    answer = answer.casefold()
-    answer = unicodedata.normalize('NFKD', answer)
-    answer = answer.encode('ascii', 'ignore').decode()
-
-    return bool(re.search(reference_reg, answer))
 
 
 @dataclass
@@ -108,6 +60,9 @@ def instructions(run_ctx: RunContext[RunDeps]) -> str:
 
 
 class QuizzBase(ABC):
+    HINTS_COUNT = 10
+    REWARD = 25
+
     def __init__(self, bot: Bot, channel_id: int):
         self.bot = bot
         self.channel_id = channel_id
@@ -121,17 +76,19 @@ class QuizzBase(ABC):
         answer: str | None,
     ) -> UUID: ...
 
-    async def generate_hints(self, question: str | None, answer: str) -> list[str] | None:
+    @classmethod
+    async def generate_hints(cls, question: str | None, answer: str) -> list[str] | None:
         return (
-            await self.generate_ai_hints(question, answer)
+            await QuizzBase.generate_ai_hints(question, answer)
             if RequiresAI.configured
-            else self.generate_banana_hints(answer)
+            else QuizzBase.generate_banana_hints(answer)
         )
 
-    async def generate_ai_hints(self, question: str | None, answer: str) -> list[str] | None:
+    @classmethod
+    async def generate_ai_hints(cls, question: str | None, answer: str) -> list[str] | None:
         assert AI_DEFAULT_MODEL
         run = await agent.run(
-            f'Create {HINTS_COUNT} hints for the quiz answer, each offering gradually more '
+            f'Create {cls.HINTS_COUNT} hints for the quiz answer, each offering gradually more '
             f'assistance.\n'
             f'Be careful not to disclose the answer directly, or offer any translation of it.',
             output_type=list[str],
@@ -139,24 +96,25 @@ class QuizzBase(ABC):
             deps=RunDeps(question, answer),
         )
         hints = run.output
-        if len(hints) == HINTS_COUNT:
+        if len(hints) == cls.HINTS_COUNT:
             return hints
 
-    def generate_banana_hints(self, answer: str) -> list[str] | None:
+    @classmethod
+    def generate_banana_hints(cls, answer: str) -> list[str] | None:
         max_hints = len(answer) // 2
         if max_hints == 0:
             return
-        hint_interval = HINTS_COUNT // max_hints
+        hint_interval = cls.HINTS_COUNT // max_hints
         hints = []
         hint = ['🍌'] * len(answer)
-        for i in range(HINTS_COUNT):
+        for i in range(cls.HINTS_COUNT):
             if (i + 1) % hint_interval == 0:
                 r = random.choice([j for j, c in enumerate(hint) if c == '🍌'])
                 hint[r] = answer[r]
             hints.append(''.join(hint))
         return hints
 
-    async def get_embed(self, game_id: UUID):
+    async def get_embed(self, game_id: UUID) -> Embed:
         resp = await get_nanapi().quizz.quizz_get_game(game_id)
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -178,7 +136,11 @@ class QuizzBase(ABC):
         embed.set_footer(text=f'[{game_id}] #{channel} — {game.status.capitalize()}')
 
         if (answer := game.quizz.answer) is not None:
-            displayed_answer = answer if game.status is QuizzStatus.ENDED else '🍌' * len(answer)
+            displayed_answer = (
+                answer.replace('`', "'")
+                if game.status is QuizzStatus.ENDED
+                else '🍌' * len(answer)
+            )
             embed.add_field(name='Answer', value=f'||`{displayed_answer}`||')
 
         if game.status is QuizzStatus.ENDED and game.winner is not None:
@@ -190,12 +152,8 @@ class QuizzBase(ABC):
 
         return embed
 
-    async def try_validate(
-        self,
-        question: str | None,
-        answer: str | None,
-        submission: str,
-    ) -> bool:
+    @classmethod
+    async def try_validate(cls, question: str | None, answer: str | None, submission: str) -> bool:
         if RequiresAI.configured and (question is not None or submission is not None):
             assert AI_FAST_MODEL
             run = await agent.run(
@@ -219,11 +177,11 @@ class QuizzBase(ABC):
         if message.author.id == game.quizz.author.discord_id:
             return
 
-        time = (message.created_at - game_msg.created_at).total_seconds()
+        elapsed_time = (message.created_at - game_msg.created_at).total_seconds()
 
-        author_nb = round(REWARD * time / (24 * 3600))
-        author_nb = min(author_nb, REWARD)
-        answer_nb = REWARD - author_nb
+        author_nb = round(self.REWARD * elapsed_time / (24 * 3600))
+        author_nb = min(author_nb, self.REWARD)
+        answer_nb = self.REWARD - author_nb
 
         waifu_cog = cast(WaifuCollection, self.bot.get_cog(WaifuCollection.__cog_name__))
 
@@ -271,7 +229,8 @@ class AnimeMangaQuizz(QuizzBase):
         quizz = resp.result
         return quizz.id
 
-    async def saucenao(self, attachment_url: str) -> str | None:
+    @staticmethod
+    async def saucenao(attachment_url: str) -> str | None:
         saucenao = pysaucenao.SauceNao(
             min_similarity=60,
             priority=[21, 37],
@@ -282,17 +241,55 @@ class AnimeMangaQuizz(QuizzBase):
             if sauce.title is not None and isinstance(
                 sauce, (pysaucenao.AnimeSource, pysaucenao.MangaSource)
             ):
-                return sauce.title.replace('`', "'")
+                return sauce.title
 
-    async def try_validate(
-        self, question: str | None, answer: str | None, submission: str
-    ) -> bool:
+    @classmethod
+    async def try_validate(cls, question: str | None, answer: str | None, submission: str):
         fuzzy = (
-            await asyncio.to_thread(fuzzy_jp_match, answer, submission)
+            await asyncio.to_thread(cls.fuzzy_jp_match, answer, submission)
             if answer is not None
             else False
         )
         return fuzzy or await super().try_validate(question, answer, submission)
+
+    @staticmethod
+    def fuzzy_jp_match(reference: str, answer: str) -> bool:
+        """Black magic, I don't remember how it worked"""
+        reference = re.sub(r'\(\d+\)', '', reference)
+        reference = reference.translate(str.maketrans('', '', string.punctuation))
+        reference = reference.casefold()
+        reference = unicodedata.normalize('NFKD', reference)
+        reference = reference.encode('ascii', 'ignore').decode()
+
+        reference_reg = AnimeMangaQuizz.romaji_regex(reference)
+        reference_reg = reference_reg.replace(' ', '')
+
+        answer = answer.translate(str.maketrans('', '', string.punctuation + ' '))
+        answer = answer.casefold()
+        answer = unicodedata.normalize('NFKD', answer)
+        answer = answer.encode('ascii', 'ignore').decode()
+
+        return bool(re.search(reference_reg, answer))
+
+    @staticmethod
+    def romaji_regex(title: str) -> str:
+        table = [
+            ('aa', 'aa?'),
+            ('ei', 'ei?'),
+            ('ii', 'ii?'),
+            ('ou', 'ou?'),
+            ('oo', 'oo?'),
+            ('uu', 'uu?'),
+            (r'\bo\b', 'w?o'),
+            ('wo', 'w?o'),
+            (r'\bwa\b', '[wh]a'),
+            ('he', 'h?e'),
+            ('mu', 'mu?'),
+            (r'\?\?', '?'),
+        ]
+        for i, j in table:
+            title = re.sub(i, j, title)
+        return title
 
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         await super().post_end(game_id, message)
@@ -300,8 +297,8 @@ class AnimeMangaQuizz(QuizzBase):
         reply = await message.reply(f'{PREFIX}im{nb * "a"}ge {message.author.mention}')
         await self.imaaage(reply, nb)
 
-    @classmethod
-    async def imaaage(cls, message: discord.Message | MultiplexingMessage, nb: int = 1):
+    @staticmethod
+    async def imaaage(message: discord.Message | MultiplexingMessage, nb: int = 1):
         with Image.open(
             resources.open_binary(nanachan.resources, f'image{random.randint(1, 3):02}.jpg')
         ) as image:
@@ -367,7 +364,7 @@ class LouisQuizz(QuizzBase):
         await message.reply(f'{PREFIX}kininarimasu {message.author.mention}')
         await self.kininarimasu(message.channel)
 
-    @classmethod
-    async def kininarimasu(cls, channel: 'MessageableChannel'):
+    @staticmethod
+    async def kininarimasu(channel: 'MessageableChannel'):
         with resources.path(nanachan.resources, f'hyouka{random.randint(1, 7):02}.gif') as path:
             await channel.send(file=discord.File(path))
