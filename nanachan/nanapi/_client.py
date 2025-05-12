@@ -575,7 +575,7 @@ class AnilistModule:
             )
 
     async def anilist_media_search(
-        self, type: Literal['ANIME', 'MANGA'], search: str
+        self, search: str, type: Literal['ANIME', 'MANGA'] | None = None
     ) -> (
         Success[Literal[200], list[MediaSelectResult]]
         | Error[Literal[401], HTTPExceptionModel]
@@ -584,8 +584,8 @@ class AnilistModule:
         """Search for AniList media by title."""
         url = f'{self.server_url}/anilist/medias/search'
         params = {
-            'type': type,
             'search': search,
+            'type': type,
         }
         params = prep_serialization(params)
 

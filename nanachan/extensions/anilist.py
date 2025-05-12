@@ -129,7 +129,7 @@ class Anilist(Cog):
         )
 
     async def media_search(self, search: str, media_type: MediaType):
-        resp = await get_nanapi().anilist.anilist_media_search(media_type.value, search)
+        resp = await get_nanapi().anilist.anilist_media_search(search, media_type.value)
         if not success(resp):
             raise RuntimeError(resp.result)
         results = resp.result
