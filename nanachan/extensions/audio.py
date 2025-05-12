@@ -249,14 +249,8 @@ class Audio(NanaGroupCog, group_name='audio'):
             volume += ' (Muted)'
 
         if self.audio_source is not None and self.track_info is not None:
-            if self.track_info.title is None:
-                log.error(f'No music title defined for audio_source "{self.track_info}"')
-                music = '*Titleless music (you can complain to the devs)*'
-            else:
-                music = self.track_info.title
-
+            music = self.track_info.title
             url = self.track_info.display_url
-
             if len(self.playlist) > 0:
                 next_item = f'> {self.playlist[0].name}'
             else:

@@ -30,7 +30,7 @@ JAPAN7_AUTH: BasicAuth | None = None
 # NANAPI_CLIENT_PASSWORD = ''
 
 ## Redis
-REDIS_HOST = None
+REDIS_HOST: str | None = None
 REDIS_PORT = 6379
 REDIS_KWARGS = {}
 
@@ -60,7 +60,7 @@ YOUTUBE_DL_CONFIG = {
     'no_warnings': True,
     'default_search': 'ytsearch5',
 }
-OPUS_LIB_LOCATION = None
+OPUS_LIB_LOCATION: str | None = None
 for p in ('/usr/lib/libopus.so.0', '/usr/lib64/libopus.so.0'):
     if Path(p).exists():
         OPUS_LIB_LOCATION = p
@@ -89,7 +89,7 @@ MANGA_QUIZZ_CHANNEL = 0000
 LOUIS_QUIZZ_CHANNEL = 0000
 
 ## WaiColle
-WC_ROLE: None | int = None
+WC_ROLE: int | None = None
 DROP_RATE = 1000
 GLOBAL_COIN_MULTIPLIER = 1
 WC_WEB = 'https://waicolle.japan7.bde.enseeiht.fr'
@@ -105,7 +105,7 @@ AI_LOW_LATENCY_MODEL: str | None = None
 AI_PROVIDER: Provider | None = None
 
 ## SauceNAO
-SAUCENAO_API_KEY = None
+SAUCENAO_API_KEY: str | None = None
 
 ## Producer
 PRODUCER_UPLOAD_ENDPOINT = 'https://producer.japan7.bde.enseeiht.fr'

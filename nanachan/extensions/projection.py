@@ -78,8 +78,7 @@ class ProjectionCog(
         if not success(resp):
             raise RuntimeError(resp.result)
         projos = resp.result
-        if projos is None:
-            return
+
         for projo in projos:
             self.bot.add_view(ProjectionView(self.bot, projo.id))
 
@@ -631,7 +630,7 @@ class ProjectionCog(
             )
         )
 
-        content_iter: Iterable[str] = content1 + content2  # type: ignore
+        content_iter: Iterable[str] = content1 + content2
 
         await AutoNavigatorView.create(
             self.bot,

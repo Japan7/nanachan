@@ -31,9 +31,7 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
         raise RuntimeError(resp.result)
     projection = resp.result
 
-    thread = bot.get_thread(int(projection.channel_id))
-    if thread is None:
-        thread = await bot.fetch_thread(int(projection.channel_id))
+    thread = await bot.fetch_thread(int(projection.channel_id))
 
     description = []
     thumbnail_id = None

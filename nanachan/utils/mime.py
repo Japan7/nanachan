@@ -11,8 +11,5 @@ async def get_type(url: str) -> Optional[str]:
 
 
 async def is_image(url: str) -> bool:
-    if url is None:
-        return False
-
     img_type = await get_type(url)
     return img_type.split('/')[0] == 'image' if img_type is not None else False

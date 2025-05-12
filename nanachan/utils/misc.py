@@ -6,7 +6,7 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import suppress
 from functools import cache, lru_cache, singledispatch, update_wrapper
-from typing import Any, AsyncIterable, Coroutine, Optional, Type, TypedDict, cast
+from typing import Any, AsyncIterable, Coroutine, Optional, Type, TypedDict
 
 import aiohttp
 import backoff
@@ -82,7 +82,7 @@ async def run_coro(coro: Coroutine[Any, Any, Any] | Any):
     if asyncio.iscoroutine(coro):
         return await coro
     else:
-        return cast(Any, coro)
+        return coro
 
 
 class FakeMethod:

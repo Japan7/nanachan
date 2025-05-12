@@ -7,14 +7,13 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from io import BytesIO
 from operator import attrgetter, itemgetter
-from typing import cast
 
 import aiofiles
 import aiofiles.os
 import aiojobs
 from discord import FFmpegPCMAudio, File, app_commands
 from discord.ext.commands import BadArgument
-from matplotlib import axes, dates, pyplot, ticker
+from matplotlib import dates, pyplot, ticker
 
 from nanachan.discord.application_commands import legacy_command
 from nanachan.discord.bot import Bot
@@ -283,7 +282,6 @@ class Karaoke(NanaGroupCog, group_name='kara', required_settings=RequiresKaraoke
 
         pyplot.style.use('dark_background')
         fig, ax = pyplot.subplots()
-        ax = cast(axes.Axes, ax)
         score_date, scores = zip(*sorted(karas_over_time.items()))
         ax.step(score_date, scores, where='post')
 

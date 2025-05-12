@@ -102,9 +102,9 @@ def group_decorator(func: Callable[P, T]) -> Callable[P, T]:
     @wraps(func)
     def decorated(*args, **kwargs):
         kwargs['name'] = SLASH_PREFIX + kwargs.get('name', func.__name__)
-        return func(*args, **kwargs)  # type: ignore
+        return func(*args, **kwargs)
 
-    return decorated  # type: ignore
+    return decorated
 
 
 @group_decorator

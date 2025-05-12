@@ -99,7 +99,7 @@ class AMQCommand:
 
 class Roll(AMQCommand):
     @property
-    def __doc__(self):  # type: ignore
+    def __doc__(self):
         random_shows = 'konosuba', 'kaleid liner', 'index'
         return self.__func_doc__ % choice(random_shows)
 
@@ -311,7 +311,7 @@ class AMQBot(metaclass=MetaAMQBot):
         await self.sio.connect(WS_URL % (port, token))
         logger.info('waiting for connection to end')
         await self.sio.wait()
-        return self.connection_state == AMQBot.CONNECTED
+        return self.connection_state == AMQBot.CONNECTED  # type: ignore
 
     async def launch(self):
         logger.debug('logging in')
@@ -448,7 +448,7 @@ class AMQBot(metaclass=MetaAMQBot):
     @amq_command('amq_events', 'Spectator Change To Player')
     async def on_new_player(self, data):
         player = Player(data['name'])
-        if player != self.username:
+        if player.username != self.username:
             await self.send_request(player.username)
 
         self.players[data['gamePlayerId']] = player
@@ -1100,18 +1100,16 @@ class AMQ(Cog, required_settings=RequiresAMQ):
             icon_url='http://animemusicquiz.com/favicon-32x32.png',
         )
 
-        if amq_room is not None:
-            await amq_room.send(embed=embed)
+        await amq_room.send(embed=embed)
 
     async def on_play_next_song(self, data):
         self.round_infos = data
         task = await self.songs.get()
         file = await task
         amq_room = self.bot.get_text_channel(AMQ_ROOM)
-        if amq_room is not None:
-            self.song_embed = await amq_room.send(
-                f'**Round {self.round_infos["songNumber"]} song**', file=file
-            )
+        self.song_embed = await amq_room.send(
+            f'**Round {self.round_infos["songNumber"]} song**', file=file
+        )
 
     async def on_quiz_next_video_info(self, data):
         coro = self._get_amq_extract(data)
@@ -1128,8 +1126,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         self.answer_results = data
         embed = await self._round_embed(data, self.player_answers)
         amq_room = self.bot.get_text_channel(AMQ_ROOM)
-        if amq_room is not None:
-            await amq_room.send(embed=embed)
+        await amq_room.send(embed=embed)
 
     async def on_quiz_over(self, data):
         assert self.amq is not None
@@ -1168,8 +1165,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
 
             amq_room = self.bot.get_text_channel(AMQ_ROOM)
             embed = await self._game_embed(self.answer_results)
-            if amq_room is not None:
-                await amq_room.send(embed=embed)
+            await amq_room.send(embed=embed)
 
             self.reset_tracker()
 

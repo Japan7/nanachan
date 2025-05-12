@@ -107,7 +107,7 @@ class WaifuSelectorView(CompositeNavigatorView):
 
         self.waifu_select = RefreshableSelect(placeholder='Select characters')
         self.waifu_select.callback = self.select_callback
-        self.waifu_select.refresh = self._chara_select_refresh  # type: ignore
+        self.waifu_select.refresh = self._chara_select_refresh
         self.add_item(self.waifu_select)
 
         self.stared = False

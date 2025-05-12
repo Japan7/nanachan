@@ -154,7 +154,7 @@ class QuizzBase(ABC):
 
     @classmethod
     async def try_validate(cls, question: str | None, answer: str | None, submission: str) -> bool:
-        if RequiresAI.configured and (question is not None or submission is not None):
+        if RequiresAI.configured:
             assert AI_LOW_LATENCY_MODEL
             run = await agent.run(
                 f'Indicate whether the following submission closely matches all elements of the '

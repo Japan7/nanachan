@@ -152,8 +152,6 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             if not success(resp):
                 raise RuntimeError(resp.result)
             game = resp.result
-            if game is None:
-                raise commands.CommandError('No quiz started')
 
             resp = await get_nanapi().quizz.quizz_end_game(
                 game.id,
@@ -366,9 +364,6 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                         return
                     case _:
                         raise RuntimeError(resp.result)
-            game = resp.result
-            if game is None:
-                return
 
             channel = self.bot.get_text_channel(payload.channel_id)
             assert channel is not None

@@ -61,9 +61,9 @@ async def iter_stream[AgentDepsT](
                         elif isinstance(event, PartDeltaEvent):
                             if isinstance(event.delta, TextPartDelta):
                                 buf += event.delta.content_delta
-                            elif isinstance(event.delta, ToolCallPartDelta):
+                            elif isinstance(event.delta, ToolCallPartDelta):  # type: ignore
                                 ...
-                        elif isinstance(event, FinalResultEvent):
+                        elif isinstance(event, FinalResultEvent):  # type: ignore
                             ...
                         if len(buf) > 2000:
                             lines = buf.splitlines()
@@ -82,7 +82,7 @@ async def iter_stream[AgentDepsT](
                     async for event in handle_stream:
                         if isinstance(event, FunctionToolCallEvent):
                             yield f'```\n[TOOL] {event.part.tool_name} {event.part.args}\n```'
-                        elif isinstance(event, FunctionToolResultEvent):
+                        elif isinstance(event, FunctionToolResultEvent):  # type: ignore
                             ...
             elif Agent.is_end_node(node):
                 # Once an End node is reached, the agent run is complete

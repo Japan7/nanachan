@@ -39,11 +39,10 @@ class Presence(Cog, name='Presence'):
         if len(presences_data) == 0:
             return
         presence = choice(presences_data)
-        if presence is not None:
-            type = getattr(discord.ActivityType, presence.type.lower())
-            activity = discord.Activity(type=type, name=presence.name)
-            await self.bot.change_presence(activity=activity)
-            self.current_presence_id = presence.id
+        type = getattr(discord.ActivityType, presence.type.lower())
+        activity = discord.Activity(type=type, name=presence.name)
+        await self.bot.change_presence(activity=activity)
+        self.current_presence_id = presence.id
 
     @commands.guild_only()
     @commands.group()

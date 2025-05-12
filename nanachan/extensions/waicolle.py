@@ -1417,14 +1417,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             await ctx.reply('Select the new name for this character', ephemeral=True)
 
             names = [helper.chara.name_user_preferred]
-            if helper.chara.name_alternative is not None:
-                for alt in helper.chara.name_alternative:
-                    if alt and alt not in names:
-                        names.append(alt)
-            if helper.chara.name_alternative_spoiler is not None:
-                for alt in helper.chara.name_alternative_spoiler:
-                    if alt and alt not in names:
-                        names.append(alt)
+            for alt in helper.chara.name_alternative:
+                if alt and alt not in names:
+                    names.append(alt)
+            for alt in helper.chara.name_alternative_spoiler:
+                if alt and alt not in names:
+                    names.append(alt)
 
             _, name_selector = await StringSelectorView.create(
                 ctx.bot,
@@ -2177,7 +2175,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         pages = self.list_paginator(
             member,
-            [cast(WaifuSelectResult, r.waifu) for r in results],  # FIXME: ugly cast
+            [r.waifu for r in results],
             title=title,
             custom_lines=custom_lines,
         )
