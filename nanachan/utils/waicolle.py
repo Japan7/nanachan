@@ -338,7 +338,7 @@ class RollResultsView(CompositeNavigatorView):
                 ]
 
                 resp2 = await get_nanapi().waicolle.waicolle_get_waifus(
-                    discord_id=interaction.user.id, locked=0, trade_locked=0, blooded=0
+                    discord_id=str(interaction.user.id), locked=0, trade_locked=0, blooded=0
                 )
                 if not success(resp2):
                     match resp2.code:
@@ -652,7 +652,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     trackers = resp3.result
 
     members = set(
-        str(bot.get_user(tracker.user.discord_id))
+        str(bot.get_user(int(tracker.user.discord_id)))
         for tracker in trackers
         if tracker.frozen_at is None
     )
@@ -709,7 +709,7 @@ def collection_autocomplete():
         results = resp.result
         return [
             Choice(
-                name=autocomplete_truncate(f'{r.name} ({bot.get_user(r.author_discord_id)})'),
+                name=autocomplete_truncate(f'{r.name} ({bot.get_user(int(r.author_discord_id))})'),
                 value=str(r.id),
             )
             for r in results
@@ -864,7 +864,7 @@ class TradeHelper:
 
     @property
     def author(self) -> discord.User:
-        player = self.bot.get_user(self.trade_data.author.user.discord_id)
+        player = self.bot.get_user(int(self.trade_data.author.user.discord_id))
         if player is None:
             player = self.bot.get_user(self.bot.bot_id)
             assert player
@@ -872,7 +872,7 @@ class TradeHelper:
 
     @property
     def offeree(self) -> discord.User:
-        player = self.bot.get_user(self.trade_data.offeree.user.discord_id)
+        player = self.bot.get_user(int(self.trade_data.offeree.user.discord_id))
         if player is None:
             player = self.bot.get_user(self.bot.bot_id)
             assert player
@@ -1029,9 +1029,9 @@ class TradeHelper:
     async def create(cls, cog: 'WaifuCollection', trade_waifus: OrderedDict[int, list[UUID]]):
         (author_id, author_waifus), (offeree_id, offeree_waifus) = trade_waifus.items()
         body = NewTradeBody(
-            author_discord_id=author_id,
+            author_discord_id=str(author_id),
             received_ids=list(map(str, offeree_waifus)),
-            offeree_discord_id=offeree_id,
+            offeree_discord_id=str(offeree_id),
             offered_ids=list(map(str, author_waifus)),
         )
         resp = await get_nanapi().waicolle.waicolle_new_trade(body)

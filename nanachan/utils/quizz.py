@@ -123,7 +123,7 @@ class QuizzBase(ABC):
         game = resp.result
         channel = self.bot.get_channel(self.channel_id)
         assert isinstance(channel, discord.TextChannel)
-        author = channel.guild.get_member(game.quizz.author.discord_id)
+        author = channel.guild.get_member(int(game.quizz.author.discord_id))
 
         description = game.quizz.question or ''
         if game.quizz.attachment_url:
@@ -146,7 +146,7 @@ class QuizzBase(ABC):
             embed.add_field(name='Answer', value=f'||`{displayed_answer}`||')
 
         if game.status is QuizzStatus.ENDED and game.winner is not None:
-            winner = self.bot.get_user(game.winner.discord_id)
+            winner = self.bot.get_user(int(game.winner.discord_id))
             assert winner is not None
             embed.add_field(name='Solved by', value=f'{winner.mention}')
 
@@ -174,7 +174,7 @@ class QuizzBase(ABC):
         if not success(resp):
             raise RuntimeError(resp.result)
         game = resp.result
-        game_msg = await message.channel.fetch_message(game.message_id)
+        game_msg = await message.channel.fetch_message(int(game.message_id))
 
         if message.author.id == game.quizz.author.discord_id:
             return
@@ -187,7 +187,7 @@ class QuizzBase(ABC):
 
         waifu_cog = cast(WaifuCollection, self.bot.get_cog(WaifuCollection.__cog_name__))
 
-        quizz_author = self.bot.get_user(game.quizz.author.discord_id)
+        quizz_author = self.bot.get_user(int(game.quizz.author.discord_id))
         if quizz_author is not None:
             await waifu_cog.reward_coins(
                 quizz_author, max(5, author_nb) * GLOBAL_COIN_MULTIPLIER, 'Quizz author'
@@ -218,11 +218,11 @@ class AnimeMangaQuizz(QuizzBase):
             answer = await self.saucenao(url)
         hints = await self.generate_hints(question, answer) if answer is not None else None
         body = NewQuizzBody(
-            channel_id=self.channel_id,
+            channel_id=str(self.channel_id),
             attachment_url=url,
             answer=answer,
             hints=hints,
-            author_discord_id=author.id,
+            author_discord_id=str(author.id),
             author_discord_username=str(author),
         )
         resp = await get_nanapi().quizz.quizz_new_quizz(body)
@@ -347,12 +347,12 @@ class LouisQuizz(QuizzBase):
         url = (await to_producer(attachment.url))['url'] if attachment is not None else None
         hints = await self.generate_hints(question, answer) if answer is not None else None
         body = NewQuizzBody(
-            channel_id=self.channel_id,
+            channel_id=str(self.channel_id),
             question=question,
             attachment_url=url,
             answer=answer,
             hints=hints,
-            author_discord_id=author.id,
+            author_discord_id=str(author.id),
             author_discord_username=str(author),
         )
         resp = await get_nanapi().quizz.quizz_new_quizz(body)

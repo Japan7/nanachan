@@ -1057,7 +1057,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         username = answer.content
 
         resp1 = await get_nanapi().amq.amq_upsert_account(
-            interaction.user.id,
+            str(interaction.user.id),
             UpsertAMQAccountBody(discord_username=str(interaction.user), username=username),
         )
         if not success(resp1):
@@ -1073,7 +1073,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
             raise RuntimeError(resp.result)
         players = resp.result
         fields = [
-            EmbedField(str(self.bot.get_user(row.user.discord_id)), row.username)
+            EmbedField(str(self.bot.get_user(int(row.user.discord_id))), row.username)
             for row in players
         ]
         fields.sort(key=lambda i: i.name.casefold())
@@ -1231,7 +1231,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         if len(players) == 0:
             return None
         else:
-            return self.bot.get_user(players[0].user.discord_id)
+            return self.bot.get_user(int(players[0].user.discord_id))
 
     async def _round_embed(self, results, answers) -> Embed:
         answers_dict = {a['gamePlayerId']: a['answer'] for a in answers['answers']}

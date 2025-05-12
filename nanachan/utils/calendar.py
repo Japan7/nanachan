@@ -38,10 +38,10 @@ async def upsert_event(bot: Bot, event: ScheduledEvent) -> GuildEventMergeResult
         end_time=end_time,
         image=event.cover_image.url if event.cover_image else None,
         url=event.url,
-        organizer_id=event.creator.id,
+        organizer_id=str(event.creator.id),
         organizer_username=str(event.creator),
     )
-    resp = await get_nanapi().calendar.calendar_upsert_guild_event(event.id, body)
+    resp = await get_nanapi().calendar.calendar_upsert_guild_event(str(event.id), body)
     if not success(resp):
         raise RuntimeError(resp.result)
 
@@ -58,15 +58,15 @@ async def reconcile_participants(
         if participant.id not in db_participants:
             body = ParticipantAddBody(participant_username=str(participant))
             resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
-                event.id, participant.id, body
+                str(event.id), str(participant.id), body
             )
             if not success(resp):
                 raise RuntimeError(resp.result)
         else:
-            db_participants.remove(participant.id)
+            db_participants.remove(str(participant.id))
     for discord_id in db_participants:
         resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
-            event.id, discord_id
+            str(event.id), discord_id
         )
         if not success(resp):
             raise RuntimeError(resp.result)

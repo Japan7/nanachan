@@ -17,7 +17,7 @@ from nanachan.utils.anilist import MediaNavigator
 
 async def get_active_projo(channel_id: int):
     resp = await get_nanapi().projection.projection_get_projections(
-        channel_id=channel_id, status=ProjectionStatus.ONGOING.value
+        channel_id=str(channel_id), status=ProjectionStatus.ONGOING.value
     )
     if not success(resp):
         raise RuntimeError(resp.result)
@@ -31,9 +31,9 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
         raise RuntimeError(resp.result)
     projection = resp.result
 
-    thread = bot.get_thread(projection.channel_id)
+    thread = bot.get_thread(int(projection.channel_id))
     if thread is None:
-        thread = await bot.fetch_thread(projection.channel_id)
+        thread = await bot.fetch_thread(int(projection.channel_id))
 
     description = []
     thumbnail_id = None
@@ -164,7 +164,7 @@ class ProjectionView(BaseView):
             raise RuntimeError(resp.result)
         projo = resp.result
 
-        thread = self.bot.get_thread(projo.channel_id)
+        thread = self.bot.get_thread(int(projo.channel_id))
         assert thread is not None
 
         asyncio.create_task(thread.add_user(interaction.user))

@@ -168,7 +168,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def on_ready(self):
         assert self.bot.user is not None
         resp1 = await get_nanapi().waicolle.waicolle_upsert_player(
-            self.bot.user.id,
+            str(self.bot.user.id),
             UpsertPlayerBody(discord_username=str(self.bot.user), game_mode='ALL'),
         )
         if not success(resp1):
@@ -193,7 +193,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def purge_task(self):
         await self.bot.wait_until_ready()
         assert self.bot.user is not None
-        await get_nanapi().waicolle.waicolle_blood_expired_waifus(self.bot.user.id)
+        await get_nanapi().waicolle.waicolle_blood_expired_waifus(str(self.bot.user.id))
 
     @commands.group()
     async def waifu(self, ctx: commands.Context):
@@ -231,7 +231,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
     async def _register_mode(self, mode: PLAYER_MERGE_GAME_MODE, interaction: discord.Interaction):
         body = UpsertPlayerBody(discord_username=str(interaction.user), game_mode=mode)
-        resp1 = await get_nanapi().waicolle.waicolle_upsert_player(interaction.user.id, body)
+        resp1 = await get_nanapi().waicolle.waicolle_upsert_player(str(interaction.user.id), body)
         if not success(resp1):
             raise RuntimeError(resp1.result)
 
@@ -247,7 +247,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         await interaction.followup.send(content=self.bot.get_emoji_str('FubukiGO'))
 
         resp2 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=interaction.user.id, as_og=1
+            discord_id=str(interaction.user.id), as_og=1
         )
         if not success(resp2):
             raise RuntimeError(resp2.result)
@@ -256,7 +256,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             assert isinstance(interaction.channel, discord.TextChannel)
             async with interaction.channel.typing():
                 resp3 = await get_nanapi().waicolle.waicolle_player_roll(
-                    interaction.user.id, nb=10, reason='register'
+                    str(interaction.user.id), nb=10, reason='register'
                 )
                 if not success(resp3):
                     raise RuntimeError(resp3.result)
@@ -271,7 +271,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @legacy_command()
     async def freeze(self, ctx: LegacyCommandContext, member: discord.User):
         """Freeze player"""
-        resp = await get_nanapi().waicolle.waicolle_freeze_player(member.id)
+        resp = await get_nanapi().waicolle.waicolle_freeze_player(str(member.id))
         if not success(resp):
             match resp.code:
                 case 404:
@@ -298,7 +298,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if member is None:
             member = ctx.author
 
-        resp = await get_nanapi().waicolle.waicolle_get_player(member.id)
+        resp = await get_nanapi().waicolle.waicolle_get_player(str(member.id))
         if not success(resp):
             match resp.code:
                 case 404:
@@ -322,7 +322,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Donate moecoins"""
         body = DonatePlayerCoinsBody(moecoins=nb)
         resp = await get_nanapi().waicolle.waicolle_donate_player_coins(
-            ctx.author.id, other_member.id, body
+            str(ctx.author.id), str(other_member.id), body
         )
         if not success(resp):
             match resp.code:
@@ -346,7 +346,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def reward(self, ctx: LegacyCommandContext, nb: int, member: discord.User):
         """Reward (or punish) any player wallet"""
         body = AddPlayerCoinsBody(moecoins=nb)
-        resp = await get_nanapi().waicolle.waicolle_add_player_coins(member.id, body)
+        resp = await get_nanapi().waicolle.waicolle_add_player_coins(str(member.id), body)
         if not success(resp):
             match resp.code:
                 case 404:
@@ -447,11 +447,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         async with replyable.typing():
             resp = await get_nanapi().waicolle.waicolle_player_roll(
-                member.id,
+                str(member.id),
                 roll_id=roll_id,
                 coupon_code=coupon_code,
                 nb=nb,
-                pool_discord_id=pool_player.id,
+                pool_discord_id=str(pool_player.id),
                 reason=rollop_reason,
             )
 
@@ -570,7 +570,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             raise RuntimeError('How did you get there?')
 
         resp = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=member.id, client_id=None, ids=None, **kwargs
+            discord_id=str(member.id), client_id=None, ids=None, **kwargs
         )
         if not success(resp):
             match resp.code:
@@ -775,7 +775,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         async with self.trade_lock[ctx.author.id]:
             owned_waifus_resp = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0
+                discord_id=str(ctx.author.id), locked=0, trade_locked=0, blooded=0
             )
             if not success(owned_waifus_resp):
                 match owned_waifus_resp.code:
@@ -789,7 +789,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             waifus = owned_waifus_resp.result
 
             tracked_waifus_resp = await get_nanapi().waicolle.waicolle_get_player_track_unlocked(
-                discord_id=ctx.author.id,
+                discord_id=str(ctx.author.id),
                 hide_singles=0 if prioritize_singles else 1,
             )
             if not success(tracked_waifus_resp):
@@ -824,7 +824,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         async with self.trade_lock[ctx.author.id]:
             resp = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=1, trade_locked=0, blooded=0
+                discord_id=str(ctx.author.id), locked=1, trade_locked=0, blooded=0
             )
             if not success(resp):
                 match resp.code:
@@ -869,7 +869,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             notice = await ctx.reply('Ascending characters...')
 
             resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, ascendable=1
+                discord_id=str(ctx.author.id), ascendable=1
             )
             if not success(resp1):
                 match resp1.code:
@@ -932,7 +932,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             notice = await ctx.reply('Blooding characters...')
 
             resp = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0
+                discord_id=str(ctx.author.id), locked=0, trade_locked=0, blooded=0
             )
             if not success(resp):
                 match resp.code:
@@ -990,9 +990,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         try:
             body = NewOfferingBody(
-                player_discord_id=ctx.author.id,
+                player_discord_id=str(ctx.author.id),
                 chara_id_al=character_id,
-                bot_discord_id=self.bot.user.id,
+                bot_discord_id=str(self.bot.user.id),
             )
             resp = await get_nanapi().waicolle.waicolle_new_offering(body)
             match resp:
@@ -1016,7 +1016,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @legacy_command()
     async def loot(self, ctx: LegacyCommandContext, character_id: int):
         """Loot unlocked frozen waifu"""
-        body = NewLootBody(player_discord_id=ctx.author.id, chara_id_al=character_id)
+        body = NewLootBody(player_discord_id=str(ctx.author.id), chara_id_al=character_id)
         resp = await get_nanapi().waicolle.waicolle_new_loot(body)
         match resp:
             case Error(code=404):
@@ -1049,7 +1049,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             notice = await ctx.reply('Rerolling characters...')
 
             resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-                discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0
+                discord_id=str(ctx.author.id), locked=0, trade_locked=0, blooded=0
             )
             if not success(resp1):
                 match resp1.code:
@@ -1082,9 +1082,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 )
 
                 body = RerollBody(
-                    player_discord_id=ctx.author.id,
+                    player_discord_id=str(ctx.author.id),
                     waifus_ids=[str(r.id) for r in rerolled],
-                    bot_discord_id=self.bot.bot_id,
+                    bot_discord_id=str(self.bot.bot_id),
                 )
                 resp2 = await get_nanapi().waicolle.waicolle_reroll(body)
                 if not success(resp2):
@@ -1124,22 +1124,23 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             async with asyncio.TaskGroup() as tg:
                 other_track_unlocked_task = tg.create_task(
                     get_nanapi().waicolle.waicolle_get_player_track_unlocked(
-                        discord_id=other_member.id, hide_singles=0 if prioritize_singles else 1
+                        discord_id=str(other_member.id),
+                        hide_singles=0 if prioritize_singles else 1,
                     )
                 )
                 player_track_unlocked_task = tg.create_task(
                     get_nanapi().waicolle.waicolle_get_player_track_unlocked(
-                        discord_id=ctx.author.id, hide_singles=0 if prioritize_singles else 1
+                        discord_id=str(ctx.author.id), hide_singles=0 if prioritize_singles else 1
                     )
                 )
                 player_waifus_task = tg.create_task(
                     get_nanapi().waicolle.waicolle_get_waifus(
-                        discord_id=ctx.author.id, locked=0, trade_locked=0, blooded=0
+                        discord_id=str(ctx.author.id), locked=0, trade_locked=0, blooded=0
                     )
                 )
                 other_waifus_task = tg.create_task(
                     get_nanapi().waicolle.waicolle_get_waifus(
-                        discord_id=other_member.id, locked=0, trade_locked=0, blooded=0
+                        discord_id=str(other_member.id), locked=0, trade_locked=0, blooded=0
                     )
                 )
 
@@ -1280,7 +1281,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @legacy_command()
     async def roll(self, ctx: LegacyCommandContext):
         """such moecoins, very waifus"""
-        resp1 = await get_nanapi().waicolle.waicolle_get_player(ctx.author.id)
+        resp1 = await get_nanapi().waicolle.waicolle_get_player(str(ctx.author.id))
         if not success(resp1):
             match resp1.code:
                 case 404:
@@ -1304,7 +1305,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
 
-        resp2 = await get_nanapi().waicolle.waicolle_get_rolls(ctx.author.id)
+        resp2 = await get_nanapi().waicolle.waicolle_get_rolls(str(ctx.author.id))
         if not success(resp2):
             raise RuntimeError(resp2.result)
         rolls = resp2.result
@@ -1329,7 +1330,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @legacy_command()
     async def daily(self, ctx: LegacyCommandContext):
         """Daily tag informations"""
-        resp1 = await get_nanapi().waicolle.waicolle_get_rolls(ctx.author.id)
+        resp1 = await get_nanapi().waicolle.waicolle_get_rolls(str(ctx.author.id))
         if not success(resp1):
             raise RuntimeError(resp1.result)
         rolls = {roll.id: roll for roll in resp1.result}
@@ -1357,7 +1358,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def customize(self, ctx: LegacyCommandContext):
         """Customize your ascended characters"""
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=ctx.author.id, ascended=1, blooded=0
+            discord_id=str(ctx.author.id), ascended=1, blooded=0
         )
         if not success(resp1):
             match resp1.code:
@@ -1463,7 +1464,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         notice = await ctx.reply('Reordering characters...')
 
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=ctx.author.id, ascended=1, blooded=0
+            discord_id=str(ctx.author.id), ascended=1, blooded=0
         )
         if not success(resp1):
             match resp1.code:
@@ -1561,7 +1562,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             filter.value.upper(),
         )
 
-        resp = await get_nanapi().waicolle.waicolle_get_player_collage(member.id, filter_formatted)
+        resp = await get_nanapi().waicolle.waicolle_get_player_collage(
+            str(member.id), filter_formatted
+        )
         match resp:
             case Error(404):
                 raise commands.CommandError(
@@ -1599,7 +1602,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         notice = await ctx.reply('Selecting characters...')
 
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=ctx.author.id, custom_collage=0, blooded=0
+            discord_id=str(ctx.author.id), custom_collage=0, blooded=0
         )
         if not success(resp1):
             match resp1.code:
@@ -1632,7 +1635,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         notice = await ctx.reply('Selecting characters...')
 
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
-            discord_id=ctx.author.id, custom_collage=1, blooded=0
+            discord_id=str(ctx.author.id), custom_collage=1, blooded=0
         )
         if not success(resp1):
             match resp1.code:
@@ -1704,7 +1707,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             media_id = await autocomplete_cast(ctx.interaction, self.track_autocomplete, int, item)
 
             resp = await get_nanapi().waicolle.waicolle_get_player_media_album(
-                member.id, media_id, owned_only=1 if owned_only else 0
+                str(member.id), media_id, owned_only=1 if owned_only else 0
             )
             if not success(resp):
                 match resp.code:
@@ -1725,7 +1728,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         elif track_type is self.TrackChoice.staff:
             staff_id = await autocomplete_cast(ctx.interaction, self.track_autocomplete, int, item)
             resp = await get_nanapi().waicolle.waicolle_get_player_staff_album(
-                member.id, staff_id, owned_only=1 if owned_only else 0
+                str(member.id), staff_id, owned_only=1 if owned_only else 0
             )
             if not success(resp):
                 match resp.code:
@@ -1749,7 +1752,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 ctx.interaction, self.track_autocomplete, UUID, item
             )
             resp = await get_nanapi().waicolle.waicolle_get_player_collection_album(
-                member.id, collec_id, owned_only=1 if owned_only else 0
+                str(member.id), collec_id, owned_only=1 if owned_only else 0
             )
             if not success(resp):
                 match resp.code:
@@ -1794,7 +1797,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             collage_type = 'Collection'
             collage_desc = (
                 f'**{collage.collection.name}** '
-                f'({self.bot.get_user(collage.collection.author.user.discord_id)})\n'
+                f'({self.bot.get_user(int(collage.collection.author.user.discord_id))})\n'
                 + ' • '.join(media_str + staff_str)
             )
             collage_id = None
@@ -1835,7 +1838,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if member is None:
             member = ctx.author
 
-        resp = await get_nanapi().waicolle.waicolle_get_player_tracked_items(member.id)
+        resp = await get_nanapi().waicolle.waicolle_get_player_tracked_items(str(member.id))
         if not success(resp):
             match resp.code:
                 case 404:
@@ -1867,20 +1870,24 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         for media in tracks.tracked_medias:
             stats_tasks.append(
                 asyncio.create_task(
-                    get_nanapi().waicolle.waicolle_get_player_media_stats(member.id, media.id_al)
+                    get_nanapi().waicolle.waicolle_get_player_media_stats(
+                        str(member.id), media.id_al
+                    )
                 )
             )
         for staff in tracks.tracked_staffs:
             stats_tasks.append(
                 asyncio.create_task(
-                    get_nanapi().waicolle.waicolle_get_player_staff_stats(member.id, staff.id_al)
+                    get_nanapi().waicolle.waicolle_get_player_staff_stats(
+                        str(member.id), staff.id_al
+                    )
                 )
             )
         for collection in tracks.tracked_collections:
             stats_tasks.append(
                 asyncio.create_task(
                     get_nanapi().waicolle.waicolle_get_player_collection_stats(
-                        member.id, collection.id
+                        str(member.id), collection.id
                     )
                 )
             )
@@ -1962,7 +1969,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if track_type is self.TrackChoice.media:
             media_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_media(
-                interaction.user.id, media_id
+                str(interaction.user.id), media_id
             )
             if not success(resp):
                 match resp.code:
@@ -1980,7 +1987,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         elif track_type is self.TrackChoice.staff:
             staff_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_staff(
-                interaction.user.id, staff_id
+                str(interaction.user.id), staff_id
             )
             if not success(resp):
                 match resp.code:
@@ -1998,7 +2005,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         elif track_type is self.TrackChoice.collection:
             collec_id = await autocomplete_cast(interaction, self.track_autocomplete, UUID, id)
             resp = await get_nanapi().waicolle.waicolle_player_track_collection(
-                interaction.user.id, collec_id
+                str(interaction.user.id), collec_id
             )
             if not success(resp):
                 match resp.code:
@@ -2024,17 +2031,17 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if track_type is self.TrackChoice.media:
             media_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_media(
-                interaction.user.id, media_id
+                str(interaction.user.id), media_id
             )
         elif track_type is self.TrackChoice.staff:
             staff_id = await autocomplete_cast(interaction, self.track_autocomplete, int, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_staff(
-                interaction.user.id, staff_id
+                str(interaction.user.id), staff_id
             )
         elif track_type is self.TrackChoice.collection:
             collec_id = await autocomplete_cast(interaction, self.track_autocomplete, UUID, id)
             resp = await get_nanapi().waicolle.waicolle_player_untrack_collection(
-                interaction.user.id, collec_id
+                str(interaction.user.id), collec_id
             )
         else:
             raise RuntimeError('How did you get there?')
@@ -2064,7 +2071,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             member = ctx.author
 
         resp1 = await get_nanapi().waicolle.waicolle_get_player_track_unlocked(
-            member.id, 1 if hide_singles else 0
+            str(member.id), 1 if hide_singles else 0
         )
         if not success(resp1):
             match resp1.code:
@@ -2099,7 +2106,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             )
 
         custom_lines = (
-            f'🏷 {self.bot.get_user(w.owner.user.discord_id)} • ID {w.character.id_al} • '
+            f'🏷 {self.bot.get_user(int(w.owner.user.discord_id))} • ID {w.character.id_al} • '
             for w in waifus
         )
 
@@ -2118,7 +2125,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             member = ctx.author
 
         resp1 = await get_nanapi().waicolle.waicolle_get_player_track_reversed(
-            member.id, 1 if hide_singles else 0
+            str(member.id), 1 if hide_singles else 0
         )
         if not success(resp1):
             match resp1.code:
@@ -2164,7 +2171,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             for tracker in res.trackers_not_owners:
                 discord_id = tracker.user.discord_id
                 if discord_id not in owners:
-                    text.append(str(self.bot.get_user(discord_id)) + ' (**0**)')
+                    text.append(str(self.bot.get_user(int(discord_id))) + ' (**0**)')
 
             custom_lines.append('🔀 ' + ' • '.join(sorted(text, key=str.casefold)))
 
@@ -2190,7 +2197,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     @legacy_command()
     async def slash_collec_new(self, ctx: LegacyCommandContext, name: str):
         """Create a new collection"""
-        body = NewCollectionBody(discord_id=ctx.author.id, name=name)
+        body = NewCollectionBody(discord_id=str(ctx.author.id), name=name)
         resp = await get_nanapi().waicolle.waicolle_new_collection(body)
         if not success(resp):
             match resp.code:
@@ -2344,7 +2351,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         fields = [
             EmbedField(
                 c.code,
-                ' • '.join(str(self.bot.get_user(cc.user.discord_id)) for cc in c.claimed_by)
+                ' • '.join(str(self.bot.get_user(int(cc.user.discord_id))) for cc in c.claimed_by)
                 or '*Empty*',
                 inline=False,
             )
@@ -2403,7 +2410,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if nb > 0:
             body = AddPlayerCoinsBody(moecoins=nb)
-            resp = await get_nanapi().waicolle.waicolle_add_player_coins(user.id, body)
+            resp = await get_nanapi().waicolle.waicolle_add_player_coins(str(user.id), body)
             if not success(resp):
                 match resp.code:
                     case 404:
@@ -2478,7 +2485,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if ctx.bananased:
             self.next_drop[ctx.guild.id] += self.speed
             resp = await get_nanapi().waicolle.waicolle_add_player_coins(
-                ctx.author.id, AddPlayerCoinsBody(moecoins=-moecoin_gain)
+                str(ctx.author.id), AddPlayerCoinsBody(moecoins=-moecoin_gain)
             )
             if not success(resp):
                 match resp.code:
@@ -2489,7 +2496,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         else:
             self.next_drop[ctx.guild.id] -= self.speed
             resp = await get_nanapi().waicolle.waicolle_add_player_coins(
-                ctx.author.id, AddPlayerCoinsBody(moecoins=moecoin_gain)
+                str(ctx.author.id), AddPlayerCoinsBody(moecoins=moecoin_gain)
             )
             if not success(resp):
                 match resp.code:

@@ -29,7 +29,7 @@ class Pot(Cog):
         amount = amount.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
 
         resp = await get_nanapi().pot.pot_collect_pot(
-            member.id, CollectPotBody(discord_username=str(member), amount=float(amount))
+            str(member.id), CollectPotBody(discord_username=str(member), amount=float(amount))
         )
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -39,7 +39,7 @@ class Pot(Cog):
 
     @command(help='Show someone’s collected amount')
     async def pot(self, ctx, member: Member):
-        resp = await get_nanapi().pot.pot_get_pot(member.id)
+        resp = await get_nanapi().pot.pot_get_pot(str(member.id))
         if not success(resp):
             match resp.code:
                 case 404:

@@ -102,7 +102,7 @@ class ProjectionCog(
         for projo in projos:
             for event in projo.guild_events:
                 if event.start_time > now and event.start_time <= now + timedelta(hours=24):
-                    thread = self.bot.get_thread(projo.channel_id)
+                    thread = self.bot.get_thread(int(projo.channel_id))
                     event_url = f'https://discord.com/events/{thread.guild.id}/{event.discord_id}'
                     await thread.send(
                         f'[Event]({event_url}) starts <t:{event.start_time.timestamp():.0f}:R>.'
@@ -112,7 +112,7 @@ class ProjectionCog(
     async def sync_participants(self, projos: list[ProjoSelectResult]):
         logger.info('Start syncing projo participants')
         for projo in projos:
-            projo_chan = self.bot.get_channel(projo.channel_id)
+            projo_chan = self.bot.get_channel(int(projo.channel_id))
             if not isinstance(projo_chan, Thread):
                 continue
             await self.sync_projo_participants(projo, projo_chan)
@@ -134,12 +134,12 @@ class ProjectionCog(
             if discord_id not in db_participants:
                 body = ParticipantAddBody(participant_username=str(user))
                 resp = await get_nanapi().projection.projection_add_projection_participant(
-                    projo.id, discord_id, body
+                    projo.id, str(discord_id), body
                 )
                 if not success(resp):
                     raise RuntimeError(resp.result)
             else:
-                db_participants.remove(discord_id)
+                db_participants.remove(str(discord_id))
 
         for discord_id in db_participants:
             resp = await get_nanapi().projection.projection_remove_projection_participant(
@@ -173,7 +173,9 @@ class ProjectionCog(
         if not isinstance(ctx.channel, discord.Thread):
             raise commands.CommandError('This command should be used inside a thread.')
 
-        resp = await get_nanapi().projection.projection_get_projections(channel_id=ctx.channel.id)
+        resp = await get_nanapi().projection.projection_get_projections(
+            channel_id=str(ctx.channel.id)
+        )
         if not success(resp):
             raise RuntimeError(resp.result)
         projos = resp.result
@@ -181,7 +183,7 @@ class ProjectionCog(
             raise commands.CommandError('A projection is already ongoing in this thread')
 
         resp = await get_nanapi().projection.projection_new_projection(
-            NewProjectionBody(name=name, channel_id=ctx.channel.id)
+            NewProjectionBody(name=name, channel_id=str(ctx.channel.id))
         )
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -195,7 +197,7 @@ class ProjectionCog(
         info_msg = await vote_chan.send(embed=embed, view=view)
 
         resp1 = await get_nanapi().projection.projection_set_projection_message_id(
-            projo.id, SetProjectionMessageIdBody(message_id=info_msg.id)
+            projo.id, SetProjectionMessageIdBody(message_id=str(info_msg.id))
         )
         if not success(resp1):
             raise RuntimeError(resp1.result)
@@ -247,7 +249,7 @@ class ProjectionCog(
             raise RuntimeError(resp.result)
 
         assert projo.message_id is not None
-        info_msg = await self.fetch_message(projo.message_id)
+        info_msg = await self.fetch_message(int(projo.message_id))
         await info_msg.delete()
         await ctx.reply(f'The projection was cancelled. {self.bot.get_emoji_str("FubukiGO")}')
 
@@ -328,7 +330,9 @@ class ProjectionCog(
                 continue
             assert interaction.guild
             with suppress(NotFound):
-                discord_event = await interaction.guild.fetch_scheduled_event(event.discord_id)
+                discord_event = await interaction.guild.fetch_scheduled_event(
+                    int(event.discord_id)
+                )
                 new_name = self.dans_regexp.sub(f'[📽️/{folder.value}]', discord_event.name)
                 await discord_event.edit(name=new_name)
                 await interaction.followup.send(
@@ -415,7 +419,7 @@ class ProjectionCog(
             raise RuntimeError(resp.result)
 
         assert projo.message_id is not None
-        info_msg = await self.fetch_message(projo.message_id)
+        info_msg = await self.fetch_message(int(projo.message_id))
         await info_msg.delete()
         await ctx.reply(
             f'The projection was marked as completed. {self.bot.get_emoji_str("FubukiGO")}'
@@ -484,7 +488,7 @@ class ProjectionCog(
         event_name: str,
         date: datetime,
     ):
-        orga_chan = self.bot.get_channel(projection.channel_id)
+        orga_chan = self.bot.get_channel(int(projection.channel_id))
         assert isinstance(orga_chan, TextChannel | Thread)
         ev_desc = [orga_chan.mention, f'**{projection.name}**']
 
@@ -561,7 +565,7 @@ class ProjectionCog(
         assert ctx.guild
         for event in projection.guild_events:
             with suppress(NotFound):
-                discord_event = await ctx.guild.fetch_scheduled_event(event.discord_id)
+                discord_event = await ctx.guild.fetch_scheduled_event(int(event.discord_id))
                 await discord_event.delete()
 
         await ctx.reply(
@@ -645,7 +649,7 @@ class ProjectionCog(
     ):
         embed, view = await get_projo_embed_view(self.bot, projection.id)
         assert projection.message_id
-        message = await self.fetch_message(projection.message_id)
+        message = await self.fetch_message(int(projection.message_id))
         await message.edit(embed=embed, view=view)
         return embed
 
@@ -682,7 +686,7 @@ class ProjectionCog(
             await self.update_projo_embed(projo)
             body = ParticipantAddBody(participant_username=str(user))
             resp = await get_nanapi().projection.projection_add_projection_participant(
-                projo.id, user.id, body
+                projo.id, str(user.id), body
             )
             if not success(resp):
                 raise RuntimeError(resp.result)
@@ -698,7 +702,7 @@ class ProjectionCog(
         if projo is not None:
             await self.update_projo_embed(projo)
             resp = await get_nanapi().projection.projection_remove_projection_participant(
-                projo.id, user.id
+                projo.id, str(user.id)
             )
             if not success(resp):
                 raise RuntimeError(resp.result)

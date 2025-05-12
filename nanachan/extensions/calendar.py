@@ -61,7 +61,7 @@ class Calendar_Generator(Cog, name='Calendar'):
         ics = answer.content
 
         resp1 = await get_nanapi().calendar.calendar_upsert_user_calendar(
-            interaction.user.id,
+            str(interaction.user.id),
             UpsertUserCalendarBody(discord_username=str(interaction.user), ics=ics),
         )
         if not success(resp1):
@@ -84,7 +84,7 @@ class Calendar_Generator(Cog, name='Calendar'):
                 await get_nanapi().calendar.calendar_delete_guild_event(discord_id)
         for discord_id, event in all_events.items():
             await upsert_event(self.bot, event)
-            await reconcile_participants(event, db_events.get(discord_id))
+            await reconcile_participants(event, db_events.get(str(discord_id)))
         logger.info('Done syncing all events')
 
     @nana_command(description='Get my calendar ics link')
@@ -135,7 +135,7 @@ class Calendar_Generator(Cog, name='Calendar'):
     @Cog.listener()
     async def on_scheduled_event_delete(self, event: ScheduledEvent):
         logger.debug(f'Deleting event {event.name} ({event.id})')
-        resp = await get_nanapi().calendar.calendar_delete_guild_event(event.id)
+        resp = await get_nanapi().calendar.calendar_delete_guild_event(str(event.id))
         if not success(resp):
             raise RuntimeError(resp.result)
         db_event = resp.result
@@ -157,7 +157,7 @@ class Calendar_Generator(Cog, name='Calendar'):
         await upsert_event(self.bot, event)
         body = ParticipantAddBody(participant_username=str(user))
         resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
-            event.id, user.id, body
+            str(event.id), str(user.id), body
         )
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -165,7 +165,7 @@ class Calendar_Generator(Cog, name='Calendar'):
     @Cog.listener()
     async def on_scheduled_event_user_remove(self, event: ScheduledEvent, user: User):
         resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
-            event.id, user.id
+            str(event.id), str(user.id)
         )
         if not success(resp):
             raise RuntimeError(resp.result)

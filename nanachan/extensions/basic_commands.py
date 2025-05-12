@@ -104,7 +104,7 @@ class BasicCommands(Cog, name='Basic Commands'):
 
         elif self.reminders[0].timestamp <= now:
             past_reminder = self.reminders.pop(0)
-            channel = self.bot.get_channel_type(past_reminder.channel_id, Messageable)
+            channel = self.bot.get_channel_type(int(past_reminder.channel_id), Messageable)
             if channel is None:
                 channel = self.bot.get_bot_room()
 
@@ -382,9 +382,9 @@ class BasicCommands(Cog, name='Basic Commands'):
         assert interaction.channel_id is not None
         resp = await get_nanapi().reminder.reminder_new_reminder(
             NewReminderBody(
-                discord_id=interaction.user.id,
+                discord_id=str(interaction.user.id),
                 discord_username=str(interaction.user),
-                channel_id=interaction.channel_id,
+                channel_id=str(interaction.channel_id),
                 message=message,
                 timestamp=dt,
             )

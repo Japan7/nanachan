@@ -55,7 +55,7 @@ class Anilist(Cog):
         username = answer.content
 
         resp1 = await get_nanapi().anilist.anilist_upsert_account(
-            interaction.user.id,
+            str(interaction.user.id),
             UpsertAnilistAccountBody(
                 discord_username=str(interaction.user), service=service.value, username=username
             ),
@@ -103,7 +103,7 @@ class Anilist(Cog):
             raise RuntimeError(resp.result)
         anilists = resp.result
         for anilist in anilists:
-            member = self.bot.get_user(anilist.user.discord_id)
+            member = self.bot.get_user(int(anilist.user.discord_id))
             link = ''
             if anilist.service is AnilistService.ANILIST:
                 link = f'https://anilist.co/user/{anilist.username}'
