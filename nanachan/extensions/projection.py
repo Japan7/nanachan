@@ -122,9 +122,9 @@ class ProjectionCog(
         self, projo: ProjoSelectResult | ProjoInsertResult, projo_chan: Thread
     ):
         db_participants = (
-            {p.discord_id for p in projo.participants}
+            {int(p.discord_id) for p in projo.participants}
             if isinstance(projo, ProjoSelectResult)
-            else set()
+            else set[int]()
         )
 
         members = await projo_chan.fetch_members()
@@ -139,11 +139,11 @@ class ProjectionCog(
                 if not success(resp):
                     raise RuntimeError(resp.result)
             else:
-                db_participants.remove(str(discord_id))
+                db_participants.remove(discord_id)
 
         for discord_id in db_participants:
             resp = await get_nanapi().projection.projection_remove_projection_participant(
-                projo.id, discord_id
+                projo.id, str(discord_id)
             )
             if not success(resp):
                 raise RuntimeError(resp.result)

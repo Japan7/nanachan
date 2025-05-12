@@ -281,7 +281,7 @@ class RollResultsView(CompositeNavigatorView):
 
         if any(
             [
-                interaction.user.id != waifu.owner.user.discord_id,
+                interaction.user.id != int(waifu.owner.user.discord_id),
                 waifu.trade_locked,
                 waifu.blooded,
             ]
@@ -328,7 +328,7 @@ class RollResultsView(CompositeNavigatorView):
                     for w in resp1.result
                     if all(
                         [
-                            w.owner.user.discord_id == self.user.id,
+                            int(w.owner.user.discord_id) == self.user.id,
                             not w.locked,
                             not w.trade_locked,
                             not w.blooded,
@@ -555,14 +555,14 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
     waifus = resp2.result
 
     players_waifus = filter(
-        lambda w: (w.owner.user.discord_id != bot.bot_id) and not w.frozen and not w.blooded,
+        lambda w: (int(w.owner.user.discord_id) != bot.bot_id) and not w.frozen and not w.blooded,
         waifus,
     )
 
-    owners = defaultdict(WaifuOwnership)
+    owners = defaultdict[int, WaifuOwnership](WaifuOwnership)
 
     for waifu in players_waifus:
-        owner = owners[waifu.owner.user.discord_id]
+        owner = owners[int(waifu.owner.user.discord_id)]
         if waifu.trade_locked:
             ownership = owner.in_trade
         elif waifu.locked:
@@ -608,7 +608,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         text.append(str(frozen))
 
     nanaed_waifus = filter(
-        lambda w: w.owner.user.discord_id == bot.bot_id and not w.blooded,
+        lambda w: int(w.owner.user.discord_id) == bot.bot_id and not w.blooded,
         waifus,
     )
 

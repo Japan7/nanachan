@@ -174,7 +174,7 @@ class QuizzBase(ABC):
         game = resp.result
         game_msg = await message.channel.fetch_message(int(game.message_id))
 
-        if message.author.id == game.quizz.author.discord_id:
+        if message.author.id == int(game.quizz.author.discord_id):
             return
 
         elapsed_time = (message.created_at - game_msg.created_at).total_seconds()

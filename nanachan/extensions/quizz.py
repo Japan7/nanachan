@@ -62,7 +62,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             MANGA_QUIZZ_CHANNEL: AnimeMangaQuizz(self.bot, MANGA_QUIZZ_CHANNEL),
             LOUIS_QUIZZ_CHANNEL: LouisQuizz(self.bot, LOUIS_QUIZZ_CHANNEL),
         }
-        self.locks = defaultdict(asyncio.Lock)
+        self.locks = defaultdict[int, asyncio.Lock](asyncio.Lock)
         context_modifier(self.image_ctx)
 
     async def image_ctx(self, ctx):
@@ -92,7 +92,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             raise RuntimeError(resp.result)
         quizz = resp.result
         channel_id = quizz.channel_id
-        async with self.locks[channel_id]:
+        async with self.locks[int(channel_id)]:
             resp = await get_nanapi().quizz.quizz_get_current_game(channel_id)
             if not success(resp):
                 match resp.code:
@@ -227,7 +227,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         assert isinstance(ctx.author, Member)
         if not (
             ctx.channel.permissions_for(ctx.author).administrator
-            or ctx.author.id == game.quizz.author.discord_id
+            or ctx.author.id == int(game.quizz.author.discord_id)
         ):
             raise commands.CommandError('Not the author or an admin')
 
@@ -250,7 +250,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         assert isinstance(ctx.author, Member)
         if not (
             ctx.channel.permissions_for(ctx.author).administrator
-            or ctx.author.id == game.quizz.author.discord_id
+            or ctx.author.id == int(game.quizz.author.discord_id)
         ):
             raise commands.CommandError('Not the author or an admin')
 

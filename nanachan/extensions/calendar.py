@@ -76,15 +76,15 @@ class Calendar_Generator(Cog, name='Calendar'):
         )
         if not success(resp):
             raise RuntimeError(resp.result)
-        db_events = {e.discord_id: e for e in resp.result}
+        db_events = {int(e.discord_id): e for e in resp.result}
         all_events = {e.id: e for guild in self.bot.guilds for e in guild.scheduled_events}
         for discord_id, event in db_events.items():
             if discord_id not in all_events:
                 logger.debug(f'Deleting event {event.name} ({discord_id})')
-                await get_nanapi().calendar.calendar_delete_guild_event(discord_id)
+                await get_nanapi().calendar.calendar_delete_guild_event(str(discord_id))
         for discord_id, event in all_events.items():
             await upsert_event(self.bot, event)
-            await reconcile_participants(event, db_events.get(str(discord_id)))
+            await reconcile_participants(event, db_events.get(discord_id))
         logger.info('Done syncing all events')
 
     @nana_command(description='Get my calendar ics link')

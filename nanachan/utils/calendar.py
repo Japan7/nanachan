@@ -53,7 +53,7 @@ async def reconcile_participants(
     db_event: GuildEventSelectResult | None,
 ):
     logger.debug(f'Reconciling participants for {event.name} ({event.id})')
-    db_participants = {p.discord_id for p in db_event.participants} if db_event else set()
+    db_participants = {int(p.discord_id) for p in db_event.participants} if db_event else set()
     async for participant in event.users():
         if participant.id not in db_participants:
             body = ParticipantAddBody(participant_username=str(participant))
@@ -63,10 +63,10 @@ async def reconcile_participants(
             if not success(resp):
                 raise RuntimeError(resp.result)
         else:
-            db_participants.remove(str(participant.id))
+            db_participants.remove(participant.id)
     for discord_id in db_participants:
         resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
-            str(event.id), discord_id
+            str(event.id), str(discord_id)
         )
         if not success(resp):
             raise RuntimeError(resp.result)

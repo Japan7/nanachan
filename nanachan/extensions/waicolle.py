@@ -1232,7 +1232,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             member = interaction.user
 
         user_trades = [
-            TradeHelper(self, t) for t in trades if t.offeree.user.discord_id == member.id
+            TradeHelper(self, t) for t in trades if int(t.offeree.user.discord_id) == member.id
         ]
 
         for trade in user_trades:
@@ -2151,9 +2151,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         custom_lines = []
         for res in results:
-            owners = defaultdict(WaifuOwnership)
+            owners = defaultdict[int, WaifuOwnership](WaifuOwnership)
             for waifu in res.locked:
-                owner = owners[waifu.owner.user.discord_id]
+                owner = owners[int(waifu.owner.user.discord_id)]
                 ownership = owner.locked
                 if waifu.level == 0:
                     ownership.simple += 1
@@ -2169,9 +2169,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 text.append(subtext)
 
             for tracker in res.trackers_not_owners:
-                discord_id = tracker.user.discord_id
+                discord_id = int(tracker.user.discord_id)
                 if discord_id not in owners:
-                    text.append(str(self.bot.get_user(int(discord_id))) + ' (**0**)')
+                    text.append(str(self.bot.get_user(discord_id)) + ' (**0**)')
 
             custom_lines.append('🔀 ' + ' • '.join(sorted(text, key=str.casefold)))
 
@@ -2227,7 +2227,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     raise RuntimeError(resp1.result)
         collec = resp1.result
 
-        if collec.author.user.discord_id != interaction.user.id:
+        if int(collec.author.user.discord_id) != interaction.user.id:
             await interaction.followup.send('You can only delete your own collections')
             return
 
@@ -2259,7 +2259,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 case _:
                     raise RuntimeError(resp1.result)
         collec = resp1.result
-        if collec.author.user.discord_id != interaction.user.id:
+        if int(collec.author.user.discord_id) != interaction.user.id:
             await interaction.followup.send('You can only edit your own collections')
             return
 
@@ -2318,7 +2318,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     raise RuntimeError(resp1.result)
         collec = resp1.result
 
-        if collec.author.user.discord_id != interaction.user.id:
+        if int(collec.author.user.discord_id) != interaction.user.id:
             raise commands.CommandError('You can only edit your own collections')
         if track_type is self.CollecTrackChoice.media:
             resp2 = await get_nanapi().waicolle.waicolle_collection_untrack_media(cid, id_al)
