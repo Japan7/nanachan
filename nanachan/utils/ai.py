@@ -1,5 +1,6 @@
-from typing import AsyncGenerator, Iterable, Sequence
+from typing import AsyncGenerator, Iterable, Sequence, override
 
+from pydantic.json_schema import JsonSchemaValue
 from pydantic_ai import Agent, Tool
 from pydantic_ai.mcp import MCPServerStdio
 from pydantic_ai.messages import (
@@ -16,6 +17,8 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models import Model
 from pydantic_ai.models.anthropic import AnthropicModel
+from pydantic_ai.tools import GenerateToolJsonSchema
+from pydantic_core import core_schema
 
 from nanachan.nanapi.client import get_nanapi
 from nanachan.settings import AI_MODEL_CLS, AI_PROVIDER
@@ -90,6 +93,17 @@ async def iter_stream[AgentDepsT](
                 message_history.extend(run.result.new_messages())
 
 
+class GeminiCompatibleTool[AgentDepsT](Tool[AgentDepsT]):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, schema_generator=GeminiCompatibleGenerateToolJsonSchema)
+
+
+class GeminiCompatibleGenerateToolJsonSchema(GenerateToolJsonSchema):
+    @override
+    def uuid_schema(self, schema: core_schema.UuidSchema) -> JsonSchemaValue:
+        return {'type': 'string'}
+
+
 def nanapi_tools() -> Iterable[Tool[None]]:
     nanapi = get_nanapi()
     endpoints = [
@@ -125,7 +139,7 @@ def nanapi_tools() -> Iterable[Tool[None]]:
         nanapi.waicolle.waicolle_get_collection,
     ]
     for endpoint in endpoints:
-        yield Tool(endpoint, takes_ctx=None)
+        yield GeminiCompatibleTool(endpoint, takes_ctx=None)
 
 
 python_mcp_server = MCPServerStdio(

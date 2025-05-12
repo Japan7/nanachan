@@ -97,6 +97,10 @@ ignore = [
 quote-style = "single"
 
 [tool.fawltydeps]
+ignore_undeclared = [
+    # included in pydantic and pydantic-ai
+    "pydantic_core",
+]
 ignore_unused = [
     # cchardet is used by aiohttp
     "faust-cchardet",
