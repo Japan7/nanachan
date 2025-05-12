@@ -169,7 +169,7 @@ async def get_score_fields(bot: Bot, media: MediaSelectResult):
         score = f'\nScored {entry.score:.2f}/10' if entry.score else ''
         fields.append(
             EmbedField(
-                name=str(bot.get_user(entry.account.user.discord_id)),
+                name=str(bot.get_user(int(entry.account.user.discord_id))),
                 value=status + progress + score,
             )
         )

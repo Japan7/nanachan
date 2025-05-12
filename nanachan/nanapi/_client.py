@@ -272,7 +272,7 @@ class AmqModule:
             )
 
     async def amq_upsert_account(
-        self, discord_id: int, body: UpsertAMQAccountBody
+        self, discord_id: str, body: UpsertAMQAccountBody
     ) -> (
         Success[Literal[200], AccountMergeResult]
         | Error[Literal[401], HTTPExceptionModel]
@@ -422,7 +422,7 @@ class AnilistModule:
             )
 
     async def anilist_upsert_account(
-        self, discord_id: int, body: UpsertAnilistAccountBody
+        self, discord_id: str, body: UpsertAnilistAccountBody
     ) -> (
         Success[Literal[200], AccountMergeResult]
         | Error[Literal[409], HTTPExceptionModel]
@@ -499,7 +499,7 @@ class AnilistModule:
             )
 
     async def anilist_get_account_entries(
-        self, discord_id: int, type: Literal['ANIME', 'MANGA'] | None = None
+        self, discord_id: str, type: Literal['ANIME', 'MANGA'] | None = None
     ) -> (
         Success[Literal[200], list[EntrySelectAllResult]]
         | Error[Literal[401], HTTPExceptionModel]
@@ -1139,7 +1139,7 @@ class CalendarModule:
             )
 
     async def calendar_get_user_calendar(
-        self, discord_id: int
+        self, discord_id: str
     ) -> (
         Success[Literal[200], UserCalendarSelectResult]
         | Error[Literal[404], None]
@@ -1175,7 +1175,7 @@ class CalendarModule:
             )
 
     async def calendar_upsert_user_calendar(
-        self, discord_id: int, body: UpsertUserCalendarBody
+        self, discord_id: str, body: UpsertUserCalendarBody
     ) -> (
         Success[Literal[200], UserCalendarMergeResult]
         | Error[Literal[401], HTTPExceptionModel]
@@ -1209,7 +1209,7 @@ class CalendarModule:
             )
 
     async def calendar_delete_user_calendar(
-        self, discord_id: int
+        self, discord_id: str
     ) -> (
         Success[Literal[200], UserCalendarDeleteResult]
         | Error[Literal[404], None]
@@ -1284,7 +1284,7 @@ class CalendarModule:
             )
 
     async def calendar_upsert_guild_event(
-        self, discord_id: int, body: UpsertGuildEventBody, client_id: UUID | None = None
+        self, discord_id: str, body: UpsertGuildEventBody, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GuildEventMergeResult]
         | Error[Literal[401], HTTPExceptionModel]
@@ -1328,7 +1328,7 @@ class CalendarModule:
             )
 
     async def calendar_delete_guild_event(
-        self, discord_id: int, client_id: UUID | None = None
+        self, discord_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GuildEventDeleteResult]
         | Error[Literal[404], None]
@@ -1375,8 +1375,8 @@ class CalendarModule:
 
     async def calendar_add_guild_event_participant(
         self,
-        discord_id: int,
-        participant_id: int,
+        discord_id: str,
+        participant_id: str,
         body: ParticipantAddBody,
         client_id: UUID | None = None,
     ) -> (
@@ -1425,7 +1425,7 @@ class CalendarModule:
             )
 
     async def calendar_remove_guild_event_participant(
-        self, discord_id: int, participant_id: int, client_id: UUID | None = None
+        self, discord_id: str, participant_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GuildEventParticipantRemoveResult]
         | Error[Literal[404], None]
@@ -1471,7 +1471,7 @@ class CalendarModule:
             )
 
     async def calendar_get_ics(
-        self, client: str, user: int | None = None, aggregate: bool | None = None
+        self, client: str, user: str | None = None, aggregate: bool | None = None
     ) -> (
         Success[Literal[200], None]
         | Error[Literal[404], None]
@@ -1813,7 +1813,7 @@ class PotModule:
         self.server_url: str = server_url
 
     async def pot_get_pot(
-        self, discord_id: int, client_id: UUID | None = None
+        self, discord_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PotGetByUserResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -1856,7 +1856,7 @@ class PotModule:
             )
 
     async def pot_collect_pot(
-        self, discord_id: int, body: CollectPotBody, client_id: UUID | None = None
+        self, discord_id: str, body: CollectPotBody, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PotAddResult]
         | Error[Literal[401], HTTPExceptionModel]
@@ -2047,8 +2047,8 @@ class ProjectionModule:
     async def projection_get_projections(
         self,
         status: Literal['ONGOING', 'COMPLETED'] | None = None,
-        message_id: int | None = None,
-        channel_id: int | None = None,
+        message_id: str | None = None,
+        channel_id: str | None = None,
         client_id: UUID | None = None,
     ) -> (
         Success[Literal[200], list[ProjoSelectResult]]
@@ -2561,7 +2561,7 @@ class ProjectionModule:
     async def projection_add_projection_participant(
         self,
         id: UUID,
-        participant_id: int,
+        participant_id: str,
         body: ParticipantAddBody,
         client_id: UUID | None = None,
     ) -> (
@@ -2610,7 +2610,7 @@ class ProjectionModule:
             )
 
     async def projection_remove_projection_participant(
-        self, id: UUID, participant_id: int, client_id: UUID | None = None
+        self, id: UUID, participant_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], ProjoParticipantRemoveResult]
         | Success[Literal[204], None]
@@ -2656,7 +2656,7 @@ class ProjectionModule:
             )
 
     async def projection_add_projection_guild_event(
-        self, id: UUID, discord_id: int, client_id: UUID | None = None
+        self, id: UUID, discord_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[201], ProjoAddEventResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -2797,7 +2797,7 @@ class QuizzModule:
             )
 
     async def quizz_get_oldest_quizz(
-        self, channel_id: int, client_id: UUID | None = None
+        self, channel_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], QuizzGetOldestResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -3067,7 +3067,7 @@ class QuizzModule:
             )
 
     async def quizz_delete_game(
-        self, message_id: int, client_id: UUID | None = None
+        self, message_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GameDeleteByMessageIdResult]
         | Success[Literal[204], None]
@@ -3114,7 +3114,7 @@ class QuizzModule:
             )
 
     async def quizz_get_current_game(
-        self, channel_id: int, client_id: UUID | None = None
+        self, channel_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GameGetCurrentResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -3158,7 +3158,7 @@ class QuizzModule:
             )
 
     async def quizz_get_last_game(
-        self, channel_id: int, client_id: UUID | None = None
+        self, channel_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], GameGetLastResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -3521,7 +3521,7 @@ class RoleModule:
             )
 
     async def role_delete_role(
-        self, role_id: int, client_id: UUID | None = None
+        self, role_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], RoleDeleteByRoleIdResult]
         | Success[Literal[204], None]
@@ -3671,7 +3671,7 @@ class UserModule:
             )
 
     async def user_get_profile(
-        self, discord_id: int
+        self, discord_id: str
     ) -> (
         Success[Literal[200], ProfileSearchResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -3709,7 +3709,7 @@ class UserModule:
             )
 
     async def user_upsert_profile(
-        self, discord_id: int, body: UpsertProfileBody
+        self, discord_id: str, body: UpsertProfileBody
     ) -> (
         Success[Literal[200], ProfileSearchResult]
         | Error[Literal[401], HTTPExceptionModel]
@@ -3788,7 +3788,7 @@ class WaicolleModule:
             )
 
     async def waicolle_upsert_player(
-        self, discord_id: int, body: UpsertPlayerBody, client_id: UUID | None = None
+        self, discord_id: str, body: UpsertPlayerBody, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerMergeResult]
         | Error[Literal[401], HTTPExceptionModel]
@@ -3832,7 +3832,7 @@ class WaicolleModule:
             )
 
     async def waicolle_get_player(
-        self, discord_id: int, client_id: UUID | None = None
+        self, discord_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerGetByUserResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -3875,7 +3875,7 @@ class WaicolleModule:
             )
 
     async def waicolle_freeze_player(
-        self, discord_id: int, client_id: UUID | None = None
+        self, discord_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerFreezeResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -3923,7 +3923,7 @@ class WaicolleModule:
             )
 
     async def waicolle_add_player_coins(
-        self, discord_id: int, body: AddPlayerCoinsBody, client_id: UUID | None = None
+        self, discord_id: str, body: AddPlayerCoinsBody, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerAddCoinsResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -3978,8 +3978,8 @@ class WaicolleModule:
 
     async def waicolle_donate_player_coins(
         self,
-        discord_id: int,
-        to_discord_id: int,
+        discord_id: str,
+        to_discord_id: str,
         body: DonatePlayerCoinsBody,
         client_id: UUID | None = None,
     ) -> (
@@ -4042,11 +4042,11 @@ class WaicolleModule:
 
     async def waicolle_player_roll(
         self,
-        discord_id: int,
+        discord_id: str,
         roll_id: str | None = None,
         coupon_code: str | None = None,
         nb: int | None = None,
-        pool_discord_id: int | None = None,
+        pool_discord_id: str | None = None,
         reason: str | None = None,
         client_id: UUID | None = None,
     ) -> (
@@ -4118,7 +4118,7 @@ class WaicolleModule:
             )
 
     async def waicolle_get_player_tracked_items(
-        self, discord_id: int, client_id: UUID | None = None
+        self, discord_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerTrackedItemsResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4161,7 +4161,7 @@ class WaicolleModule:
             )
 
     async def waicolle_get_player_track_unlocked(
-        self, discord_id: int, hide_singles: int | None = None, client_id: UUID | None = None
+        self, discord_id: str, hide_singles: int | None = None, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], list[WaifuSelectResult]]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4206,7 +4206,7 @@ class WaicolleModule:
             )
 
     async def waicolle_get_player_track_reversed(
-        self, discord_id: int, hide_singles: int | None = None, client_id: UUID | None = None
+        self, discord_id: str, hide_singles: int | None = None, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], list[PlayerTrackReversedResult]]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4251,7 +4251,7 @@ class WaicolleModule:
             )
 
     async def waicolle_get_player_media_stats(
-        self, discord_id: int, id_al: int, client_id: UUID | None = None
+        self, discord_id: str, id_al: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerMediaStatsResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4294,7 +4294,7 @@ class WaicolleModule:
             )
 
     async def waicolle_player_track_media(
-        self, discord_id: int, id_al: int, client_id: UUID | None = None
+        self, discord_id: str, id_al: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerAddMediaResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4342,7 +4342,7 @@ class WaicolleModule:
             )
 
     async def waicolle_player_untrack_media(
-        self, discord_id: int, id_al: int, client_id: UUID | None = None
+        self, discord_id: str, id_al: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerRemoveMediaResult]
         | Success[Literal[204], None]
@@ -4388,7 +4388,7 @@ class WaicolleModule:
             )
 
     async def waicolle_get_player_staff_stats(
-        self, discord_id: int, id_al: int, client_id: UUID | None = None
+        self, discord_id: str, id_al: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerStaffStatsResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4431,7 +4431,7 @@ class WaicolleModule:
             )
 
     async def waicolle_player_track_staff(
-        self, discord_id: int, id_al: int, client_id: UUID | None = None
+        self, discord_id: str, id_al: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerAddStaffResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4479,7 +4479,7 @@ class WaicolleModule:
             )
 
     async def waicolle_player_untrack_staff(
-        self, discord_id: int, id_al: int, client_id: UUID | None = None
+        self, discord_id: str, id_al: int, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerRemoveStaffResult]
         | Success[Literal[204], None]
@@ -4525,7 +4525,7 @@ class WaicolleModule:
             )
 
     async def waicolle_get_player_collection_stats(
-        self, discord_id: int, id: UUID, client_id: UUID | None = None
+        self, discord_id: str, id: UUID, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerCollectionStatsResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4568,7 +4568,7 @@ class WaicolleModule:
             )
 
     async def waicolle_player_track_collection(
-        self, discord_id: int, id: UUID, client_id: UUID | None = None
+        self, discord_id: str, id: UUID, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerAddCollectionResult]
         | Error[Literal[404], HTTPExceptionModel]
@@ -4616,7 +4616,7 @@ class WaicolleModule:
             )
 
     async def waicolle_player_untrack_collection(
-        self, discord_id: int, id: UUID, client_id: UUID | None = None
+        self, discord_id: str, id: UUID, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], PlayerRemoveCollectionResult]
         | Success[Literal[204], None]
@@ -4663,7 +4663,7 @@ class WaicolleModule:
 
     async def waicolle_get_player_collage(
         self,
-        discord_id: int,
+        discord_id: str,
         filter: Literal['FULL', 'LOCKED', 'UNLOCKED', 'ASCENDED', 'EDGED', 'CUSTOM'],
         client_id: UUID | None = None,
     ) -> (
@@ -4710,7 +4710,7 @@ class WaicolleModule:
 
     async def waicolle_get_player_media_album(
         self,
-        discord_id: int,
+        discord_id: str,
         id_al: int,
         owned_only: int | None = None,
         client_id: UUID | None = None,
@@ -4758,7 +4758,7 @@ class WaicolleModule:
 
     async def waicolle_get_player_staff_album(
         self,
-        discord_id: int,
+        discord_id: str,
         id_al: int,
         owned_only: int | None = None,
         client_id: UUID | None = None,
@@ -4806,7 +4806,7 @@ class WaicolleModule:
 
     async def waicolle_get_player_collection_album(
         self,
-        discord_id: int,
+        discord_id: str,
         id: UUID,
         owned_only: int | None = None,
         client_id: UUID | None = None,
@@ -4855,7 +4855,7 @@ class WaicolleModule:
     async def waicolle_get_waifus(
         self,
         ids: str | None = None,
-        discord_id: int | None = None,
+        discord_id: str | None = None,
         level: int | None = None,
         locked: int | None = None,
         trade_locked: int | None = None,
@@ -5030,7 +5030,7 @@ class WaicolleModule:
             )
 
     async def waicolle_blood_expired_waifus(
-        self, discord_id: int, client_id: UUID | None = None
+        self, discord_id: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], list[WaifuSelectResult]]
         | Error[Literal[401], HTTPExceptionModel]
@@ -6081,7 +6081,7 @@ class WaicolleModule:
             )
 
     async def waicolle_get_rolls(
-        self, discord_id: int
+        self, discord_id: str
     ) -> (
         Success[Literal[200], list[RollData]]
         | Error[Literal[401], HTTPExceptionModel]

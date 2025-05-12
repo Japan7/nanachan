@@ -48,7 +48,9 @@ class Profiles(Cog):
         all_members = {member for guild in self.bot.guilds for member in guild.members}
         await get_nanapi().user.user_upsert_discord_accounts(
             [
-                UpsertDiscordAccountBodyItem(discord_id=member.id, discord_username=str(member))
+                UpsertDiscordAccountBodyItem(
+                    discord_id=str(member.id), discord_username=str(member)
+                )
                 for member in all_members
             ]
         )
@@ -77,7 +79,7 @@ class Profiles(Cog):
         user_profile = UpsertProfileBody(
             discord_username=after.name, graduation_year=graduation_year
         )
-        await get_nanapi().user.user_upsert_profile(discord_id=after.id, body=user_profile)
+        await get_nanapi().user.user_upsert_profile(discord_id=str(after.id), body=user_profile)
 
     async def _update_year_roles(
         self, members: list[Member], year_roles: list[Role], target_roles: list[Role]
@@ -111,7 +113,7 @@ class Profiles(Cog):
         birthdays = [
             (
                 self.next_birthday(p.birthday),
-                p.full_name or guild.get_member(p.user.discord_id),
+                p.full_name or guild.get_member(int(p.user.discord_id)),
             )
             for p in profiles
             if p.birthday
@@ -153,7 +155,7 @@ class Profiles(Cog):
         for profile in profiles:
             if profile.graduation_year is None:
                 continue
-            member = guild.get_member(profile.user.discord_id)
+            member = guild.get_member(int(profile.user.discord_id))
             if member is None:
                 continue
             role_index = max(profile.graduation_year - last_promo, 0)
@@ -191,7 +193,7 @@ class Profiles(Cog):
 
     @staticmethod
     async def _create_or_update_profile(member: Member | discord.User, payload: UpsertProfileBody):
-        resp = await get_nanapi().user.user_upsert_profile(member.id, payload)
+        resp = await get_nanapi().user.user_upsert_profile(str(member.id), payload)
         if not success(resp):
             raise RuntimeError(resp.result)
         profile = resp.result
@@ -251,7 +253,7 @@ class Profiles(Cog):
     @nana_command(description='Edit your own profile.')
     async def iam(self, interaction: Interaction[Bot]):
         _ = asyncio.create_task(interaction.response.defer())
-        profile_resp = await get_nanapi().user.user_get_profile(interaction.user.id)
+        profile_resp = await get_nanapi().user.user_get_profile(str(interaction.user.id))
         match profile_resp:
             case Success():
                 profile = profile_upsert_body_from_search_result(
@@ -270,7 +272,7 @@ class Profiles(Cog):
     @nana_command(description="Display other user's profile.")
     async def whois(self, interaction: Interaction[Bot], other: discord.User):
         _ = asyncio.create_task(interaction.response.defer())
-        profile_resp = await get_nanapi().user.user_get_profile(other.id)
+        profile_resp = await get_nanapi().user.user_get_profile(str(other.id))
         match profile_resp:
             case Success():
                 pass
@@ -302,7 +304,7 @@ class Profiles(Cog):
                 }
             )
             if re.search(re.escape(search_tags), magic_string, re.IGNORECASE):
-                resp = await get_nanapi().user.user_get_profile(member.id)
+                resp = await get_nanapi().user.user_get_profile(str(member.id))
                 if not success(resp):
                     match resp.code:
                         case 404:
@@ -320,7 +322,7 @@ class Profiles(Cog):
         profiles = resp.result
 
         for profile in profiles:
-            member = guild.get_member(profile.user.discord_id)
+            member = guild.get_member(int(profile.user.discord_id))
             if member is None:
                 continue
 
@@ -541,7 +543,7 @@ class ProfileCreateOrChangeView(BaseView):
 
 @app_commands.context_menu(name='Who is')
 async def user_who_is(interaction: Interaction, member: Member):
-    resp = await get_nanapi().user.user_get_profile(member.id)
+    resp = await get_nanapi().user.user_get_profile(str(member.id))
     match resp:
         case Success():
             pass

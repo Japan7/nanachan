@@ -103,9 +103,9 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             else:
                 raise commands.CommandError('There is a pending quizz')
 
-            channel = self.bot.get_text_channel(channel_id)
+            channel = self.bot.get_text_channel(int(channel_id))
             assert channel is not None
-            cls = self.quizz_cls[channel_id]
+            cls = self.quizz_cls[channel.id]
 
             last_game = None
             with suppress(discord.HTTPException):
@@ -119,10 +119,10 @@ class Quizz(Cog, required_settings=RequiresQuizz):
                 else:
                     last_game_res = resp.result
                     m_id = last_game_res.message_id
-                    last_game = await channel.fetch_message(m_id)
+                    last_game = await channel.fetch_message(int(m_id))
                     await last_game.unpin()
 
-            author = self.bot.get_user(quizz.author.discord_id)
+            author = self.bot.get_user(int(quizz.author.discord_id))
 
             kwargs = {}
             if last_game is not None:
@@ -136,7 +136,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
 
             await new_game_msg.pin()
 
-            body = NewGameBody(message_id=new_game_msg.id, quizz_id=quizz_id)
+            body = NewGameBody(message_id=str(new_game_msg.id), quizz_id=quizz_id)
 
             resp = await get_nanapi().quizz.quizz_new_game(body)
             if not success(resp):
@@ -148,7 +148,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
     async def end_game(self, message: discord.Message | MultiplexingMessage):
         channel = message.channel
         async with self.locks[channel.id]:
-            resp = await get_nanapi().quizz.quizz_get_current_game(channel.id)
+            resp = await get_nanapi().quizz.quizz_get_current_game(str(channel.id))
             if not success(resp):
                 raise RuntimeError(resp.result)
             game = resp.result
@@ -158,7 +158,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             resp = await get_nanapi().quizz.quizz_end_game(
                 game.id,
                 EndGameBody(
-                    winner_discord_id=message.author.id,
+                    winner_discord_id=str(message.author.id),
                     winner_discord_username=str(message.author),
                 ),
             )
@@ -169,7 +169,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             cls = self.quizz_cls[channel.id]
             embed = await cls.get_embed(game.id)
 
-            game_msg = await channel.fetch_message(game.message_id)
+            game_msg = await channel.fetch_message(int(game.message_id))
             await game_msg.edit(embed=embed)
 
             with suppress(Exception):
@@ -183,7 +183,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
     @legacy_command()
     async def hint(self, ctx: LegacyCommandContext):
         """Turn quizz into hangman game"""
-        resp = await get_nanapi().quizz.quizz_get_current_game(ctx.channel.id)
+        resp = await get_nanapi().quizz.quizz_get_current_game(str(ctx.channel.id))
         if not success(resp):
             match resp.code:
                 case 404:
@@ -215,7 +215,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
     @legacy_command(ephemeral=True)
     async def get_answer(self, ctx: LegacyCommandContext):
         """Get current quizz answer (author only)"""
-        resp = await get_nanapi().quizz.quizz_get_current_game(ctx.channel.id)
+        resp = await get_nanapi().quizz.quizz_get_current_game(str(ctx.channel.id))
         if not success(resp):
             match resp.code:
                 case 404:
@@ -238,7 +238,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
     @legacy_command(ephemeral=True)
     async def set_answer(self, ctx: LegacyCommandContext, answer: str | None):
         """Set (or remove) current quizz answer (author only)"""
-        resp = await get_nanapi().quizz.quizz_get_current_game(ctx.channel.id)
+        resp = await get_nanapi().quizz.quizz_get_current_game(str(ctx.channel.id))
         if not success(resp):
             match resp.code:
                 case 404:
@@ -254,7 +254,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         ):
             raise commands.CommandError('Not the author or an admin')
 
-        cls = self.quizz_cls[game.quizz.channel_id]
+        cls = self.quizz_cls[int(game.quizz.channel_id)]
 
         if answer is not None:
             hints = await cls.generate_hints(game.quizz.question, answer)
@@ -266,7 +266,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         if not success(resp):
             raise RuntimeError(resp.result)
 
-        game_msg = await ctx.fetch_message(game.message_id)
+        game_msg = await ctx.fetch_message(int(game.message_id))
         embed = await cls.get_embed(game.id)
         await game_msg.edit(embed=embed)
 
@@ -279,7 +279,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         if id:
             uuid = UUID(id)
         else:
-            resp = await get_nanapi().quizz.quizz_get_oldest_quizz(ctx.channel.id)
+            resp = await get_nanapi().quizz.quizz_get_oldest_quizz(str(ctx.channel.id))
             if not success(resp):
                 match resp.code:
                     case 404:
@@ -326,7 +326,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         if ctx.channel.id not in self.quizz_cls:
             return
 
-        resp = await get_nanapi().quizz.quizz_get_current_game(ctx.channel.id)
+        resp = await get_nanapi().quizz.quizz_get_current_game(str(ctx.channel.id))
         if not success(resp):
             match resp.code:
                 case 404:
@@ -337,7 +337,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         question = game.quizz.question
         answer = game.quizz.answer
         casefolded = ctx.message.clean_content.casefold()
-        cls = self.quizz_cls[game.quizz.channel_id]
+        cls = self.quizz_cls[int(game.quizz.channel_id)]
         if (answer is not None and (casefolded == answer.casefold())) or (
             await cls.try_validate(question, answer, casefolded)
         ):
@@ -346,7 +346,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
     @Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
         if payload.channel_id in self.quizz_cls:
-            resp = await get_nanapi().quizz.quizz_delete_game(payload.message_id)
+            resp = await get_nanapi().quizz.quizz_delete_game(str(payload.message_id))
             if not success(resp):
                 raise RuntimeError(resp.result)
 
@@ -359,7 +359,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
             return
 
         if payload.emoji.name == 'FubukiGO':
-            resp = await get_nanapi().quizz.quizz_get_current_game(payload.channel_id)
+            resp = await get_nanapi().quizz.quizz_get_current_game(str(payload.channel_id))
             if not success(resp):
                 match resp.code:
                     case 404:
