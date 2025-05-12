@@ -16,7 +16,6 @@ import pysaucenao
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.openai import OpenAIModelSettings
 
 import nanachan.resources
 from nanachan.discord.bot import Bot
@@ -25,8 +24,8 @@ from nanachan.extensions.waicolle import WaifuCollection
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
 from nanachan.settings import (
+    AI_FLAGSHIP_MODEL,
     AI_LOW_LATENCY_MODEL,
-    AI_REASONING_MODEL,
     GLOBAL_COIN_MULTIPLIER,
     PREFIX,
     SAUCENAO_API_KEY,
@@ -87,15 +86,14 @@ class QuizzBase(ABC):
 
     @classmethod
     async def generate_ai_hints(cls, question: str | None, answer: str) -> list[str] | None:
-        assert AI_REASONING_MODEL
+        assert AI_FLAGSHIP_MODEL
         run = await agent.run(
             f'Create {cls.HINTS_COUNT} hints for the quiz answer, each offering gradually more '
             f'assistance.\n'
             f'Be careful not to disclose the answer directly, or offer any translation of it.',
             output_type=list[str],
-            model=get_model(AI_REASONING_MODEL),
+            model=get_model(AI_FLAGSHIP_MODEL),
             deps=RunDeps(question, answer),
-            model_settings=OpenAIModelSettings(openai_reasoning_effort='high'),
         )
         hints = run.output
         if len(hints) == cls.HINTS_COUNT:
