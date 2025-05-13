@@ -392,10 +392,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     ########
     # Drop #
     ########
-    @slash_waifu.command()
+    @slash_waifu.command(name='drop')
     @app_commands.check(is_admin_or_bureau)
     @legacy_command()
-    async def drop(
+    async def slash_drop(
         self,
         ctx: LegacyCommandContext,
         nb: app_commands.Range[int, 0, None],
@@ -420,10 +420,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             for member in members:
                 asyncio.create_task(
-                    self._drop(member, 'Event drop', replyable=ctx, nb=nb, rollop_reason='event')
+                    self.drop(member, 'Event drop', replyable=ctx, nb=nb, rollop_reason='event')
                 )
 
-    async def _drop(
+    async def drop(
         self,
         member: UserType,
         reason: str,
@@ -717,7 +717,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             return []
 
         pages = [
-            self._waifu_selector_page(owner, group, len(waifus))
+            self.waifu_selector_page(owner, group, len(waifus))
             for group in batched(waifus, PER_PAGE_SELECTOR)
         ]
 
@@ -738,7 +738,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         selected = view.selected
         return selected
 
-    async def _waifu_selector_page(
+    async def waifu_selector_page(
         self, owner: discord.User | discord.Member, waifus: Iterable[WaifuSelectResult], total: int
     ):
         embed = Embed(title='Character list', color=WC_COLOR)
@@ -995,13 +995,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 bot_discord_id=str(self.bot.user.id),
             )
             resp = await get_nanapi().waicolle.waicolle_new_offering(body)
-            match resp:
-                case Error(code=404):
-                    raise commands.CommandError('This character is not available for offering.')
-                case Error():
-                    raise RuntimeError(resp.result)
-
+            if not success(resp):
+                match resp:
+                    case Error(code=404):
+                        raise commands.CommandError('This character is not available for offering.')
+                    case _:
+                        raise RuntimeError(resp.result)
             data = resp.result
+
             trade = TradeHelper(self, data, can_author_accept=True)
             try:
                 await trade.send(ctx.reply)
@@ -1018,13 +1019,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Loot unlocked frozen waifu"""
         body = NewLootBody(player_discord_id=str(ctx.author.id), chara_id_al=character_id)
         resp = await get_nanapi().waicolle.waicolle_new_loot(body)
-        match resp:
-            case Error(code=404):
-                raise commands.CommandError('No frozen waifu found.')
-            case Error():
-                raise RuntimeError(resp.result)
-
+        if not success(resp):
+            match resp:
+                case Error(code=404):
+                    raise commands.CommandError('No frozen waifu found.')
+                case _:
+                    raise RuntimeError(resp.result)
         data = resp.result
+
         trade = TradeHelper(self, data, can_author_accept=True, offeree_silent=True)
         try:
             await trade.send(
@@ -1101,18 +1103,18 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     # Trade #
     #########
 
-    @slash_waifu.command()
+    @slash_waifu.command(name='trade')
     @legacy_command()
-    async def trade(
+    async def slash_trade(
         self,
         ctx: LegacyCommandContext,
         other_member: discord.User,
         prioritize_singles: bool = False,
     ):
         """Trade your characters with other players"""
-        return await self._trade(ctx, other_member, prioritize_singles)
+        return await self.trade(ctx, other_member, prioritize_singles)
 
-    async def _trade(
+    async def trade(
         self,
         ctx: LegacyCommandContext,
         other_member: discord.User | discord.Member,
@@ -1324,7 +1326,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             content=f'Rolling **{roll_data.name}** for **{roll_data.price}** '
             f'{self.bot.get_emoji_str("moecoin")}.'
         )
-        await self._drop(user, f'Roll: {roll_data.name}', replyable=ctx, roll_id=roll_data.id)
+        await self.drop(user, f'Roll: {roll_data.name}', replyable=ctx, roll_id=roll_data.id)
 
     @slash_waifu_global.command()
     @legacy_command()
@@ -2387,7 +2389,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def coupon_claim(self, ctx: LegacyCommandContext, code: str):
         """Claim a coupon"""
         await ctx.defer(ephemeral=True)
-        await self._drop(ctx.author, 'Coupon drop', coupon_code=code, replyable=ctx)
+        await self.drop(ctx.author, 'Coupon drop', coupon_code=code, replyable=ctx)
 
     ##########
     # Reward #
@@ -2397,7 +2399,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if user.bot:
             return
 
-        await self._drop(user, reason, nb=nb, rollop_reason=reason.casefold())
+        await self.drop(user, reason, nb=nb, rollop_reason=reason.casefold())
 
     async def reward_coins(self, user: UserType, nb: int, reason: str, room_id: int = BOT_ROOM_ID):
         if user.bot:
@@ -2578,9 +2580,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                             user = await listener.queue.get()
 
                         dropped = True
-                        asyncio.create_task(
-                            self._drop(user, 'Random drop', rollop_reason='random')
-                        )
+                        asyncio.create_task(self.drop(user, 'Random drop', rollop_reason='random'))
 
                 if dropped:
                     self.next_drop[ctx.guild.id] = self._drp_factory()
@@ -2592,7 +2592,7 @@ def user_menu_trade(cog: WaifuCollection):
     @handle_command_errors
     async def user_trade(interaction: discord.Interaction[Bot], member: discord.Member):
         ctx = await LegacyCommandContext.from_interaction(interaction)
-        await cog._trade(ctx, member)
+        await cog.trade(ctx, member)
 
     return user_trade
 

@@ -107,7 +107,7 @@ class Ignored(Cog):
         self.bot_dispatch = bot.dispatch
         bot.dispatch = self._dispatch
         # this little guy use copy instead of reference, so we need to copy the new one again
-        bot._connection.dispatch = self._dispatch
+        bot._connection.dispatch = self._dispatch  # pyright: ignore[reportPrivateUsage]
 
     @has_permissions(administrator=True)
     @command(hidden=True, help='A tyrant command\nIgnore this member for 5 minutes (by default)')

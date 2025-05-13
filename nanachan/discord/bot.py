@@ -438,7 +438,7 @@ class Bot(commands.AutoShardedBot):
 
     async def unregister_reaction_listener(self, message_id: int) -> None:
         if listener := self.reaction_listeners.pop(message_id, None):
-            if not listener._done.done():
+            if not listener.done_fut.done():
                 listener.unregister()
             await listener.clear_reactions()
 

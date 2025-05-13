@@ -62,12 +62,14 @@ homepage = "https://github.com/Japan7/nanachan"
 
 [tool.pyright]
 pythonVersion = "3.13"
-reportDeprecated = true
-reportUnnecessaryCast = true
-reportUnnecessaryComparison = true
-reportUnnecessaryContains = true
-reportUnnecessaryIsInstance = true
-reportUnnecessaryTypeIgnoreComment = true
+typeCheckingMode = "strict"
+reportMissingParameterType = false
+reportMissingTypeArgument = false
+reportMissingTypeStubs = false
+reportUnknownArgumentType = false
+reportUnknownMemberType = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
 
 [tool.ruff]
 line-length = 99

@@ -1,3 +1,4 @@
+# pyright: reportConstantRedefinition=false
 from pathlib import Path
 from typing import Sequence
 from zoneinfo import ZoneInfo

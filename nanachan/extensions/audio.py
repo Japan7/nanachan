@@ -51,7 +51,7 @@ class AudioControlsView(BaseView):
     async def _manage_volume(self):
         if self.cog.audio_source is not None:
             self.cog.audio_source.volume = 0 if self.cog.muted else self.cog.volume
-        await self.cog._refresh_control_message()
+        await self.cog.refresh_control_message()
 
 
 class YTVideo:
@@ -164,14 +164,14 @@ class Audio(NanaGroupCog, group_name='audio'):
             await self._connect(ctx, show_control)
 
         self.audio_source = audio_source
-        await self._refresh_control_message()
+        await self.refresh_control_message()
         assert self.connection is not None
         self.connection.play(audio_source, after=self._end_sync_callback)
 
     async def add_to_playlist(self, playlist_entry: PlaylistEntry[Any]):
         if self.connection:
             self.playlist.append(playlist_entry)
-            await self._refresh_control_message()
+            await self.refresh_control_message()
             assert self.control_message is not None
             await self.control_message.channel.send(':ok_hand:')
         else:
@@ -267,7 +267,7 @@ class Audio(NanaGroupCog, group_name='audio'):
 
         return embed
 
-    async def _refresh_control_message(self):
+    async def refresh_control_message(self):
         if self.control_message is None:
             return
         embed = self._build_control_message()

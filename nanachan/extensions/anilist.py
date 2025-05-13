@@ -95,7 +95,7 @@ class Anilist(Cog):
 
     async def get_accounts(self, ctx: commands.Context[Bot]):
         """Get members AL/MAL links."""
-        llist = []
+        llist: list[EmbedField] = []
         services = {}
 
         resp = await get_nanapi().anilist.anilist_get_accounts()

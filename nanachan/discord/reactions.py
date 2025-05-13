@@ -132,7 +132,7 @@ class ReactionListener(metaclass=MetaReactionListener):
         if channel_id is not None:
             asyncio.create_task(self.prefetch_message())
 
-        self._done: asyncio.Future[Any] = self.bot.loop.create_future()
+        self.done_fut: asyncio.Future[Any] = self.bot.loop.create_future()
         asyncio.create_task(self.bot.register_reaction_listener(self.message_id, self))
 
         self._reaction_handlers = {'add': {}, 'remove': {}}
@@ -247,11 +247,11 @@ class ReactionListener(metaclass=MetaReactionListener):
                 raise HandlerException(self) from e
 
     def unregister(self):
-        self._done.set_result(None)
+        self.done_fut.set_result(None)
         return asyncio.create_task(self.bot.unregister_reaction_listener(self.message_id))
 
     async def done(self):
-        await self._done
+        await self.done_fut
 
     def add_handler(self, handler):
         if handler.on_add:

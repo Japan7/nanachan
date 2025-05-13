@@ -7,7 +7,6 @@ from operator import itemgetter
 from typing import Protocol, TypedDict, override
 
 import discord
-import discord.ext
 from dateutil.parser import parse
 from discord import Interaction, Member, Role, SelectOption, User, app_commands, ui
 from discord.ui import Button
@@ -192,7 +191,7 @@ class Profiles(Cog):
                 await interaction.followup.send('分かりません :confounded:')
 
     @staticmethod
-    async def _create_or_update_profile(member: Member | discord.User, payload: UpsertProfileBody):
+    async def create_or_update_profile(member: Member | discord.User, payload: UpsertProfileBody):
         resp = await get_nanapi().user.user_upsert_profile(str(member.id), payload)
         if not success(resp):
             raise RuntimeError(resp.result)
@@ -516,7 +515,7 @@ class ProfileCreateOrChangeView(BaseView):
 
     async def _confirm_button_cb(self, interaction: Interaction):
         await interaction.response.defer()
-        await Profiles._create_or_update_profile(self.member, self.profile)
+        await Profiles.create_or_update_profile(self.member, self.profile)
         assert interaction.message
         await interaction.message.edit(
             content='Profile has been updated successfully.', embed=None, view=None

@@ -391,7 +391,7 @@ class RollResultsView(CompositeNavigatorView):
             return []
 
         pages = [
-            self.cog._waifu_selector_page(owner, group, len(waifus))
+            self.cog.waifu_selector_page(owner, group, len(waifus))
             for group in batched(waifus, PER_PAGE_SELECTOR)
         ]
 
@@ -960,7 +960,7 @@ class TradeHelper:
             if len(str(url)) <= 2048:
                 thumbnail_url = str(url)
 
-        offer, _ = await TradeOfferView.create(
+        await TradeOfferView.create(
             self.bot,
             replyable,
             static_content=content,

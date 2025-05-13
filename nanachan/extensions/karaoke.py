@@ -206,7 +206,7 @@ class Karaoke(NanaGroupCog, group_name='kara', required_settings=RequiresKaraoke
     async def _send_karagraph(
         self, ctx, username: str, begin: date | None = None, end: date | None = None
     ):
-        timers, errors = await self._get_karas_by_timers()
+        timers, _ = await self._get_karas_by_timers()
 
         if username not in timers:
             await ctx.send(f'No user named {username} found :confounded:')
@@ -281,7 +281,7 @@ class Karaoke(NanaGroupCog, group_name='kara', required_settings=RequiresKaraoke
             minor_fmt = None
 
         pyplot.style.use('dark_background')
-        fig, ax = pyplot.subplots()
+        _, ax = pyplot.subplots()
         score_date, scores = zip(*sorted(karas_over_time.items()))
         ax.step(score_date, scores, where='post')
 

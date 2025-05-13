@@ -4,7 +4,7 @@ import asyncio
 import inspect
 import logging
 from functools import wraps
-from typing import Any, Callable, Concatenate, ParamSpec, TypeVar, override
+from typing import Callable, Concatenate, Coroutine, override
 
 from discord import Interaction, InteractionCallbackResponse, app_commands
 from discord.ext.commands import CommandError, Context
@@ -78,30 +78,25 @@ class LegacyCommandContext(Context[Bot]):
             return message
 
 
-T = TypeVar('T')
-P = ParamSpec('P')
-
-
-def app_command_decorator(func: Callable[P, T]) -> Callable[P, T]:
+def app_command_decorator[**P, T](func: Callable[P, T]):
     @wraps(func)
-    def decorated(*args, **kwargs):
+    def decorated(*args: P.args, **kwargs: P.kwargs):
         def cmd_decorator(func):
-            kwargs['name'] = SLASH_PREFIX + kwargs.get('name', func.__name__)
-
+            kwargs['name'] = f'{SLASH_PREFIX}{kwargs.get("name", func.__name__)}'
             return app_commands.command(*args, **kwargs)(func)
 
         return cmd_decorator
 
-    return decorated  # type: ignore
+    return decorated
 
 
 nana_command = app_command_decorator(app_commands.command)
 
 
-def group_decorator(func: Callable[P, T]) -> Callable[P, T]:
+def group_decorator[**P, R](func: Callable[P, R]):
     @wraps(func)
-    def decorated(*args, **kwargs):
-        kwargs['name'] = SLASH_PREFIX + kwargs.get('name', func.__name__)
+    def decorated(*args: P.args, **kwargs: P.kwargs):
+        kwargs['name'] = f'{SLASH_PREFIX}{kwargs.get("name", func.__name__)}'
         return func(*args, **kwargs)
 
     return decorated
@@ -112,33 +107,40 @@ class NanaGroup(app_commands.Group):
     pass
 
 
-def handle_command_errors(func: Callable[P, T]) -> Callable[P, T]:
+def handle_command_errors[**P, R: Coroutine](func: Callable[Concatenate[Interaction[Bot], P], R]):
     @wraps(func)
-    async def decorated(interaction: Interaction, *args, **kwargs):
+    async def decorated(
+        interaction: Interaction[Bot], *args: P.args, **kwargs: P.kwargs
+    ) -> R | None:
         try:
-            return await func(interaction, *args, **kwargs)  # type: ignore
+            return await func(interaction, *args, **kwargs)
         except CommandError as e:
             if interaction.response.is_done():
                 await interaction.followup.send(str(e))
             else:
                 await interaction.response.send_message(str(e))
 
-    return decorated  # type: ignore
+    return decorated
 
 
 def legacy_command(ephemeral: bool = False):
-    def decorator(
-        func: Callable[Concatenate[Any, LegacyCommandContext, P], T],
-    ) -> Callable[Concatenate[Any, Interaction, P], T]:
+    def decorator[T, **P, R: Coroutine](
+        func: Callable[Concatenate[T, LegacyCommandContext, P], R],
+    ):
         @wraps(func)
-        async def decorated(cog, interaction: Interaction[Bot], *args, **kwargs) -> T | None:
+        async def decorated(
+            cog: T,
+            interaction: Interaction[Bot],
+            *args: P.args,
+            **kwargs: P.kwargs,
+        ) -> R | None:
             ctx = await LegacyCommandContext.from_interaction(interaction, ephemeral=ephemeral)
-            _ = asyncio.create_task(ctx.send_initial_message())
+            asyncio.create_task(ctx.send_initial_message())
             try:
-                return await func(cog, ctx, *args, **kwargs)  # type: ignore
+                return await func(cog, ctx, *args, **kwargs)
             except CommandError as e:
                 await ctx.send(str(e))
 
-        return decorated  # type: ignore
+        return decorated
 
     return decorator

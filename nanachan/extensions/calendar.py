@@ -3,7 +3,7 @@ import logging
 from contextlib import suppress
 from datetime import datetime
 
-import discord.utils
+import discord
 from discord import (
     AllowedMentions,
     EventStatus,

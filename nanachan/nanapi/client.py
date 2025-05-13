@@ -31,7 +31,7 @@ async def load_bearer_token():
 
         session = get_session(NANAPI_URL)
         session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
-        session._request = session_backoff(session._request)
+        session._request = session_backoff(session._request)  # pyright: ignore[reportPrivateUsage]
 
         body = Body_client_login(
             grant_type='password', username=NANAPI_CLIENT_USERNAME, password=NANAPI_CLIENT_PASSWORD
@@ -58,7 +58,7 @@ def get_nanapi():
         backoff.expo, lambda r: r.status == 401, max_tries=2, on_backoff=auth_on_backoff
     )
 
-    session._request = auth_backoff(session_backoff(wrap_request(session._request)))
+    session._request = auth_backoff(session_backoff(wrap_request(session._request)))  # pyright: ignore[reportPrivateUsage]
 
     return session
 

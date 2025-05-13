@@ -554,10 +554,10 @@ class GameEndResultQuizz(BaseModel):
     id: UUID
     channel_id: str
     answer: str | None
-    submitted_at: datetime
-    question: str | None
-    hints: list[str] | None
     attachment_url: str | None
+    hints: list[str] | None
+    question: str | None
+    submitted_at: datetime
 
 
 class GameEndResultQuizzAuthor(BaseModel):
@@ -587,10 +587,10 @@ class GameGetByIdResultQuizz(BaseModel):
     id: UUID
     channel_id: str
     answer: str | None
-    submitted_at: datetime
-    question: str | None
-    hints: list[str] | None
     attachment_url: str | None
+    hints: list[str] | None
+    question: str | None
+    submitted_at: datetime
 
 
 class GameGetByIdResultQuizzAuthor(BaseModel):
@@ -620,10 +620,10 @@ class GameGetCurrentResultQuizz(BaseModel):
     id: UUID
     channel_id: str
     answer: str | None
-    submitted_at: datetime
-    question: str | None
-    hints: list[str] | None
     attachment_url: str | None
+    hints: list[str] | None
+    question: str | None
+    submitted_at: datetime
 
 
 class GameGetCurrentResultQuizzAuthor(BaseModel):
@@ -653,10 +653,10 @@ class GameGetLastResultQuizz(BaseModel):
     id: UUID
     channel_id: str
     answer: str | None
-    submitted_at: datetime
-    question: str | None
-    hints: list[str] | None
     attachment_url: str | None
+    hints: list[str] | None
+    question: str | None
+    submitted_at: datetime
 
 
 class GameGetLastResultQuizzAuthor(BaseModel):
@@ -691,10 +691,10 @@ class GameSelectResultQuizz(BaseModel):
     id: UUID
     channel_id: str
     answer: str | None
-    submitted_at: datetime
-    question: str | None
-    hints: list[str] | None
     attachment_url: str | None
+    hints: list[str] | None
+    question: str | None
+    submitted_at: datetime
 
 
 class GameSelectResultQuizzAuthor(BaseModel):
@@ -1433,10 +1433,10 @@ class QuizzGetByIdResult(BaseModel):
     id: UUID
     channel_id: str
     answer: str | None
-    submitted_at: datetime
-    question: str | None
-    hints: list[str] | None
     attachment_url: str | None
+    hints: list[str] | None
+    question: str | None
+    submitted_at: datetime
 
 
 class QuizzGetByIdResultAuthor(BaseModel):
@@ -1450,10 +1450,10 @@ class QuizzGetOldestResult(BaseModel):
     id: UUID
     channel_id: str
     answer: str | None
-    submitted_at: datetime
-    question: str | None
-    hints: list[str] | None
     attachment_url: str | None
+    hints: list[str] | None
+    question: str | None
+    submitted_at: datetime
 
 
 class QuizzGetOldestResultAuthor(BaseModel):

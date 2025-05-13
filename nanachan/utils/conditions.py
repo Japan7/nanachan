@@ -111,7 +111,7 @@ class Conditions:
             await waifu_cog.bot.on_error('load_conditions')
 
     def condition(self, condition_class: Type[Condition]):
-        name = condition_class._condition_name
+        name = condition_class.condition_name
         self.condition_classes[name] = condition_class
         return condition_class
 
@@ -124,13 +124,13 @@ class ConditionDisabled(Exception):
 
 
 class Condition(abc.ABC):
-    _condition_name: str
+    condition_name: str
 
     def __init_subclass__(cls, name: str | None = None):
-        cls._condition_name = cls.__name__ if name is None else name
+        cls.condition_name = cls.__name__ if name is None else name
 
     def serialize(self) -> dict[str, Any]:
-        return {'condition_name': self._condition_name}
+        return {'condition_name': self.condition_name}
 
     @classmethod
     @abc.abstractmethod
@@ -367,7 +367,7 @@ class StringCondition(Condition):
         bot_room = self.waifu_cog.bot.get_bot_room()
         bot_room = cast(Messageable, bot_room)
         await bot_room.send(f'**{ctx.author}** {self.word.action}', embed=ctx.message.quote_embed)
-        await self.waifu_cog._drop(
+        await self.waifu_cog.drop(
             self.user,
             f'Conditional drop: {ctx.author} {self.word.action}',
             nb=nb,
