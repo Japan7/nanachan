@@ -998,7 +998,9 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             if not success(resp):
                 match resp:
                     case Error(code=404):
-                        raise commands.CommandError('This character is not available for offering.')
+                        raise commands.CommandError(
+                            'This character is not available for offering.'
+                        )
                     case _:
                         raise RuntimeError(resp.result)
             data = resp.result
