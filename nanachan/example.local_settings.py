@@ -100,6 +100,7 @@ REDIS_HOST = None
 # AI_FLAGSHIP_MODEL = 'mistral-large-latest'
 # AI_LOW_LATENCY_MODEL = 'mistral-small-latest'
 # AI_PROVIDER = MistralProvider(api_key='myapikey')
+# AI_GEMINI_API_KEY = ''
 
 ## SauceNAO
 # SAUCENAO_API_KEY = None

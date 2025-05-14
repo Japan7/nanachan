@@ -13,6 +13,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "discord-py[voice]",
+    "discord-ext-voice-recv",
     "matplotlib==3.10.3",
     "python-socketio[asyncio_client]==5.13.0",
     "aiohttp[speedups]==3.11.18",
@@ -37,6 +38,7 @@ dependencies = [
     "tzdata==2025.2",
     "python-dateutil==2.9.0.post0",
     "pydantic-ai-slim[openai,anthropic,mistral,mcp,duckduckgo]==0.2.3",
+    "google-genai==1.15.0",
 ]
 
 [dependency-groups]
@@ -56,6 +58,7 @@ dev = [
 discord-py = { git = "https://github.com/Japan7/discord.py.git", rev = "a18d22383427a2bb8714fc8a88832fd1012d42c0" }
 mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "770766934f666f50cb3cb6a3af648a482ae96277" }
 yappi = { git = "https://github.com/odrling/yappi.git", rev = "c1ea539c831ad0c46f7b0b463025688d7db05c14" }
+discord-ext-voice-recv = { git = "https://github.com/imayhaveborkedit/discord-ext-voice-recv.git", rev = "02a0782db6a1e154edbcfe252004f8fdd4bf539f" }
 
 [project.urls]
 homepage = "https://github.com/Japan7/nanachan"
@@ -116,6 +119,7 @@ ignore_unused = [
     # we have 1st party utils modules with the same name
     # https://github.com/tweag/FawltyDeps/issues/419
     "discord-py",
+    "discord-ext-voice-recv",
     "redis",
     "types-redis",
 ]

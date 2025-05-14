@@ -8,6 +8,7 @@ import discord
 from discord import AllowedMentions, app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
+from discord.ext.voice_recv import VoiceRecvClient
 from discord.utils import time_snowflake
 from pydantic_ai import Agent, BinaryContent, ModelRetry, RunContext
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
@@ -17,8 +18,14 @@ from nanachan.discord.application_commands import LegacyCommandContext, legacy_c
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed
-from nanachan.settings import AI_DEFAULT_MODEL, AI_MODEL_CLS, TZ, RequiresAI
-from nanachan.utils.ai import get_model, iter_stream, nanapi_tools, python_mcp_server
+from nanachan.settings import AI_DEFAULT_MODEL, AI_MODEL_CLS, TZ, RequiresAI, RequiresGemini
+from nanachan.utils.ai import (
+    GeminiLiveAudioSink,
+    get_model,
+    iter_stream,
+    nanapi_tools,
+    python_mcp_server,
+)
 from nanachan.utils.misc import autocomplete_truncate
 
 logger = logging.getLogger(__name__)
@@ -113,9 +120,16 @@ async def model_autocomplete(interaction: discord.Interaction, current: str) -> 
 
 @app_commands.guild_only()
 class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
+    slash_voicechat = app_commands.Group(name='voicechat', description='AI Voice Chat')
+
     def __init__(self, bot: Bot):
         self.bot = bot
         self.contexts = dict[int, ChatContext]()
+        self.voice_client: VoiceRecvClient | None = None
+
+        if RequiresGemini.configured:
+            self.slash_voicechat.command(name='start')(self.voice_start)
+            self.slash_voicechat.command(name='stop')(self.voice_stop)
 
     @app_commands.command(name='chat')
     @app_commands.autocomplete(model_name=model_autocomplete)
@@ -191,6 +205,37 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             except Exception as e:
                 await send(f'An error occured while running the agent:\n```\n{e}\n```')
                 logger.exception(e)
+
+    @legacy_command()
+    async def voice_start(self, ctx: LegacyCommandContext):
+        """Start Voice Chat with AI"""
+        if (
+            not isinstance(ctx.author, discord.Member)
+            or not ctx.author.voice
+            or not ctx.author.voice.channel
+        ):
+            raise commands.CommandError('You must be in a voice channel')
+
+        if self.voice_client:
+            raise commands.CommandError('Already running')
+
+        self.voice_client = await ctx.author.voice.channel.connect(cls=VoiceRecvClient)
+        sink = GeminiLiveAudioSink(self.bot, ctx.author)
+        self.voice_client.listen(sink)
+        self.voice_client.play(sink.response_source, application='voip')
+
+        await ctx.send(self.bot.get_emoji_str('FubukiGO'))
+
+    @legacy_command()
+    async def voice_stop(self, ctx: LegacyCommandContext):
+        """Stop Voice Chat with AI"""
+        if not self.voice_client:
+            raise commands.CommandError('Not running')
+
+        await self.voice_client.disconnect()
+        self.voice_client = None
+
+        await ctx.send(self.bot.get_emoji_str('FubukiStop'))
 
     @NanaGroupCog.listener()
     async def on_message(self, message: discord.Message):
