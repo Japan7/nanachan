@@ -1,11 +1,12 @@
 import asyncio
 import logging
-from contextlib import suppress
 from functools import cache
 from queue import Empty, Queue
-from typing import AsyncGenerator, Iterable, Sequence, override
+from typing import AsyncGenerator, Iterable, Literal, Sequence, override
 
+import audioop
 import discord
+import numpy as np
 from discord.ext.voice_recv import AudioSink
 from google import genai
 from google.genai import live, types
@@ -162,25 +163,28 @@ def get_gemini():
 
 
 class GeminiLiveAudioSink(AudioSink):
-    MIN_VOICE_LENGTH = 0.5
-    MIN_SILENCE_LENGTH = 0.5
+    type VoiceName = Literal['Puck', 'Charon', 'Kore', 'Fenrir', 'Aoede', 'Leda', 'Orus', 'Zephyr']
+    MIN_VOICE_LENGTH = 0.75
+    MIN_SILENCE_LENGTH = 1
 
-    def __init__(self, bot: Bot, user: UserType):
+    def __init__(self, bot: Bot, user: UserType, voice_name: VoiceName = 'Aoede'):
         super().__init__()
         self.bot = bot
         self.user = user
+        self.voice_name = voice_name
 
-        self.start_activity_handle: asyncio.TimerHandle | None = None
-        self.start_activity_time: float | None = None
+        self.speak_start_time: float | None = None
+        self.speak_end_time: float | None = None
         self.end_activity_handle: asyncio.TimerHandle | None = None
-        self.end_activity_time: float | None = None
 
-        self.in_activity = asyncio.Event()
-        self.req_queue = asyncio.Queue[bytes | None]()
+        self.write_buf = b''
+        self.sumbit_activity = asyncio.Event()
         self.res_queue = Queue[bytes]()
 
+        self.send_loop_task: asyncio.Task[None] | None = None
+        self.receive_loop_task: asyncio.Task[None] | None = None
+        self.kill_event = asyncio.Event()
         asyncio.create_task(self.gemini_session())
-        self.session_receive_task: asyncio.Task[None] | None = None
 
     @property
     def response_source(self):
@@ -193,56 +197,40 @@ class GeminiLiveAudioSink(AudioSink):
     @override
     def write(self, user, data):
         if user == self.user:
-            self.req_queue.put_nowait(data.pcm)
+            self.write_buf += data.pcm
 
     @AudioSink.listener()
     def on_voice_member_speaking_start(self, member: discord.Member) -> None:
         if member == self.user:
+            looptime = self.bot.loop.time()
+            self.speak_start_time = looptime
             if (
                 self.end_activity_handle
-                and self.end_activity_time
-                and self.bot.loop.time() - self.end_activity_time < self.MIN_SILENCE_LENGTH
+                and self.speak_end_time
+                and looptime - self.speak_end_time < self.MIN_SILENCE_LENGTH
             ):
                 self.end_activity_handle.cancel()
                 self.end_activity_handle = None
             else:
-                self.start_activity_time = self.bot.loop.time()
-                self.start_activity_handle = self.bot.loop.call_later(
-                    self.MIN_VOICE_LENGTH, self.start_activity
-                )
+                self.write_buf = b''
 
     @AudioSink.listener()
     def on_voice_member_speaking_stop(self, member: discord.Member) -> None:
         if member == self.user:
-            if (
-                self.start_activity_handle
-                and self.start_activity_time
-                and self.bot.loop.time() - self.start_activity_time < self.MIN_VOICE_LENGTH
-            ):
-                self.start_activity_handle.cancel()
-                self.start_activity_handle = None
-            else:
-                self.end_activity_time = self.bot.loop.time()
+            looptime = self.bot.loop.time()
+            self.speak_end_time = looptime
+            if self.speak_start_time and looptime - self.speak_start_time >= self.MIN_VOICE_LENGTH:
+                if self.end_activity_handle:
+                    self.end_activity_handle.cancel()
                 self.end_activity_handle = self.bot.loop.call_later(
-                    self.MIN_SILENCE_LENGTH, self.end_activity
+                    self.MIN_SILENCE_LENGTH,
+                    lambda: self.sumbit_activity.set(),
                 )
-
-    def start_activity(self):
-        logger.info(f'Starting Gemini Live activity for {self.user}')
-        self.in_activity.set()
-
-    def end_activity(self):
-        logger.info(f'Ending Gemini Live activity for {self.user}')
-        self.in_activity.clear()
-        self.req_queue.put_nowait(None)
 
     async def gemini_session(self):
         async with get_gemini().aio.live.connect(
             model='gemini-2.0-flash-live-001',
             config=types.LiveConnectConfig(
-                system_instruction=types.Content(
-                    parts=[types.Part(text='The assistant is Nana-chan. Nana-chan speaks French.')]
-                ),
                 response_modalities=[types.Modality.AUDIO],
                 realtime_input_config=types.RealtimeInputConfig(
                     automatic_activity_detection=types.AutomaticActivityDetection(disabled=True)
@@ -250,53 +238,77 @@ class GeminiLiveAudioSink(AudioSink):
                 speech_config=types.SpeechConfig(
                     language_code='fr-FR',
                     voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name='aoede')
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=self.voice_name)
                     ),
+                ),
+                input_audio_transcription=types.AudioTranscriptionConfig(),
+                output_audio_transcription=types.AudioTranscriptionConfig(),
+                system_instruction=types.Content(
+                    parts=[
+                        types.Part(
+                            text=(
+                                f'The assistant is {self.bot.user}.\n'
+                                f'RESPOND IN FRENCH. YOU MUST RESPOND UNMISTAKABLY IN FRENCH.'
+                            )
+                        )
+                    ]
                 ),
                 tools=[types.Tool(google_search=types.GoogleSearch())],
             ),
         ) as session:
             logger.info(f'Gemini Live session started for {self.user}')
-            self.session_receive_task = asyncio.create_task(self.session_receive(session))
-            with suppress(asyncio.QueueShutDown):
-                await self.process_req_queue(session)
+            self.receive_loop_task = asyncio.create_task(self.receive_loop(session))
+            self.send_loop_task = asyncio.create_task(self.send_loop(session))
+            await self.kill_event.wait()
 
-    async def process_req_queue(self, session: live.AsyncSession):
+    async def send_loop(self, session: live.AsyncSession):
         while True:
-            await self.in_activity.wait()
+            await self.sumbit_activity.wait()
+            logger.info(f'Gemini Live activity sumbit for {self.user}')
             await session.send_realtime_input(activity_start=types.ActivityStart())
-            while True:
-                item = await self.req_queue.get()
-                if item is None:
-                    self.req_queue.task_done()
-                    break
-                await session.send_realtime_input(
-                    audio=types.Blob(data=item, mime_type='audio/pcm;rate=48000')
-                )
-                self.req_queue.task_done()
+            # Discord audio is 32-bit signed stereo PCM at 48KHz.
+            # Audio data in the Live API is always raw, little-endian, 16-bit PCM.
+            # Input audio is natively 16kHz,
+            # but the Live API will resample if needed so any sample rate can be sent.
+            data = audioop.lin2lin(self.write_buf, 4, 2)
+            await session.send_realtime_input(
+                audio=types.Blob(data=data, mime_type='audio/pcm;rate=48000')
+            )
             await session.send_realtime_input(activity_end=types.ActivityEnd())
+            self.sumbit_activity.clear()
 
-    async def session_receive(self, session: live.AsyncSession):
+    async def receive_loop(self, session: live.AsyncSession):
         while True:
             with self.res_queue.mutex:
                 self.res_queue.queue.clear()
+            input_transcription = ''
+            output_transcription = ''
             async for message in session.receive():
-                if message.data is not None:
+                if message.data:
                     self.res_queue.put_nowait(message.data)
+                if message.server_content:
+                    if transcription := message.server_content.input_transcription:
+                        input_transcription += transcription.text or ''
+                    if transcription := message.server_content.output_transcription:
+                        output_transcription += transcription.text or ''
+            logger.info(f'[{self.user}] {input_transcription}')
+            logger.info(f'[{self.voice_name}] {output_transcription}')
 
     @override
     def cleanup(self):
-        self.req_queue.shutdown(immediate=True)
         self.res_queue.shutdown(immediate=True)
-        if self.session_receive_task:
-            self.session_receive_task.cancel()
+        if self.send_loop_task:
+            self.send_loop_task.cancel()
+        if self.receive_loop_task:
+            self.receive_loop_task.cancel()
+        self.kill_event.set()
         logger.info(f'Done cleaning Gemini Live for {self.user}')
 
 
 class GeminiLiveAudioSource(discord.AudioSource):
-    input_frame_size = 960  # 20ms at 24kHz mono
-    output_frame_size = 3840  # 20ms at 48kHz stereo
-    silence = b'\x00' * output_frame_size
+    INPUT_FRAME_SIZE = 960  # 20ms at 24kHz 16-bit mono
+    OUTPUT_FRAME_SIZE = 3840  # 20ms at 48kHz 16-bit stereo
+    SILENCE = b'\x00' * OUTPUT_FRAME_SIZE
 
     def __init__(self, queue: Queue[bytes]):
         self.queue = queue
@@ -305,27 +317,22 @@ class GeminiLiveAudioSource(discord.AudioSource):
 
     @override
     def read(self) -> bytes:
-        while len(self.buffer) - self.position < self.input_frame_size:
+        while len(self.buffer) - self.position < self.INPUT_FRAME_SIZE:
             try:
                 item = self.queue.get_nowait()
                 self.buffer += item
                 self.queue.task_done()
             except Empty:
-                return self.silence
+                return self.SILENCE
 
-        input_frame = self.buffer[self.position : self.position + self.input_frame_size]
-        self.position += self.input_frame_size
+        input_frame = self.buffer[self.position : self.position + self.INPUT_FRAME_SIZE]
+        self.position += self.INPUT_FRAME_SIZE
         if self.position > 48000:
             self.buffer = self.buffer[self.position :]
             self.position = 0
 
-        output_frame = bytearray(self.output_frame_size)
-        for i in range(0, len(input_frame), 2):
-            sample = input_frame[i : i + 2]
-            pos = i * 4
-            output_frame[pos : pos + 2] = sample
-            output_frame[pos + 2 : pos + 4] = sample
-            output_frame[pos + 4 : pos + 6] = sample
-            output_frame[pos + 6 : pos + 8] = sample
+        input_array = np.frombuffer(input_frame, dtype=np.int16)
+        output_array = np.repeat(input_array, 4).astype(np.int16)
+        output_frame = output_array.tobytes()
 
-        return bytes(output_frame)
+        return output_frame
