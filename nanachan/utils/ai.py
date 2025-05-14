@@ -180,7 +180,7 @@ class GeminiLiveAudioSink(AudioSink):
         self.end_activity_handle: asyncio.TimerHandle | None = None
 
         self.write_buf = b''
-        self.sumbit_activity = asyncio.Event()
+        self.req_queue = asyncio.Queue[bytes]()
         self.res_queue = Queue[bytes]()
 
         self.send_loop_task: asyncio.Task[None] | None = None
@@ -213,8 +213,6 @@ class GeminiLiveAudioSink(AudioSink):
             ):
                 self.end_activity_handle.cancel()
                 self.end_activity_handle = None
-            else:
-                self.write_buf = b''
 
     @AudioSink.listener()
     def on_voice_member_speaking_stop(self, member: discord.Member) -> None:
@@ -225,9 +223,12 @@ class GeminiLiveAudioSink(AudioSink):
                 if self.end_activity_handle:
                     self.end_activity_handle.cancel()
                 self.end_activity_handle = self.bot.loop.call_later(
-                    self.MIN_SILENCE_LENGTH,
-                    lambda: self.sumbit_activity.set(),
+                    self.MIN_SILENCE_LENGTH, self.sumbit_activity
                 )
+
+    def sumbit_activity(self):
+        self.req_queue.put_nowait(self.write_buf)
+        self.write_buf = b''
 
     async def gemini_session(self):
         async with get_gemini().aio.live.connect(
@@ -265,19 +266,18 @@ class GeminiLiveAudioSink(AudioSink):
 
     async def send_loop(self, session: live.AsyncSession):
         while True:
-            await self.sumbit_activity.wait()
+            buf = await self.req_queue.get()
             logger.info('Gemini Live activity sumbit')
             await session.send_realtime_input(activity_start=types.ActivityStart())
             # Discord audio is 32-bit signed stereo PCM at 48KHz.
             # Audio data in the Live API is always raw, little-endian, 16-bit PCM.
             # Input audio is natively 16kHz,
             # but the Live API will resample if needed so any sample rate can be sent.
-            data = audioop.lin2lin(self.write_buf, 4, 2)
+            data = audioop.lin2lin(buf, 4, 2)
             await session.send_realtime_input(
                 audio=types.Blob(data=data, mime_type='audio/pcm;rate=48000')
             )
             await session.send_realtime_input(activity_end=types.ActivityEnd())
-            self.sumbit_activity.clear()
 
     async def receive_loop(self, session: live.AsyncSession):
         while True:
@@ -298,6 +298,7 @@ class GeminiLiveAudioSink(AudioSink):
 
     @override
     def cleanup(self):
+        self.req_queue.shutdown(immediate=True)
         self.res_queue.shutdown(immediate=True)
         if self.send_loop_task:
             self.send_loop_task.cancel()
