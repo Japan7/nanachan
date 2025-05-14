@@ -210,6 +210,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
     async def voice_start(
         self,
         ctx: LegacyCommandContext,
+        only_with: discord.Member | None = None,
         voice_name: GeminiLiveAudioSink.VoiceName = 'Aoede',
     ):
         """Start Voice Chat with AI"""
@@ -224,7 +225,7 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             raise commands.CommandError('Already running')
 
         self.voice_client = await ctx.author.voice.channel.connect(cls=VoiceRecvClient)
-        sink = GeminiLiveAudioSink(self.bot, ctx.author, voice_name=voice_name)
+        sink = GeminiLiveAudioSink(self.bot, voice_name=voice_name, only_with=only_with)
         self.voice_client.listen(sink)
         self.voice_client.play(sink.response_source, application='voip')
 

@@ -167,11 +167,13 @@ class GeminiLiveAudioSink(AudioSink):
     MIN_VOICE_LENGTH = 0.75
     MIN_SILENCE_LENGTH = 1
 
-    def __init__(self, bot: Bot, user: UserType, voice_name: VoiceName = 'Aoede'):
+    def __init__(
+        self, bot: Bot, voice_name: VoiceName = 'Aoede', only_with: UserType | None = None
+    ):
         super().__init__()
         self.bot = bot
-        self.user = user
         self.voice_name = voice_name
+        self.only_with = only_with
 
         self.speak_start_time: float | None = None
         self.speak_end_time: float | None = None
@@ -196,12 +198,12 @@ class GeminiLiveAudioSink(AudioSink):
 
     @override
     def write(self, user, data):
-        if user == self.user:
+        if self.only_with is None or user == self.only_with:
             self.write_buf += data.pcm
 
     @AudioSink.listener()
     def on_voice_member_speaking_start(self, member: discord.Member) -> None:
-        if member == self.user:
+        if self.only_with is None or member == self.only_with:
             looptime = self.bot.loop.time()
             self.speak_start_time = looptime
             if (
@@ -216,7 +218,7 @@ class GeminiLiveAudioSink(AudioSink):
 
     @AudioSink.listener()
     def on_voice_member_speaking_stop(self, member: discord.Member) -> None:
-        if member == self.user:
+        if self.only_with is None or member == self.only_with:
             looptime = self.bot.loop.time()
             self.speak_end_time = looptime
             if self.speak_start_time and looptime - self.speak_start_time >= self.MIN_VOICE_LENGTH:
@@ -256,7 +258,7 @@ class GeminiLiveAudioSink(AudioSink):
                 tools=[types.Tool(google_search=types.GoogleSearch())],
             ),
         ) as session:
-            logger.info(f'Gemini Live session started for {self.user}')
+            logger.info('Gemini Live session started')
             self.receive_loop_task = asyncio.create_task(self.receive_loop(session))
             self.send_loop_task = asyncio.create_task(self.send_loop(session))
             await self.kill_event.wait()
@@ -264,7 +266,7 @@ class GeminiLiveAudioSink(AudioSink):
     async def send_loop(self, session: live.AsyncSession):
         while True:
             await self.sumbit_activity.wait()
-            logger.info(f'Gemini Live activity sumbit for {self.user}')
+            logger.info('Gemini Live activity sumbit')
             await session.send_realtime_input(activity_start=types.ActivityStart())
             # Discord audio is 32-bit signed stereo PCM at 48KHz.
             # Audio data in the Live API is always raw, little-endian, 16-bit PCM.
@@ -291,7 +293,7 @@ class GeminiLiveAudioSink(AudioSink):
                         input_transcription += transcription.text or ''
                     if transcription := message.server_content.output_transcription:
                         output_transcription += transcription.text or ''
-            logger.info(f'[{self.user}] {input_transcription}')
+            logger.info(f'[{self.only_with or "Users"}] {input_transcription}')
             logger.info(f'[{self.voice_name}] {output_transcription}')
 
     @override
@@ -302,7 +304,7 @@ class GeminiLiveAudioSink(AudioSink):
         if self.receive_loop_task:
             self.receive_loop_task.cancel()
         self.kill_event.set()
-        logger.info(f'Done cleaning Gemini Live for {self.user}')
+        logger.info('Done cleaning Gemini Live')
 
 
 class GeminiLiveAudioSource(discord.AudioSource):
