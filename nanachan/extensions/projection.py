@@ -587,10 +587,12 @@ class ProjectionCog(
         content: list[str] = []
         last_events: MutableSequence[datetime | None] = []
         for projo in projos:
-            events = projo.guild_events
-            if events:
+            if events := projo.guild_events:
                 last_events.append(events[-1].start_time)
                 date = f'`[{events[-1].start_time}]` '
+            elif legacy_events := projo.legacy_events:
+                last_events.append(legacy_events[-1].date)
+                date = f'`[{legacy_events[-1].date}]` '
             else:
                 last_events.append(None)
                 date = ''

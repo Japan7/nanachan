@@ -1366,10 +1366,11 @@ class ProjoSelectResult(BaseModel):
     external_medias: list['ProjoSelectResultExternalMedias']
     participants: list['ProjoSelectResultParticipants']
     guild_events: list['ProjoSelectResultGuildEvents']
-    status: 'ProjectionStatus'
-    name: str
+    legacy_events: list['ProjoSelectResultLegacyEvents']
     message_id: str | None
     channel_id: str
+    status: 'ProjectionStatus'
+    name: str
     id: UUID
 
 
@@ -1383,7 +1384,6 @@ class ProjoSelectResultExternalMedias(BaseModel):
 class ProjoSelectResultGuildEvents(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: str
     description: str | None
     end_time: datetime
     image: str | None
@@ -1391,6 +1391,14 @@ class ProjoSelectResultGuildEvents(BaseModel):
     name: str
     start_time: datetime
     url: str | None
+    discord_id: str
+
+
+class ProjoSelectResultLegacyEvents(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+    date: datetime
+    description: str
 
 
 class ProjoSelectResultMedias(BaseModel):
@@ -1403,8 +1411,8 @@ class ProjoSelectResultMedias(BaseModel):
 class ProjoSelectResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_id: str
     discord_username: str
+    discord_id: str
 
 
 class ProjoUpdateMessageIdResult(BaseModel):
