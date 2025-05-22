@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 import discord
-import pysaucenao
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 from pydantic_ai import Agent, RunContext
@@ -32,7 +31,7 @@ from nanachan.settings import (
     RequiresAI,
 )
 from nanachan.utils.ai import get_model
-from nanachan.utils.misc import to_producer
+from nanachan.utils.misc import saucenao_lookup, to_producer
 
 if TYPE_CHECKING:
     from discord.abc import MessageableChannel
@@ -231,17 +230,10 @@ class AnimeMangaQuizz(QuizzBase):
 
     @staticmethod
     async def saucenao(attachment_url: str) -> str | None:
-        saucenao = pysaucenao.SauceNao(
-            min_similarity=60,
-            priority=[21, 37],
-            api_key=SAUCENAO_API_KEY,
-        )
-        resp = await saucenao.from_url(attachment_url)
+        resp = await saucenao_lookup(attachment_url, priority=[21, 37])
         for sauce in resp.results:
-            if sauce.title is not None and isinstance(
-                sauce, (pysaucenao.AnimeSource, pysaucenao.MangaSource)
-            ):
-                return sauce.title
+            if 'source' in sauce.data and sauce.header.similarity > 60 and 'mal_id' in sauce.data:
+                return sauce.data['source']
 
     @classmethod
     async def try_validate(cls, question: str | None, answer: str | None, submission: str):

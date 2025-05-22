@@ -6,17 +6,18 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import suppress
 from functools import cache, lru_cache, singledispatch, update_wrapper
-from typing import Any, AsyncIterable, Coroutine, Optional, Type, TypedDict
+from typing import Any, AsyncIterable, Coroutine, NotRequired, Optional, Type, TypedDict
 
 import aiohttp
 import backoff
+import pydantic
 import tldr
 from discord.ext.commands import Paginator
 from rich import traceback
 from rich.console import Console
 from yarl import URL
 
-from nanachan.settings import PRODUCER_TOKEN, PRODUCER_UPLOAD_ENDPOINT
+from nanachan.settings import PRODUCER_TOKEN, PRODUCER_UPLOAD_ENDPOINT, SAUCENAO_API_KEY
 
 __all__ = (
     'framed_header',
@@ -120,7 +121,6 @@ def json_dumps(d: Any) -> str:
 @cache
 def get_session() -> aiohttp.ClientSession:
     timeout = aiohttp.ClientTimeout(total=30, connect=5, sock_connect=5)
-    # until they fix https://github.com/aio-libs/aiohttp/issues/5975
     return aiohttp.ClientSession(timeout=timeout)
 
 
@@ -275,3 +275,61 @@ async def async_any(it: AsyncIterable[bool]) -> bool:
 def not_none[T](x: T | None) -> T:
     assert x is not None
     return x
+
+
+SAUCENAO_API_URL = 'https://saucenao.com/search.php'
+
+
+class SauceData(TypedDict):
+    artist: NotRequired[str]
+    author: NotRequired[str]
+    creator: NotRequired[list[str] | str]
+    member_id: NotRequired[int]
+    member_name: NotRequired[str]
+    pixiv_id: NotRequired[int]
+    danbooru_id: NotRequired[int]
+    ext_urls: list[str]
+    mal_id: NotRequired[int]
+    md_id: NotRequired[str]
+    # mu_id: NotRequired[int]
+    part: NotRequired[str]
+    source: NotRequired[str]
+
+
+class SauceHeader(pydantic.BaseModel):
+    similarity: float
+    index_id: int
+    index_name: str
+    dupes: int
+    hidden: int
+    thumbnail: str
+
+
+class SauceResult(pydantic.BaseModel):
+    data: SauceData
+    header: SauceHeader
+
+
+class SauceLookup(pydantic.BaseModel):
+    results: list[SauceResult]
+
+
+async def saucenao_lookup(url: str, priority: list[int] | None = None):
+    assert SAUCENAO_API_KEY is not None
+    params: dict[str, str | int | float | list[int]] = {
+        'url': url,
+        'api_key': SAUCENAO_API_KEY,
+        'output_type': 2,
+        'test_mode': 0,
+        'strict_mode': '1',
+        'priority': [] if priority is None else priority,
+        'priority_tolerance': 10,
+    }
+
+    session = get_session()
+    async with session.get(SAUCENAO_API_URL, params=params) as resp:
+        data = await resp.json()
+        try:
+            return SauceLookup.model_validate(data)
+        except Exception as e:
+            raise RuntimeError(f'failed to parse {data}') from e
