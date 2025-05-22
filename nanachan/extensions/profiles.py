@@ -4,11 +4,12 @@ import re
 from datetime import date, datetime, timezone
 from functools import partial
 from operator import itemgetter
-from typing import Protocol, TypedDict, override
+from typing import Protocol, TypedDict, cast, override
 
 import discord
 from dateutil.parser import parse
 from discord import Interaction, Member, Role, SelectOption, User, app_commands, ui
+from discord.types.interactions import SelectMessageComponentInteractionData
 from discord.ui import Button
 
 from nanachan.discord.application_commands import nana_command
@@ -507,10 +508,10 @@ class ProfileCreateOrChangeView(BaseView):
         await self._edit_embed(self.profile, interaction)
 
     async def _n7_major_select_cb(self, interaction: Interaction):
-        await interaction.response.defer()
-        assert interaction.data
-        assert 'values' in interaction.data
-        self.profile.n7_major = interaction.data['values'][0]
+        assert interaction.data is not None
+        data = cast(SelectMessageComponentInteractionData, interaction.data)
+        if 'values' in data:
+            self.profile.n7_major = data['values'][0]
         await self._edit_embed(self.profile, interaction)
 
     async def _confirm_button_cb(self, interaction: Interaction):
