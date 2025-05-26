@@ -292,15 +292,15 @@ class Sauce(pydantic.BaseModel):
     thumbnail: str
 
     def __str__(self) -> str:
-        parts = [f'[{self.index_name}]']
+        parts = [f'[**{self.similarity:.2f}%** ⋅ {self.index_name}]']
         if self.artists:
-            parts.append(', '.join(self.artists))
+            parts.append(', '.join(f'**{a}**' for a in self.artists))
 
         if self.title:
-            parts.append(self.title)
+            parts.append(f'*{self.title}*')
 
         if self.part:
-            parts.append(self.part)
+            parts.append(f'*{self.part}*')
 
         if self.urls:
             parts.append('\n'.join(self.urls))
