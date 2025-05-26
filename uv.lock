@@ -74,19 +74,6 @@ speedups = [
 ]
 
 [[package]]
-name = "aiohttp-proxy"
-version = "0.1.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "yarl" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/03/93/d7cc02c794a3febbbe7b0fd1b2c7cb31234b2556b9da7bee273c33ae0f6f/aiohttp_proxy-0.1.2.tar.gz", hash = "sha256:4da16face2df486329f7eef36719da5c2ac7136e756574de06b428c5793b8090", size = 10891, upload-time = "2020-02-04T11:26:04.488Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/97/01/e97e1ca3b4ca031c54f3751a7f4b5829626c167846784202edafe2959781/aiohttp_proxy-0.1.2-py3-none-any.whl", hash = "sha256:b955ab883d30fd5452f6b226f0b416fc3905cc5e2b3f023b481e95664ef40667", size = 12322, upload-time = "2020-02-04T11:26:02.769Z" },
-]
-
-[[package]]
 name = "aiojobs"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1010,7 +997,6 @@ dependencies = [
     { name = "pillow" },
     { name = "pydantic" },
     { name = "pydantic-ai-slim", extra = ["duckduckgo", "mcp", "mistral", "openai", "tavily"] },
-    { name = "pysaucenao" },
     { name = "python-dateutil" },
     { name = "python-socketio", extra = ["asyncio-client"] },
     { name = "redis", extra = ["hiredis"] },
@@ -1050,7 +1036,6 @@ requires-dist = [
     { name = "pillow", specifier = "==11.2.1" },
     { name = "pydantic", specifier = "==2.11.5" },
     { name = "pydantic-ai-slim", extras = ["openai", "mistral", "mcp", "duckduckgo", "tavily"], specifier = "==0.2.8" },
-    { name = "pysaucenao", specifier = "==1.6.3" },
     { name = "python-dateutil", specifier = "==2.9.0.post0" },
     { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.13.0" },
     { name = "redis", extras = ["hiredis"], specifier = "==5.3.0" },
@@ -1510,19 +1495,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/79/9a/7ab2b333b921b2d6bfcffe05a0e0a0bbeff884bd6fb5ed50cd68e2898e53/pyright-1.1.401.tar.gz", hash = "sha256:788a82b6611fa5e34a326a921d86d898768cddf59edde8e93e56087d277cc6f1", size = 3894193, upload-time = "2025-05-21T10:44:52.03Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0d/e6/1f908fce68b0401d41580e0f9acc4c3d1b248adcff00dfaad75cd21a1370/pyright-1.1.401-py3-none-any.whl", hash = "sha256:6fde30492ba5b0d7667c16ecaf6c699fab8d7a1263f6a18549e0b00bf7724c06", size = 5629193, upload-time = "2025-05-21T10:44:50.129Z" },
-]
-
-[[package]]
-name = "pysaucenao"
-version = "1.6.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "aiohttp-proxy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/08/10/2f21487dca92b5e5837f70b098af5df7eddf4950aaeedb492c9cc0ace47f/pysaucenao-1.6.3.tar.gz", hash = "sha256:549bf8a50a0e286da9fb5ae8f32a3f43bfc86e55effcc803316f1f490fe4b2e1", size = 61718, upload-time = "2025-02-15T23:17:02.919Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/5b/f2adcaa18ff207a1d928c3aaeb39e80d782a46bafa2f7e755ea31bc33918/pysaucenao-1.6.3-py3-none-any.whl", hash = "sha256:1f56f7edac91f95ed32f1555429d3cac1265f9d708aebdcfd76e0f12eed8de1c", size = 12101, upload-time = "2025-02-15T23:17:00.782Z" },
 ]
 
 [[package]]
