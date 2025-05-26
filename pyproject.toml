@@ -18,7 +18,7 @@ dependencies = [
     "python-socketio[asyncio_client]==5.13.0",
     "aiohttp[speedups]==3.12.0",
     "aiofiles==24.1.0",
-    "pysaucenao==1.6.3",
+    "pysaucenao==2.0.1",
     "Pillow==11.2.1",
     "html2text==2025.4.15",
     # https://github.com/PyYoshi/cChardet/issues/81
