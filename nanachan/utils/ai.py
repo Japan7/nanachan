@@ -11,6 +11,8 @@ from discord.ext.voice_recv import AudioSink
 from google import genai
 from google.genai import live, types
 from pydantic_ai import Agent, Tool
+from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
+from pydantic_ai.common_tools.tavily import tavily_search_tool
 from pydantic_ai.mcp import MCPServerStdio
 from pydantic_ai.messages import (
     FinalResultEvent,
@@ -25,12 +27,11 @@ from pydantic_ai.messages import (
     UserContent,
 )
 from pydantic_ai.models import Model
-from pydantic_ai.models.anthropic import AnthropicModel
 
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import UserType
 from nanachan.nanapi.client import get_nanapi
-from nanachan.settings import AI_GEMINI_API_KEY, AI_MODEL_CLS, AI_PROVIDER
+from nanachan.settings import AI_GEMINI_API_KEY, AI_MODEL_CLS, AI_PROVIDER, AI_TAVILY_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +49,6 @@ async def iter_stream[AgentDepsT](
     deps: AgentDepsT,
 ) -> AsyncGenerator[str]:
     """https://ai.pydantic.dev/agents/#streaming"""
-    # Workaround to avoid rate limit errors w/ Anthropic
-    if isinstance(model, AnthropicModel):
-        model.client.max_retries = 100
     async with (
         agent.run_mcp_servers(),
         agent.iter(
@@ -140,6 +138,14 @@ def nanapi_tools() -> Iterable[Tool[None]]:
     ]
     for endpoint in endpoints:
         yield Tool(endpoint, takes_ctx=None)
+
+
+def search_tool() -> Tool[None]:
+    return (
+        tavily_search_tool(AI_TAVILY_API_KEY)
+        if AI_TAVILY_API_KEY is not None
+        else duckduckgo_search_tool()
+    )
 
 
 python_mcp_server = MCPServerStdio(

@@ -11,7 +11,6 @@ from discord.ext import commands
 from discord.ext.voice_recv import VoiceRecvClient
 from discord.utils import time_snowflake
 from pydantic_ai import Agent, BinaryContent, ModelRetry, RunContext
-from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.messages import ModelMessage, UserContent
 
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
@@ -25,6 +24,7 @@ from nanachan.utils.ai import (
     iter_stream,
     nanapi_tools,
     python_mcp_server,
+    search_tool,
 )
 from nanachan.utils.misc import autocomplete_truncate
 
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 agent = Agent(
     deps_type=commands.Context[Bot],
-    tools=(*nanapi_tools(), duckduckgo_search_tool()),  # type: ignore
+    tools=(search_tool(), *nanapi_tools()),  # type: ignore
     mcp_servers=[python_mcp_server],
 )
 
