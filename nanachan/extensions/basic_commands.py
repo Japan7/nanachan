@@ -6,12 +6,10 @@ from datetime import datetime, timedelta
 from importlib import resources
 from operator import attrgetter
 from random import choice
-from typing import MutableSequence, Optional, Union, cast
+from typing import MutableSequence, Optional, Union
 
 import discord
 import parsedatetime.parsedatetime as pdt
-import pysaucenao
-import pysaucenao.errors
 from discord import (
     AllowedMentions,
     File,
@@ -51,8 +49,8 @@ from nanachan.nanapi.model import (
     ReminderInsertSelectResult,
     ReminderSelectAllResult,
 )
-from nanachan.settings import SAUCENAO_API_KEY, SLASH_PREFIX, TZ
-from nanachan.utils.misc import get_session, tldr_get_page
+from nanachan.settings import SLASH_PREFIX, TZ
+from nanachan.utils.misc import get_session, saucenao_lookup, tldr_get_page
 
 logger = logging.getLogger(__name__)
 
@@ -471,36 +469,12 @@ async def cmd_saucenao(interaction: Interaction[Bot], message: Message):
         else:
             raise commands.CommandError('No link found')
 
-    saucenao = pysaucenao.SauceNao(api_key=SAUCENAO_API_KEY)
     try:
-        resp = await saucenao.from_url(url)
-    except pysaucenao.errors.SauceNaoException as e:
+        resp = await saucenao_lookup(url)
+    except Exception as e:
         raise commands.CommandError(str(e))
 
-    sauces = []
-    for result in resp.results:
-        # Only keep Pixiv, Anime and MangaDex results
-        if result.index_id not in [5, 21, 37]:
-            continue
-
-        sauce = [f'`[{result.index}]`']
-
-        if result.index_id == 5:  # Pixiv
-            sauce.append(f'**{result.author_name}** - {result.title}')
-        elif result.index_id == 21:  # Anime
-            result = cast(pysaucenao.AnimeSource, result)
-            sauce.append(f'**{result.title}** - Episode {result.episode}')
-        elif result.index_id == 37:  # Mangadex
-            result = cast(pysaucenao.MangaSource, result)
-            sauce.append(f'**{result.title}** ({result.author_name}){result.chapter}')
-            # Dumb dedupe translated chapters
-            if any(['\n'.join(sauce) in s for s in sauces]):
-                continue
-
-        if result.source_url is not None:
-            sauce.append(result.source_url)
-
-        sauces.append('\n'.join(sauce))
+    sauces = [str(sauce) for sauce in resp if sauce.similarity > 50]
 
     if not sauces:
         raise commands.CommandError('No sauce found')
@@ -511,7 +485,7 @@ async def cmd_saucenao(interaction: Interaction[Bot], message: Message):
         interaction.followup.send,
         title='SauceNAO results',
         description='\n\n'.join(sauces),
-        thumbnail_url=resp.results[0].thumbnail,
+        thumbnail_url=resp[0].thumbnail,
     )
 
 

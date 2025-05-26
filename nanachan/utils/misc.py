@@ -6,17 +6,18 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import suppress
 from functools import cache, lru_cache, singledispatch, update_wrapper
-from typing import Any, AsyncIterable, Coroutine, Optional, Type, TypedDict
+from typing import Any, AsyncIterable, Coroutine, NotRequired, Optional, Type, TypedDict
 
 import aiohttp
 import backoff
+import pydantic
 import tldr
 from discord.ext.commands import Paginator
 from rich import traceback
 from rich.console import Console
 from yarl import URL
 
-from nanachan.settings import PRODUCER_TOKEN, PRODUCER_UPLOAD_ENDPOINT
+from nanachan.settings import PRODUCER_TOKEN, PRODUCER_UPLOAD_ENDPOINT, SAUCENAO_API_KEY
 
 __all__ = (
     'framed_header',
@@ -120,7 +121,6 @@ def json_dumps(d: Any) -> str:
 @cache
 def get_session() -> aiohttp.ClientSession:
     timeout = aiohttp.ClientTimeout(total=30, connect=5, sock_connect=5)
-    # until they fix https://github.com/aio-libs/aiohttp/issues/5975
     return aiohttp.ClientSession(timeout=timeout)
 
 
@@ -275,3 +275,152 @@ async def async_any(it: AsyncIterable[bool]) -> bool:
 def not_none[T](x: T | None) -> T:
     assert x is not None
     return x
+
+
+SAUCENAO_API_URL = 'https://saucenao.com/search.php'
+
+
+class Sauce(pydantic.BaseModel):
+    artists: list[str]
+    urls: list[str]
+    title: str = ''
+    part: str = ''
+    mal_id: int | None = None
+    similarity: float
+    index_id: int
+    index_name: str
+    thumbnail: str
+
+    def __str__(self) -> str:
+        parts = [f'[{self.index_name}]']
+        if self.artists:
+            parts.append(', '.join(self.artists))
+
+        if self.title:
+            parts.append(self.title)
+
+        if self.part:
+            parts.append(self.part)
+
+        if self.urls:
+            parts.append('\n'.join(self.urls))
+
+        return '\n'.join(parts)
+
+
+class SauceData(TypedDict):
+    artist: NotRequired[str]
+    author: NotRequired[str]
+    creator: NotRequired[list[str] | str]
+    member_id: NotRequired[int]
+    member_name: NotRequired[str]
+    pixiv_id: NotRequired[int]
+    danbooru_id: NotRequired[int]
+    ext_urls: list[str]
+    mal_id: NotRequired[int]
+    md_id: NotRequired[str]
+    # mu_id: NotRequired[int]
+    part: NotRequired[str]
+    source: NotRequired[str]
+
+
+class SauceHeader(pydantic.BaseModel):
+    similarity: float
+    index_id: int
+    index_name: str
+    dupes: int
+    hidden: int
+    thumbnail: str
+
+
+class SauceResult(pydantic.BaseModel):
+    data: SauceData
+    header: SauceHeader
+
+    def to_sauce(self) -> Sauce:
+        artists = []
+        if artist := self.data.get('artist'):
+            artists.append(artist)
+        if creator := self.data.get('creator'):
+            if isinstance(creator, list):
+                artists.extend(creator)
+            else:
+                artists.append(creator)
+        if author := self.data.get('author'):
+            if isinstance(creator, list):
+                artists.extend(author)
+            else:
+                artists.append(author)
+        if member_name := self.data.get('member_name'):
+            artists.append(member_name)
+
+        urls = self.data['ext_urls']
+
+        title = ''
+        part = ''
+        mal_id = None
+
+        match self.header.index_id:
+            case 5:  # Pixiv
+                pass
+            case 21:  # Anime
+                assert 'source' in self.data
+                assert 'part' in self.data
+                title = self.data['source']
+                part = f'Episode {self.data["part"]}'
+                mal_id = self.data.get('mal_id')
+            case 37:  # Mangadex
+                assert 'source' in self.data
+                assert 'part' in self.data
+                title = self.data['source']
+                part = self.data['part']
+                mal_id = self.data.get('mal_id')
+            case _:  # default
+                if source := self.data.get('source'):
+                    if source.startswith('https://'):
+                        urls.insert(0, source)
+                    else:
+                        title = source
+                part = self.data.get('part', '')
+
+        return Sauce(
+            artists=artists,
+            urls=urls,
+            title=title,
+            part=part,
+            mal_id=mal_id,
+            similarity=self.header.similarity,
+            index_id=self.header.index_id,
+            index_name=self.header.index_name,
+            thumbnail=self.header.thumbnail,
+        )
+
+
+class SauceLookup(pydantic.BaseModel):
+    results: list[SauceResult]
+
+
+async def saucenao_lookup(url: str, priority: list[int] | None = None) -> list[Sauce]:
+    assert SAUCENAO_API_KEY is not None
+    params: dict[str, str | int | float | list[int]] = {
+        'url': url,
+        'api_key': SAUCENAO_API_KEY,
+        'output_type': 2,
+        'test_mode': 0,
+        'strict_mode': '1',
+        'priority': [] if priority is None else priority,
+        'priority_tolerance': 10,
+    }
+
+    session = get_session()
+    res: list[Sauce] = []
+    async with session.get(SAUCENAO_API_URL, params=params) as resp:
+        data = await resp.json()
+        try:
+            sauces = SauceLookup.model_validate(data)
+            for s in sauces.results:
+                res.append(s.to_sauce())
+        except Exception as e:
+            raise RuntimeError(f'failed to parse {data}') from e
+
+    return res
