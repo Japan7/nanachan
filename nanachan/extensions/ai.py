@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 agent = Agent(
     deps_type=commands.Context[Bot],
-    tools=(search_tool(), *nanapi_tools()),  # type: ignore
+    tools=(search_tool, *nanapi_tools()),  # type: ignore
     mcp_servers=[python_mcp_server],
 )
 
@@ -43,18 +43,21 @@ def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
     ctx = run_ctx.deps
     assert ctx.bot.user and ctx.guild
     return (
-        f'The assistant is a Discord bot named {ctx.bot.user.display_name} '
-        f'(ID {ctx.bot.user.id}).\n'
-        f'{ctx.bot.user.display_name} answers requests from the members of the {ctx.guild.name} '
-        f'server.\n'
-        f'The current date is {datetime.now(TZ)}.'
+        f'The assistant is {ctx.bot.user.display_name}, a Discord bot.\n'
+        f'The current date is {datetime.now(TZ)}.\n'
+        f'{ctx.bot.user.display_name} answers to the members of the {ctx.guild.name} server.\n'
+        f"{ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}."
     )
 
 
 @agent.instructions
 def author_instructions(run_ctx: RunContext[commands.Context[Bot]]):
     ctx = run_ctx.deps
-    return f'The user {ctx.author.display_name} (ID {ctx.author.id}) is sending this prompt.'
+    assert ctx.bot.user
+    return (
+        f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name} '
+        f'(ID {ctx.author.id}).'
+    )
 
 
 @agent.tool

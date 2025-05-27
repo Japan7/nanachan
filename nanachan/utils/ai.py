@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime
 from functools import cache
 from queue import Empty, Queue
 from typing import AsyncGenerator, Iterable, Literal, Sequence, override
@@ -31,7 +32,7 @@ from pydantic_ai.models import Model
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import UserType
 from nanachan.nanapi.client import get_nanapi
-from nanachan.settings import AI_GEMINI_API_KEY, AI_MODEL_CLS, AI_PROVIDER, AI_TAVILY_API_KEY
+from nanachan.settings import AI_GEMINI_API_KEY, AI_MODEL_CLS, AI_PROVIDER, AI_TAVILY_API_KEY, TZ
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +103,13 @@ async def iter_stream[AgentDepsT](
                 message_history.extend(run.result.new_messages())
 
 
+search_tool = (
+    tavily_search_tool(AI_TAVILY_API_KEY)
+    if AI_TAVILY_API_KEY is not None
+    else duckduckgo_search_tool()
+)
+
+
 def nanapi_tools() -> Iterable[Tool[None]]:
     nanapi = get_nanapi()
     endpoints = [
@@ -138,14 +146,6 @@ def nanapi_tools() -> Iterable[Tool[None]]:
     ]
     for endpoint in endpoints:
         yield Tool(endpoint, takes_ctx=None)
-
-
-def search_tool() -> Tool[None]:
-    return (
-        tavily_search_tool(AI_TAVILY_API_KEY)
-        if AI_TAVILY_API_KEY is not None
-        else duckduckgo_search_tool()
-    )
 
 
 python_mcp_server = MCPServerStdio(
@@ -256,7 +256,8 @@ class GeminiLiveAudioSink(AudioSink):
                     parts=[
                         types.Part(
                             text=(
-                                f'The assistant is {self.bot.user}.\n'
+                                f'The assistant is {self.bot.user}, a Discord bot.\n'
+                                f'The current date is {datetime.now(TZ)}.\n'
                                 f'RESPOND IN FRENCH. YOU MUST RESPOND UNMISTAKABLY IN FRENCH.'
                             )
                         )
