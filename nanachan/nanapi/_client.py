@@ -1640,7 +1640,7 @@ class DiscordModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         """Create or update a Discord message."""
-        url = f'{self.server_url}/discord/messsages/{message_id}'
+        url = f'{self.server_url}/discord/messages/{message_id}'
 
         async with self.session.put(
             url,
@@ -1674,7 +1674,7 @@ class DiscordModule:
         | Error[Literal[422], HTTPValidationError]
     ):
         """Delete Discord messages."""
-        url = f'{self.server_url}/discord/messsages'
+        url = f'{self.server_url}/discord/messages'
         params = {
             'message_ids': message_ids,
         }
