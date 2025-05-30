@@ -945,6 +945,16 @@ class MediasPoolExportResult(BaseModel):
     favourites: int
 
 
+class MessageBulkDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
+class MessageMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
 class NewClientBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     username: str
@@ -1367,10 +1377,10 @@ class ProjoSelectResult(BaseModel):
     participants: list['ProjoSelectResultParticipants']
     guild_events: list['ProjoSelectResultGuildEvents']
     legacy_events: list['ProjoSelectResultLegacyEvents']
-    message_id: str | None
-    channel_id: str
     status: 'ProjectionStatus'
     name: str
+    message_id: str | None
+    channel_id: str
     id: UUID
 
 
@@ -1384,6 +1394,7 @@ class ProjoSelectResultExternalMedias(BaseModel):
 class ProjoSelectResultGuildEvents(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
+    discord_id: str
     description: str | None
     end_time: datetime
     image: str | None
@@ -1391,7 +1402,6 @@ class ProjoSelectResultGuildEvents(BaseModel):
     name: str
     start_time: datetime
     url: str | None
-    discord_id: str
 
 
 class ProjoSelectResultLegacyEvents(BaseModel):
@@ -1411,8 +1421,8 @@ class ProjoSelectResultMedias(BaseModel):
 class ProjoSelectResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class ProjoUpdateMessageIdResult(BaseModel):
@@ -1807,6 +1817,11 @@ class UpsertGuildEventBody(BaseModel):
     location: str | None = None
     image: str | None = None
     url: str | None = None
+
+
+class UpsertMessageBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    data: str
 
 
 class UpsertPlayerBody(BaseModel):

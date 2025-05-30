@@ -5,7 +5,7 @@ import re
 import signal
 from collections.abc import Coroutine, Sequence
 from contextlib import suppress
-from functools import partial
+from functools import partial, wraps
 from operator import itemgetter as get
 from pathlib import Path
 from typing import Any, Callable, Literal, cast, override
@@ -118,8 +118,19 @@ class Bot(commands.AutoShardedBot):
         loop.add_signal_handler(signal.SIGINT, loop.stop)
         loop.add_signal_handler(signal.SIGTERM, loop.stop)
 
+        self._connection.parsers['MESSAGE_CREATE'] = self.wrap_parse_message_create(
+            self._connection.parsers['MESSAGE_CREATE']
+        )
         self.extension_errors = await load_extensions(self)
         await super().start(token, reconnect=reconnect)
+
+    def wrap_parse_message_create(self, parse_message_create):
+        @wraps(parse_message_create)
+        def wrapper(data):
+            self.dispatch('raw_message', data)
+            return parse_message_create(data)
+
+        return wrapper
 
     def get_channel_type[T](self, channel_id: int, channel_type: type[T]) -> T | None:
         text_channel = self.get_channel(channel_id)

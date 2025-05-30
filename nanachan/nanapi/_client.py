@@ -68,6 +68,8 @@ from .model import (
     MediaSelectResult,
     MediasPoolExportResult,
     MediaTitleAutocompleteResult,
+    MessageBulkDeleteResult,
+    MessageMergeResult,
     NewClientBody,
     NewCollectionBody,
     NewCouponBody,
@@ -151,6 +153,7 @@ from .model import (
     UpsertAnilistAccountBody,
     UpsertDiscordAccountBodyItem,
     UpsertGuildEventBody,
+    UpsertMessageBody,
     UpsertPlayerBody,
     UpsertProfileBody,
     UpsertUserCalendarBody,
@@ -1606,6 +1609,84 @@ class ClientModule:
             if resp.status == 201:
                 return Success[Literal[201], LoginResponse](
                     code=201, result=LoginResponse(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+
+class DiscordModule:
+    def __init__(self, session: 'ClientSession', server_url: str):
+        self.session: ClientSession = session
+        self.server_url: str = server_url
+
+    async def discord_upsert_message(
+        self, message_id: str, body: UpsertMessageBody
+    ) -> (
+        Success[Literal[200], MessageMergeResult]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Create or update a Discord message."""
+        url = f'{self.server_url}/discord/messsages/{message_id}'
+
+        async with self.session.put(
+            url,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], MessageMergeResult](
+                    code=200, result=MessageMergeResult(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def discord_delete_messages(
+        self, message_ids: str
+    ) -> (
+        Success[Literal[200], list[MessageBulkDeleteResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Delete Discord messages."""
+        url = f'{self.server_url}/discord/messsages'
+        params = {
+            'message_ids': message_ids,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.delete(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[MessageBulkDeleteResult]](
+                    code=200, result=[MessageBulkDeleteResult(**e) for e in (await resp.json())]
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
@@ -6192,6 +6273,7 @@ class ClientSession(aiohttp.ClientSession):
         self.anilist: AnilistModule = AnilistModule(self, server_url)
         self.calendar: CalendarModule = CalendarModule(self, server_url)
         self.client: ClientModule = ClientModule(self, server_url)
+        self.discord: DiscordModule = DiscordModule(self, server_url)
         self.histoire: HistoireModule = HistoireModule(self, server_url)
         self.pot: PotModule = PotModule(self, server_url)
         self.presence: PresenceModule = PresenceModule(self, server_url)
