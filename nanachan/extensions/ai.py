@@ -1,9 +1,8 @@
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from inspect import get_annotations
-from typing import TYPE_CHECKING, get_args
+from typing import get_args
 
 import discord
 from discord import AllowedMentions, app_commands
@@ -18,8 +17,6 @@ from nanachan.discord.application_commands import LegacyCommandContext, legacy_c
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed
-from nanachan.nanapi.client import get_nanapi
-from nanachan.nanapi.model import UpsertMessageBody
 from nanachan.settings import AI_DEFAULT_MODEL, AI_MODEL_CLS, TZ, RequiresAI, RequiresGemini
 from nanachan.utils.ai import (
     GeminiLiveAudioSink,
@@ -30,9 +27,6 @@ from nanachan.utils.ai import (
     search_tool,
 )
 from nanachan.utils.misc import autocomplete_truncate
-
-if TYPE_CHECKING:
-    from discord.types.gateway import MessageCreateEvent
 
 logger = logging.getLogger(__name__)
 
@@ -263,29 +257,6 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             prompt = ctx.message.content
             attachments = ctx.message.attachments
             await self.chat(ctx, message.channel, prompt, attachments, reply_to=ctx.message)
-
-    @NanaGroupCog.listener()
-    async def on_raw_message(self, data: 'MessageCreateEvent'):
-        await get_nanapi().discord.discord_upsert_message(
-            str(data['id']),
-            UpsertMessageBody(data=json.dumps(data)),
-        )
-
-    @NanaGroupCog.listener()
-    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
-        data = payload.data
-        await get_nanapi().discord.discord_upsert_message(
-            str(data['id']),
-            UpsertMessageBody(data=json.dumps(data)),
-        )
-
-    @NanaGroupCog.listener()
-    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
-        await get_nanapi().discord.discord_delete_messages(str(payload.message_id))
-
-    @NanaGroupCog.listener()
-    async def on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
-        await get_nanapi().discord.discord_delete_messages(','.join(map(str, payload.message_ids)))
 
 
 async def setup(bot: Bot):

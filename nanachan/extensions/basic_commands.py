@@ -1,12 +1,13 @@
 import asyncio
 import bisect
+import json
 import logging
 import re
 from datetime import datetime, timedelta
 from importlib import resources
 from operator import attrgetter
 from random import choice
-from typing import MutableSequence, Optional, Union
+from typing import TYPE_CHECKING, MutableSequence, Optional, Union
 
 import discord
 import parsedatetime.parsedatetime as pdt
@@ -48,9 +49,13 @@ from nanachan.nanapi.model import (
     NewReminderBody,
     ReminderInsertSelectResult,
     ReminderSelectAllResult,
+    UpsertMessageBody,
 )
-from nanachan.settings import SLASH_PREFIX, TZ
+from nanachan.settings import ENABLE_MESSAGE_EXPORT, SLASH_PREFIX, TZ
 from nanachan.utils.misc import get_session, saucenao_lookup, tldr_get_page
+
+if TYPE_CHECKING:
+    from discord.types.gateway import MessageCreateEvent
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +79,11 @@ class BasicCommands(Cog, name='Basic Commands'):
         self.reminders_processor_task = None
         self.reminders_processor_task_sleep = None
         self.reminders: MutableSequence[ReminderSelectAllResult | ReminderInsertSelectResult] = []
+        if ENABLE_MESSAGE_EXPORT:
+            Cog.listener()(self.on_raw_message)
+            Cog.listener()(self.on_raw_message_edit)
+            Cog.listener()(self.on_raw_message_delete)
+            Cog.listener()(self.on_raw_bulk_message_delete)
 
     @Cog.listener()
     async def on_ready(self):
@@ -440,6 +450,25 @@ class BasicCommands(Cog, name='Basic Commands'):
         except Exception:
             await event.delete()
             raise
+
+    async def on_raw_message(self, data: 'MessageCreateEvent'):
+        await get_nanapi().discord.discord_upsert_message(
+            str(data['id']),
+            UpsertMessageBody(data=json.dumps(data)),
+        )
+
+    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+        data = payload.data
+        await get_nanapi().discord.discord_upsert_message(
+            str(data['id']),
+            UpsertMessageBody(data=json.dumps(data)),
+        )
+
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
+        await get_nanapi().discord.discord_delete_messages(str(payload.message_id))
+
+    async def on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
+        await get_nanapi().discord.discord_delete_messages(','.join(map(str, payload.message_ids)))
 
 
 def message_quote(cog: BasicCommands):

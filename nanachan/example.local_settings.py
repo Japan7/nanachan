@@ -21,6 +21,7 @@ BOT_VOICE_ID = 0000
 # TZ = ZoneInfo('Europe/Paris')
 # DEFAULT_COLOUR = 0xE91E63
 # DISABLED_EXTENSIONS = set('snowflake')
+# ENABLE_MESSAGE_EXPORT = False
 
 ## nanapi
 # NANAPI_URL = 'https://nanapi.japan7.bde.enseeiht.fr/prod'
