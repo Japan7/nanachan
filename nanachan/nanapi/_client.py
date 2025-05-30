@@ -69,6 +69,7 @@ from .model import (
     MediasPoolExportResult,
     MediaTitleAutocompleteResult,
     MessageBulkDeleteResult,
+    MessageBulkInsertResult,
     MessageMergeResult,
     NewClientBody,
     NewCollectionBody,
@@ -148,12 +149,10 @@ from .model import (
     StaffSelectResult,
     TradeDeleteResult,
     TradeSelectResult,
-    UpdateAMQSettingsBody,
     UpsertAMQAccountBody,
     UpsertAnilistAccountBody,
     UpsertDiscordAccountBodyItem,
     UpsertGuildEventBody,
-    UpsertMessageBody,
     UpsertPlayerBody,
     UpsertProfileBody,
     UpsertUserCalendarBody,
@@ -347,7 +346,7 @@ class AmqModule:
             )
 
     async def amq_update_settings(
-        self, body: UpdateAMQSettingsBody, client_id: UUID | None = None
+        self, body: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], list[SettingsMergeResult]]
         | Error[Literal[401], HTTPExceptionModel]
@@ -1632,27 +1631,37 @@ class DiscordModule:
         self.session: ClientSession = session
         self.server_url: str = server_url
 
-    async def discord_upsert_message(
-        self, message_id: str, body: UpsertMessageBody
+    async def discord_bulk_insert_messages(
+        self, body: list[str], client_id: UUID | None = None
     ) -> (
-        Success[Literal[200], MessageMergeResult]
+        Success[Literal[200], list[MessageBulkInsertResult]]
         | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Create or update a Discord message."""
-        url = f'{self.server_url}/discord/messages/{message_id}'
+        """Bulk create Discord messages."""
+        url = f'{self.server_url}/discord/messages'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
 
-        async with self.session.put(
+        async with self.session.post(
             url,
+            params=params,
             json=body,
         ) as resp:
             if resp.status == 200:
-                return Success[Literal[200], MessageMergeResult](
-                    code=200, result=MessageMergeResult(**(await resp.json()))
+                return Success[Literal[200], list[MessageBulkInsertResult]](
+                    code=200, result=[MessageBulkInsertResult(**e) for e in (await resp.json())]
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
                 )
             if resp.status == 422:
                 return Error[Literal[422], HTTPValidationError](
@@ -1667,16 +1676,18 @@ class DiscordModule:
             )
 
     async def discord_delete_messages(
-        self, message_ids: str
+        self, message_ids: str, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], list[MessageBulkDeleteResult]]
         | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
         """Delete Discord messages."""
         url = f'{self.server_url}/discord/messages'
         params = {
             'message_ids': message_ids,
+            'client_id': client_id,
         }
         params = prep_serialization(params)
 
@@ -1691,6 +1702,54 @@ class DiscordModule:
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
                     code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def discord_upsert_message(
+        self, message_id: str, body: str, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], MessageMergeResult]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Create or update a Discord message."""
+        url = f'{self.server_url}/discord/messages/{message_id}'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.put(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], MessageMergeResult](
+                    code=200, result=MessageMergeResult(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
                 )
             if resp.status == 422:
                 return Error[Literal[422], HTTPValidationError](

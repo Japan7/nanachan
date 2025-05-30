@@ -28,7 +28,7 @@ from nanachan.discord.helpers import AMQWebhook, Colour, Embed, EmbedField, Mult
 from nanachan.discord.views import AutoNavigatorView
 from nanachan.extensions.waicolle import WaifuCollection
 from nanachan.nanapi.client import get_nanapi, success
-from nanachan.nanapi.model import UpdateAMQSettingsBody, UpsertAMQAccountBody
+from nanachan.nanapi.model import UpsertAMQAccountBody
 from nanachan.settings import (
     AMQ_DEFAULT_SETTINGS,
     AMQ_PASSWORD,
@@ -885,9 +885,7 @@ async def load_settings():
 
 
 async def save(settings: dict):
-    resp = await get_nanapi().amq.amq_update_settings(
-        UpdateAMQSettingsBody(settings=json.dumps(settings))
-    )
+    resp = await get_nanapi().amq.amq_update_settings(json.dumps(settings))
     if not success(resp):
         raise RuntimeError(resp.result)
 

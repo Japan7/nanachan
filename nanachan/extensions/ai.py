@@ -19,7 +19,6 @@ from nanachan.discord.bot import Bot
 from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed
 from nanachan.nanapi.client import get_nanapi
-from nanachan.nanapi.model import UpsertMessageBody
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_MODEL_CLS,
@@ -273,18 +272,12 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
 
 
 async def on_raw_message(data: 'MessageCreateEvent'):
-    await get_nanapi().discord.discord_upsert_message(
-        str(data['id']),
-        UpsertMessageBody(data=json.dumps(data)),
-    )
+    await get_nanapi().discord.discord_upsert_message(str(data['id']), json.dumps(data))
 
 
 async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
     data = payload.data
-    await get_nanapi().discord.discord_upsert_message(
-        str(data['id']),
-        UpsertMessageBody(data=json.dumps(data)),
-    )
+    await get_nanapi().discord.discord_upsert_message(str(data['id']), json.dumps(data))
 
 
 async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
