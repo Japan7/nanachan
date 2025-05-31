@@ -543,7 +543,7 @@ wheels = [
 
 [[package]]
 name = "google-genai"
-version = "1.17.0"
+version = "1.18.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -554,9 +554,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/51/93/4ad189184db21539c625bba432faa3a36e1e5eeb0b3a0b52fbdc9bdac324/google_genai-1.17.0.tar.gz", hash = "sha256:2cf0ff1218290efe6fad80d586cc4aed5a1ca6d38407d1ae221cf10e308c299b", size = 197180, upload-time = "2025-05-28T22:50:06.29Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/c2/4dac4192aa3f1273d117b54002bde9df565becd0fb5489ec1f58777ce2a3/google_genai-1.18.0.tar.gz", hash = "sha256:242a02df3248e291f03e37019ce5a1c8a21a14ec245b59668c9f2b4d8965295e", size = 197394, upload-time = "2025-05-30T23:49:45.673Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/e8/6cc81b481d71f64896964d6aa105f17f13a974627da5d22a3e676fb056b6/google_genai-1.17.0-py3-none-any.whl", hash = "sha256:0a5ba765cc9900a5fa7e71ed4520a1560a857754e72db32765009e2e9fe75333", size = 199245, upload-time = "2025-05-28T22:50:04.852Z" },
+    { url = "https://files.pythonhosted.org/packages/94/db/dce044ddf3f272248aa517fb8e525b31685b483210a8e08773596dbcc611/google_genai-1.18.0-py3-none-any.whl", hash = "sha256:3527bb93c8306e725401aca0a0a684610bbf1ef9aa61c2ed3333a695f43dc9af", size = 199485, upload-time = "2025-05-30T23:49:43.833Z" },
 ]
 
 [[package]]
@@ -1028,7 +1028,7 @@ requires-dist = [
     { name = "discord-ext-voice-recv", git = "https://github.com/imayhaveborkedit/discord-ext-voice-recv.git?rev=02a0782db6a1e154edbcfe252004f8fdd4bf539f" },
     { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=a18d22383427a2bb8714fc8a88832fd1012d42c0" },
     { name = "faust-cchardet", specifier = "==2.1.19" },
-    { name = "google-genai", specifier = "==1.17.0" },
+    { name = "google-genai", specifier = "==1.18.0" },
     { name = "html2text", specifier = "==2025.4.15" },
     { name = "matplotlib", specifier = "==3.10.3" },
     { name = "numpy", specifier = "==2.2.6" },
