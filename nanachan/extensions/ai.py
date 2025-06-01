@@ -120,7 +120,7 @@ async def retrieve_chat_context(search_query: str) -> list[list[str]]:
     resp = await get_nanapi().discord.discord_rag(search_query)
     if not success(resp):
         raise RuntimeError(resp.result)
-    return [[m.data for m in result.messages] for result in resp.result[:25]]
+    return [[m.data for m in result.messages] for result in resp.result[:10]]
 
 
 @dataclass
