@@ -127,6 +127,7 @@ from .model import (
     QuizzGetOldestResult,
     QuizzInsertResult,
     QuizzSetAnswerResult,
+    RagQueryResultObjectMessages,
     Rank,
     ReminderDeleteByIdResult,
     ReminderInsertSelectResult,
@@ -1706,6 +1707,46 @@ class DiscordModule:
             if resp.status == 403:
                 return Error[Literal[403], HTTPExceptionModel](
                     code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def discord_rag(
+        self, search_query: str, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], list[list[RagQueryResultObjectMessages]]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Retrieve relevant chat sections based on a search query in French."""
+        url = f'{self.server_url}/discord/messages/rag'
+        params = {
+            'search_query': search_query,
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.get(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[list[RagQueryResultObjectMessages]]](
+                    code=200,
+                    result=[list[RagQueryResultObjectMessages](**e) for e in (await resp.json())],
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
                 )
             if resp.status == 422:
                 return Error[Literal[422], HTTPValidationError](

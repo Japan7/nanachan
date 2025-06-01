@@ -18,7 +18,7 @@ from nanachan.discord.application_commands import LegacyCommandContext, legacy_c
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import NanaGroupCog
 from nanachan.discord.helpers import Embed
-from nanachan.nanapi.client import get_nanapi
+from nanachan.nanapi.client import get_nanapi, success
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_MODEL_CLS,
@@ -112,6 +112,15 @@ async def channel_history(
         after=time_snowflake(after) if after else None,
         around=time_snowflake(around) if around else None,
     )
+
+
+@agent.tool_plain
+async def retrieve_chat_context(search_query: str):
+    """Retrieve relevant chat sections based on a search query in French."""
+    resp = await get_nanapi().discord.discord_rag(search_query)
+    if not success(resp):
+        raise RuntimeError(resp.result)
+    return [[m.data for m in result] for result in resp.result[:25]]
 
 
 @dataclass

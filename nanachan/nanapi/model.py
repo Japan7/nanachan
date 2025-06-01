@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -541,10 +541,10 @@ class GameEndResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     winner: 'GameEndResultWinner | None'
     quizz: 'GameEndResultQuizz'
-    message_id: str
     status: 'QuizzStatus'
     started_at: datetime
     ended_at: datetime | None
+    message_id: str
     id: UUID
 
 
@@ -552,12 +552,12 @@ class GameEndResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     author: 'GameEndResultQuizzAuthor'
     id: UUID
+    channel_id: str
     answer: str | None
     attachment_url: str | None
     hints: list[str] | None
     question: str | None
     submitted_at: datetime
-    channel_id: str
 
 
 class GameEndResultQuizzAuthor(BaseModel):
@@ -575,22 +575,22 @@ class GameGetByIdResult(BaseModel):
     winner: 'GameGetByIdResultWinner | None'
     quizz: 'GameGetByIdResultQuizz'
     id: UUID
+    message_id: str
     ended_at: datetime | None
     started_at: datetime
     status: 'QuizzStatus'
-    message_id: str
 
 
 class GameGetByIdResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     author: 'GameGetByIdResultQuizzAuthor'
     id: UUID
+    channel_id: str
     answer: str | None
     attachment_url: str | None
     hints: list[str] | None
     question: str | None
     submitted_at: datetime
-    channel_id: str
 
 
 class GameGetByIdResultQuizzAuthor(BaseModel):
@@ -608,22 +608,22 @@ class GameGetCurrentResult(BaseModel):
     winner: 'GameGetCurrentResultWinner | None'
     quizz: 'GameGetCurrentResultQuizz'
     id: UUID
+    message_id: str
     ended_at: datetime | None
     started_at: datetime
     status: 'QuizzStatus'
-    message_id: str
 
 
 class GameGetCurrentResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     author: 'GameGetCurrentResultQuizzAuthor'
     id: UUID
+    channel_id: str
     answer: str | None
     attachment_url: str | None
     hints: list[str] | None
     question: str | None
     submitted_at: datetime
-    channel_id: str
 
 
 class GameGetCurrentResultQuizzAuthor(BaseModel):
@@ -641,22 +641,22 @@ class GameGetLastResult(BaseModel):
     winner: 'GameGetLastResultWinner | None'
     quizz: 'GameGetLastResultQuizz'
     id: UUID
+    message_id: str
     ended_at: datetime | None
     started_at: datetime
     status: 'QuizzStatus'
-    message_id: str
 
 
 class GameGetLastResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     author: 'GameGetLastResultQuizzAuthor'
     id: UUID
+    channel_id: str
     answer: str | None
     attachment_url: str | None
     hints: list[str] | None
     question: str | None
     submitted_at: datetime
-    channel_id: str
 
 
 class GameGetLastResultQuizzAuthor(BaseModel):
@@ -679,22 +679,22 @@ class GameSelectResult(BaseModel):
     winner: 'GameSelectResultWinner | None'
     quizz: 'GameSelectResultQuizz'
     id: UUID
+    message_id: str
     ended_at: datetime | None
     started_at: datetime
     status: 'QuizzStatus'
-    message_id: str
 
 
 class GameSelectResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     author: 'GameSelectResultQuizzAuthor'
     id: UUID
+    channel_id: str
     answer: str | None
     attachment_url: str | None
     hints: list[str] | None
     question: str | None
     submitted_at: datetime
-    channel_id: str
 
 
 class GameSelectResultQuizzAuthor(BaseModel):
@@ -709,7 +709,6 @@ class GameSelectResultWinner(BaseModel):
 
 class GuildEventDeleteResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    discord_id: str
     url: str | None
     start_time: datetime
     name: str
@@ -717,6 +716,7 @@ class GuildEventDeleteResult(BaseModel):
     image: str | None
     end_time: datetime
     description: str | None
+    discord_id: str
     id: UUID
     organizer: 'GuildEventDeleteResultOrganizer'
     participants: list['GuildEventDeleteResultParticipants']
@@ -734,29 +734,30 @@ class GuildEventDeleteResultClient(BaseModel):
 class GuildEventDeleteResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class GuildEventDeleteResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class GuildEventDeleteResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    name: str
-    status: 'ProjectionStatus'
     channel_id: str
     message_id: str | None
+    name: str
+    status: 'ProjectionStatus'
 
 
 class GuildEventMergeResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
+    discord_id: str
     description: str | None
     end_time: datetime
     image: str | None
@@ -764,7 +765,6 @@ class GuildEventMergeResult(BaseModel):
     name: str
     start_time: datetime
     url: str | None
-    discord_id: str
     client: 'GuildEventMergeResultClient'
     projection: 'GuildEventMergeResultProjection | None'
     participants: list['GuildEventMergeResultParticipants']
@@ -781,24 +781,24 @@ class GuildEventMergeResultClient(BaseModel):
 class GuildEventMergeResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class GuildEventMergeResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class GuildEventMergeResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    name: str
-    status: 'ProjectionStatus'
     channel_id: str
     message_id: str | None
+    name: str
+    status: 'ProjectionStatus'
 
 
 class GuildEventParticipantAddResult(BaseModel):
@@ -814,6 +814,7 @@ class GuildEventParticipantRemoveResult(BaseModel):
 class GuildEventSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
+    discord_id: str
     description: str | None
     end_time: datetime
     image: str | None
@@ -821,7 +822,6 @@ class GuildEventSelectResult(BaseModel):
     name: str
     start_time: datetime
     url: str | None
-    discord_id: str
     client: 'GuildEventSelectResultClient'
     projection: 'GuildEventSelectResultProjection | None'
     participants: list['GuildEventSelectResultParticipants']
@@ -838,24 +838,24 @@ class GuildEventSelectResultClient(BaseModel):
 class GuildEventSelectResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class GuildEventSelectResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class GuildEventSelectResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    name: str
-    status: 'ProjectionStatus'
     channel_id: str
     message_id: str | None
+    name: str
+    status: 'ProjectionStatus'
 
 
 class HTTPExceptionModel(BaseModel):
@@ -1382,10 +1382,10 @@ class ProjoSelectResult(BaseModel):
     participants: list['ProjoSelectResultParticipants']
     guild_events: list['ProjoSelectResultGuildEvents']
     legacy_events: list['ProjoSelectResultLegacyEvents']
-    message_id: str | None
-    channel_id: str
     status: 'ProjectionStatus'
     name: str
+    message_id: str | None
+    channel_id: str
     id: UUID
 
 
@@ -1399,6 +1399,7 @@ class ProjoSelectResultExternalMedias(BaseModel):
 class ProjoSelectResultGuildEvents(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
+    discord_id: str
     description: str | None
     end_time: datetime
     image: str | None
@@ -1406,7 +1407,6 @@ class ProjoSelectResultGuildEvents(BaseModel):
     name: str
     start_time: datetime
     url: str | None
-    discord_id: str
 
 
 class ProjoSelectResultLegacyEvents(BaseModel):
@@ -1426,8 +1426,8 @@ class ProjoSelectResultMedias(BaseModel):
 class ProjoSelectResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class ProjoUpdateMessageIdResult(BaseModel):
@@ -1454,12 +1454,12 @@ class QuizzGetByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     author: 'QuizzGetByIdResultAuthor'
     id: UUID
+    channel_id: str
     answer: str | None
     attachment_url: str | None
     hints: list[str] | None
     question: str | None
     submitted_at: datetime
-    channel_id: str
 
 
 class QuizzGetByIdResultAuthor(BaseModel):
@@ -1471,12 +1471,12 @@ class QuizzGetOldestResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     author: 'QuizzGetOldestResultAuthor'
     id: UUID
+    channel_id: str
     answer: str | None
     attachment_url: str | None
     hints: list[str] | None
     question: str | None
     submitted_at: datetime
-    channel_id: str
 
 
 class QuizzGetOldestResultAuthor(BaseModel):
@@ -1492,6 +1492,11 @@ class QuizzInsertResult(BaseModel):
 class QuizzSetAnswerResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
+
+
+class RagQueryResultObjectMessages(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    data: Any
 
 
 class Rank(BaseModel):
@@ -1868,8 +1873,8 @@ class UserCalendarSelectAllResult(BaseModel):
 class UserCalendarSelectAllResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class UserCalendarSelectResult(BaseModel):
@@ -1882,8 +1887,8 @@ class UserCalendarSelectResult(BaseModel):
 class UserCalendarSelectResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    discord_username: str
     discord_id: str
+    discord_username: str
 
 
 class UserSelectResult(BaseModel):
