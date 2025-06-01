@@ -58,7 +58,8 @@ def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
         f'The assistant is {ctx.bot.user.display_name}, a Discord bot.\n'
         f'The current date is {datetime.now(TZ)}.\n'
         f'{ctx.bot.user.display_name} answers to the members of the {ctx.guild.name} server.\n'
-        f"{ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}."
+        f"{ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}.\n"
+        'The assistant should use the retrieve_context tool if a context is missing to answer.'
     )
 
 
@@ -115,8 +116,8 @@ async def channel_history(
 
 
 @agent.tool_plain
-async def retrieve_chat_context(search_query: str) -> list[list[str]]:
-    """Retrieve chat sections based on a search query in French."""
+async def retrieve_context(search_query: str) -> list[list[str]]:
+    """Retrieve relevant chat sections based on a search query in French."""
     resp = await get_nanapi().discord.discord_rag(search_query)
     if not success(resp):
         raise RuntimeError(resp.result)
