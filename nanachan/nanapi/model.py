@@ -1494,6 +1494,11 @@ class QuizzSetAnswerResult(BaseModel):
     id: UUID
 
 
+class RagQueryResultObject(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    messages: list['RagQueryResultObjectMessages']
+
+
 class RagQueryResultObjectMessages(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     data: Any

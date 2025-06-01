@@ -127,7 +127,7 @@ from .model import (
     QuizzGetOldestResult,
     QuizzInsertResult,
     QuizzSetAnswerResult,
-    RagQueryResultObjectMessages,
+    RagQueryResultObject,
     Rank,
     ReminderDeleteByIdResult,
     ReminderInsertSelectResult,
@@ -1723,7 +1723,7 @@ class DiscordModule:
     async def discord_rag(
         self, search_query: str, client_id: UUID | None = None
     ) -> (
-        Success[Literal[200], list[list[RagQueryResultObjectMessages]]]
+        Success[Literal[200], list[RagQueryResultObject]]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
@@ -1740,9 +1740,8 @@ class DiscordModule:
             params=params,
         ) as resp:
             if resp.status == 200:
-                return Success[Literal[200], list[list[RagQueryResultObjectMessages]]](
-                    code=200,
-                    result=[list[RagQueryResultObjectMessages](**e) for e in (await resp.json())],
+                return Success[Literal[200], list[RagQueryResultObject]](
+                    code=200, result=[RagQueryResultObject(**e) for e in (await resp.json())]
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](

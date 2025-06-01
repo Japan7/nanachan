@@ -115,12 +115,12 @@ async def channel_history(
 
 
 @agent.tool_plain
-async def retrieve_chat_context(search_query: str):
+async def retrieve_chat_context(search_query: str) -> list[list[str]]:
     """Retrieve relevant chat sections based on a search query in French."""
     resp = await get_nanapi().discord.discord_rag(search_query)
     if not success(resp):
         raise RuntimeError(resp.result)
-    return [[m.data for m in result] for result in resp.result[:25]]
+    return [[m.data for m in result.messages] for result in resp.result[:25]]
 
 
 @dataclass
