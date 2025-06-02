@@ -39,6 +39,7 @@ from nanachan.utils.misc import autocomplete_truncate
 
 if TYPE_CHECKING:
     from discord.types.gateway import MessageCreateEvent
+    from discord.types.message import Message
 
 logger = logging.getLogger(__name__)
 
@@ -285,17 +286,17 @@ async def setup(bot: Bot):
     await bot.add_cog(AI(bot))
 
     async def on_raw_message(data: 'MessageCreateEvent'):
-        await get_nanapi().discord.discord_upsert_message(str(data['id']), json.dumps(data))
+        await upsert_message(data)
 
     async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
-        data = payload.data
+        await upsert_message(payload.data)
+
+    async def upsert_message(data: 'Message'):
         noindex = None
         if (thread := data.get('thread')) and thread['owner_id'] == bot.bot_id:
             noindex = 'bot thread'  # AI chat ?
         await get_nanapi().discord.discord_upsert_message(
-            str(data['id']),
-            json.dumps(data),
-            noindex=noindex,
+            str(data['id']), json.dumps(data), noindex=noindex
         )
 
     async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
