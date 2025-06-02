@@ -1507,6 +1507,7 @@ class RagQueryResultObject(BaseModel):
 class RagQueryResultObjectMessages(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     data: Any
+    timestamp: datetime
 
 
 class Rank(BaseModel):

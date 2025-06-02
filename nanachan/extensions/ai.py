@@ -122,7 +122,10 @@ async def retrieve_context(search_query: str) -> list[list[str]]:
     resp = await get_nanapi().discord.discord_rag(search_query)
     if not success(resp):
         raise RuntimeError(resp.result)
-    return [[m.data for m in result.messages] for result in resp.result[:10]]
+    return [
+        [m.data for m in sorted(result.messages, key=lambda m: m.timestamp)]
+        for result in resp.result[:10]
+    ]
 
 
 @dataclass
@@ -293,8 +296,10 @@ async def setup(bot: Bot):
 
     async def upsert_message(data: 'Message'):
         noindex = None
-        if (thread := data.get('thread')) and thread['owner_id'] == bot.bot_id:
-            noindex = 'bot thread'  # AI chat ?
+        if data['author']['id'] == bot.bot_id:
+            noindex = 'nanachan'
+        elif (thread := data.get('thread')) and thread['owner_id'] == bot.bot_id:
+            noindex = 'nanachan thread'  # AI chat ?
         await get_nanapi().discord.discord_upsert_message(
             str(data['id']), json.dumps(data), noindex=noindex
         )

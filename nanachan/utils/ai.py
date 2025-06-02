@@ -132,6 +132,7 @@ def nanapi_tools() -> Iterable[Tool[None]]:
         nanapi.histoire.histoire_get_histoire,
         nanapi.projection.projection_get_projections,
         nanapi.reminder.reminder_get_reminders,
+        nanapi.user.user_profile_search,
         nanapi.user.user_get_profile,
         nanapi.waicolle.waicolle_get_players,
         nanapi.waicolle.waicolle_get_player,
