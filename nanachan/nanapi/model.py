@@ -960,6 +960,11 @@ class MessageMergeResult(BaseModel):
     id: UUID
 
 
+class MessageUpdateNoindexResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
 class NewClientBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     username: str
@@ -1795,6 +1800,11 @@ class TradeSelectResultReceivedOwner(BaseModel):
 class TradeSelectResultReceivedOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_id: str
+
+
+class UpdateMessageNoindexBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    noindex: str
 
 
 class UpsertAMQAccountBody(BaseModel):

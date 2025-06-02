@@ -281,25 +281,29 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             await self.chat(ctx, message.channel, prompt, attachments, reply_to=ctx.message)
 
 
-async def on_raw_message(data: 'MessageCreateEvent'):
-    await get_nanapi().discord.discord_upsert_message(str(data['id']), json.dumps(data))
-
-
-async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
-    data = payload.data
-    await get_nanapi().discord.discord_upsert_message(str(data['id']), json.dumps(data))
-
-
-async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
-    await get_nanapi().discord.discord_delete_messages(str(payload.message_id))
-
-
-async def on_raw_bulk_message_delete(payload: discord.RawBulkMessageDeleteEvent):
-    await get_nanapi().discord.discord_delete_messages(','.join(map(str, payload.message_ids)))
-
-
 async def setup(bot: Bot):
     await bot.add_cog(AI(bot))
+
+    async def on_raw_message(data: 'MessageCreateEvent'):
+        await get_nanapi().discord.discord_upsert_message(str(data['id']), json.dumps(data))
+
+    async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
+        data = payload.data
+        noindex = None
+        if (thread := data.get('thread')) and thread['owner_id'] == bot.bot_id:
+            noindex = 'bot thread'  # AI chat ?
+        await get_nanapi().discord.discord_upsert_message(
+            str(data['id']),
+            json.dumps(data),
+            noindex=noindex,
+        )
+
+    async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
+        await get_nanapi().discord.discord_delete_messages(str(payload.message_id))
+
+    async def on_raw_bulk_message_delete(payload: discord.RawBulkMessageDeleteEvent):
+        await get_nanapi().discord.discord_delete_messages(','.join(map(str, payload.message_ids)))
+
     if ENABLE_MESSAGE_EXPORT:
         bot.add_listener(on_raw_message)
         bot.add_listener(on_raw_message_edit)

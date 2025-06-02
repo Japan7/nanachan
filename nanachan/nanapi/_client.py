@@ -71,6 +71,7 @@ from .model import (
     MessageBulkDeleteResult,
     MessageBulkInsertResult,
     MessageMergeResult,
+    MessageUpdateNoindexResult,
     NewClientBody,
     NewCollectionBody,
     NewCouponBody,
@@ -150,6 +151,7 @@ from .model import (
     StaffSelectResult,
     TradeDeleteResult,
     TradeSelectResult,
+    UpdateMessageNoindexBody,
     UpsertAMQAccountBody,
     UpsertAnilistAccountBody,
     UpsertDiscordAccountBodyItem,
@@ -1760,9 +1762,10 @@ class DiscordModule:
             )
 
     async def discord_upsert_message(
-        self, message_id: str, body: str, client_id: UUID | None = None
+        self, message_id: str, body: str, noindex: str | None = None, client_id: UUID | None = None
     ) -> (
         Success[Literal[200], MessageMergeResult]
+        | Error[Literal[400], HTTPExceptionModel]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
@@ -1770,6 +1773,7 @@ class DiscordModule:
         """Create or update a Discord message."""
         url = f'{self.server_url}/discord/messages/{message_id}'
         params = {
+            'noindex': noindex,
             'client_id': client_id,
         }
         params = prep_serialization(params)
@@ -1782,6 +1786,59 @@ class DiscordModule:
             if resp.status == 200:
                 return Success[Literal[200], MessageMergeResult](
                     code=200, result=MessageMergeResult(**(await resp.json()))
+                )
+            if resp.status == 400:
+                return Error[Literal[400], HTTPExceptionModel](
+                    code=400, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def discord_update_message_noindex(
+        self, message_id: str, body: UpdateMessageNoindexBody, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], MessageUpdateNoindexResult]
+        | Error[Literal[404], HTTPExceptionModel]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Update indexation instructions of a Discord message."""
+        url = f'{self.server_url}/discord/messages/{message_id}/noindex'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.put(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], MessageUpdateNoindexResult](
+                    code=200, result=MessageUpdateNoindexResult(**(await resp.json()))
+                )
+            if resp.status == 404:
+                return Error[Literal[404], HTTPExceptionModel](
+                    code=404, result=HTTPExceptionModel(**(await resp.json()))
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
