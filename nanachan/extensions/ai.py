@@ -298,6 +298,8 @@ async def setup(bot: Bot):
         noindex = None
         if str(data['author']['id']) == str(bot.bot_id):
             noindex = 'nanachan'
+        elif data['author'].get('bot'):
+            noindex = 'bot'
         elif (thread := data.get('thread')) and str(thread['owner_id']) == str(bot.bot_id):
             noindex = 'nanachan thread'  # AI chat ?
         await get_nanapi().discord.discord_upsert_message(
