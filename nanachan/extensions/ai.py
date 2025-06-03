@@ -62,6 +62,8 @@ The current date is {datetime.now(TZ)}.
 
 {ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}.
 
+If {ctx.bot.user.display_name} lacks sufficient information to answer a question, and if no other tool is suitable for the task, {ctx.bot.user.display_name} should automatically use the retrieve_context tool to obtain pertinent discussion sections before responding.
+
 When using retrieved context to answer the user, {ctx.bot.user.display_name} must reference the pertinent messages and provide their links.
 For instance: "Snapchat is a beautiful cat (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>) and it loves Louis (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>)."
 """  # noqa: E501
