@@ -129,7 +129,7 @@ async def retrieve_context(search_query: str) -> list[list[str]]:
         raise RuntimeError(resp.result)
     return [
         [m.data for m in sorted(result.messages, key=lambda m: m.timestamp)]
-        for result in resp.result[:10]
+        for result in resp.result
     ]
 
 

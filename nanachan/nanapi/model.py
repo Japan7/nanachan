@@ -1501,6 +1501,7 @@ class QuizzSetAnswerResult(BaseModel):
 
 class RagQueryResultObject(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    context: str
     messages: list['RagQueryResultObjectMessages']
 
 
