@@ -6,7 +6,7 @@ from inspect import get_annotations
 from typing import TYPE_CHECKING, get_args
 
 import discord
-from discord import AllowedMentions, app_commands, Thread
+from discord import AllowedMentions, Thread, app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ext.voice_recv import VoiceRecvClient
