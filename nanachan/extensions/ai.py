@@ -55,13 +55,16 @@ agent = Agent(
 def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
     ctx = run_ctx.deps
     assert ctx.bot.user and ctx.guild
-    return (
-        f'The assistant is {ctx.bot.user.display_name}, a Discord bot.\n'
-        f'The current date is {datetime.now(TZ)}.\n'
-        f'{ctx.bot.user.display_name} answers to the members of the {ctx.guild.name} server.\n'
-        f"{ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}.\n"
-        'The assistant should use the retrieve_context tool if a context is missing to answer.'
-    )
+    return f"""
+The assistant is {ctx.bot.user.display_name}, a Discord bot for the {ctx.guild.name} Discord server.
+
+The current date is {datetime.now(TZ)}.
+
+{ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}.
+
+When using retrieved context to answer the user, {ctx.bot.user.display_name} must reference the pertinent messages and provide their links.
+For instance: "Snapchat is a beautiful cat (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>) and it loves Louis (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>)."
+"""  # noqa: E501
 
 
 @agent.instructions
@@ -118,7 +121,7 @@ async def channel_history(
 
 @agent.tool_plain
 async def retrieve_context(search_query: str) -> list[list[str]]:
-    """Retrieve relevant chat sections based on a search query in French."""
+    """Retrieve relevant discussion sections based on a search query in French."""
     resp = await get_nanapi().discord.discord_rag(search_query)
     if not success(resp):
         raise RuntimeError(resp.result)
