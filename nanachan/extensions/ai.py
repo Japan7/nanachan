@@ -6,7 +6,7 @@ from inspect import get_annotations
 from typing import TYPE_CHECKING, get_args
 
 import discord
-from discord import AllowedMentions, app_commands
+from discord import AllowedMentions, app_commands, Thread
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ext.voice_recv import VoiceRecvClient
@@ -305,11 +305,18 @@ async def setup(bot: Bot):
             noindex = 'nanachan'
         elif data['author'].get('bot'):
             noindex = 'bot'
-        elif (thread := data.get('thread')) and str(thread['owner_id']) == str(bot.bot_id):
+        elif await is_nana_thread(data):
             noindex = 'nanachan thread'  # AI chat ?
         await get_nanapi().discord.discord_upsert_message(
             str(data['id']), json.dumps(data), noindex=noindex
         )
+
+    async def is_nana_thread(data: 'Message'):
+        if (thread := data.get('thread')) and str(thread['owner_id']) == str(bot.bot_id):
+            return True
+        channel_id = int(data['channel_id'])
+        channel = bot.get_channel(channel_id) or await bot.fetch_channel(channel_id)
+        return isinstance(channel, Thread) and channel.owner_id == bot.bot_id
 
     async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
         await get_nanapi().discord.discord_delete_messages(str(payload.message_id))
