@@ -124,13 +124,10 @@ async def channel_history(
 @agent.tool_plain
 async def retrieve_context(search_query: str) -> list[list[str]]:
     """Retrieve relevant discussion sections based on a search query in French."""
-    resp = await get_nanapi().discord.discord_rag(search_query)
+    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=50)
     if not success(resp):
         raise RuntimeError(resp.result)
-    return [
-        [m.data for m in sorted(result.messages, key=lambda m: m.timestamp)]
-        for result in resp.result
-    ]
+    return [[m.data for m in r.object.messages] for r in resp.result]
 
 
 @dataclass

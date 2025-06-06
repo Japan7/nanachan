@@ -71,6 +71,7 @@ from .model import (
     MessageBulkDeleteResult,
     MessageBulkInsertResult,
     MessageMergeResult,
+    MessagesRagResult,
     MessageUpdateNoindexResult,
     NewClientBody,
     NewCollectionBody,
@@ -128,7 +129,6 @@ from .model import (
     QuizzGetOldestResult,
     QuizzInsertResult,
     QuizzSetAnswerResult,
-    RagQueryResultObject,
     Rank,
     ReminderDeleteByIdResult,
     ReminderInsertSelectResult,
@@ -1722,10 +1722,10 @@ class DiscordModule:
                 headers=resp.headers,
             )
 
-    async def discord_rag(
-        self, search_query: str, client_id: UUID | None = None
+    async def discord_messages_rag(
+        self, search_query: str, limit: int | None = None, client_id: UUID | None = None
     ) -> (
-        Success[Literal[200], list[RagQueryResultObject]]
+        Success[Literal[200], list[MessagesRagResult]]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
@@ -1733,6 +1733,7 @@ class DiscordModule:
         url = f'{self.server_url}/discord/messages/rag'
         params = {
             'search_query': search_query,
+            'limit': limit,
             'client_id': client_id,
         }
         params = prep_serialization(params)
@@ -1742,8 +1743,8 @@ class DiscordModule:
             params=params,
         ) as resp:
             if resp.status == 200:
-                return Success[Literal[200], list[RagQueryResultObject]](
-                    code=200, result=[RagQueryResultObject(**e) for e in (await resp.json())]
+                return Success[Literal[200], list[MessagesRagResult]](
+                    code=200, result=[MessagesRagResult(**e) for e in (await resp.json())]
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](

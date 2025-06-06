@@ -965,6 +965,12 @@ class MessageUpdateNoindexResult(BaseModel):
     id: UUID
 
 
+class MessagesRagResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    object: 'RagQueryResultObject'
+    distance: float
+
+
 class NewClientBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     username: str
