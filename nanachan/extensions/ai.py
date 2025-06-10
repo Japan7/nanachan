@@ -22,6 +22,7 @@ from nanachan.nanapi.client import get_nanapi, success
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_MODEL_CLS,
+    AI_SKIP_PERMISSIONS_CHECK,
     ENABLE_MESSAGE_EXPORT,
     TZ,
     RequiresAI,
@@ -107,12 +108,21 @@ async def channel_history(
     The before, after, and around parameters are mutually exclusive,
     only one may be passed at a time.
     """
+    ctx = run_ctx.deps
+    if not AI_SKIP_PERMISSIONS_CHECK:
+        assert isinstance(ctx.author, discord.Member)
+        channel = ctx.bot.get_channel(channel_id)
+        if not channel:
+            raise RuntimeError(f'Channel {channel_id} not found.')
+        if isinstance(channel, discord.abc.PrivateChannel):
+            raise RuntimeError(f'Channel {channel_id} is private.')
+        if not channel.permissions_for(ctx.author).read_message_history:
+            raise RuntimeError(f'User does not have permission to read channel {channel_id}')
     if sum(bool(x) for x in (before, after, around)) > 1:
         raise ModelRetry('Only one of before, after, or around may be passed.')
     if limit > 100:
         raise ModelRetry('Max limit is 100.')
-    bot = run_ctx.deps.bot
-    return await bot.http.logs_from(
+    return await ctx.bot.http.logs_from(
         channel_id=channel_id,
         limit=limit,
         before=time_snowflake(before) if before else None,
@@ -121,13 +131,26 @@ async def channel_history(
     )
 
 
-@agent.tool_plain
-async def retrieve_context(search_query: str) -> list[list[str]]:
+@agent.tool
+async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_query: str):
     """Retrieve relevant discussion sections based on a search query in French."""
+    ctx = run_ctx.deps
+    assert isinstance(ctx.author, discord.Member)
     resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=50)
     if not success(resp):
         raise RuntimeError(resp.result)
-    return [[m.data for m in r.object.messages] for r in resp.result]
+    messages = [
+        [
+            m.data
+            for m in r.object.messages
+            if AI_SKIP_PERMISSIONS_CHECK
+            or (channel := ctx.bot.get_channel(int(m.channel_id)))
+            and not isinstance(channel, discord.abc.PrivateChannel)
+            and channel.permissions_for(ctx.author).read_message_history
+        ]
+        for r in resp.result
+    ]
+    return messages
 
 
 @dataclass

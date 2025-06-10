@@ -103,6 +103,7 @@ REDIS_HOST = None
 # AI_PROVIDER = MistralProvider(api_key='myapikey')
 # AI_GEMINI_API_KEY = ''
 # AI_TAVILY_API_KEY = ''
+# AI_SKIP_PERMISSIONS_CHECK = False
 
 ## SauceNAO
 # SAUCENAO_API_KEY = None

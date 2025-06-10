@@ -1514,6 +1514,7 @@ class RagQueryResultObject(BaseModel):
 class RagQueryResultObjectMessages(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     data: Any
+    channel_id: str
     timestamp: datetime
 
 

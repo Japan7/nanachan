@@ -107,6 +107,7 @@ AI_LOW_LATENCY_MODEL: str | None = None
 AI_PROVIDER: Provider | None = None
 AI_GEMINI_API_KEY: str | None = None
 AI_TAVILY_API_KEY: str | None = None
+AI_SKIP_PERMISSIONS_CHECK = False
 
 ## SauceNAO
 SAUCENAO_API_KEY: str | None = None
