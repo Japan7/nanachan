@@ -380,8 +380,8 @@ wheels = [
 
 [[package]]
 name = "discord-ext-voice-recv"
-version = "0.5.0a165"
-source = { git = "https://github.com/imayhaveborkedit/discord-ext-voice-recv.git?rev=02a0782db6a1e154edbcfe252004f8fdd4bf539f#02a0782db6a1e154edbcfe252004f8fdd4bf539f" }
+version = "0.5.1a169"
+source = { git = "https://github.com/imayhaveborkedit/discord-ext-voice-recv.git?rev=be2ba24972a4e00e4e9117db176b24c750507d94#be2ba24972a4e00e4e9117db176b24c750507d94" }
 dependencies = [
     { name = "discord-py", extra = ["voice"] },
 ]
@@ -1013,7 +1013,7 @@ requires-dist = [
     { name = "aiohttp", extras = ["speedups"], specifier = "==3.12.12" },
     { name = "aiojobs", specifier = "==1.4.0" },
     { name = "backoff", specifier = "==2.2.1" },
-    { name = "discord-ext-voice-recv", git = "https://github.com/imayhaveborkedit/discord-ext-voice-recv.git?rev=02a0782db6a1e154edbcfe252004f8fdd4bf539f" },
+    { name = "discord-ext-voice-recv", git = "https://github.com/imayhaveborkedit/discord-ext-voice-recv.git?rev=be2ba24972a4e00e4e9117db176b24c750507d94" },
     { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=a18d22383427a2bb8714fc8a88832fd1012d42c0" },
     { name = "faust-cchardet", specifier = "==2.1.19" },
     { name = "google-genai", specifier = "==1.20.0" },
