@@ -1,22 +1,25 @@
+import base64
+import io
 import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from inspect import get_annotations
-from typing import TYPE_CHECKING, get_args
+from typing import TYPE_CHECKING, Literal, get_args
 
 import discord
 from discord import AllowedMentions, Thread, app_commands
 from discord.app_commands import Choice
+from discord.app_commands.tree import ALL_GUILDS
 from discord.ext import commands
 from discord.ext.voice_recv import VoiceRecvClient
 from discord.utils import time_snowflake
 from pydantic_ai import Agent, BinaryContent, ModelRetry, RunContext
 from pydantic_ai.messages import ModelMessage, UserContent
 
-from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
+from nanachan.discord.application_commands import LegacyCommandContext, NanaGroup, legacy_command
 from nanachan.discord.bot import Bot
-from nanachan.discord.cog import NanaGroupCog
+from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.helpers import Embed
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.settings import (
@@ -27,10 +30,12 @@ from nanachan.settings import (
     TZ,
     RequiresAI,
     RequiresGemini,
+    RequiresOpenAI,
 )
 from nanachan.utils.ai import (
     GeminiLiveAudioSink,
     get_model,
+    get_openai,
     iter_stream,
     nanapi_tools,
     python_mcp_server,
@@ -173,19 +178,23 @@ async def model_autocomplete(interaction: discord.Interaction, current: str) -> 
 
 
 @app_commands.guild_only()
-class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
-    slash_voicechat = app_commands.Group(name='voicechat', description='AI Voice Chat')
+class AI(Cog, required_settings=RequiresAI):
+    slash_ai = NanaGroup(name='ai', guild_ids=[ALL_GUILDS], description='AI commands')
+    slash_vc = app_commands.Group(name='voicechat', parent=slash_ai, description='AI Voice Chat')
 
     def __init__(self, bot: Bot):
         self.bot = bot
         self.contexts = dict[int, ChatContext]()
         self.voice_client: VoiceRecvClient | None = None
 
-        if RequiresGemini.configured:
-            self.slash_voicechat.command(name='start')(self.voice_start)
-            self.slash_voicechat.command(name='stop')(self.voice_stop)
+        if RequiresOpenAI.configured:
+            self.slash_ai.command(name='image')(self.imagen)
 
-    @app_commands.command(name='chat')
+        if RequiresGemini.configured:
+            self.slash_vc.command(name='start')(self.voice_start)
+            self.slash_vc.command(name='stop')(self.voice_stop)
+
+    @slash_ai.command(name='chat')
     @app_commands.autocomplete(model_name=model_autocomplete)
     @legacy_command()
     async def new_chat(
@@ -259,6 +268,52 @@ class AI(NanaGroupCog, group_name='ai', required_settings=RequiresAI):
             except Exception as e:
                 await send(f'An error occured while running the agent:\n```\n{e}\n```')
                 logger.exception(e)
+
+    @legacy_command()
+    async def imagen(
+        self,
+        ctx: LegacyCommandContext,
+        prompt: str,
+        attachment: discord.Attachment | None = None,
+        model: Literal['gpt-image-1', 'dall-e-2'] = 'gpt-image-1',
+        quality: Literal['standard', 'low', 'medium', 'high', 'auto'] = 'auto',
+        size: Literal[
+            '256x256', '512x512', '1024x1024', '1536x1024', '1024x1536', 'auto'
+        ] = 'auto',
+    ):
+        """OpenAI Image Generation"""
+        await ctx.defer()
+        embed = Embed(description=prompt, color=ctx.author.accent_color)
+        embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
+        embed.set_footer(text=f'{model} (quality: {quality}, size: {size})')
+        if attachment and attachment.content_type and attachment.content_type.startswith('image/'):
+            embed.set_image(url=attachment.url)
+            data = await attachment.read()
+            result = await get_openai().images.edit(
+                model=model,
+                prompt=prompt,
+                image=(attachment.filename, data, attachment.content_type),
+                quality=quality,
+                size=size,
+            )
+        else:
+            result = await get_openai().images.generate(
+                model=model,
+                prompt=prompt,
+                quality=quality,
+                size=size,
+            )
+        assert result.data
+        image_base64 = result.data[0].b64_json
+        assert image_base64
+        image_bytes = base64.b64decode(image_base64)
+        with io.BytesIO() as buf:
+            buf.write(image_bytes)
+            buf.seek(0)
+            await ctx.reply(
+                embed=embed,
+                file=discord.File(fp=buf, filename=f'{result.created}.png'),
+            )
 
     @legacy_command()
     async def voice_start(

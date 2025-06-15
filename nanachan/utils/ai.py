@@ -11,6 +11,7 @@ import numpy as np
 from discord.ext.voice_recv import AudioSink
 from google import genai
 from google.genai import live, types
+from openai import AsyncOpenAI
 from pydantic_ai import Agent, Tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.common_tools.tavily import tavily_search_tool
@@ -32,7 +33,14 @@ from pydantic_ai.models import Model
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import UserType
 from nanachan.nanapi.client import get_nanapi
-from nanachan.settings import AI_GEMINI_API_KEY, AI_MODEL_CLS, AI_PROVIDER, AI_TAVILY_API_KEY, TZ
+from nanachan.settings import (
+    AI_GEMINI_API_KEY,
+    AI_MODEL_CLS,
+    AI_OPENAI_API_KEY,
+    AI_PROVIDER,
+    AI_TAVILY_API_KEY,
+    TZ,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +169,12 @@ python_mcp_server = MCPServerStdio(
         'stdio',
     ],
 )
+
+
+@cache
+def get_openai():
+    assert AI_OPENAI_API_KEY
+    return AsyncOpenAI(api_key=AI_OPENAI_API_KEY)
 
 
 @cache

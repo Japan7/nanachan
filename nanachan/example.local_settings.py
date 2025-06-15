@@ -101,6 +101,7 @@ REDIS_HOST = None
 # AI_FLAGSHIP_MODEL = 'mistral-large-latest'
 # AI_LOW_LATENCY_MODEL = 'mistral-small-latest'
 # AI_PROVIDER = MistralProvider(api_key='myapikey')
+# AI_OPENAI_API_KEY = ''
 # AI_GEMINI_API_KEY = ''
 # AI_TAVILY_API_KEY = ''
 # AI_SKIP_PERMISSIONS_CHECK = False

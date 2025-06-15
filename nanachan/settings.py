@@ -105,6 +105,7 @@ AI_DEFAULT_MODEL: str | None = None
 AI_FLAGSHIP_MODEL: str | None = None
 AI_LOW_LATENCY_MODEL: str | None = None
 AI_PROVIDER: Provider | None = None
+AI_OPENAI_API_KEY: str | None = None
 AI_GEMINI_API_KEY: str | None = None
 AI_TAVILY_API_KEY: str | None = None
 AI_SKIP_PERMISSIONS_CHECK = False
@@ -153,4 +154,5 @@ RequiresWaicolle = RequiredSettings(WC_ROLE)
 RequiresAI = RequiredSettings(
     AI_MODEL_CLS, AI_DEFAULT_MODEL, AI_FLAGSHIP_MODEL, AI_LOW_LATENCY_MODEL, AI_PROVIDER
 )
+RequiresOpenAI = RequiredSettings(AI_OPENAI_API_KEY)
 RequiresGemini = RequiredSettings(AI_GEMINI_API_KEY)
