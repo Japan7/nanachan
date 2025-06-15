@@ -877,6 +877,31 @@ class AnilistModule:
                 headers=resp.headers,
             )
 
+    async def anilist_chara_birthdays(
+        self,
+    ) -> Success[Literal[200], list[CharaSelectResult]] | Error[Literal[401], HTTPExceptionModel]:
+        """Characters Birthdays"""
+        url = f'{self.server_url}/anilist/charas/birthdays'
+
+        async with self.session.get(
+            url,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[CharaSelectResult]](
+                    code=200, result=[CharaSelectResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
     async def anilist_get_chara_collage(
         self, ids_al: str, hide_no_images: int | None = None, blooded: int | None = None
     ) -> (

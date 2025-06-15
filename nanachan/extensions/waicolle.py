@@ -389,6 +389,21 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         pages = [chara_page(self.bot, chara) for chara in results]
         await NavigatorView.create(self.bot, ctx.reply, pages=pages)
 
+    @slash_waifu_global.command()
+    @legacy_command()
+    async def birthdays(self, ctx: LegacyCommandContext):
+        """Characters Birthdays"""
+        resp = await get_nanapi().anilist.anilist_chara_birthdays()
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        results = resp.result
+
+        if len(results) == 0:
+            raise commands.CommandError('No results found')
+
+        pages = [chara_page(self.bot, chara) for chara in results]
+        await NavigatorView.create(self.bot, ctx.reply, pages=pages)
+
     ########
     # Drop #
     ########
