@@ -22,8 +22,10 @@ from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.helpers import Embed
 from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.model import InsertPromptBody
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
+    AI_FLAGSHIP_MODEL,
     AI_MODEL_CLS,
     AI_SKIP_PERMISSIONS_CHECK,
     ENABLE_MESSAGE_EXPORT,
@@ -72,6 +74,8 @@ If {ctx.bot.user.display_name} lacks sufficient information to answer a question
 
 When using retrieved context to answer the user, {ctx.bot.user.display_name} must reference the pertinent messages and provide their links.
 For instance: "Snapchat is a beautiful cat (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>) and it loves Louis (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>)."
+
+For complex tasks, {ctx.bot.user.display_name} can access to a collection of prompts with ai_prompt_index and ai_get_prompt. These prompts serve as instructions.
 """  # noqa: E501
 
 
@@ -177,10 +181,26 @@ async def model_autocomplete(interaction: discord.Interaction, current: str) -> 
     return choices[:25]
 
 
+async def prompt_autocomplete(interaction: discord.Interaction, current: str) -> list[Choice[str]]:
+    resp = await get_nanapi().ai.ai_prompt_index()
+    if not success(resp):
+        raise RuntimeError(resp.result)
+    choices = [
+        Choice(
+            name=autocomplete_truncate(f'{prompt.name} ({prompt.description})'),
+            value=prompt.name,
+        )
+        for prompt in resp.result
+        if current.lower() in prompt.name.lower()
+    ]
+    return choices[:25]
+
+
 @app_commands.guild_only()
 class AI(Cog, required_settings=RequiresAI):
     slash_ai = NanaGroup(name='ai', guild_ids=[ALL_GUILDS], description='AI commands')
-    slash_vc = app_commands.Group(name='voicechat', parent=slash_ai, description='AI Voice Chat')
+    slash_pr = app_commands.Group(name='prompt', parent=slash_ai, description='AI prompts')
+    slash_vc = app_commands.Group(name='voicechat', parent=slash_ai, description='AI voice chat')
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -268,6 +288,83 @@ class AI(Cog, required_settings=RequiresAI):
             except Exception as e:
                 await send(f'An error occured while running the agent:\n```\n{e}\n```')
                 logger.exception(e)
+
+    @slash_pr.command(name='save')
+    @legacy_command()
+    async def prompt_save(self, ctx: LegacyCommandContext, name: str, what: str):
+        """Save a prompt"""
+        await ctx.defer()
+        assert AI_FLAGSHIP_MODEL
+        async with agent.run_mcp_servers():
+            result = await agent.run(
+                f'Create a prompt named `{name}` (make it snake_case) '
+                f'that does the following task:\n{what}',
+                output_type=InsertPromptBody,
+                model=get_model(AI_FLAGSHIP_MODEL),
+                deps=ctx,
+            )
+        body = result.output
+        resp = await get_nanapi().ai.ai_insert_prompt(body)
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        embed = Embed(title=f'`{body.name}`', description=body.description)
+        embed.add_field(name='Prompt', value=body.prompt, inline=False)
+        for arg in body.arguments:
+            embed.add_field(name=f'`{arg.name}`', value=arg.description, inline=True)
+        await ctx.reply(embed=embed)
+
+    @slash_pr.command(name='delete')
+    @app_commands.autocomplete(name=prompt_autocomplete)
+    @legacy_command()
+    async def prompt_delete(self, ctx: LegacyCommandContext, name: str):
+        """Delete a prompt"""
+        resp = await get_nanapi().ai.ai_delete_prompt(name)
+        if not success(resp):
+            raise RuntimeError(resp.result)
+        await ctx.reply(self.bot.get_emoji_str('FubukiGO'))
+
+    @slash_pr.command(name='use')
+    @app_commands.autocomplete(name=prompt_autocomplete)
+    @app_commands.autocomplete(model_name=model_autocomplete)
+    @legacy_command()
+    async def prompt_use(
+        self,
+        ctx: LegacyCommandContext,
+        name: str,
+        model_name: str | None = None,
+    ):
+        """Use a prompt"""
+        if not model_name:
+            assert AI_DEFAULT_MODEL
+            model_name = AI_DEFAULT_MODEL
+
+        resp = await get_nanapi().ai.ai_get_prompt(name)
+        if not success(resp):
+            raise commands.CommandError('Prompt not found')
+        prompt = resp.result
+
+        chat_prompt = prompt.prompt
+        if prompt.arguments:
+            chat_prompt += '\n\nBefore proceeding, ask the user the following arguments:\n'
+            for arg in prompt.arguments:
+                chat_prompt += f'{arg.name}: {arg.description}\n'
+
+        embed = Embed(description=f'`/{prompt.name}`', color=ctx.author.accent_color)
+        embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
+        embed.set_footer(text=model_name)
+        resp = await ctx.reply(embed=embed)
+
+        if isinstance(ctx.channel, discord.Thread):
+            thread = ctx.channel
+            reply_to = resp
+        else:
+            async with ctx.channel.typing():
+                thread = await resp.create_thread(name=prompt.name, auto_archive_duration=60)
+                await thread.add_user(ctx.author)
+                reply_to = None
+
+        self.contexts[thread.id] = ChatContext(model_name=model_name)
+        await self.chat(ctx, thread, chat_prompt, attachments=[], reply_to=reply_to)
 
     @legacy_command()
     async def imagen(

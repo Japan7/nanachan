@@ -63,6 +63,7 @@ from .model import (
     HistoireSelectIdTitleResult,
     HTTPExceptionModel,
     HTTPValidationError,
+    InsertPromptBody,
     LoginResponse,
     MediaAlbumResult,
     MediaSelectResult,
@@ -124,6 +125,10 @@ from .model import (
     ProjoUpdateMessageIdResult,
     ProjoUpdateNameResult,
     ProjoUpdateStatusResult,
+    PromptDeleteResult,
+    PromptInsertResult,
+    PromptSelectByNameResult,
+    PromptSelectNameDescResult,
     QuizzDeleteByIdResult,
     QuizzGetByIdResult,
     QuizzGetOldestResult,
@@ -231,6 +236,181 @@ class JsonDataclassEncoder(json.JSONEncoder):
 
 def default_json_serializer(o: Any) -> str:
     return json.dumps(o, cls=JsonDataclassEncoder)
+
+
+class AiModule:
+    def __init__(self, session: 'ClientSession', server_url: str):
+        self.session: ClientSession = session
+        self.server_url: str = server_url
+
+    async def ai_prompt_index(
+        self, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], list[PromptSelectNameDescResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """List all prompts (name and description)."""
+        url = f'{self.server_url}/ai/prompts'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.get(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[PromptSelectNameDescResult]](
+                    code=200, result=[PromptSelectNameDescResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def ai_insert_prompt(
+        self, body: InsertPromptBody, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], PromptInsertResult]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Insert a new prompt."""
+        url = f'{self.server_url}/ai/prompts'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.post(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], PromptInsertResult](
+                    code=200, result=PromptInsertResult(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def ai_get_prompt(
+        self, name: str, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], PromptSelectByNameResult]
+        | Error[Literal[404], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Get a prompt by name."""
+        url = f'{self.server_url}/ai/prompts/{name}'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.get(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], PromptSelectByNameResult](
+                    code=200, result=PromptSelectByNameResult(**(await resp.json()))
+                )
+            if resp.status == 404:
+                return Error[Literal[404], None](code=404, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def ai_delete_prompt(
+        self, name: str, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], PromptDeleteResult]
+        | Success[Literal[204], None]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Delete a prompt by name."""
+        url = f'{self.server_url}/ai/prompts/{name}'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.delete(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], PromptDeleteResult](
+                    code=200, result=PromptDeleteResult(**(await resp.json()))
+                )
+            if resp.status == 204:
+                return Success[Literal[204], None](code=204, result=None)
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
 
 
 class AmqModule:
@@ -6451,6 +6631,7 @@ class WaicolleModule:
 class ClientSession(aiohttp.ClientSession):
     def __init__(self, server_url: str, **kwargs):
         super().__init__(**kwargs)
+        self.ai: AiModule = AiModule(self, server_url)
         self.amq: AmqModule = AmqModule(self, server_url)
         self.anilist: AnilistModule = AnilistModule(self, server_url)
         self.calendar: CalendarModule = CalendarModule(self, server_url)

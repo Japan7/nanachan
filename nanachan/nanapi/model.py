@@ -892,6 +892,20 @@ class HistoireSelectIdTitleResult(BaseModel):
     title: str
 
 
+class InsertPromptBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str
+    prompt: str
+    arguments: list['InsertPromptBodyArgument']
+    description: str | None = None
+
+
+class InsertPromptBodyArgument(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str
+    description: str | None = None
+
+
 class LoginResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     access_token: str
@@ -1454,6 +1468,36 @@ class ProjoUpdateNameResult(BaseModel):
 class ProjoUpdateStatusResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
+
+
+class PromptDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
+class PromptInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
+class PromptSelectByNameResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str
+    description: str | None
+    prompt: str
+    arguments: list['PromptSelectByNameResultArguments']
+
+
+class PromptSelectByNameResultArguments(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str
+    description: str | None
+
+
+class PromptSelectNameDescResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str
+    description: str | None
 
 
 class QuizzDeleteByIdResult(BaseModel):

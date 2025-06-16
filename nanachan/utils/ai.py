@@ -121,6 +121,8 @@ search_tool = (
 def nanapi_tools() -> Iterable[Tool[None]]:
     nanapi = get_nanapi()
     endpoints = [
+        nanapi.ai.ai_prompt_index,
+        nanapi.ai.ai_get_prompt,
         nanapi.amq.amq_get_accounts,
         nanapi.anilist.anilist_get_accounts,
         nanapi.anilist.anilist_get_account_entries,
