@@ -182,7 +182,7 @@ def get_openai():
 @cache
 def get_gemini():
     assert AI_GEMINI_API_KEY
-    return genai.Client(api_key=AI_GEMINI_API_KEY)
+    return genai.Client(api_key=AI_GEMINI_API_KEY, http_options={'api_version': 'v1alpha'})
 
 
 class GeminiLiveAudioSink(AudioSink):
@@ -255,9 +255,11 @@ class GeminiLiveAudioSink(AudioSink):
 
     async def gemini_session(self):
         async with get_gemini().aio.live.connect(
-            model='gemini-2.0-flash-live-001',
+            model='gemini-2.5-flash-preview-native-audio-dialog',
             config=types.LiveConnectConfig(
                 response_modalities=[types.Modality.AUDIO],
+                enable_affective_dialog=True,
+                proactivity=types.ProactivityConfig(proactive_audio=True),
                 realtime_input_config=types.RealtimeInputConfig(
                     automatic_activity_detection=types.AutomaticActivityDetection(disabled=True)
                 ),
