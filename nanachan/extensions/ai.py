@@ -106,7 +106,7 @@ def get_channels_name_channel_id_map(run_ctx: RunContext[commands.Context[Bot]])
 @agent.tool
 async def channel_history(
     run_ctx: RunContext[commands.Context[Bot]],
-    channel_id: int,
+    channel_id: str,
     limit: int = 100,
     before: datetime | None = None,
     after: datetime | None = None,
@@ -120,7 +120,7 @@ async def channel_history(
     ctx = run_ctx.deps
     if not AI_SKIP_PERMISSIONS_CHECK:
         assert isinstance(ctx.author, discord.Member)
-        channel = ctx.bot.get_channel(channel_id)
+        channel = ctx.bot.get_channel(int(channel_id))
         if not channel:
             raise RuntimeError(f'Channel {channel_id} not found.')
         if isinstance(channel, discord.abc.PrivateChannel):
