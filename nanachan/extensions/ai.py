@@ -140,12 +140,12 @@ async def channel_history(
     )
 
 
-@agent.tool(retries=5)
+@agent.tool
 async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_query: str):
-    """Find relevant discussion sections using a simple French keyword search."""
+    """Retrieve relevant discussion sections based on a search query in French."""
     ctx = run_ctx.deps
     assert isinstance(ctx.author, discord.Member)
-    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=25)
+    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=50)
     if not success(resp):
         raise RuntimeError(resp.result)
     messages = [
@@ -159,9 +159,6 @@ async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_qu
         ]
         for r in resp.result
     ]
-    messages = [b for b in messages if b]
-    if not messages:
-        raise ModelRetry('No results found. Try using a simpler query.')
     return messages
 
 
