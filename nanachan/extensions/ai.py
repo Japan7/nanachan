@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import io
 import json
@@ -55,6 +56,8 @@ agent = Agent(
     tools=(search_tool, *nanapi_tools()),  # type: ignore
     mcp_servers=[python_mcp_server],
 )
+
+agent_lock = asyncio.Lock()
 
 
 @agent.system_prompt
@@ -247,7 +250,7 @@ class AI(Cog, required_settings=RequiresAI):
         attachments: list[discord.Attachment],
         reply_to: discord.Message | None = None,
     ):
-        async with thread.typing():
+        async with agent_lock, thread.typing():
             content: list[UserContent] = [prompt]
             for attachment in attachments:
                 if attachment.content_type:
@@ -282,7 +285,7 @@ class AI(Cog, required_settings=RequiresAI):
         """Save a prompt"""
         await ctx.defer()
         assert AI_FLAGSHIP_MODEL
-        async with agent.run_mcp_servers():
+        async with agent_lock, agent.run_mcp_servers():
             result = await agent.run(
                 f'Create a prompt named `{name}` (make it snake_case) '
                 f'that does the following task:\n{what}',
