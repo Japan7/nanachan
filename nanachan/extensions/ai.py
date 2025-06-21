@@ -4,8 +4,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from inspect import get_annotations
-from typing import TYPE_CHECKING, Literal, get_args
+from typing import TYPE_CHECKING, Literal
 
 import discord
 from discord import AllowedMentions, Thread, app_commands
@@ -26,7 +25,6 @@ from nanachan.nanapi.model import InsertPromptBody
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_FLAGSHIP_MODEL,
-    AI_MODEL_CLS,
     AI_SKIP_PERMISSIONS_CHECK,
     ENABLE_MESSAGE_EXPORT,
     TZ,
@@ -171,19 +169,6 @@ class ChatContext:
     history: list[ModelMessage] = field(default_factory=list)
 
 
-async def model_autocomplete(interaction: discord.Interaction, current: str) -> list[Choice[str]]:
-    assert AI_MODEL_CLS
-    # trust me bro
-    model_name_type = get_annotations(AI_MODEL_CLS, eval_str=True)['_model_name']
-    model_names = get_args(get_args(model_name_type)[1])
-    choices = [
-        Choice(name=autocomplete_truncate(name), value=name)
-        for name in model_names
-        if current.lower() in name.lower()
-    ]
-    return choices[:25]
-
-
 async def prompt_autocomplete(interaction: discord.Interaction, current: str) -> list[Choice[str]]:
     resp = await get_nanapi().ai.ai_prompt_index()
     if not success(resp):
@@ -218,7 +203,6 @@ class AI(Cog, required_settings=RequiresAI):
             self.slash_vc.command(name='stop')(self.voice_stop)
 
     @slash_ai.command(name='chat')
-    @app_commands.autocomplete(model_name=model_autocomplete)
     @legacy_command()
     async def new_chat(
         self,
@@ -328,7 +312,6 @@ class AI(Cog, required_settings=RequiresAI):
 
     @slash_pr.command(name='use')
     @app_commands.autocomplete(name=prompt_autocomplete)
-    @app_commands.autocomplete(model_name=model_autocomplete)
     @legacy_command()
     async def prompt_use(
         self,
