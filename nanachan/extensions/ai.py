@@ -105,6 +105,36 @@ def get_channels_name_channel_id_map(run_ctx: RunContext[commands.Context[Bot]])
 
 
 @agent.tool
+async def get_parent_channel(run_ctx: RunContext[commands.Context[Bot]]):
+    """Retrieve the parent channel of the current thread in which the assistant is summoned."""
+    ctx = run_ctx.deps
+    channel_id = (
+        ctx.channel.parent.id
+        if isinstance(ctx.channel, Thread) and ctx.channel.parent
+        else ctx.channel.id
+    )
+    return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
+
+
+@agent.tool
+async def fetch_channel(run_ctx: RunContext[commands.Context[Bot]], channel_id: str):
+    """Fetch a channel."""
+    ctx = run_ctx.deps
+    return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
+
+
+@agent.tool
+async def fetch_message(
+    run_ctx: RunContext[commands.Context[Bot]],
+    channel_id: str,
+    message_id: str,
+):
+    """Fetch a message from a channel."""
+    ctx = run_ctx.deps
+    return await ctx._state.http.get_message(channel_id, message_id)  # pyright: ignore[reportPrivateUsage]
+
+
+@agent.tool
 async def channel_history(
     run_ctx: RunContext[commands.Context[Bot]],
     channel_id: str,
