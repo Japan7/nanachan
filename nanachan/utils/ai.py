@@ -59,13 +59,8 @@ async def iter_stream[AgentDepsT](
 ) -> AsyncGenerator[str]:
     """https://ai.pydantic.dev/agents/#streaming"""
     async with (
-        agent.run_mcp_servers(),
-        agent.iter(
-            user_prompt,
-            message_history=message_history,
-            model=model,
-            deps=deps,
-        ) as run,
+        agent,
+        agent.iter(user_prompt, message_history=message_history, model=model, deps=deps) as run,
     ):
         async for node in run:
             if Agent.is_user_prompt_node(node):

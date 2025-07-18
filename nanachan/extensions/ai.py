@@ -315,7 +315,7 @@ class AI(Cog, required_settings=RequiresAI):
         """Save a prompt"""
         await ctx.defer()
         assert AI_FLAGSHIP_MODEL
-        async with agent_lock, agent.run_mcp_servers():
+        async with agent_lock, agent:
             result = await agent.run(
                 f'Create a prompt named `{name}` (make it snake_case) '
                 f'that does the following task:\n{what}',
