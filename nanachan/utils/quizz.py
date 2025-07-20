@@ -24,7 +24,6 @@ from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
 from nanachan.settings import (
     AI_FLAGSHIP_MODEL,
-    AI_LOW_LATENCY_MODEL,
     GLOBAL_COIN_MULTIPLIER,
     PREFIX,
     SAUCENAO_API_KEY,
@@ -153,18 +152,7 @@ class QuizzBase(ABC):
 
     @classmethod
     async def try_validate(cls, question: str | None, answer: str | None, submission: str) -> bool:
-        if RequiresAI.configured:
-            assert AI_LOW_LATENCY_MODEL
-            run = await agent.run(
-                f'Indicate whether the following submission closely matches all elements of the '
-                f'quizz answer with very high confidence: {submission}',
-                output_type=bool,
-                model=get_model(AI_LOW_LATENCY_MODEL),
-                deps=RunDeps(question, answer),
-            )
-            return run.output
-        else:
-            return False
+        return False
 
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         resp = await get_nanapi().quizz.quizz_get_game(game_id)
