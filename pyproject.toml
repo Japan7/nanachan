@@ -14,7 +14,7 @@ requires-python = ">=3.13"
 dependencies = [
     "discord-py[voice]",
     "discord-ext-voice-recv==0.5.2a179",
-    "matplotlib==3.10.3",
+    "matplotlib==3.10.5",
     "python-socketio[asyncio_client]==5.13.0",
     "aiohttp[speedups]==3.12.15",
     "aiofiles==24.1.0",
