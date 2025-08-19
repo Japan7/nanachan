@@ -46,7 +46,7 @@ dev = [
     "pyright==1.1.403",
     "ruff==0.12.9",
     "mahou-py",
-    "requests==2.32.4",
+    "requests==2.32.5",
     # FIXME: https://pypi.org/project/types-redis/#description
     # Note: Redis-py 5.0.0 added a py.typed file, but the inline annotations are incomplete.
     # Continuing to use types-redis for the time being may lead to superior results.
