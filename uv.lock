@@ -455,8 +455,8 @@ wheels = [
 
 [[package]]
 name = "discord-py"
-version = "2.5.2"
-source = { git = "https://github.com/Japan7/discord.py.git?rev=a18d22383427a2bb8714fc8a88832fd1012d42c0#a18d22383427a2bb8714fc8a88832fd1012d42c0" }
+version = "2.7.0a5306+g1ca11a06"
+source = { git = "https://github.com/Japan7/discord.py.git?rev=1ca11a064594639de62b1dd8b09953cdb5da44dc#1ca11a064594639de62b1dd8b09953cdb5da44dc" }
 dependencies = [
     { name = "aiohttp" },
     { name = "audioop-lts" },
@@ -1185,7 +1185,7 @@ requires-dist = [
     { name = "aiojobs", specifier = "==1.4.0" },
     { name = "backoff", specifier = "==2.2.1" },
     { name = "discord-ext-voice-recv", specifier = "==0.5.2a179" },
-    { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=a18d22383427a2bb8714fc8a88832fd1012d42c0" },
+    { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=1ca11a064594639de62b1dd8b09953cdb5da44dc" },
     { name = "faust-cchardet", specifier = "==2.1.19" },
     { name = "google-genai", specifier = "==1.31.0" },
     { name = "html2text", specifier = "==2025.4.15" },
