@@ -276,11 +276,11 @@ class Audio(NanaGroupCog, group_name='audio'):
     @staticmethod
     def _find_yt_video(search_tags: str):
         search_tags = search_tags.lstrip('<').rstrip('>')
-        ytdl = YoutubeDL(YOUTUBE_DL_CONFIG)
+        ytdl = YoutubeDL(YOUTUBE_DL_CONFIG)  # pyright: ignore[reportArgumentType]
         data = ytdl.extract_info(search_tags, download=False)
 
-        if data is not None and 'entries' in data:
-            videos = [YTVideo(e) for e in data['entries']]
+        if data is not None and 'entries' in data:  # pyright: ignore[reportUnnecessaryComparison]
+            videos = [YTVideo(e) for e in data['entries']]  # pyright: ignore[reportGeneralTypeIssues]
         else:
             videos = [YTVideo(data)]
 
