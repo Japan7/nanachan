@@ -361,7 +361,7 @@ class ProfileModal(ui.Modal):
             self.profile.birthday.strftime('%Y-%m-%d') if self.profile.birthday else None
         )
 
-        TextInput = ui.TextInput[ProfileModal]
+        TextInput = ui.TextInput  # FIXME: can’t use ui.TextInput[ProfileModal] now
 
         self.birthday = TextInput(
             label='Birthdate',

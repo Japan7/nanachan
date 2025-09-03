@@ -107,7 +107,7 @@ class Bot(commands.AutoShardedBot):
             command_prefix=get_command_prefix,
             intents=intents,
             description=framed_header('Nana-chan commands manual'),
-            help_command=CustomHelpCommand(help='Show this message'),
+            help_command=CustomHelpCommand(),
             allowed_mentions=AllowedMentions(everyone=False, roles=False),
             case_insensitive=True,
         )

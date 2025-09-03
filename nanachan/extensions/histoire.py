@@ -71,9 +71,7 @@ class Histoire(Cog):
             parts_count = builder.store(message.content)
             await ctx.send(f'{parts_count} parts cached')
 
-    @commands.group(
-        invoke_without_command=True, recursive_help=False, help='Tell you a story (in french)'
-    )
+    @commands.group(invoke_without_command=True, help='Tell you a story (in french)')
     async def histoire(self, ctx: commands.Context, story_id: Optional[str]) -> None:
         _story_id = None
         # Check if story_id is subcommand or real parameter
