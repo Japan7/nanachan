@@ -613,7 +613,7 @@ wheels = [
 
 [[package]]
 name = "google-genai"
-version = "1.34.0"
+version = "1.35.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -625,9 +625,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/80/54a58abd46b5cb1385d993fd668f8c82c74a8896dceae691da1315a90dc9/google_genai-1.34.0.tar.gz", hash = "sha256:9f963745faaa177a921202aa849c0811f7852089101fa143b7568a32020c9de9", size = 243492, upload-time = "2025-09-09T02:37:31.408Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/e4/9a493c16c8b7ecc9faa73e5dba026e34c7c4acdfa4ae10008503ad4e1def/google_genai-1.35.0.tar.gz", hash = "sha256:08b7f663dd7ff38e2c5b9574cba9016cad1503e7f2ddaa9c234deaf0e8d5b609", size = 243703, upload-time = "2025-09-09T21:51:45.287Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/2f/cd0009936b9fb0bd700a990ea7c8ec8e0f3e7a267279f062222f16823668/google_genai-1.34.0-py3-none-any.whl", hash = "sha256:d944d05c55162f3d408d22ea67bdb8dcc07ff3a9c82074f732acc27653175bdd", size = 244108, upload-time = "2025-09-09T02:37:29.66Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/f2/19999caa9bcdb808ee510434da7c5591bfc805e6436113deff0e350fe7fe/google_genai-1.35.0-py3-none-any.whl", hash = "sha256:c2671a20655ee700704c98dcc6d2742eb8ee71a04ea112dc47e338444de8da8a", size = 244299, upload-time = "2025-09-09T21:51:43.361Z" },
 ]
 
 [[package]]
@@ -1200,7 +1200,7 @@ requires-dist = [
     { name = "discord-ext-voice-recv", specifier = "==0.5.2a179" },
     { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=27cc8196e457d009238876219168b223f700968c" },
     { name = "faust-cchardet", specifier = "==2.1.19" },
-    { name = "google-genai", specifier = "==1.34.0" },
+    { name = "google-genai", specifier = "==1.35.0" },
     { name = "html2text", specifier = "==2025.4.15" },
     { name = "matplotlib", specifier = "==3.10.6" },
     { name = "numpy", specifier = "==2.3.3" },
@@ -1244,6 +1244,7 @@ wheels = [
 name = "numpy"
 version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/19/95b3d357407220ed24c139018d2518fab0a61a948e68286a25f1a4d049ff/numpy-2.3.3.tar.gz", hash = "sha256:ddc7c39727ba62b80dfdbedf400d1c10ddfa8eefbd7ec8dcb118be8b56d31029", size = 20576648, upload-time = "2025-09-09T16:54:12.543Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7d/b9/984c2b1ee61a8b803bf63582b4ac4242cf76e2dbd663efeafcb620cc0ccb/numpy-2.3.3-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:f5415fb78995644253370985342cd03572ef8620b934da27d77377a2285955bf", size = 20949588, upload-time = "2025-09-09T15:56:59.087Z" },
     { url = "https://files.pythonhosted.org/packages/a6/e4/07970e3bed0b1384d22af1e9912527ecbeb47d3b26e9b6a3bced068b3bea/numpy-2.3.3-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:d00de139a3324e26ed5b95870ce63be7ec7352171bc69a4cf1f157a48e3eb6b7", size = 14177802, upload-time = "2025-09-09T15:57:01.73Z" },
