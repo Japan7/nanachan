@@ -38,7 +38,7 @@ dependencies = [
     "python-dateutil==2.9.0.post0",
     "pydantic-ai-slim[openai,mistral,mcp,duckduckgo,tavily]==1.0.7",
     "openai==1.107.3",
-    "google-genai==1.36.0",
+    "google-genai==1.38.0",
 ]
 
 [dependency-groups]
