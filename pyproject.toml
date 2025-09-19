@@ -36,7 +36,7 @@ dependencies = [
     "aiojobs==1.4.0",
     "tzdata==2025.2",
     "python-dateutil==2.9.0.post0",
-    "pydantic-ai-slim[openai,mistral,mcp,duckduckgo,tavily]==1.0.8",
+    "pydantic-ai-slim[openai,mistral,mcp,duckduckgo,tavily]==1.0.9",
     "openai==1.108.0",
     "google-genai==1.38.0",
 ]
