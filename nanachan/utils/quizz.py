@@ -14,7 +14,7 @@ from uuid import UUID
 import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import RunContext
 
 import nanachan.resources
 from nanachan.discord.bot import Bot
@@ -29,7 +29,7 @@ from nanachan.settings import (
     SAUCENAO_API_KEY,
     RequiresAI,
 )
-from nanachan.utils.ai import get_model
+from nanachan.utils.ai import Agent, get_model
 from nanachan.utils.misc import saucenao_lookup, to_producer
 
 if TYPE_CHECKING:
@@ -44,22 +44,21 @@ class RunDeps:
     answer: str | None
 
 
-agent = Agent(deps_type=RunDeps)
-
-
-@agent.instructions
-def instructions(run_ctx: RunContext[RunDeps]) -> str:
-    prompt: list[str] = []
-    if question := run_ctx.deps.question:
-        prompt.append(f'The quizz question is: {question}')
-    if answer := run_ctx.deps.answer:
-        prompt.append(f'The quizz answer is: {answer}')
-    return '\n'.join(prompt)
-
-
 class QuizzBase(ABC):
     HINTS_COUNT = 5
     REWARD = 100
+
+    agent = Agent(deps_type=RunDeps)
+
+    @agent.instructions
+    @staticmethod
+    def instructions(run_ctx: RunContext[RunDeps]) -> str:
+        prompt: list[str] = []
+        if question := run_ctx.deps.question:
+            prompt.append(f'The quizz question is: {question}')
+        if answer := run_ctx.deps.answer:
+            prompt.append(f'The quizz answer is: {answer}')
+        return '\n'.join(prompt)
 
     def __init__(self, bot: Bot, channel_id: int):
         self.bot = bot
@@ -85,7 +84,7 @@ class QuizzBase(ABC):
     @classmethod
     async def generate_ai_hints(cls, question: str | None, answer: str) -> list[str] | None:
         assert AI_FLAGSHIP_MODEL
-        run = await agent.run(
+        run = await cls.agent.run(
             f'Create {cls.HINTS_COUNT} hints for the quiz answer, each offering gradually more '
             f'assistance.\n'
             f'Be careful not to disclose the answer directly, or offer any translation of it.',

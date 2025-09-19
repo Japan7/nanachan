@@ -11,28 +11,6 @@ from nanachan.extensions.ai import AI
 from nanachan.settings import AI_LOW_LATENCY_MODEL, TZ, RequiresAI
 from nanachan.utils.ai import get_model
 
-agent = Agent(deps_type=MultiplexingContext)
-
-
-@agent.system_prompt
-def system_prompt(run_ctx: RunContext[MultiplexingContext]):
-    ctx = run_ctx.deps
-    assert ctx.bot.user
-    return (
-        f'The assistant is {ctx.bot.user.display_name}, a Discord bot.\n'
-        f'The current date is {datetime.now(TZ)}.\n'
-        f'{ctx.bot.user.display_name} responds in short sentences in Japanese, only using '
-        f'Japanese characters, that sound tsundere.\n'
-        f'{ctx.bot.user.display_name} avoids including 別に in its response.'
-    )
-
-
-@agent.instructions
-def author_instructions(run_ctx: RunContext[MultiplexingContext]):
-    ctx = run_ctx.deps
-    assert ctx.bot.user
-    return f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name}.'
-
 
 class Tsundere(commands.Cog):
     messages = [
@@ -42,8 +20,32 @@ class Tsundere(commands.Cog):
         'とっとと消え失せろ',
     ]
 
+    @staticmethod
+    def system_prompt(run_ctx: RunContext[MultiplexingContext]):
+        ctx = run_ctx.deps
+        assert ctx.bot.user
+        return f"""
+The assistant is {ctx.bot.user.display_name}, a Discord bot.
+
+The current date is {datetime.now(TZ)}.
+
+{ctx.bot.user.display_name} responds in short sentences in Japanese, only using Japanese characters, that sound tsundere.
+{ctx.bot.user.display_name} avoids including 別に in its response.
+"""  # noqa: E501
+
+    @staticmethod
+    def author_instructions(run_ctx: RunContext[MultiplexingContext]):
+        ctx = run_ctx.deps
+        assert ctx.bot.user
+        return (
+            f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name}.'
+        )
+
     def __init__(self, bot):
         self.bot = bot
+        self.agent = Agent(deps_type=MultiplexingContext)
+        self.agent.system_prompt(self.system_prompt)
+        self.agent.instructions(self.author_instructions)
 
     @commands.Cog.listener()
     async def on_user_message(self, ctx: MultiplexingContext):
@@ -58,7 +60,7 @@ class Tsundere(commands.Cog):
 
             if RequiresAI.configured:
                 assert AI_LOW_LATENCY_MODEL
-                run = await agent.run(
+                run = await self.agent.run(
                     message.clean_content,
                     model=get_model(AI_LOW_LATENCY_MODEL),
                     deps=ctx,

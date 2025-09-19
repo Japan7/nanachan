@@ -13,8 +13,7 @@ from discord.app_commands import Choice
 from discord.app_commands.tree import ALL_GUILDS
 from discord.ext import commands
 from discord.ext.voice_recv import VoiceRecvClient
-from discord.utils import time_snowflake
-from pydantic_ai import Agent, BinaryContent, ModelRetry, RunContext
+from pydantic_ai import Agent, BinaryContent, RunContext
 from pydantic_ai.messages import ModelMessage, UserContent
 
 from nanachan.discord.application_commands import LegacyCommandContext, NanaGroup, legacy_command
@@ -26,7 +25,6 @@ from nanachan.nanapi.model import InsertPromptBody
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_FLAGSHIP_MODEL,
-    AI_SKIP_PERMISSIONS_CHECK,
     ENABLE_MESSAGE_EXPORT,
     TZ,
     RequiresAI,
@@ -35,12 +33,13 @@ from nanachan.settings import (
 )
 from nanachan.utils.ai import (
     GeminiLiveAudioSink,
+    discord_toolset,
     get_model,
     get_openai,
     iter_stream,
-    nanapi_tools,
-    python_mcp_server,
-    search_tool,
+    nanapi_toolset,
+    python_toolset,
+    search_toolset,
 )
 from nanachan.utils.misc import autocomplete_truncate
 
@@ -49,151 +48,6 @@ if TYPE_CHECKING:
     from discord.types.message import Message
 
 logger = logging.getLogger(__name__)
-
-
-agent = Agent(
-    deps_type=commands.Context[Bot],
-    tools=(search_tool, *nanapi_tools()),  # type: ignore
-    mcp_servers=[python_mcp_server],
-)
-
-agent_lock = asyncio.Lock()
-
-
-@agent.system_prompt
-def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
-    ctx = run_ctx.deps
-    assert ctx.bot.user and ctx.guild
-    return f"""
-The assistant is {ctx.bot.user.display_name}, a Discord bot for the {ctx.guild.name} Discord server.
-
-The current date is {datetime.now(TZ)}.
-
-{ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}.
-
-If {ctx.bot.user.display_name} lacks sufficient information to answer a question, and if no other tool is suitable for the task, {ctx.bot.user.display_name} should automatically use the retrieve_context tool to obtain pertinent discussion sections before responding.
-
-When using retrieved context to answer the user, {ctx.bot.user.display_name} must reference the pertinent messages and provide their links.
-For instance: "Snapchat is a beautiful cat (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>) and it loves Louis (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>)."
-
-For complex tasks, {ctx.bot.user.display_name} can access to a collection of prompts with ai_prompt_index and ai_get_prompt. These prompts serve as instructions.
-"""  # noqa: E501
-
-
-@agent.instructions
-def author_instructions(run_ctx: RunContext[commands.Context[Bot]]):
-    ctx = run_ctx.deps
-    assert ctx.bot.user
-    return (
-        f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name} '
-        f'(ID {ctx.author.id}).'
-    )
-
-
-@agent.tool
-def get_members_name_discord_id_map(run_ctx: RunContext[commands.Context[Bot]]):
-    """Generate a mapping of Discord member display names to their Discord IDs."""
-    ctx = run_ctx.deps
-    return {member.display_name: member.id for member in ctx.bot.get_all_members()}
-
-
-@agent.tool
-def get_channels_name_channel_id_map(run_ctx: RunContext[commands.Context[Bot]]):
-    """Generate a mapping of Discord channel names to their channel IDs."""
-    ctx = run_ctx.deps
-    return {channel.name: channel.id for channel in ctx.bot.get_all_channels()}
-
-
-@agent.tool
-async def get_parent_channel(run_ctx: RunContext[commands.Context[Bot]]):
-    """Retrieve the parent channel of the current thread in which the assistant is summoned."""
-    ctx = run_ctx.deps
-    channel_id = (
-        ctx.channel.parent.id
-        if isinstance(ctx.channel, Thread) and ctx.channel.parent
-        else ctx.channel.id
-    )
-    return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
-
-
-@agent.tool
-async def fetch_channel(run_ctx: RunContext[commands.Context[Bot]], channel_id: str):
-    """Fetch a channel."""
-    ctx = run_ctx.deps
-    return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
-
-
-@agent.tool
-async def fetch_message(
-    run_ctx: RunContext[commands.Context[Bot]],
-    channel_id: str,
-    message_id: str,
-):
-    """Fetch a message from a channel."""
-    ctx = run_ctx.deps
-    return await ctx._state.http.get_message(channel_id, message_id)  # pyright: ignore[reportPrivateUsage]
-
-
-@agent.tool
-async def channel_history(
-    run_ctx: RunContext[commands.Context[Bot]],
-    channel_id: str,
-    limit: int = 100,
-    before: datetime | None = None,
-    after: datetime | None = None,
-    around: datetime | None = None,
-):
-    """
-    Get messages in a channel.
-    The before, after, and around parameters are mutually exclusive,
-    only one may be passed at a time.
-    """
-    ctx = run_ctx.deps
-    if not AI_SKIP_PERMISSIONS_CHECK:
-        assert isinstance(ctx.author, discord.Member)
-        channel = ctx.bot.get_channel(int(channel_id))
-        if not channel:
-            raise RuntimeError(f'Channel {channel_id} not found.')
-        if isinstance(channel, discord.abc.PrivateChannel):
-            raise RuntimeError(f'Channel {channel_id} is private.')
-        if not channel.permissions_for(ctx.author).read_message_history:
-            raise RuntimeError(f'User does not have permission to read channel {channel_id}')
-    if sum(bool(x) for x in (before, after, around)) > 1:
-        raise ModelRetry('Only one of before, after, or around may be passed.')
-    if limit > 100:
-        raise ModelRetry('Max limit is 100.')
-    return await ctx.bot.http.logs_from(
-        channel_id=channel_id,
-        limit=limit,
-        before=time_snowflake(before) if before else None,
-        after=time_snowflake(after) if after else None,
-        around=time_snowflake(around) if around else None,
-    )
-
-
-@agent.tool(retries=5)
-async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_query: str):
-    """Find relevant discussion sections using a simple French keyword search."""
-    ctx = run_ctx.deps
-    assert isinstance(ctx.author, discord.Member)
-    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=25)
-    if not success(resp):
-        raise RuntimeError(resp.result)
-    messages = [
-        [
-            m.data
-            for m in r.object.messages
-            if AI_SKIP_PERMISSIONS_CHECK
-            or (channel := ctx.bot.get_channel(int(m.channel_id)))
-            and not isinstance(channel, discord.abc.PrivateChannel)
-            and channel.permissions_for(ctx.author).read_message_history
-        ]
-        for r in resp.result
-    ]
-    messages = [b for b in messages if b]
-    if not messages:
-        raise ModelRetry('No results found. Try using a simpler query.')
-    return messages
 
 
 @dataclass
@@ -223,8 +77,45 @@ class AI(Cog, required_settings=RequiresAI):
     slash_pr = app_commands.Group(name='prompt', parent=slash_ai, description='AI prompts')
     slash_vc = app_commands.Group(name='voicechat', parent=slash_ai, description='AI voice chat')
 
+    @staticmethod
+    def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
+        ctx = run_ctx.deps
+        assert ctx.bot.user and ctx.guild
+        return f"""
+The assistant is {ctx.bot.user.display_name}, a Discord bot for the {ctx.guild.name} Discord server.
+
+The current date is {datetime.now(TZ)}.
+
+{ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}.
+
+{ctx.bot.user.display_name} should use the retrieve_context tool to retrieve context before responding.
+
+When using retrieved context to answer the user, {ctx.bot.user.display_name} must reference the pertinent messages and provide their links.
+For instance: "Snapchat is a beautiful cat (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>) and it loves Louis (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>)."
+
+For complex tasks, {ctx.bot.user.display_name} can access to a collection of prompts with ai_prompt_index and ai_get_prompt. These prompts serve as instructions.
+"""  # noqa: E501
+
+    @staticmethod
+    def author_instructions(run_ctx: RunContext[commands.Context[Bot]]):
+        ctx = run_ctx.deps
+        assert ctx.bot.user
+        return (
+            f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name} '
+            f'(ID {ctx.author.id}).'
+        )
+
     def __init__(self, bot: Bot):
         self.bot = bot
+
+        self.agent = Agent(
+            deps_type=commands.Context[Bot],
+            toolsets=[nanapi_toolset, discord_toolset, search_toolset, python_toolset],  # type: ignore
+        )
+        self.agent.system_prompt(self.system_prompt)
+        self.agent.instructions(self.author_instructions)
+        self.agent_lock = asyncio.Lock()
+
         self.contexts = dict[int, ChatContext]()
         self.voice_client: VoiceRecvClient | None = None
 
@@ -280,7 +171,7 @@ class AI(Cog, required_settings=RequiresAI):
         attachments: list[discord.Attachment],
         reply_to: discord.Message | None = None,
     ):
-        async with agent_lock, thread.typing():
+        async with self.agent_lock, thread.typing():
             content: list[UserContent] = [prompt]
             for attachment in attachments:
                 if attachment.content_type:
@@ -296,15 +187,17 @@ class AI(Cog, required_settings=RequiresAI):
             allowed_mentions.replied_user = True
 
             try:
-                async for part in iter_stream(
-                    agent,
-                    user_prompt=content,
-                    message_history=chat_ctx.history,
-                    model=model,
-                    deps=ctx,
-                ):
-                    resp = await send(part, allowed_mentions=allowed_mentions)
-                    send = resp.reply
+                async with self.agent:
+                    async for part in iter_stream(
+                        self.agent,
+                        user_prompt=content,
+                        message_history=chat_ctx.history,
+                        model=model,
+                        deps=ctx,
+                        yield_call_tools=True,
+                    ):
+                        resp = await send(part, allowed_mentions=allowed_mentions)
+                        send = resp.reply
             except Exception as e:
                 await send(f'An error occured while running the agent:\n```\n{e}\n```')
                 logger.exception(e)
@@ -315,8 +208,8 @@ class AI(Cog, required_settings=RequiresAI):
         """Save a prompt"""
         await ctx.defer()
         assert AI_FLAGSHIP_MODEL
-        async with agent_lock, agent:
-            result = await agent.run(
+        async with self.agent_lock, self.agent:
+            result = await self.agent.run(
                 f'Create a prompt named `{name}` (make it snake_case) '
                 f'that does the following task:\n{what}',
                 output_type=InsertPromptBody,
