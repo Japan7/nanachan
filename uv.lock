@@ -1305,7 +1305,7 @@ requires-dist = [
     { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.13.0" },
     { name = "redis", extras = ["hiredis"], specifier = "==6.4.0" },
     { name = "rich", specifier = "==14.1.0" },
-    { name = "tldr", specifier = "==3.4.2" },
+    { name = "tldr", specifier = "==3.4.3" },
     { name = "tzdata", specifier = "==2025.2" },
     { name = "watchfiles", specifier = "==1.1.0" },
     { name = "yappi", git = "https://github.com/odrling/yappi.git?rev=c1ea539c831ad0c46f7b0b463025688d7db05c14" },
@@ -2264,16 +2264,16 @@ wheels = [
 
 [[package]]
 name = "tldr"
-version = "3.4.2"
+version = "3.4.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "shtab" },
     { name = "termcolor" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/5d/2c1c95238204dba8a7bae619801e27062ab19d21b8022c5781e414f9d530/tldr-3.4.2.tar.gz", hash = "sha256:7bb210b47b3697c6050b7e17fbc283c2a2aeba6d794b63e607376396f9c510a9", size = 17347, upload-time = "2025-09-12T14:54:42.856Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/6c/0ced5f6fac4bb65e7b07070f58991739f4b617dc698a8ba9b3d77528b03d/tldr-3.4.3.tar.gz", hash = "sha256:9238a1ce7de05d0ac32a9316db2b199bbac5634448d48ec7012a3817109392a4", size = 17360, upload-time = "2025-09-22T16:06:03.194Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/c1/125b6c5adf5feb8a7dfda7bd5ffc60f1d16fd4b9b9bed99d9846ee3e8c75/tldr-3.4.2-py3-none-any.whl", hash = "sha256:7fadd2e48e2bebc5406a9301808cef568d0521e95f2e9855461f61bf061699d2", size = 13772, upload-time = "2025-09-12T14:54:41.41Z" },
+    { url = "https://files.pythonhosted.org/packages/63/73/679b1fbdd197c12b9259935cbfc8dfd43253d36387cf28c4dbf2094c7bb4/tldr-3.4.3-py3-none-any.whl", hash = "sha256:b5088cec8cd40a8a30a9cdab1794b4dcee6d1c1b4aa11dd8f2a8bfc07706c821", size = 13772, upload-time = "2025-09-22T16:06:02.094Z" },
 ]
 
 [[package]]
