@@ -490,7 +490,7 @@ class BasicCommands(Cog, name='Basic Commands'):
         resp = await self.agent.run(
             [
                 'Given this channel informations and the last 50 messages, '
-                'give a very short summary in a single sentence of what this thread is about.',
+                'give a summary in a single sentence, in French, of what this thread is about.',
                 json.dumps(channel, default=str),
                 json.dumps(messages, default=str),
             ],
