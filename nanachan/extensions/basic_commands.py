@@ -449,6 +449,7 @@ class BasicCommands(Cog, name='Basic Commands'):
     @nana_command()
     @app_commands.guild_only()
     async def active_threads(self, interaction: Interaction):
+        """List all active threads"""
         assert interaction.guild
         await interaction.response.defer()
         all_user_threads = [
