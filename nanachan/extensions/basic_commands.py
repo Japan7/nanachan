@@ -463,7 +463,7 @@ class BasicCommands(Cog, name='Basic Commands'):
         for t in all_user_threads:
             assert isinstance(t.parent, TextChannel)
             per_chan[t.parent].append(t)
-        embed = Embed(title='Active threads')
+        blocks = []
         for chan, threads in sorted(per_chan.items(), key=lambda x: x[0].position):
             values = []
             for t in sorted(
@@ -473,8 +473,13 @@ class BasicCommands(Cog, name='Basic Commands'):
             ):
                 values.append(f'`├─` {t.mention} {all_summary_dict.get(t.id, "")}')
             if values:
-                embed.add_field(name=chan.mention, value='\n'.join(values), inline=False)
-        await interaction.followup.send(embed=embed)
+                blocks.append(chan.mention + '\n' + '\n'.join(values))
+        await AutoNavigatorView.create(
+            self.bot,
+            interaction.followup.send,
+            title='Active threads',
+            description='\n\n'.join(blocks),
+        )
 
     async def get_thread_summary(self, thread: Thread) -> tuple[Thread, str]:
         if not RequiresAI.configured:
