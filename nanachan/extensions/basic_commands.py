@@ -1,7 +1,9 @@
 import asyncio
 import bisect
+import json
 import logging
 import re
+from collections import defaultdict
 from datetime import datetime, timedelta
 from importlib import resources
 from operator import attrgetter
@@ -31,6 +33,7 @@ from discord.abc import Messageable
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord.utils import MISSING
+from pydantic_ai import Agent
 
 import nanachan.resources
 from nanachan.discord.application_commands import (
@@ -49,7 +52,8 @@ from nanachan.nanapi.model import (
     ReminderInsertSelectResult,
     ReminderSelectAllResult,
 )
-from nanachan.settings import SLASH_PREFIX, TZ
+from nanachan.settings import AI_LOW_LATENCY_MODEL, SLASH_PREFIX, TZ, RequiresAI
+from nanachan.utils.ai import get_model
 from nanachan.utils.misc import get_session, saucenao_lookup, tldr_get_page
 
 logger = logging.getLogger(__name__)
@@ -74,6 +78,7 @@ class BasicCommands(Cog, name='Basic Commands'):
         self.reminders_processor_task = None
         self.reminders_processor_task_sleep = None
         self.reminders: MutableSequence[ReminderSelectAllResult | ReminderInsertSelectResult] = []
+        self.agent = Agent()
 
     @Cog.listener()
     async def on_ready(self):
@@ -440,6 +445,48 @@ class BasicCommands(Cog, name='Basic Commands'):
         except Exception:
             await event.delete()
             raise
+
+    @nana_command()
+    @app_commands.guild_only()
+    async def active_threads(self, interaction: Interaction):
+        assert interaction.guild
+        await interaction.response.defer()
+        all_user_threads = [
+            t
+            for t in await interaction.guild.active_threads()
+            if isinstance(t.parent, TextChannel) and t.owner and not t.owner.bot
+        ]
+        all_summary = await asyncio.gather(*[self.get_thread_summary(t) for t in all_user_threads])
+        all_summary_dict = {t.id: summary for t, summary in all_summary}
+        per_chan = defaultdict[TextChannel, list[Thread]](list)
+        for t in all_user_threads:
+            assert isinstance(t.parent, TextChannel)
+            per_chan[t.parent].append(t)
+        embed = Embed(title='Active threads')
+        for chan, threads in sorted(per_chan.items(), key=lambda x: x[0].position):
+            values = []
+            for t in sorted(threads, key=lambda x: x.created_at or 0, reverse=True):
+                values.append(f'`├─` {t.mention} {all_summary_dict.get(t.id, "")}')
+            if values:
+                embed.add_field(name=chan.mention, value='\n'.join(values), inline=False)
+        await interaction.followup.send(embed=embed)
+
+    async def get_thread_summary(self, thread: Thread) -> tuple[Thread, str]:
+        if not RequiresAI.configured:
+            return thread, ''
+        assert AI_LOW_LATENCY_MODEL
+        channel = await thread._state.http.get_channel(thread.id)  # pyright: ignore[reportPrivateUsage]
+        messages = await thread._state.http.logs_from(thread.id, limit=50)  # pyright: ignore[reportPrivateUsage]
+        resp = await self.agent.run(
+            [
+                'Given this channel informations and the last 50 messages, '
+                'give a very short summary in a single sentence of what this thread is about.',
+                json.dumps(channel, default=str),
+                json.dumps(messages, default=str),
+            ],
+            model=get_model(AI_LOW_LATENCY_MODEL),
+        )
+        return thread, resp.output.replace('\n', ' ').strip()
 
 
 def message_quote(cog: BasicCommands):
