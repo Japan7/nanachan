@@ -465,7 +465,11 @@ class BasicCommands(Cog, name='Basic Commands'):
         embed = Embed(title='Active threads')
         for chan, threads in sorted(per_chan.items(), key=lambda x: x[0].position):
             values = []
-            for t in sorted(threads, key=lambda x: x.created_at or 0, reverse=True):
+            for t in sorted(
+                threads,
+                key=lambda x: x.created_at.timestamp() if x.created_at else 0,
+                reverse=True,
+            ):
                 values.append(f'`├─` {t.mention} {all_summary_dict.get(t.id, "")}')
             if values:
                 embed.add_field(name=chan.mention, value='\n'.join(values), inline=False)
