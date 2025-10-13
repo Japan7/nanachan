@@ -295,7 +295,7 @@ class StringCondition(Condition):
         Word.simple('bruh'),
         Word.singular('vegan'),
         Word.simple('japon'),
-        Word.singular('vacance'),
+        Word.simple('vacances'),
         Word.simple('trump'),
         Word.simple('1A'),
     ]
