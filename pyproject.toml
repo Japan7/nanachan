@@ -27,7 +27,7 @@ dependencies = [
     "pydantic==2.12.2",
     "numpy==2.3.3",
     "tldr==3.4.3",
-    "watchfiles==1.1.0",
+    "watchfiles==1.1.1",
     "backoff==2.2.1",
     "yappi",
     "redis[hiredis]==6.4.0",
