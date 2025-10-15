@@ -727,7 +727,7 @@ wheels = [
 
 [[package]]
 name = "google-genai"
-version = "1.43.0"
+version = "1.44.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -739,9 +739,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c1/75/992ca4462682949750709678b8efbc865222c9a16cf34504b69c5459606c/google_genai-1.43.0.tar.gz", hash = "sha256:84eb219d320759c5882bc2cdb4e2ac84544d00f5d12c7892c79fb03d71bfc9a4", size = 236132, upload-time = "2025-10-10T23:16:40.131Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/c4/7edde80ee4c0622f740008f927a11f8c8b0c7d6457f219fc698c27a3a377/google_genai-1.44.0.tar.gz", hash = "sha256:7df8c42505900714fea98ed0d03c06ed18323368ef9dceff74645631fd7a7650", size = 236659, upload-time = "2025-10-15T03:32:49.653Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/85/e90dda488d5044e6e4cd1b49e7e7f0cc7f4a2a1c8004e88a5122d42ea024/google_genai-1.43.0-py3-none-any.whl", hash = "sha256:be1d4b1acab268125d536fd81b73c38694a70cb08266759089154718924434fd", size = 236733, upload-time = "2025-10-10T23:16:38.809Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/4d/1f64941ec95c004c290db6287c1e8a0906ed00a0656075ad705cecb12e7d/google_genai-1.44.0-py3-none-any.whl", hash = "sha256:4732ffd56e5f7c89f2440e0baf9a78b91b01a2a22db1b451a60b4417b3bcfd74", size = 237302, upload-time = "2025-10-15T03:32:47.839Z" },
 ]
 
 [[package]]
@@ -1435,7 +1435,7 @@ requires-dist = [
     { name = "discord-ext-voice-recv", specifier = "==0.5.2a179" },
     { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=27cc8196e457d009238876219168b223f700968c" },
     { name = "faust-cchardet", specifier = "==2.1.19" },
-    { name = "google-genai", specifier = "==1.43.0" },
+    { name = "google-genai", specifier = "==1.44.0" },
     { name = "html2text", specifier = "==2025.4.15" },
     { name = "matplotlib", specifier = "==3.10.7" },
     { name = "numpy", specifier = "==2.3.3" },
