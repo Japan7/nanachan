@@ -1489,7 +1489,7 @@ requires-dist = [
     { name = "tldr", specifier = "==3.4.3" },
     { name = "tzdata", specifier = "==2025.2" },
     { name = "watchfiles", specifier = "==1.1.1" },
-    { name = "yappi", git = "https://github.com/odrling/yappi.git?rev=c1ea539c831ad0c46f7b0b463025688d7db05c14" },
+    { name = "yappi", git = "https://github.com/sumerc/yappi.git?rev=e3509baae645c1e0018461f3a96de57479a1a0f8" },
     { name = "yarl", specifier = "==1.22.0" },
     { name = "yt-dlp", extras = ["default"], specifier = "==2025.10.14" },
 ]
@@ -2752,8 +2752,8 @@ wheels = [
 
 [[package]]
 name = "yappi"
-version = "1.6.0"
-source = { git = "https://github.com/odrling/yappi.git?rev=c1ea539c831ad0c46f7b0b463025688d7db05c14#c1ea539c831ad0c46f7b0b463025688d7db05c14" }
+version = "1.6.10"
+source = { git = "https://github.com/sumerc/yappi.git?rev=e3509baae645c1e0018461f3a96de57479a1a0f8#e3509baae645c1e0018461f3a96de57479a1a0f8" }
 
 [[package]]
 name = "yarl"
