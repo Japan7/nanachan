@@ -10,7 +10,7 @@ authors = [
     { name = "odrling", email = "florianbadie@odrling.xyz" },
     { name = "NextFire", email = "git@yuru.moe" },
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "discord-py[voice]",
     "discord-ext-voice-recv==0.5.2a179",
@@ -63,7 +63,7 @@ yappi = { git = "https://github.com/sumerc/yappi.git", rev = "e3509baae645c1e001
 homepage = "https://github.com/Japan7/nanachan"
 
 [tool.pyright]
-pythonVersion = "3.13"
+pythonVersion = "3.14"
 typeCheckingMode = "strict"
 reportMissingParameterType = false
 reportMissingTypeArgument = false
