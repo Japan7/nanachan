@@ -71,7 +71,9 @@ class Conditions:
                 member = json_dumps(condition.serialize()).encode()
                 redis = await get_redis()
                 if redis is not None:
-                    await redis.srem(REDIS_KEY, member)
+                    coro = redis.srem(REDIS_KEY, member)
+                    assert asyncio.iscoroutine(coro)
+                    await coro
 
             except Exception as e:
                 logger.exception(e)
@@ -85,7 +87,9 @@ class Conditions:
                     member = json_dumps(cond.serialize()).encode()
                     redis = await get_redis()
                     if redis is not None:
-                        await redis.sadd(REDIS_KEY, member)
+                        coro = redis.sadd(REDIS_KEY, member)
+                        assert asyncio.iscoroutine(coro)
+                        await coro
 
                     await cond.announce_rules(ctx, waifu_cog)
             except Exception as e:
@@ -97,7 +101,9 @@ class Conditions:
             if redis is None:
                 return
 
-            for condition_arguments in await redis.smembers(REDIS_KEY):
+            coro = redis.smembers(REDIS_KEY)
+            assert asyncio.iscoroutine(coro)
+            for condition_arguments in await coro:
                 try:
                     args = json.loads(condition_arguments)
                     cond_cls = self.condition_classes[args['condition_name']]

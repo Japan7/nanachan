@@ -11,10 +11,6 @@ local_settings.py
 .vim
 .vim-arsync
 
-# VS Code things
-.devcontainer/pypoetry/
-redis-stack-server.out
-
 # ruff
 .ruff_cache/
 

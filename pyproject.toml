@@ -30,7 +30,7 @@ dependencies = [
     "watchfiles==1.1.1",
     "backoff==2.2.1",
     "yappi",
-    "redis[hiredis]==6.4.0",
+    "valkey[libvalkey]==6.1.1",
     "parsedatetime==2.6",
     "yt-dlp[default]==2025.10.22",
     "aiojobs==1.4.0",
@@ -47,10 +47,6 @@ dev = [
     "ruff==0.14.1",
     "mahou-py",
     "requests==2.32.5",
-    # FIXME: https://pypi.org/project/types-redis/#description
-    # Note: Redis-py 5.0.0 added a py.typed file, but the inline annotations are incomplete.
-    # Continuing to use types-redis for the time being may lead to superior results.
-    "types-redis==4.6.0.20241004",
     "fawltydeps>=0.19.0",
 ]
 
@@ -119,7 +115,5 @@ ignore_unused = [
     # https://github.com/tweag/FawltyDeps/issues/419
     "discord-py",
     "discord-ext-voice-recv",
-    "redis",
-    "types-redis",
 ]
 output_format = "human_detailed"

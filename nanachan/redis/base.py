@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any, cast
 
 import backoff
-from redis import asyncio as aioredis
+import valkey.asyncio as aioredis
 
 from nanachan.settings import REDIS_HOST, REDIS_KWARGS, REDIS_PORT, TOKEN
 from nanachan.utils.misc import json_dumps, print_exc
@@ -103,7 +103,9 @@ class BaseRedis[T](ABC):
         redis = await get_redis()
 
         if redis is not None:
-            asyncio.get_running_loop().create_task(redis.set(key, encoded_value, **kwargs))
+            coro = redis.set(key, encoded_value, **kwargs)
+            assert asyncio.iscoroutine(coro)
+            asyncio.get_running_loop().create_task(coro)
 
     async def expire_at(self, when: datetime, sub_key: SubKeyType = None):
         key = self.key if sub_key is None else f'{self.key}:{sub_key}'
