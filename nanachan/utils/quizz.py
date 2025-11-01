@@ -108,7 +108,9 @@ class QuizzBase(ABC):
         hint = ['🍌'] * len(answer)
         for i in range(cls.HINTS_COUNT):
             if (i + 1) % hint_interval == 0:
-                banana_indices = [j for j, c in enumerate(hint) if c == '🍌']
+                # Find indices where hint is still banana and choose one
+                banana_mask = np.array([c == '🍌' for c in hint])
+                banana_indices = np.where(banana_mask)[0]
                 r = _RNG.choice(banana_indices)
                 hint[r] = answer[r]
             hints.append(''.join(hint))

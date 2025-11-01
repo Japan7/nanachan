@@ -166,9 +166,8 @@ class WaifuSelectorView(CompositeNavigatorView):
     async def star_callback(self, interaction: discord.Interaction):
         if not self.stared:
             for i, part in enumerate(batched(self.waifus, PER_PAGE_SELECTOR)):
-                part_list = list(part)
                 self.selected_per_page[i] = [
-                    str(i * PER_PAGE_SELECTOR + j) for j, _ in enumerate(part_list)
+                    str(i * PER_PAGE_SELECTOR + j) for j, _ in enumerate(part)
                 ]
         else:
             self.selected_per_page = {}
