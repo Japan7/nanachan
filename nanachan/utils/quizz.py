@@ -1,6 +1,5 @@
 import asyncio
 import io
-import random
 import re
 import string
 import unicodedata
@@ -12,6 +11,7 @@ from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 import discord
+import numpy as np
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 from pydantic_ai import RunContext
@@ -36,6 +36,8 @@ if TYPE_CHECKING:
     from discord.abc import MessageableChannel
 
 COLOR_BANANA = 0xF6D68D
+
+_RNG = np.random.default_rng()
 
 
 @dataclass
@@ -106,7 +108,8 @@ class QuizzBase(ABC):
         hint = ['🍌'] * len(answer)
         for i in range(cls.HINTS_COUNT):
             if (i + 1) % hint_interval == 0:
-                r = random.choice([j for j, c in enumerate(hint) if c == '🍌'])
+                banana_indices = [j for j, c in enumerate(hint) if c == '🍌']
+                r = _RNG.choice(banana_indices)
                 hint[r] = answer[r]
             hints.append(''.join(hint))
         return hints
@@ -272,14 +275,14 @@ class AnimeMangaQuizz(QuizzBase):
 
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         await super().post_end(game_id, message)
-        nb = random.randint(1, 12)
+        nb = _RNG.integers(1, 13)
         reply = await message.reply(f'{PREFIX}im{nb * "a"}ge {message.author.mention}')
         await self.imaaage(reply, nb)
 
     @staticmethod
     async def imaaage(message: discord.Message | MultiplexingMessage, nb: int = 1):
         with Image.open(
-            resources.open_binary(nanachan.resources, f'image{random.randint(1, 3):02}.jpg')
+            resources.open_binary(nanachan.resources, f'image{_RNG.integers(1, 4):02}.jpg')
         ) as image:
             with io.BytesIO() as pp_binary, suppress(IndexError):
                 mention = message.mentions[0]
@@ -345,5 +348,5 @@ class LouisQuizz(QuizzBase):
 
     @staticmethod
     async def kininarimasu(channel: 'MessageableChannel'):
-        with resources.path(nanachan.resources, f'hyouka{random.randint(1, 7):02}.gif') as path:
+        with resources.path(nanachan.resources, f'hyouka{_RNG.integers(1, 8):02}.gif') as path:
             await channel.send(file=discord.File(path))

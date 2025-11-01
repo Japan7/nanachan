@@ -4,7 +4,6 @@ import abc
 import asyncio
 import datetime
 import logging
-import random
 import re
 import unicodedata
 from collections.abc import Sequence
@@ -23,6 +22,7 @@ from typing import (
 )
 
 import discord
+import numpy as np
 from discord import (
     ForumChannel,
     HTTPException,
@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from nanachan.discord.bot import Bot
     from nanachan.extensions.easter_eggs import Bananas
 
+_RNG = np.random.default_rng()
 
 __all__ = (
     'getEmojiStr',
@@ -698,7 +699,7 @@ class BananasWebhook(WebhookProxy):
 
         i = 1
         while i < len(message):
-            j = random.randint(3, 5)
+            j = _RNG.integers(3, 6)
             new_message += message[i : i + j] + ':banana:'
             i += j + 1
 

@@ -1,6 +1,6 @@
-import random
 from datetime import datetime
 
+import numpy as np
 from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot
@@ -10,6 +10,8 @@ from nanachan.discord.helpers import MultiplexingContext
 from nanachan.extensions.ai import AI
 from nanachan.settings import AI_LOW_LATENCY_MODEL, TZ, RequiresAI
 from nanachan.utils.ai import get_model
+
+_RNG = np.random.default_rng()
 
 
 class Tsundere(commands.Cog):
@@ -67,7 +69,7 @@ The current date is {datetime.now(TZ)}.
                 )
                 content = run.output
             else:
-                content = random.choice(self.messages)
+                content = _RNG.choice(self.messages)
 
             await message.reply(content, allowed_mentions=AllowedMentions.none())
 

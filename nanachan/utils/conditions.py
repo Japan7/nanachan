@@ -4,7 +4,6 @@ import abc
 import asyncio
 import json
 import logging
-import random
 import re
 from contextlib import suppress
 from dataclasses import asdict, dataclass
@@ -12,6 +11,7 @@ from enum import Enum, auto
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Type, cast
 
+import numpy as np
 from discord.abc import Messageable
 from discord.member import Member
 from discord.user import User
@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_RNG = np.random.default_rng()
 
 REDIS_KEY = make_redis_key('drop_conditions')
 
@@ -343,13 +344,13 @@ class StringCondition(Condition):
 
     @classmethod
     async def instanciation_condition(cls, ctx, *args, **kwargs) -> bool:
-        return random.random() < 1 / 250 and cls.available_instances > 0
+        return _RNG.random() < 1 / 250 and cls.available_instances > 0
 
     @classmethod
     async def instanciate(cls, ctx: MultiplexingContext, waifu_cog: WaifuCollection):
         async with cls.instances_lock:
             if cls.words:
-                i = random.randrange(len(cls.words))
+                i = _RNG.integers(0, len(cls.words))
                 w = cls.words[i]
                 return cls(user=ctx.author, word=w, waifu_cog=waifu_cog)
             else:

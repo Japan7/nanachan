@@ -1,9 +1,9 @@
 import asyncio
 import logging
 import re
-from random import Random
 from typing import Optional, cast
 
+import numpy as np
 from discord import Member
 from discord.ext.commands import CommandError, command, has_permissions
 
@@ -16,7 +16,7 @@ from nanachan.settings import DEBUG, WASABI_FREQUENCY, WASABI_RANGE
 
 log = logging.getLogger(__name__)
 
-random = Random()
+_RNG = np.random.default_rng()
 
 perdu_reg = re.compile(r'\bperd', re.IGNORECASE)
 creeper_reg = re.compile(r'\bcreeper', re.IGNORECASE)
@@ -70,7 +70,7 @@ class Wasabi(Cog):
                 waifu_cog = self.bot.get_cog(WaifuCollection.__cog_name__)
                 if waifu_cog is not None:
                     waifu_cog = cast(WaifuCollection, waifu_cog)
-                    await waifu_cog.reward_drop(ctx.message.author, random.randint(0, 1), 'Wasabi')
+                    await waifu_cog.reward_drop(ctx.message.author, _RNG.integers(0, 2), 'Wasabi')
 
     async def is_wasabi(self, message):
         count = await self.get_wasabi_count()
@@ -93,7 +93,7 @@ class Wasabi(Cog):
 
     @staticmethod
     async def reset_counter() -> int:
-        count = random.randint(WASABI_FREQUENCY, WASABI_FREQUENCY + WASABI_RANGE)
+        count = _RNG.integers(WASABI_FREQUENCY, WASABI_FREQUENCY + WASABI_RANGE + 1)
         await wasabi_count.set(count)
         return count
 
@@ -225,7 +225,7 @@ class Bananas(Cog):
 
         i = 1
         while i < len(message):
-            j = random.randint(3, 5)
+            j = _RNG.integers(3, 6)
             new_message += message[i : i + j] + ':banana:'
             i += j + 1
 

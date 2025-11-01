@@ -166,8 +166,9 @@ class WaifuSelectorView(CompositeNavigatorView):
     async def star_callback(self, interaction: discord.Interaction):
         if not self.stared:
             for i, part in enumerate(batched(self.waifus, PER_PAGE_SELECTOR)):
+                part_list = list(part)
                 self.selected_per_page[i] = [
-                    str(i * PER_PAGE_SELECTOR + j) for j in range(len(part))
+                    str(i * PER_PAGE_SELECTOR + j) for j, _ in enumerate(part_list)
                 ]
         else:
             self.selected_per_page = {}
@@ -453,33 +454,32 @@ class WaifuOwnershipTypes:
         return self.count > 0
 
     def __str__(self):
-        out = f'{self.context_char}'
         if self.count == 1 and self.simple == 1:
-            return out
+            return f'{self.context_char}'
 
-        out += ' ('
+        parts = [f'{self.context_char}', ' (']
 
         if self.double_ascended > 1:
-            out += f'**{self.double_ascended}**'
+            parts.append(f'**{self.double_ascended}**')
         if self.double_ascended > 0:
-            out += '🌟'
+            parts.append('🌟')
 
             if self.ascended or self.simple:
-                out += '+'
+                parts.append('+')
 
         if self.ascended > 1:
-            out += f'**{self.ascended}**'
+            parts.append(f'**{self.ascended}**')
         if self.ascended > 0:
-            out += '⭐'
+            parts.append('⭐')
 
             if self.simple:
-                out += '+'
+                parts.append('+')
 
         if self.simple and self.count > 1:
-            out += f'**{self.simple}**'
+            parts.append(f'**{self.simple}**')
 
-        out += ')'
-        return out
+        parts.append(')')
+        return ''.join(parts)
 
 
 @dataclass

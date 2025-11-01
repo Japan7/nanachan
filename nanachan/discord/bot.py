@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import random
 import re
 import signal
 from collections.abc import Coroutine, Sequence
@@ -10,6 +9,7 @@ from operator import itemgetter as get
 from pathlib import Path
 from typing import Any, Callable, Literal, cast, override
 
+import numpy as np
 from discord import (
     AllowedMentions,
     Client,
@@ -75,6 +75,8 @@ from nanachan.utils.misc import (
 
 log = logging.getLogger(__name__)
 console = get_console()
+
+_RNG = np.random.default_rng()
 
 PREFIX_REG = re.compile(f'{re.escape(PREFIX)}[a-zA-Z]')
 EMOJI_REG = re.compile(r':([^ :]+):')
@@ -470,7 +472,7 @@ class Bot(commands.AutoShardedBot):
             listener.unregister()
 
     def get_nana_emoji(self, name: str) -> Emoji | None:
-        if name == 'saladedefruits' and random.random() <= 0.05:
+        if name == 'saladedefruits' and _RNG.random() <= 0.05:
             name = 'slddfrts'
 
         for guild in self.guilds:
