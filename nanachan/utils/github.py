@@ -6,7 +6,6 @@ https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/creat
 
 import hashlib
 import logging
-import sys
 import traceback
 from typing import Any
 
@@ -214,7 +213,7 @@ async def create_issue(
     return data['createIssue']['issue']
 
 
-async def report_error_to_github(source: Any) -> str | None:
+async def report_error_to_github(error: BaseException, source: Any) -> str | None:
     """Report the current error to GitHub, creating an issue if needed and assigning Copilot.
 
     Returns the issue URL if successful, None otherwise.
@@ -222,8 +221,7 @@ async def report_error_to_github(source: Any) -> str | None:
     Note: GITHUB_ISSUE_ENABLE and RequiresGitHub checks are performed by caller.
     """
     # Filter out exceptions we don't want to report
-    _, error, _ = sys.exc_info()
-    if error is None or isinstance(error, FILTERED_EXCEPTIONS):
+    if isinstance(error, FILTERED_EXCEPTIONS):
         logger.debug(f'Skipping GitHub report for filtered exception: {type(error).__name__}')
         return None
 

@@ -3,6 +3,7 @@ import logging
 import random
 import re
 import signal
+import sys
 from collections.abc import Coroutine, Sequence
 from contextlib import suppress
 from functools import partial, wraps
@@ -188,7 +189,9 @@ class Bot(commands.AutoShardedBot):
         itai: bool = True,
     ):
         if GITHUB_ISSUE_ENABLE and RequiresGitHub.configured:
-            asyncio.create_task(report_error_to_github(source))
+            _, error, _ = sys.exc_info()
+            if error is not None:
+                asyncio.create_task(report_error_to_github(error, source))
 
         if reply is None:
             bot_room = self.get_channel(BOT_ROOM_ID)
