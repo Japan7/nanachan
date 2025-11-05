@@ -402,7 +402,7 @@ class Bot(commands.AutoShardedBot):
     def get_anas(self, guild: Guild):
         return guild.get_member(ANAS_ID)
 
-    async def get_webhook(self, channel: TextChannel | ForumChannel):
+    async def get_webhook(self, channel: TextChannel | ForumChannel | Thread):
         if isinstance(channel, Thread):
             assert channel.parent is not None
             channel = channel.parent
