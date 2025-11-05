@@ -515,6 +515,9 @@ class MultiplexingMessage:
     async def unpin(self, *args, **kwargs):
         return await self._message.unpin(*args, **kwargs)
 
+    def __repr__(self):
+        return f'<{self.__class__.__name__} _message={self._message!r}>'
+
 
 class ChannelListener(metaclass=abc.ABCMeta):
     def __init__(self, bot, channel: TextChannel | PrivateChannel):

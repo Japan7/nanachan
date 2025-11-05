@@ -12,6 +12,11 @@ from aiohttp import BasicAuth
 # ERROR_WEBHOOK = None
 # TADAIMA = False
 
+## GitHub Issues
+# GITHUB_ISSUE_ENABLE = not DEBUG
+# GITHUB_REPO_SLUG = 'Japan7/nanachan'
+# GITHUB_TOKEN = None
+
 ## Bot
 TOKEN = ''
 PREFIX = '7'

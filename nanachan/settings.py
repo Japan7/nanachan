@@ -13,6 +13,11 @@ DEBUG = True
 ERROR_WEBHOOK = None
 TADAIMA = False
 
+## GitHub Issues
+GITHUB_ISSUE_ENABLE = not DEBUG
+GITHUB_REPO_SLUG = 'Japan7/nanachan'
+GITHUB_TOKEN: str | None = None
+
 ## Bot
 # TOKEN = ''
 PREFIX = '7'
@@ -156,3 +161,4 @@ RequiresAI = RequiredSettings(
 )
 RequiresOpenAI = RequiredSettings(AI_OPENAI_API_KEY)
 RequiresGemini = RequiredSettings(AI_GEMINI_API_KEY)
+RequiresGitHub = RequiredSettings(GITHUB_REPO_SLUG, GITHUB_TOKEN)

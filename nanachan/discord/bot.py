@@ -57,11 +57,14 @@ from nanachan.settings import (
     DISABLED_EXTENSIONS,
     ERROR_WEBHOOK,
     FAREWELL_MSG,
+    GITHUB_ISSUE_ENABLE,
     PREFIX,
     TADAIMA,
     WELCOME_BOT,
     WELCOME_MSG,
+    RequiresGitHub,
 )
+from nanachan.utils.github import report_error_to_github
 from nanachan.utils.misc import (
     framed_header,
     get_console,
@@ -180,9 +183,13 @@ class Bot(commands.AutoShardedBot):
     async def send_error(
         self,
         error_msg: str,
+        source: Any = None,
         reply: Callable[[str], Coroutine[Any, Any, Any]] | None = None,
         itai: bool = True,
     ):
+        if GITHUB_ISSUE_ENABLE and RequiresGitHub.configured:
+            asyncio.create_task(report_error_to_github(source))
+
         if reply is None:
             bot_room = self.get_channel(BOT_ROOM_ID)
             assert isinstance(bot_room, TextChannel)
@@ -249,7 +256,7 @@ class Bot(commands.AutoShardedBot):
         else:
             error_msg = await self.extract_error(error)
             if not isinstance(error, IHateThe3SecondsTimeout):
-                await self.send_error(error_msg, ctx)
+                await self.send_error(error_msg, source=ctx.message, reply=ctx)
 
     async def on_app_command_error(self, interaction: Interaction, error: AppCommandError):
         error_msg = await self.extract_error(error)
@@ -258,7 +265,7 @@ class Bot(commands.AutoShardedBot):
         else:
             interaction_reply = interaction.response.send_message
 
-        await self.send_error(error_msg, interaction_reply)
+        await self.send_error(error_msg, source=interaction.message, reply=interaction_reply)
 
     async def on_error(self, event_method: str, /, *args: Any, **kwargs: Any):
         trace = get_traceback_exc()
@@ -356,7 +363,7 @@ class Bot(commands.AutoShardedBot):
         except Exception as e:
             trace = get_traceback(e)
             msg = get_traceback_str(trace) + f'\n{ctx.message}'
-            await self.send_error(msg)
+            await self.send_error(msg, source=ctx.message)
             raise
 
         await super().invoke(ctx)
