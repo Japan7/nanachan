@@ -253,7 +253,7 @@ class MultiplexingContext(commands.Context['Bot']):
         if self.guild is None:
             raise RuntimeError('Webhook cannot be created outside of a guild')
 
-        assert isinstance(self.channel, (TextChannel, ForumChannel))
+        assert isinstance(self.channel, (TextChannel, ForumChannel, Thread))
         webhook = await self.bot.get_webhook(self.channel)
         webhook = CheckEmptyWebhook(webhook)
         webhook = UserWebhook(webhook, cast(User, self.author))
