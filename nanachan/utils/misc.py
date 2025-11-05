@@ -316,11 +316,11 @@ class SauceData(TypedDict):
     member_name: NotRequired[str]
     pixiv_id: NotRequired[int]
     danbooru_id: NotRequired[int]
-    ext_urls: list[str]
+    ext_urls: NotRequired[list[str]]
     mal_id: NotRequired[int]
     md_id: NotRequired[str]
     # mu_id: NotRequired[int]
-    part: NotRequired[str]
+    part: NotRequired[str | None]
     source: NotRequired[str]
 
 
@@ -354,7 +354,7 @@ class SauceResult(pydantic.BaseModel):
         if member_name := self.data.get('member_name'):
             artists.append(member_name)
 
-        urls = self.data['ext_urls']
+        urls = self.data.get('ext_urls', [])
 
         title = ''
         part = ''
@@ -367,13 +367,14 @@ class SauceResult(pydantic.BaseModel):
                 assert 'source' in self.data
                 assert 'part' in self.data
                 title = self.data['source']
-                part = f'Episode {self.data["part"]}'
+                part_value = self.data['part']
+                part = f'Episode {part_value}' if part_value else ''
                 mal_id = self.data.get('mal_id')
             case 37:  # Mangadex
                 assert 'source' in self.data
                 assert 'part' in self.data
                 title = self.data['source']
-                part = self.data['part']
+                part = self.data['part'] or ''
                 mal_id = self.data.get('mal_id')
             case _:  # default
                 if source := self.data.get('source'):
@@ -381,7 +382,7 @@ class SauceResult(pydantic.BaseModel):
                         urls.insert(0, source)
                     else:
                         title = source
-                part = self.data.get('part', '')
+                part = self.data.get('part') or ''
 
         return Sauce(
             artists=artists,
