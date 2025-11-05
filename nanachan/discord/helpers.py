@@ -687,6 +687,12 @@ class ThreadWebhook(WebhookProxy):
         super().__init__(webhook, **kwargs)
         self.thread = thread
 
+    @property
+    def url(self) -> str:
+        """Returns the webhook URL with thread_id parameter for thread webhooks."""
+        base_url = super().url
+        return f'{base_url}?thread_id={self.thread.id}'
+
     async def send(self, wait=True, **kwargs):
         kwargs.setdefault('thread', self.thread)
         return await super().send(wait=wait, **kwargs)
