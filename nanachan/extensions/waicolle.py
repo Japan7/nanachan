@@ -14,6 +14,7 @@ from operator import getitem, itemgetter
 from typing import TYPE_CHECKING, Any, Literal, cast
 from uuid import UUID
 
+import aiohttp
 import discord
 from discord import AllowedMentions, Interaction, app_commands
 from discord.app_commands.commands import Check
@@ -1579,9 +1580,16 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             filter.value.upper(),
         )
 
-        resp = await get_nanapi().waicolle.waicolle_get_player_collage(
-            str(member.id), filter_formatted
-        )
+        try:
+            resp = await get_nanapi().waicolle.waicolle_get_player_collage(
+                str(member.id), filter_formatted
+            )
+        except aiohttp.ClientResponseError as e:
+            emoji = self.bot.get_emoji_str('saladedefruits')
+            raise commands.CommandError(
+                f'Failed to generate collage: API returned {e.status} error {emoji}'
+            )
+
         match resp:
             case Error(404):
                 raise commands.CommandError(
