@@ -290,12 +290,12 @@ async def retrieve_context(run_ctx: RunContext[DiscordDeps], search_query: str):
 async def generate_image(
     run_ctx: RunContext[DiscordDeps],
     prompt: str,
-    edited_image_urls: Sequence[str] = (),
+    base_image_urls: list[str] | None = None,
     include_ctx_attachments: bool = False,
 ):
     """
     Generate an image and send it on Discord.
-    If edited_image_urls are provided, these images will be included as base images for editing.
+    If base_image_urls are provided, these images will be included as base images for editing.
     If include_ctx_attachments is True, images attached to the user prompt will also be included
     as base images for editing.
     """
@@ -305,8 +305,9 @@ async def generate_image(
         'Content-Type': 'application/json',
     }
     content = [{'type': 'text', 'text': prompt}]
-    for url in edited_image_urls:
-        content.append({'type': 'image_url', 'image_url': url})
+    if base_image_urls:
+        for url in base_image_urls:
+            content.append({'type': 'image_url', 'url': url})
     if include_ctx_attachments:
         ctx = run_ctx.deps.ctx
         for attachment in ctx.message.attachments:
