@@ -12,7 +12,6 @@ from discord import AllowedMentions, Thread, app_commands
 from discord.app_commands import Choice
 from discord.app_commands.tree import ALL_GUILDS
 from discord.ext import commands
-from discord.ext.voice_recv import VoiceRecvClient
 from pydantic_ai import Agent, BinaryContent, RunContext
 from pydantic_ai.messages import ModelMessage, UserContent
 
@@ -28,11 +27,9 @@ from nanachan.settings import (
     ENABLE_MESSAGE_EXPORT,
     TZ,
     RequiresAI,
-    RequiresGemini,
     RequiresOpenAI,
 )
 from nanachan.utils.ai import (
-    GeminiLiveAudioSink,
     discord_toolset,
     get_model,
     get_openai,
@@ -75,7 +72,6 @@ async def prompt_autocomplete(interaction: discord.Interaction, current: str) ->
 class AI(Cog, required_settings=RequiresAI):
     slash_ai = NanaGroup(name='ai', guild_ids=[ALL_GUILDS], description='AI commands')
     slash_pr = app_commands.Group(name='prompt', parent=slash_ai, description='AI prompts')
-    slash_vc = app_commands.Group(name='voicechat', parent=slash_ai, description='AI voice chat')
 
     @staticmethod
     def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
@@ -117,14 +113,9 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
         self.agent_lock = asyncio.Lock()
 
         self.contexts = dict[int, ChatContext]()
-        self.voice_client: VoiceRecvClient | None = None
 
         if RequiresOpenAI.configured:
             self.slash_ai.command(name='image')(self.imagen)
-
-        if RequiresGemini.configured:
-            self.slash_vc.command(name='start')(self.voice_start)
-            self.slash_vc.command(name='stop')(self.voice_stop)
 
     @slash_ai.command(name='chat')
     @legacy_command()
@@ -323,42 +314,6 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
                 embed=embed,
                 file=discord.File(fp=buf, filename=f'{result.created}.png'),
             )
-
-    @legacy_command()
-    async def voice_start(
-        self,
-        ctx: LegacyCommandContext,
-        only_with: discord.Member | None = None,
-        voice_name: GeminiLiveAudioSink.VoiceName = 'Aoede',
-    ):
-        """Start Voice Chat with AI"""
-        if (
-            not isinstance(ctx.author, discord.Member)
-            or not ctx.author.voice
-            or not ctx.author.voice.channel
-        ):
-            raise commands.CommandError('You must be in a voice channel')
-
-        if self.voice_client:
-            raise commands.CommandError('Already running')
-
-        self.voice_client = await ctx.author.voice.channel.connect(cls=VoiceRecvClient)
-        sink = GeminiLiveAudioSink(self.bot, voice_name=voice_name, only_with=only_with)
-        self.voice_client.listen(sink)
-        self.voice_client.play(sink.response_source, application='voip')
-
-        await ctx.send(self.bot.get_emoji_str('FubukiGO'))
-
-    @legacy_command()
-    async def voice_stop(self, ctx: LegacyCommandContext):
-        """Stop Voice Chat with AI"""
-        if not self.voice_client:
-            raise commands.CommandError('Not running')
-
-        await self.voice_client.disconnect()
-        self.voice_client = None
-
-        await ctx.send(self.bot.get_emoji_str('FubukiStop'))
 
     @NanaGroupCog.listener()
     async def on_message(self, message: discord.Message):
