@@ -10,6 +10,7 @@ import traceback
 from typing import Any
 
 from aiohttp import ClientConnectorError, ClientResponseError, ClientSession
+from discord.ext import commands
 
 from nanachan.settings import GITHUB_REPO_SLUG, GITHUB_TOKEN
 from nanachan.utils.misc import get_session
@@ -221,7 +222,10 @@ async def report_error_to_github(error: BaseException, source: Any) -> str | Non
     Note: GITHUB_ISSUE_ENABLE and RequiresGitHub checks are performed by caller.
     """
     # Filter out exceptions we don't want to report
-    if isinstance(error, FILTERED_EXCEPTIONS):
+    if isinstance(
+        error.original if isinstance(error, commands.CommandInvokeError) else error,
+        FILTERED_EXCEPTIONS,
+    ):
         logger.debug(f'Skipping GitHub report for filtered exception: {type(error).__name__}')
         return None
 
