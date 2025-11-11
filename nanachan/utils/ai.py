@@ -1,12 +1,13 @@
+import base64
+import io
 import logging
+from dataclasses import dataclass
 from datetime import datetime
-from functools import cache
 from typing import AsyncGenerator, Iterable, Sequence
 
 import discord
 from discord.ext import commands
 from discord.utils import time_snowflake
-from openai import AsyncOpenAI
 from pydantic_ai import Agent, ModelRetry, RunContext, Tool
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.common_tools.tavily import tavily_search_tool
@@ -24,23 +25,32 @@ from pydantic_ai.messages import (
     UserContent,
 )
 from pydantic_ai.models import Model
+from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.toolsets import FunctionToolset
 
 from nanachan.discord.bot import Bot
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.settings import (
-    AI_MODEL_CLS,
-    AI_OPENAI_API_KEY,
-    AI_PROVIDER,
+    AI_IMAGE_MODEL,
+    AI_OPENROUTER_API_KEY,
     AI_SKIP_PERMISSIONS_CHECK,
     AI_TAVILY_API_KEY,
 )
+from nanachan.utils.misc import get_session
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class DiscordDeps:
+    ctx: commands.Context[Bot]
+    thread: discord.Thread | None = None
+
+
 def get_model(model_name: str) -> Model:
-    return AI_MODEL_CLS(model_name, provider=AI_PROVIDER)  # type: ignore
+    assert AI_OPENROUTER_API_KEY
+    return OpenAIChatModel(model_name, provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY))
 
 
 async def iter_stream[AgentDepsT](
@@ -148,7 +158,7 @@ def nanapi_tools() -> Iterable[Tool[None]]:
 
 
 nanapi_toolset = FunctionToolset(tools=list(nanapi_tools()))
-discord_toolset = FunctionToolset[commands.Context[Bot]]()
+discord_toolset = FunctionToolset[DiscordDeps]()
 search_toolset = FunctionToolset(
     tools=[
         tavily_search_tool(AI_TAVILY_API_KEY)
@@ -171,23 +181,23 @@ python_toolset = MCPServerStdio(
 
 
 @discord_toolset.tool
-def get_members_name_discord_id_map(run_ctx: RunContext[commands.Context[Bot]]):
+def get_members_name_discord_id_map(run_ctx: RunContext[DiscordDeps]):
     """Generate a mapping of Discord member display names to their Discord IDs."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     return {member.display_name: member.id for member in ctx.bot.get_all_members()}
 
 
 @discord_toolset.tool
-def get_channels_name_channel_id_map(run_ctx: RunContext[commands.Context[Bot]]):
+def get_channels_name_channel_id_map(run_ctx: RunContext[DiscordDeps]):
     """Generate a mapping of Discord channel names to their channel IDs."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     return {channel.name: channel.id for channel in ctx.bot.get_all_channels()}
 
 
 @discord_toolset.tool
-async def get_parent_channel(run_ctx: RunContext[commands.Context[Bot]]):
+async def get_parent_channel(run_ctx: RunContext[DiscordDeps]):
     """Retrieve the parent channel of the current thread in which the assistant is summoned."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     channel_id = (
         ctx.channel.parent.id
         if isinstance(ctx.channel, discord.Thread) and ctx.channel.parent
@@ -197,26 +207,26 @@ async def get_parent_channel(run_ctx: RunContext[commands.Context[Bot]]):
 
 
 @discord_toolset.tool
-async def fetch_channel(run_ctx: RunContext[commands.Context[Bot]], channel_id: str):
+async def fetch_channel(run_ctx: RunContext[DiscordDeps], channel_id: str):
     """Fetch a channel."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
 
 
 @discord_toolset.tool
 async def fetch_message(
-    run_ctx: RunContext[commands.Context[Bot]],
+    run_ctx: RunContext[DiscordDeps],
     channel_id: str,
     message_id: str,
 ):
     """Fetch a message from a channel."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     return await ctx._state.http.get_message(channel_id, message_id)  # pyright: ignore[reportPrivateUsage]
 
 
 @discord_toolset.tool
 async def channel_history(
-    run_ctx: RunContext[commands.Context[Bot]],
+    run_ctx: RunContext[DiscordDeps],
     channel_id: str,
     limit: int = 100,
     before: datetime | None = None,
@@ -228,7 +238,7 @@ async def channel_history(
     The before, after, and around parameters are mutually exclusive,
     only one may be passed at a time.
     """
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     if not AI_SKIP_PERMISSIONS_CHECK:
         assert isinstance(ctx.author, discord.Member)
         channel = ctx.bot.get_channel(int(channel_id))
@@ -252,9 +262,9 @@ async def channel_history(
 
 
 @discord_toolset.tool(retries=5)
-async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_query: str):
+async def retrieve_context(run_ctx: RunContext[DiscordDeps], search_query: str):
     """Find relevant discussion sections using a simple French keyword search."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     assert isinstance(ctx.author, discord.Member)
     resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=25)
     if not success(resp):
@@ -276,7 +286,38 @@ async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_qu
     return messages
 
 
-@cache
-def get_openai():
-    assert AI_OPENAI_API_KEY
-    return AsyncOpenAI(api_key=AI_OPENAI_API_KEY)
+@discord_toolset.tool
+async def generate_image(run_ctx: RunContext[DiscordDeps], prompt: str):
+    """Generate an image and send it on Discord."""
+    url = 'https://openrouter.ai/api/v1/chat/completions'
+    headers = {
+        'Authorization': f'Bearer {AI_OPENROUTER_API_KEY}',
+        'Content-Type': 'application/json',
+    }
+    payload = {
+        'model': AI_IMAGE_MODEL,
+        'messages': [{'role': 'user', 'content': prompt}],
+        'modalities': ['image', 'text'],
+    }
+    async with get_session().post(url, headers=headers, json=payload, timeout=None) as resp:
+        resp.raise_for_status()
+        result = await resp.json()
+
+    message = result['choices'][0]['message']
+    content = message['content']
+    image_url = message['images'][0]['image_url']['url']
+
+    # Extract base64 data from data URL
+    # Format: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
+    header, encoded = image_url.split(',', 1)
+    mime_type = header.split(';')[0].split(':')[1]
+    extension = mime_type.split('/')[1]
+
+    # Decode base64 to bytes
+    image_data = base64.b64decode(encoded)
+
+    # Create a Discord file and send it
+    send = run_ctx.deps.thread.send if run_ctx.deps.thread else run_ctx.deps.ctx.send
+    file = discord.File(io.BytesIO(image_data), filename=f'generated.{extension}')
+    sent = await send(content, file=file)
+    return repr(sent)

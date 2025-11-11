@@ -4,8 +4,6 @@
 # from zoneinfo import ZoneInfo
 
 from aiohttp import BasicAuth
-# from pydantic_ai.models.mistral import MistralModel
-# from pydantic_ai.providers.mistral import MistralProvider
 
 # LOG_LEVEL = 'INFO'
 # DEBUG = True
@@ -101,12 +99,11 @@ REDIS_HOST = None
 # NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## AI
-# AI_MODEL_CLS = MistralModel
-# AI_DEFAULT_MODEL = 'pixtral-large-latest'
-# AI_FLAGSHIP_MODEL = 'mistral-large-latest'
-# AI_LOW_LATENCY_MODEL = 'mistral-small-latest'
-# AI_PROVIDER = MistralProvider(api_key='myapikey')
-# AI_OPENAI_API_KEY = ''
+# AI_OPENROUTER_API_KEY = ''
+# AI_FLAGSHIP_MODEL = 'openai/gpt-4.1'
+# AI_DEFAULT_MODEL = 'openai/gpt-4.1-mini'
+# AI_LOW_LATENCY_MODEL = 'openai/gpt-4.1-nano'
+# AI_IMAGE_MODEL = 'google/gemini-2.5-flash-image'
 # AI_TAVILY_API_KEY = ''
 # AI_SKIP_PERMISSIONS_CHECK = False
 

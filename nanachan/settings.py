@@ -5,8 +5,6 @@ from zoneinfo import ZoneInfo
 
 from aiohttp import BasicAuth
 from discord.utils import utcnow
-from pydantic_ai.models import Model
-from pydantic_ai.providers import Provider
 
 LOG_LEVEL = 'INFO'
 DEBUG = True
@@ -105,12 +103,11 @@ WC_WEB = 'https://waicolle.japan7.bde.enseeiht.fr'
 NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## AI
-AI_MODEL_CLS: type[Model] | None = None
-AI_DEFAULT_MODEL: str | None = None
-AI_FLAGSHIP_MODEL: str | None = None
-AI_LOW_LATENCY_MODEL: str | None = None
-AI_PROVIDER: Provider | None = None
-AI_OPENAI_API_KEY: str | None = None
+AI_OPENROUTER_API_KEY: str | None = None
+AI_FLAGSHIP_MODEL = 'openai/gpt-4.1'
+AI_DEFAULT_MODEL = 'openai/gpt-4.1-mini'
+AI_LOW_LATENCY_MODEL = 'openai/gpt-4.1-nano'
+AI_IMAGE_MODEL = 'google/gemini-2.5-flash-image'
 AI_TAVILY_API_KEY: str | None = None
 AI_SKIP_PERMISSIONS_CHECK = False
 
@@ -156,7 +153,6 @@ RequiresProjo = RequiredSettings(PROJO_THREADS_ROOM, PROJO_ROOM, PROJO_VOICE, PR
 RequiresQuizz = RequiredSettings(ANIME_QUIZZ_CHANNEL, MANGA_QUIZZ_CHANNEL, LOUIS_QUIZZ_CHANNEL)
 RequiresWaicolle = RequiredSettings(WC_ROLE)
 RequiresAI = RequiredSettings(
-    AI_MODEL_CLS, AI_DEFAULT_MODEL, AI_FLAGSHIP_MODEL, AI_LOW_LATENCY_MODEL, AI_PROVIDER
+    AI_OPENROUTER_API_KEY, AI_FLAGSHIP_MODEL, AI_DEFAULT_MODEL, AI_LOW_LATENCY_MODEL
 )
-RequiresOpenAI = RequiredSettings(AI_OPENAI_API_KEY)
 RequiresGitHub = RequiredSettings(GITHUB_REPO_SLUG, GITHUB_TOKEN)

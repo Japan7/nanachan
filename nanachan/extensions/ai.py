@@ -1,11 +1,9 @@
 import asyncio
-import base64
-import io
 import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import discord
 from discord import AllowedMentions, Thread, app_commands
@@ -27,12 +25,11 @@ from nanachan.settings import (
     ENABLE_MESSAGE_EXPORT,
     TZ,
     RequiresAI,
-    RequiresOpenAI,
 )
 from nanachan.utils.ai import (
+    DiscordDeps,
     discord_toolset,
     get_model,
-    get_openai,
     iter_stream,
     nanapi_toolset,
     python_toolset,
@@ -74,8 +71,8 @@ class AI(Cog, required_settings=RequiresAI):
     slash_pr = app_commands.Group(name='prompt', parent=slash_ai, description='AI prompts')
 
     @staticmethod
-    def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
-        ctx = run_ctx.deps
+    def system_prompt(run_ctx: RunContext[DiscordDeps]):
+        ctx = run_ctx.deps.ctx
         assert ctx.bot.user and ctx.guild
         return f"""
 The assistant is {ctx.bot.user.display_name}, a Discord bot for the {ctx.guild.name} Discord server.
@@ -93,8 +90,8 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
 """  # noqa: E501
 
     @staticmethod
-    def author_instructions(run_ctx: RunContext[commands.Context[Bot]]):
-        ctx = run_ctx.deps
+    def author_instructions(run_ctx: RunContext[DiscordDeps]):
+        ctx = run_ctx.deps.ctx
         assert ctx.bot.user
         return (
             f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name} '
@@ -105,7 +102,7 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
         self.bot = bot
 
         self.agent = Agent(
-            deps_type=commands.Context[Bot],
+            deps_type=DiscordDeps,
             toolsets=[nanapi_toolset, discord_toolset, search_toolset, python_toolset],  # type: ignore
         )
         self.agent.system_prompt(self.system_prompt)
@@ -113,9 +110,6 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
         self.agent_lock = asyncio.Lock()
 
         self.contexts = dict[int, ChatContext]()
-
-        if RequiresOpenAI.configured:
-            self.slash_ai.command(name='image')(self.imagen)
 
     @slash_ai.command(name='chat')
     @legacy_command()
@@ -184,7 +178,7 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
                         user_prompt=content,
                         message_history=chat_ctx.history,
                         model=model,
-                        deps=ctx,
+                        deps=DiscordDeps(ctx, thread=thread),
                         yield_call_tools=True,
                     ):
                         resp = await send(part, allowed_mentions=allowed_mentions)
@@ -205,7 +199,7 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
                 f'that does the following task:\n{what}',
                 output_type=InsertPromptBody,
                 model=get_model(AI_FLAGSHIP_MODEL),
-                deps=ctx,
+                deps=DiscordDeps(ctx),
             )
         body = result.output
         resp = await get_nanapi().ai.ai_insert_prompt(body)
@@ -268,52 +262,6 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
 
         self.contexts[thread.id] = ChatContext(model_name=model_name)
         await self.chat(ctx, thread, chat_prompt, attachments=[], reply_to=reply_to)
-
-    @legacy_command()
-    async def imagen(
-        self,
-        ctx: LegacyCommandContext,
-        prompt: str,
-        attachment: discord.Attachment | None = None,
-        model: Literal['gpt-image-1', 'dall-e-2'] = 'gpt-image-1',
-        quality: Literal['standard', 'low', 'medium', 'high', 'auto'] = 'auto',
-        size: Literal[
-            '256x256', '512x512', '1024x1024', '1536x1024', '1024x1536', 'auto'
-        ] = 'auto',
-    ):
-        """OpenAI Image Generation"""
-        await ctx.defer()
-        embed = Embed(description=prompt, color=ctx.author.accent_color)
-        embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
-        embed.set_footer(text=f'{model} (quality: {quality}, size: {size})')
-        if attachment and attachment.content_type and attachment.content_type.startswith('image/'):
-            embed.set_image(url=attachment.url)
-            data = await attachment.read()
-            result = await get_openai().images.edit(
-                model=model,
-                prompt=prompt,
-                image=(attachment.filename, data, attachment.content_type),
-                quality=quality,
-                size=size,
-            )
-        else:
-            result = await get_openai().images.generate(
-                model=model,
-                prompt=prompt,
-                quality=quality,
-                size=size,
-            )
-        assert result.data
-        image_base64 = result.data[0].b64_json
-        assert image_base64
-        image_bytes = base64.b64decode(image_base64)
-        with io.BytesIO() as buf:
-            buf.write(image_bytes)
-            buf.seek(0)
-            await ctx.reply(
-                embed=embed,
-                file=discord.File(fp=buf, filename=f'{result.created}.png'),
-            )
 
     @NanaGroupCog.listener()
     async def on_message(self, message: discord.Message):
