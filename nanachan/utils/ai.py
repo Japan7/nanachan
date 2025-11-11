@@ -3,7 +3,7 @@ import io
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import AsyncGenerator, Iterable, Sequence
+from typing import Any, AsyncGenerator, Iterable, Sequence
 
 import discord
 from discord.ext import commands
@@ -299,15 +299,14 @@ async def generate_image(
     If include_ctx_attachments is True, images attached to the user prompt will also be included
     as base images for editing.
     """
-    url = 'https://openrouter.ai/api/v1/chat/completions'
     headers = {
         'Authorization': f'Bearer {AI_OPENROUTER_API_KEY}',
         'Content-Type': 'application/json',
     }
-    content = [{'type': 'text', 'text': prompt}]
+    content: list[Any] = [{'type': 'text', 'text': prompt}]
     if base_image_urls:
-        for url in base_image_urls:
-            content.append({'type': 'image_url', 'url': url})
+        for image_url in base_image_urls:
+            content.append({'type': 'image_url', 'image_url': {'url': image_url}})
     if include_ctx_attachments:
         ctx = run_ctx.deps.ctx
         for attachment in ctx.message.attachments:
@@ -315,13 +314,18 @@ async def generate_image(
                 image_bytes = await attachment.read()
                 encoded_image = base64.b64encode(image_bytes).decode('utf-8')
                 data_url = f'data:{attachment.content_type};base64,{encoded_image}'
-                content.append({'type': 'image_url', 'image_url': data_url})
+                content.append({'type': 'image_url', 'image_url': {'url': data_url}})
     payload = {
         'model': AI_IMAGE_MODEL,
         'messages': [{'role': 'user', 'content': content}],
         'modalities': ['image', 'text'],
     }
-    async with get_session().post(url, headers=headers, json=payload, timeout=None) as resp:
+    async with get_session().post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        headers=headers,
+        json=payload,
+        timeout=None,
+    ) as resp:
         resp.raise_for_status()
         result = await resp.json()
 
