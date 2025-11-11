@@ -290,12 +290,14 @@ async def retrieve_context(run_ctx: RunContext[DiscordDeps], search_query: str):
 async def generate_image(
     run_ctx: RunContext[DiscordDeps],
     prompt: str,
+    edited_image_urls: Sequence[str] = (),
     include_ctx_attachments: bool = False,
 ):
     """
     Generate an image and send it on Discord.
-    If include_ctx_attachments is True, images attached to the user prompt will be included as base
-    images for editing.
+    If edited_image_urls are provided, these images will be included as base images for editing.
+    If include_ctx_attachments is True, images attached to the user prompt will also be included
+    as base images for editing.
     """
     url = 'https://openrouter.ai/api/v1/chat/completions'
     headers = {
@@ -303,6 +305,8 @@ async def generate_image(
         'Content-Type': 'application/json',
     }
     content = [{'type': 'text', 'text': prompt}]
+    for url in edited_image_urls:
+        content.append({'type': 'image_url', 'image_url': url})
     if include_ctx_attachments:
         ctx = run_ctx.deps.ctx
         for attachment in ctx.message.attachments:
