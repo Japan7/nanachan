@@ -255,10 +255,10 @@ async def report_error_to_github(error: BaseException, source: Any) -> str | Non
 ## Traceback
 
 ```
-{error_msg}
+{error_msg.strip()}
 ```
 
-## Source user interaction
+## Initial user interaction
 
 ```
 {source!r}
