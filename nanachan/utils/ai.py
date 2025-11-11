@@ -287,16 +287,33 @@ async def retrieve_context(run_ctx: RunContext[DiscordDeps], search_query: str):
 
 
 @discord_toolset.tool
-async def generate_image(run_ctx: RunContext[DiscordDeps], prompt: str):
-    """Generate an image and send it on Discord."""
+async def generate_image(
+    run_ctx: RunContext[DiscordDeps],
+    prompt: str,
+    include_ctx_attachments: bool = False,
+):
+    """
+    Generate an image and send it on Discord.
+    If include_ctx_attachments is True, images attached to the user prompt will be included as base
+    images for editing.
+    """
     url = 'https://openrouter.ai/api/v1/chat/completions'
     headers = {
         'Authorization': f'Bearer {AI_OPENROUTER_API_KEY}',
         'Content-Type': 'application/json',
     }
+    content = [{'type': 'text', 'text': prompt}]
+    if include_ctx_attachments:
+        ctx = run_ctx.deps.ctx
+        for attachment in reversed(ctx.message.attachments):
+            if attachment.content_type and attachment.content_type.startswith('image/'):
+                image_bytes = await attachment.read()
+                encoded_image = base64.b64encode(image_bytes).decode('utf-8')
+                data_url = f'data:{attachment.content_type};base64,{encoded_image}'
+                content.append({'type': 'image_url', 'image_url': data_url})
     payload = {
         'model': AI_IMAGE_MODEL,
-        'messages': [{'role': 'user', 'content': prompt}],
+        'messages': [{'role': 'user', 'content': content}],
         'modalities': ['image', 'text'],
     }
     async with get_session().post(url, headers=headers, json=payload, timeout=None) as resp:
