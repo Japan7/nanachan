@@ -305,7 +305,7 @@ async def generate_image(
     content = [{'type': 'text', 'text': prompt}]
     if include_ctx_attachments:
         ctx = run_ctx.deps.ctx
-        for attachment in reversed(ctx.message.attachments):
+        for attachment in ctx.message.attachments:
             if attachment.content_type and attachment.content_type.startswith('image/'):
                 image_bytes = await attachment.read()
                 encoded_image = base64.b64encode(image_bytes).decode('utf-8')
