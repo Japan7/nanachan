@@ -3,7 +3,7 @@ import io
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, AsyncGenerator, Iterable, Sequence
+from typing import AsyncGenerator, Iterable, Sequence
 
 import discord
 from discord.ext import commands
@@ -303,10 +303,10 @@ async def generate_image(
         'Authorization': f'Bearer {AI_OPENROUTER_API_KEY}',
         'Content-Type': 'application/json',
     }
-    content: list[Any] = [{'type': 'text', 'text': prompt}]
+    input_content = [{'type': 'text', 'text': prompt}]
     if base_image_urls:
-        for image_url in base_image_urls:
-            content.append({'type': 'image_url', 'image_url': {'url': image_url}})
+        for url in base_image_urls:
+            input_content.append({'type': 'image_url', 'image_url': url})
     if include_ctx_attachments:
         ctx = run_ctx.deps.ctx
         for attachment in ctx.message.attachments:
@@ -314,10 +314,10 @@ async def generate_image(
                 image_bytes = await attachment.read()
                 encoded_image = base64.b64encode(image_bytes).decode('utf-8')
                 data_url = f'data:{attachment.content_type};base64,{encoded_image}'
-                content.append({'type': 'image_url', 'image_url': {'url': data_url}})
+                input_content.append({'type': 'image_url', 'image_url': data_url})
     payload = {
         'model': AI_IMAGE_MODEL,
-        'messages': [{'role': 'user', 'content': content}],
+        'messages': [{'role': 'user', 'content': input_content}],
         'modalities': ['image', 'text'],
     }
     async with get_session().post(
