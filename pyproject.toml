@@ -32,7 +32,7 @@ dependencies = [
     "yappi",
     "valkey[libvalkey]==6.1.1",
     "parsedatetime==2.6",
-    "yt-dlp[default]==2025.10.22",
+    "yt-dlp[default]==2025.11.12",
     "aiojobs==1.4.0",
     "tzdata==2025.2",
     "python-dateutil==2.9.0.post0",
