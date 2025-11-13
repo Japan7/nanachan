@@ -27,7 +27,6 @@ from nanachan.settings import (
     RequiresAI,
 )
 from nanachan.utils.ai import (
-    DiscordDeps,
     discord_toolset,
     get_model,
     iter_stream,
@@ -71,8 +70,8 @@ class AI(Cog, required_settings=RequiresAI):
     slash_pr = app_commands.Group(name='prompt', parent=slash_ai, description='AI prompts')
 
     @staticmethod
-    def system_prompt(run_ctx: RunContext[DiscordDeps]):
-        ctx = run_ctx.deps.ctx
+    def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
+        ctx = run_ctx.deps
         assert ctx.bot.user and ctx.guild
         return f"""
 The assistant is {ctx.bot.user.display_name}, a Discord bot for the {ctx.guild.name} Discord server.
@@ -90,8 +89,8 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
 """  # noqa: E501
 
     @staticmethod
-    def author_instructions(run_ctx: RunContext[DiscordDeps]):
-        ctx = run_ctx.deps.ctx
+    def author_instructions(run_ctx: RunContext[commands.Context[Bot]]):
+        ctx = run_ctx.deps
         assert ctx.bot.user
         return (
             f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name} '
@@ -102,7 +101,7 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
         self.bot = bot
 
         self.agent = Agent(
-            deps_type=DiscordDeps,
+            deps_type=commands.Context[Bot],
             toolsets=[nanapi_toolset, discord_toolset, search_toolset, python_toolset],  # type: ignore
         )
         self.agent.system_prompt(self.system_prompt)
@@ -113,40 +112,33 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
 
     @slash_ai.command(name='chat')
     @legacy_command()
-    async def new_chat(
-        self,
-        ctx: LegacyCommandContext,
-        prompt: str,
-        attachment: discord.Attachment | None = None,
-        model_name: str | None = None,
-    ):
+    async def new_chat(self, ctx: LegacyCommandContext, model_name: str | None = None):
         """Chat with AI"""
         if not model_name:
             assert AI_DEFAULT_MODEL
             model_name = AI_DEFAULT_MODEL
 
-        embed = Embed(description=prompt, color=ctx.author.accent_color)
-        embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
-        if attachment and attachment.content_type and attachment.content_type.startswith('image/'):
-            embed.set_image(url=attachment.url)
+        embed = Embed(color=ctx.author.accent_color)
         embed.set_footer(text=model_name)
         resp = await ctx.reply(embed=embed)
 
-        attachments = []
-        if attachment:
-            attachments.append(attachment)
-
         if isinstance(ctx.channel, discord.Thread):
             thread = ctx.channel
-            reply_to = resp
         else:
-            async with ctx.channel.typing():
-                thread = await resp.create_thread(name=prompt[:100], auto_archive_duration=60)
-                await thread.add_user(ctx.author)
-                reply_to = None
+            timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
+            thread = await resp.create_thread(
+                name=f'AI Chat - {timestamp}',
+                auto_archive_duration=60,
+            )
+            await thread.add_user(ctx.author)
 
         self.contexts[thread.id] = ChatContext(model_name=model_name)
-        await self.chat(ctx, thread, prompt, attachments, reply_to=reply_to)
+
+        assert self.bot.user
+        await thread.send(
+            f'{self.bot.user.mention} to ask AI',
+            allowed_mentions=AllowedMentions.none(),
+        )
 
     async def chat(
         self,
@@ -178,7 +170,7 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
                         user_prompt=content,
                         message_history=chat_ctx.history,
                         model=model,
-                        deps=DiscordDeps(ctx, thread=thread),
+                        deps=ctx,
                         yield_call_tools=True,
                     ):
                         resp = await send(part, allowed_mentions=allowed_mentions)
@@ -199,7 +191,7 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
                 f'that does the following task:\n{what}',
                 output_type=InsertPromptBody,
                 model=get_model(AI_FLAGSHIP_MODEL),
-                deps=DiscordDeps(ctx),
+                deps=ctx,
             )
         body = result.output
         resp = await get_nanapi().ai.ai_insert_prompt(body)
