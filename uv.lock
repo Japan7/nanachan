@@ -1440,7 +1440,7 @@ requires-dist = [
     { name = "tzdata", specifier = "==2025.2" },
     { name = "valkey", extras = ["libvalkey"], specifier = "==6.1.1" },
     { name = "watchfiles", specifier = "==1.1.1" },
-    { name = "yappi", git = "https://github.com/sumerc/yappi.git?rev=06518da884fb12ce0cee7555f27f60f5da868519" },
+    { name = "yappi", git = "https://github.com/sumerc/yappi.git?rev=294c97e31a0ec66ff12dbca051fa2df08c6ec578" },
     { name = "yarl", specifier = "==1.22.0" },
     { name = "yt-dlp", extras = ["default"], specifier = "==2025.11.12" },
 ]
@@ -2629,7 +2629,7 @@ wheels = [
 [[package]]
 name = "yappi"
 version = "1.7.3"
-source = { git = "https://github.com/sumerc/yappi.git?rev=06518da884fb12ce0cee7555f27f60f5da868519#06518da884fb12ce0cee7555f27f60f5da868519" }
+source = { git = "https://github.com/sumerc/yappi.git?rev=294c97e31a0ec66ff12dbca051fa2df08c6ec578#294c97e31a0ec66ff12dbca051fa2df08c6ec578" }
 
 [[package]]
 name = "yarl"
