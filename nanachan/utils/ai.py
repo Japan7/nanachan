@@ -200,6 +200,18 @@ async def get_parent_channel(run_ctx: RunContext[commands.Context[Bot]]):
 
 
 @discord_toolset.tool
+async def get_replied_message(run_ctx: RunContext[commands.Context[Bot]]):
+    """Retrieve the message that the current message is replying to, if any."""
+    ctx = run_ctx.deps
+    if ctx.message.reference and ctx.message.reference.message_id:
+        return await ctx._state.http.get_message(  # pyright: ignore[reportPrivateUsage]
+            ctx.message.reference.channel_id,
+            ctx.message.reference.message_id,
+        )
+    return None
+
+
+@discord_toolset.tool
 async def fetch_channel(run_ctx: RunContext[commands.Context[Bot]], channel_id: str):
     """Fetch a channel."""
     ctx = run_ctx.deps
@@ -256,7 +268,7 @@ async def channel_history(
 
 @discord_toolset.tool(retries=5)
 async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_query: str):
-    """Find relevant discussion sections using a simple French keyword search."""
+    """Find relevant past discussion sections using a simple French keyword search."""
     ctx = run_ctx.deps
     assert isinstance(ctx.author, discord.Member)
     resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=25)

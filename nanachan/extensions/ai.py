@@ -80,12 +80,10 @@ The current date is {datetime.now(TZ)}.
 
 {ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}.
 
-{ctx.bot.user.display_name} should use the retrieve_context tool to retrieve context before responding.
-
 When using retrieved context to answer the user, {ctx.bot.user.display_name} must reference the pertinent messages and provide their links.
 For instance: "Snapchat is a beautiful cat (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>) and it loves Louis (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>)."
 
-For complex tasks, {ctx.bot.user.display_name} can access to a collection of prompts with ai_prompt_index and ai_get_prompt. These prompts serve as instructions.
+If the agent is asked to factcheck something, this something may be a replied message or the last messages in the channel.
 """  # noqa: E501
 
     @staticmethod
@@ -118,27 +116,29 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
             assert AI_DEFAULT_MODEL
             model_name = AI_DEFAULT_MODEL
 
-        embed = Embed(color=ctx.author.accent_color)
+        embed = Embed()
         embed.set_footer(text=model_name)
         resp = await ctx.reply(embed=embed)
 
-        if isinstance(ctx.channel, discord.Thread):
-            thread = ctx.channel
-        else:
-            timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
-            thread = await resp.create_thread(
-                name=f'AI Chat - {timestamp}',
-                auto_archive_duration=60,
-            )
-            await thread.add_user(ctx.author)
-
+        thread = await self.get_chat_thread(resp, name='/ai chat')
+        await thread.add_user(ctx.author)
         self.contexts[thread.id] = ChatContext(model_name=model_name)
 
         assert self.bot.user
         await thread.send(
-            f'{self.bot.user.mention} to ask AI',
+            f'Mention {self.bot.user.mention} to prompt {model_name}',
             allowed_mentions=AllowedMentions.none(),
         )
+
+    async def get_chat_thread(self, message: discord.Message, name: str):
+        if isinstance(message.channel, discord.Thread):
+            thread = message.channel
+        else:
+            thread = await message.create_thread(
+                name=f'{name} – {datetime.now(TZ):%Y-%m-%d %H:%M}',
+                auto_archive_duration=60,
+            )
+        return thread
 
     async def chat(
         self,
@@ -146,20 +146,22 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
         thread: discord.Thread,
         prompt: str,
         attachments: list[discord.Attachment],
-        reply_to: discord.Message | None = None,
     ):
         async with self.agent_lock, thread.typing():
+            chat_ctx = self.contexts[thread.id]
+            model = get_model(chat_ctx.model_name)
+
             content: list[UserContent] = [prompt]
             for attachment in attachments:
                 if attachment.content_type:
                     data = await attachment.read()
                     content.append(BinaryContent(data, media_type=attachment.content_type))
 
-            chat_ctx = self.contexts[thread.id]
-
-            model = get_model(chat_ctx.model_name)
-
-            send = reply_to.reply if reply_to else thread.send
+            send = (
+                ctx.message.reply
+                if isinstance(ctx.message.channel, discord.Thread)
+                else thread.send
+            )
             allowed_mentions = AllowedMentions.none()
             allowed_mentions.replied_user = True
 
@@ -238,35 +240,47 @@ For complex tasks, {ctx.bot.user.display_name} can access to a collection of pro
             for arg in prompt.arguments:
                 chat_prompt += f'{arg.name}: {arg.description}\n'
 
-        embed = Embed(description=f'`/{prompt.name}`', color=ctx.author.accent_color)
-        embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
+        embed = Embed(description=f'`/{prompt.name}`')
         embed.set_footer(text=model_name)
         resp = await ctx.reply(embed=embed)
 
-        if isinstance(ctx.channel, discord.Thread):
-            thread = ctx.channel
-            reply_to = resp
-        else:
-            async with ctx.channel.typing():
-                thread = await resp.create_thread(name=prompt.name, auto_archive_duration=60)
-                await thread.add_user(ctx.author)
-                reply_to = None
-
+        thread = await self.get_chat_thread(resp, name=prompt.name)
+        await thread.add_user(ctx.author)
         self.contexts[thread.id] = ChatContext(model_name=model_name)
-        await self.chat(ctx, thread, chat_prompt, attachments=[], reply_to=reply_to)
+
+        await self.chat(ctx, thread, chat_prompt, [])
 
     @NanaGroupCog.listener()
     async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+
         if (
-            not message.author.bot
-            and self.bot.user in message.mentions
+            self.bot.user in message.mentions
             and isinstance(message.channel, discord.Thread)
             and message.channel.id in self.contexts
         ):
             ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
-            prompt = ctx.message.content
-            attachments = ctx.message.attachments
-            await self.chat(ctx, message.channel, prompt, attachments, reply_to=ctx.message)
+            await self.chat(
+                ctx,
+                message.channel,
+                message.content,
+                message.attachments,
+            )
+            return
+
+        if message.content.startswith('@grok'):
+            ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
+            thread = await self.get_chat_thread(message, name='@grok')
+            await thread.add_user(message.author)
+            self.contexts[thread.id] = ChatContext(model_name='x-ai/grok-4')
+            await self.chat(
+                ctx,
+                thread,
+                message.content.removeprefix('@grok '),
+                message.attachments,
+            )
+            return
 
 
 async def setup(bot: Bot):
