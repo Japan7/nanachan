@@ -113,5 +113,7 @@ ignore_unused = [
     # https://github.com/tweag/FawltyDeps/issues/419
     "discord-py",
     "discord-ext-voice-recv",
+    # ai chat
+    "mcp-run-python",
 ]
 output_format = "human_detailed"
