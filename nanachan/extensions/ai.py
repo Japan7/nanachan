@@ -31,6 +31,7 @@ from nanachan.utils.ai import (
     discord_toolset,
     get_model,
     iter_stream,
+    multimodal_toolset,
     nanapi_toolset,
     python_toolset,
     search_toolset,
@@ -101,7 +102,13 @@ If the agent is asked to factcheck something, this something may be a replied me
 
         self.agent = Agent(
             deps_type=commands.Context[Bot],
-            toolsets=[nanapi_toolset, discord_toolset, search_toolset, python_toolset],  # type: ignore
+            toolsets=[
+                nanapi_toolset,  # type: ignore
+                discord_toolset,
+                multimodal_toolset,
+                search_toolset,
+                python_toolset,
+            ],
         )
         self.agent.system_prompt(self.system_prompt)
         self.agent.instructions(self.author_instructions)

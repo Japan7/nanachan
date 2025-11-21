@@ -152,6 +152,7 @@ def nanapi_tools() -> Iterable[Tool[None]]:
 
 nanapi_toolset = FunctionToolset(tools=list(nanapi_tools()))
 discord_toolset = FunctionToolset[commands.Context[Bot]]()
+multimodal_toolset = FunctionToolset[commands.Context[Bot]]()
 search_toolset = FunctionToolset(
     tools=[
         tavily_search_tool(AI_TAVILY_API_KEY)
@@ -159,18 +160,7 @@ search_toolset = FunctionToolset(
         else duckduckgo_search_tool()
     ]
 )
-python_toolset = MCPServerStdio(
-    'deno',
-    args=[
-        'run',
-        '-N',
-        '-R=node_modules',
-        '-W=node_modules',
-        '--node-modules-dir=auto',
-        'jsr:@pydantic/mcp-run-python',
-        'stdio',
-    ],
-)
+python_toolset = MCPServerStdio('uv', args=['run', 'mcp-run-python', 'stdio'], timeout=10)
 
 
 @discord_toolset.tool
@@ -291,7 +281,7 @@ async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_qu
     return messages
 
 
-@discord_toolset.tool
+@multimodal_toolset.tool
 async def generate_image(
     run_ctx: RunContext[commands.Context[Bot]],
     prompt: str,
