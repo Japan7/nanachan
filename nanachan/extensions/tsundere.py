@@ -59,7 +59,6 @@ The current date is {datetime.now(TZ)}.
                 return
 
             if RequiresAI.configured:
-                assert AI_LOW_LATENCY_MODEL
                 run = await self.agent.run(
                     message.clean_content,
                     model=get_model(AI_LOW_LATENCY_MODEL),

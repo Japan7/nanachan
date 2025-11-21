@@ -83,7 +83,6 @@ class QuizzBase(ABC):
 
     @classmethod
     async def generate_ai_hints(cls, question: str | None, answer: str) -> list[str] | None:
-        assert AI_FLAGSHIP_MODEL
         run = await cls.agent.run(
             f'Create {cls.HINTS_COUNT} hints for the quiz answer, each offering gradually more '
             f'assistance.\n'

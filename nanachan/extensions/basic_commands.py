@@ -484,7 +484,6 @@ class BasicCommands(Cog, name='Basic Commands'):
     async def get_thread_summary(self, thread: Thread) -> tuple[Thread, str]:
         if not RequiresAI.configured:
             return thread, ''
-        assert AI_LOW_LATENCY_MODEL
         channel = await thread._state.http.get_channel(thread.id)  # pyright: ignore[reportPrivateUsage]
         messages = await thread._state.http.logs_from(thread.id, limit=50)  # pyright: ignore[reportPrivateUsage]
         resp = await self.agent.run(

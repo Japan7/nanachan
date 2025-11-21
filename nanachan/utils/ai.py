@@ -271,7 +271,7 @@ async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_qu
     """Find relevant past discussion sections using a simple French keyword search."""
     ctx = run_ctx.deps
     assert isinstance(ctx.author, discord.Member)
-    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=25)
+    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=10)
     if not success(resp):
         raise RuntimeError(resp.result)
     messages = [

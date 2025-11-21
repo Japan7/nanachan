@@ -22,6 +22,7 @@ from nanachan.nanapi.model import InsertPromptBody
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_FLAGSHIP_MODEL,
+    AI_GROK_MODEL,
     ENABLE_MESSAGE_EXPORT,
     TZ,
     RequiresAI,
@@ -113,7 +114,6 @@ If the agent is asked to factcheck something, this something may be a replied me
     async def new_chat(self, ctx: LegacyCommandContext, model_name: str | None = None):
         """Chat with AI"""
         if not model_name:
-            assert AI_DEFAULT_MODEL
             model_name = AI_DEFAULT_MODEL
 
         embed = Embed()
@@ -126,7 +126,7 @@ If the agent is asked to factcheck something, this something may be a replied me
 
         assert self.bot.user
         await thread.send(
-            f'Mention {self.bot.user.mention} to prompt {model_name}',
+            f'Mention {self.bot.user.mention} to prompt **{model_name}**.',
             allowed_mentions=AllowedMentions.none(),
         )
 
@@ -186,7 +186,6 @@ If the agent is asked to factcheck something, this something may be a replied me
     async def prompt_save(self, ctx: LegacyCommandContext, name: str, what: str):
         """Save a prompt"""
         await ctx.defer()
-        assert AI_FLAGSHIP_MODEL
         async with self.agent_lock, self.agent:
             result = await self.agent.run(
                 f'Create a prompt named `{name}` (make it snake_case) '
@@ -226,7 +225,6 @@ If the agent is asked to factcheck something, this something may be a replied me
     ):
         """Use a prompt"""
         if not model_name:
-            assert AI_DEFAULT_MODEL
             model_name = AI_DEFAULT_MODEL
 
         resp = await get_nanapi().ai.ai_get_prompt(name)
@@ -273,7 +271,7 @@ If the agent is asked to factcheck something, this something may be a replied me
             ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
             thread = await self.get_chat_thread(message, name='@grok')
             await thread.add_user(message.author)
-            self.contexts[thread.id] = ChatContext(model_name='x-ai/grok-4')
+            self.contexts[thread.id] = ChatContext(model_name=AI_GROK_MODEL)
             await self.chat(
                 ctx,
                 thread,

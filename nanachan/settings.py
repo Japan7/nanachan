@@ -107,7 +107,8 @@ AI_OPENROUTER_API_KEY: str | None = None
 AI_FLAGSHIP_MODEL = 'openai/gpt-4.1'
 AI_DEFAULT_MODEL = 'openai/gpt-4.1-mini'
 AI_LOW_LATENCY_MODEL = 'openai/gpt-4.1-nano'
-AI_IMAGE_MODEL = 'google/gemini-2.5-flash-image'
+AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
+AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
 AI_TAVILY_API_KEY: str | None = None
 AI_SKIP_PERMISSIONS_CHECK = False
 
@@ -153,6 +154,11 @@ RequiresProjo = RequiredSettings(PROJO_THREADS_ROOM, PROJO_ROOM, PROJO_VOICE, PR
 RequiresQuizz = RequiredSettings(ANIME_QUIZZ_CHANNEL, MANGA_QUIZZ_CHANNEL, LOUIS_QUIZZ_CHANNEL)
 RequiresWaicolle = RequiredSettings(WC_ROLE)
 RequiresAI = RequiredSettings(
-    AI_OPENROUTER_API_KEY, AI_FLAGSHIP_MODEL, AI_DEFAULT_MODEL, AI_LOW_LATENCY_MODEL
+    AI_OPENROUTER_API_KEY,
+    AI_FLAGSHIP_MODEL,
+    AI_DEFAULT_MODEL,
+    AI_LOW_LATENCY_MODEL,
+    AI_GROK_MODEL,
+    AI_IMAGE_MODEL,
 )
 RequiresGitHub = RequiredSettings(GITHUB_REPO_SLUG, GITHUB_TOKEN)
