@@ -120,8 +120,7 @@ If the agent is asked to factcheck something, this something may be a replied me
         embed.set_footer(text=model_name)
         resp = await ctx.reply(embed=embed)
 
-        thread = await self.get_chat_thread(resp, name='/ai chat')
-        await thread.add_user(ctx.author)
+        thread = await self.get_chat_thread(resp, name='/ai chat', user_to_add=ctx.author)
         self.contexts[thread.id] = ChatContext(model_name=model_name)
 
         assert self.bot.user
@@ -130,7 +129,12 @@ If the agent is asked to factcheck something, this something may be a replied me
             allowed_mentions=AllowedMentions.none(),
         )
 
-    async def get_chat_thread(self, message: discord.Message, name: str):
+    async def get_chat_thread(
+        self,
+        message: discord.Message,
+        name: str,
+        user_to_add: discord.Member | discord.User | None = None,
+    ):
         if isinstance(message.channel, discord.Thread):
             thread = message.channel
         else:
@@ -138,6 +142,8 @@ If the agent is asked to factcheck something, this something may be a replied me
                 name=f'{name} – {datetime.now(TZ):%Y-%m-%d %H:%M}',
                 auto_archive_duration=60,
             )
+        if user_to_add:
+            await thread.add_user(user_to_add)
         return thread
 
     async def chat(
@@ -242,8 +248,7 @@ If the agent is asked to factcheck something, this something may be a replied me
         embed.set_footer(text=model_name)
         resp = await ctx.reply(embed=embed)
 
-        thread = await self.get_chat_thread(resp, name=prompt.name)
-        await thread.add_user(ctx.author)
+        thread = await self.get_chat_thread(resp, name=prompt.name, user_to_add=ctx.author)
         self.contexts[thread.id] = ChatContext(model_name=model_name)
 
         await self.chat(ctx, thread, chat_prompt, [])
@@ -253,32 +258,27 @@ If the agent is asked to factcheck something, this something may be a replied me
         if message.author.bot:
             return
 
-        if (
-            self.bot.user in message.mentions
-            and isinstance(message.channel, discord.Thread)
-            and message.channel.id in self.contexts
-        ):
-            ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
-            await self.chat(
-                ctx,
-                message.channel,
-                message.content,
-                message.attachments,
+        if self.bot.user in message.mentions:
+            await self.on_chat_message(
+                message,
+                thread_name='/ai chat',
+                model_name=AI_DEFAULT_MODEL,
             )
             return
 
         if message.content.startswith('@grok'):
-            ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
-            thread = await self.get_chat_thread(message, name='@grok')
-            await thread.add_user(message.author)
-            self.contexts[thread.id] = ChatContext(model_name=AI_GROK_MODEL)
-            await self.chat(
-                ctx,
-                thread,
-                message.content.removeprefix('@grok '),
-                message.attachments,
+            await self.on_chat_message(
+                message,
+                thread_name='@grok',
+                model_name=AI_GROK_MODEL,
             )
             return
+
+    async def on_chat_message(self, message: discord.Message, thread_name: str, model_name: str):
+        ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
+        thread = await self.get_chat_thread(message, name=thread_name, user_to_add=message.author)
+        self.contexts[thread.id] = ChatContext(model_name)
+        await self.chat(ctx, thread, message.content, message.attachments)
 
 
 async def setup(bot: Bot):
