@@ -291,9 +291,29 @@ async def generate_image(
     """
     Generate an image and send it on Discord.
     If base_image_urls are provided, these images will be included as base images for editing.
-    If include_ctx_attachments is True, images attached to the user prompt will also be included
-    as base images for editing.
-    """
+    If include_ctx_attachments is True, images attached to the user prompt will also be included as base images for editing.
+
+    ## Establishing the vision: Story, subject and style
+
+    To achieve the best results and have more nuanced creative control, include the following elements in your prompt:
+
+    - Subject: Who or what is in the image? Be specific. (e.g., a stoic robot barista with glowing blue optics; a fluffy calico cat wearing a tiny wizard hat).
+    - Composition: How is the shot framed? (e.g., extreme close-up, wide shot, low angle shot, portrait).
+    - Action: What is happening? (e.g., brewing a cup of coffee, casting a magical spell, mid-stride running through a field).
+    - Location: Where does the scene take place? (e.g., a futuristic cafe on Mars, a cluttered alchemist's library, a sun-drenched meadow at golden hour).
+    - Style: What is the overall aesthetic? (e.g., 3D animation, film noir, watercolor painting, photorealistic, 1990s product photography).
+    - Editing Instructions: For modifying an existing image, be direct and specific. (e.g., change the man's tie to green, remove the car in the background)
+
+    ## Refining the details: Camera, lighting and format
+
+    While simple prompts still work, achieving professional results requires more specific instructions. When crafting your prompts, move beyond the basics and consider these advanced elements:
+
+    - Composition and aspect ratio: Define the canvas. (e.g., "A 9:16 vertical poster," "A cinematic 21:9 wide shot.")
+    - Camera and lighting details: Direct the shot like a cinematographer. (e.g., "A low-angle shot with a shallow depth of field (f/1.8)," "Golden hour backlighting creating long shadows," "Cinematic color grading with muted teal tones.")
+    - Specific text integration: Clearly state what text should appear and how it should look. (e.g., "The headline 'URBAN EXPLORER' rendered in bold, white, sans-serif font at the top.")
+    - Factual constraints (for diagrams): Specify the need for accuracy and ensure your inputs themselves are factual (e.g., "A scientifically accurate cross-section diagram," "Ensure historical accuracy for the Victorian era.").
+    - Reference inputs: When using uploaded images, clearly define the role of each. (e.g., "Use Image A for the character's pose, Image B for the art style, and Image C for the background environment.")
+    """  # noqa: E501
     headers = {
         'Authorization': f'Bearer {AI_OPENROUTER_API_KEY}',
         'Content-Type': 'application/json',
