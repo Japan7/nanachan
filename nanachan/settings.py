@@ -104,9 +104,9 @@ NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## AI
 AI_OPENROUTER_API_KEY: str | None = None
-AI_FLAGSHIP_MODEL = 'openai/gpt-5.1'
-AI_DEFAULT_MODEL = 'openai/gpt-5-mini'
-AI_LOW_LATENCY_MODEL = 'openai/gpt-5-nano'
+AI_FLAGSHIP_MODEL = 'openai/gpt-4.1'
+AI_DEFAULT_MODEL = 'openai/gpt-4.1-mini'
+AI_LOW_LATENCY_MODEL = 'openai/gpt-4.1-nano'
 AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
 AI_TAVILY_API_KEY: str | None = None
