@@ -12,6 +12,8 @@ from nanachan.nanapi.model import Body_client_login
 from nanachan.settings import NANAPI_CLIENT_PASSWORD, NANAPI_CLIENT_USERNAME, NANAPI_URL
 
 # Timeout for all HTTP requests to nanapi (in seconds)
+# Set to 60 seconds to handle potentially slow database queries
+# and file processing operations on the backend
 NANAPI_TIMEOUT = 60
 
 bearer_token: str | None = None
