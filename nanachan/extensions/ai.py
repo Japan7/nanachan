@@ -278,7 +278,10 @@ If the agent is asked to factcheck something, this something may be a replied me
         thread = await self.get_chat_thread(
             message, name_prefix=model_name, user_to_add=message.author
         )
-        self.contexts[thread.id] = ChatContext(model_name)
+        if thread.id not in self.contexts:
+            self.contexts[thread.id] = ChatContext(model_name)
+        elif model_name != AI_DEFAULT_MODEL:
+            self.contexts[thread.id].model_name = model_name
         await self.chat(ctx, thread, message.content, message.attachments)
 
 
