@@ -1314,7 +1314,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         return stats
 
     async def _get_amq_extract(self, data) -> discord.File:
-        url = data['videoInfo']['videoMap']['catbox']['0']
+        url = 'https://nawdist.animemusicquiz.com/' + data['videoInfo']['videoMap']['catbox']['0']
 
         async with NamedTemporaryFile() as f:
             headers = {'Referer': 'https://animemusicquiz.com/'}
