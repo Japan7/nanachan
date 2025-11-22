@@ -11,6 +11,9 @@ from nanachan.nanapi._client import success as success
 from nanachan.nanapi.model import Body_client_login
 from nanachan.settings import NANAPI_CLIENT_PASSWORD, NANAPI_CLIENT_USERNAME, NANAPI_URL
 
+# Timeout for all HTTP requests to nanapi (in seconds)
+NANAPI_TIMEOUT = 60
+
 bearer_token: str | None = None
 bearer_ready = asyncio.Event()
 load_lock = asyncio.Lock()
@@ -29,7 +32,7 @@ async def load_bearer_token():
     async with load_lock:
         bearer_ready.clear()
 
-        timeout = ClientTimeout(total=60)
+        timeout = ClientTimeout(total=NANAPI_TIMEOUT)
         session = get_session(NANAPI_URL, timeout=timeout)
         session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
         session._request = session_backoff(session._request)  # pyright: ignore[reportPrivateUsage]
@@ -47,7 +50,7 @@ async def load_bearer_token():
 
 @cache
 def get_nanapi():
-    timeout = ClientTimeout(total=60)
+    timeout = ClientTimeout(total=NANAPI_TIMEOUT)
     session = get_session(NANAPI_URL, timeout=timeout)
 
     session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
