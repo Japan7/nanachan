@@ -7,24 +7,27 @@ from typing import AsyncGenerator, Iterable, Sequence
 import discord
 from discord.ext import commands
 from discord.utils import time_snowflake
-from pydantic_ai import Agent, ModelRetry, RunContext, Tool
+from pydantic_ai import (
+    Agent,
+    FunctionToolCallEvent,
+    ModelMessage,
+    ModelRetry,
+    PartDeltaEvent,
+    PartEndEvent,
+    PartStartEvent,
+    RunContext,
+    TextPart,
+    TextPartDelta,
+    ThinkingPart,
+    ThinkingPartDelta,
+    Tool,
+    UserContent,
+)
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.common_tools.tavily import tavily_search_tool
 from pydantic_ai.mcp import MCPServerStdio
-from pydantic_ai.messages import (
-    FinalResultEvent,
-    FunctionToolCallEvent,
-    FunctionToolResultEvent,
-    ModelMessage,
-    PartDeltaEvent,
-    PartStartEvent,
-    TextPart,
-    TextPartDelta,
-    ToolCallPartDelta,
-    UserContent,
-)
 from pydantic_ai.models import Model
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.toolsets import FunctionToolset
 
@@ -43,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 def get_model(model_name: str) -> Model:
     assert AI_OPENROUTER_API_KEY
-    return OpenAIChatModel(model_name, provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY))
+    return OpenRouterModel(model_name, provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY))
 
 
 async def iter_stream[AgentDepsT](
@@ -53,60 +56,45 @@ async def iter_stream[AgentDepsT](
     message_history: list[ModelMessage],
     model: Model,
     deps: AgentDepsT,
-    yield_call_tools: bool = False,
 ) -> AsyncGenerator[str]:
     """https://ai.pydantic.dev/agents/#streaming"""
-    async with agent.iter(
+    buf = ''
+    thinking = False
+    async for event in agent.run_stream_events(
         user_prompt,
         message_history=message_history,
         model=model,
         deps=deps,
-    ) as run:
-        async for node in run:
-            if Agent.is_user_prompt_node(node):
-                # A user prompt node => The user has provided input
+    ):
+        match event:
+            case PartStartEvent(part=ThinkingPart(content=content)):
+                thinking = True
+                buf = content
+            case PartStartEvent(part=TextPart(content=content)):
+                thinking = False
+                buf = content
+            case PartDeltaEvent(delta=ThinkingPartDelta(content_delta=content_delta)) if (
+                content_delta is not None
+            ):
+                buf += content_delta
+            case PartDeltaEvent(delta=TextPartDelta(content_delta=content_delta)):
+                buf += content_delta
+            case FunctionToolCallEvent(part=part):
+                yield f'```\n[TOOL] {part.tool_name} {part.args}\n```'
+            case PartEndEvent():
+                if buf:
+                    yield f'>>> {buf}' if thinking else buf
+            case _:
                 ...
-            elif Agent.is_model_request_node(node):
-                # A model request node => We can stream tokens from the model's request
-                async with node.stream(run.ctx) as request_stream:
-                    buf = ''
-                    async for event in request_stream:
-                        if isinstance(event, PartStartEvent):
-                            if isinstance(event.part, TextPart):
-                                buf += event.part.content
-                        elif isinstance(event, PartDeltaEvent):
-                            if isinstance(event.delta, TextPartDelta):
-                                buf += event.delta.content_delta
-                            elif isinstance(event.delta, ToolCallPartDelta):  # type: ignore
-                                ...
-                        elif isinstance(event, FinalResultEvent):  # type: ignore
-                            ...
-                        if len(buf) > 2000:
-                            lines = buf.splitlines()
-                            buf = ''
-                            for line in lines:
-                                if len(buf) + len(line) > 2000:
-                                    yield buf
-                                    buf = line
-                                else:
-                                    buf += '\n' + line
-                    if buf:
-                        yield buf
-            elif Agent.is_call_tools_node(node):
-                # A handle-response node => The model returned some data, potentially calls a tool
-                async with node.stream(run.ctx) as handle_stream:
-                    async for event in handle_stream:
-                        if isinstance(event, FunctionToolCallEvent):
-                            if yield_call_tools:
-                                yield (
-                                    f'```\n[TOOL] {event.part.tool_name} {event.part.args}\n```'
-                                )
-                        elif isinstance(event, FunctionToolResultEvent):
-                            ...
-            elif Agent.is_end_node(node):
-                # Once an End node is reached, the agent run is complete
-                assert run.result
-                message_history.extend(run.result.new_messages())
+        if len(buf) > (2000 if not thinking else 1996):
+            lines = buf.splitlines()
+            buf = ''
+            for line in lines:
+                if len(buf) + len(line) > (2000 if not thinking else 1996):
+                    yield f'>>> {buf}' if thinking else buf
+                    buf = line
+                else:
+                    buf += '\n' + line
 
 
 def nanapi_tools() -> Iterable[Tool[None]]:

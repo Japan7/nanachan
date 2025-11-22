@@ -159,10 +159,11 @@ If the agent is asked to factcheck something, this something may be a replied me
         thread: discord.Thread,
         prompt: str,
         attachments: list[discord.Attachment],
+        model_name: str | None = None,
     ):
         async with self.agent_lock, thread.typing():
             chat_ctx = self.contexts[thread.id]
-            model = get_model(chat_ctx.model_name)
+            model = get_model(model_name or chat_ctx.model_name)
 
             content: list[UserContent] = [prompt]
             for attachment in attachments:
@@ -186,7 +187,6 @@ If the agent is asked to factcheck something, this something may be a replied me
                         message_history=chat_ctx.history,
                         model=model,
                         deps=ctx,
-                        yield_call_tools=True,
                     ):
                         resp = await send(part, allowed_mentions=allowed_mentions)
                         send = resp.reply
@@ -266,23 +266,21 @@ If the agent is asked to factcheck something, this something may be a replied me
             return
 
         if self.bot.user in message.mentions:
-            await self.on_chat_message(message, model_name=AI_DEFAULT_MODEL)
+            await self.on_chat_message(message)
             return
 
         if message.content.startswith('@grok'):
             await self.on_chat_message(message, model_name=AI_GROK_MODEL)
             return
 
-    async def on_chat_message(self, message: discord.Message, model_name: str):
+    async def on_chat_message(self, message: discord.Message, model_name: str | None = None):
         ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
         thread = await self.get_chat_thread(
-            message, name_prefix=model_name, user_to_add=message.author
+            message, name_prefix=model_name or AI_DEFAULT_MODEL, user_to_add=message.author
         )
         if thread.id not in self.contexts:
-            self.contexts[thread.id] = ChatContext(model_name)
-        elif model_name != AI_DEFAULT_MODEL:
-            self.contexts[thread.id].model_name = model_name
-        await self.chat(ctx, thread, message.content, message.attachments)
+            self.contexts[thread.id] = ChatContext(model_name or AI_DEFAULT_MODEL)
+        await self.chat(ctx, thread, message.content, message.attachments, model_name=model_name)
 
 
 async def setup(bot: Bot):
