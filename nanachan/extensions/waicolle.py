@@ -259,7 +259,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     resp3 = await get_nanapi().waicolle.waicolle_player_roll(
                         str(interaction.user.id), nb=10, reason='register'
                     )
-                except TimeoutError:
+                except asyncio.TimeoutError:
                     await interaction.followup.send(
                         f'The request timed out. Please try again later. '
                         f'{self.bot.get_emoji_str("saladedefruits")}'
@@ -477,7 +477,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     pool_discord_id=str(pool_player.id),
                     reason=rollop_reason,
                 )
-            except TimeoutError:
+            except asyncio.TimeoutError:
                 await replyable.send(
                     f'{member} The request timed out. Please try again later. '
                     f'{self.bot.get_emoji_str("saladedefruits")}'
