@@ -2,7 +2,7 @@ import asyncio
 from functools import cache
 
 import backoff
-from aiohttp import ClientResponse
+from aiohttp import ClientResponse, ClientTimeout
 
 from nanachan.nanapi._client import Error as Error  # noqa: F401
 from nanachan.nanapi._client import Success as Success  # noqa: F401
@@ -29,7 +29,8 @@ async def load_bearer_token():
     async with load_lock:
         bearer_ready.clear()
 
-        session = get_session(NANAPI_URL)
+        timeout = ClientTimeout(total=60)
+        session = get_session(NANAPI_URL, timeout=timeout)
         session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
         session._request = session_backoff(session._request)  # pyright: ignore[reportPrivateUsage]
 
@@ -46,7 +47,8 @@ async def load_bearer_token():
 
 @cache
 def get_nanapi():
-    session = get_session(NANAPI_URL)
+    timeout = ClientTimeout(total=60)
+    session = get_session(NANAPI_URL, timeout=timeout)
 
     session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
 

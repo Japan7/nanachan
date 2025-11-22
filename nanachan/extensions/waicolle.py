@@ -255,9 +255,16 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if len(waifus) == 0:
             assert isinstance(interaction.channel, discord.TextChannel)
             async with interaction.channel.typing():
-                resp3 = await get_nanapi().waicolle.waicolle_player_roll(
-                    str(interaction.user.id), nb=10, reason='register'
-                )
+                try:
+                    resp3 = await get_nanapi().waicolle.waicolle_player_roll(
+                        str(interaction.user.id), nb=10, reason='register'
+                    )
+                except TimeoutError:
+                    await interaction.followup.send(
+                        f'The request timed out. Please try again later. '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                    return
                 if not success(resp3):
                     raise RuntimeError(resp3.result)
                 assert resp3.code == 201
@@ -461,14 +468,21 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         assert replyable is not None
 
         async with replyable.typing():
-            resp = await get_nanapi().waicolle.waicolle_player_roll(
-                str(member.id),
-                roll_id=roll_id,
-                coupon_code=coupon_code,
-                nb=nb,
-                pool_discord_id=str(pool_player.id),
-                reason=rollop_reason,
-            )
+            try:
+                resp = await get_nanapi().waicolle.waicolle_player_roll(
+                    str(member.id),
+                    roll_id=roll_id,
+                    coupon_code=coupon_code,
+                    nb=nb,
+                    pool_discord_id=str(pool_player.id),
+                    reason=rollop_reason,
+                )
+            except TimeoutError:
+                await replyable.send(
+                    f'{member} The request timed out. Please try again later. '
+                    f'{self.bot.get_emoji_str("saladedefruits")}'
+                )
+                return
 
             match resp:
                 case Error(code=404 | 409):
