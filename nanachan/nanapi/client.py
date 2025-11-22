@@ -16,6 +16,9 @@ bearer_token: str | None = None
 bearer_ready = asyncio.Event()
 load_lock = asyncio.Lock()
 
+# Timeout configuration for nanapi HTTP requests
+NANAPI_TIMEOUT = aiohttp.ClientTimeout(total=30, connect=5, sock_connect=5)
+
 
 def check_invalid(r: ClientResponse):
     return r.status in (502, 520, 522) or (
@@ -30,8 +33,7 @@ async def load_bearer_token():
     async with load_lock:
         bearer_ready.clear()
 
-        timeout = aiohttp.ClientTimeout(total=30, connect=5, sock_connect=5)
-        session = get_session(NANAPI_URL, timeout=timeout)
+        session = get_session(NANAPI_URL, timeout=NANAPI_TIMEOUT)
         session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
         session._request = session_backoff(session._request)  # pyright: ignore[reportPrivateUsage]
 
@@ -48,8 +50,7 @@ async def load_bearer_token():
 
 @cache
 def get_nanapi():
-    timeout = aiohttp.ClientTimeout(total=30, connect=5, sock_connect=5)
-    session = get_session(NANAPI_URL, timeout=timeout)
+    session = get_session(NANAPI_URL, timeout=NANAPI_TIMEOUT)
 
     session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
 
