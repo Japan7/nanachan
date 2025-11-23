@@ -151,14 +151,6 @@ search_toolset = FunctionToolset(
 python_toolset = MCPServerStdio('uv', args=['run', 'mcp-run-python', 'stdio'], timeout=10)
 
 
-@search_toolset.tool
-async def fetch_url(url: str) -> str:
-    """Fetch the content of a URL."""
-    async with get_session().get(url) as resp:
-        resp.raise_for_status()
-        return await resp.text()
-
-
 @discord_toolset.tool
 def get_members_name_discord_id_map(run_ctx: RunContext[commands.Context[Bot]]):
     """Generate a mapping of Discord member display names to their Discord IDs."""
