@@ -1,6 +1,7 @@
 import base64
 import io
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 from typing import AsyncGenerator, Iterable, Sequence
 
@@ -42,6 +43,12 @@ from nanachan.settings import (
 from nanachan.utils.misc import get_session
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class AgentContext:
+    ctx: commands.Context[Bot]
+    thread: discord.Thread
 
 
 def get_model(model_name: str) -> Model:
@@ -137,8 +144,8 @@ def nanapi_tools() -> Iterable[Tool[None]]:
 
 
 nanapi_toolset = FunctionToolset(tools=list(nanapi_tools()))
-discord_toolset = FunctionToolset[commands.Context[Bot]]()
-multimodal_toolset = FunctionToolset[commands.Context[Bot]]()
+discord_toolset = FunctionToolset[AgentContext]()
+multimodal_toolset = FunctionToolset[AgentContext]()
 search_toolset = FunctionToolset(
     tools=[
         tavily_search_tool(AI_TAVILY_API_KEY)
@@ -150,23 +157,23 @@ python_toolset = MCPServerStdio('uv', args=['run', 'mcp-run-python', 'stdio'], t
 
 
 @discord_toolset.tool
-def get_members_name_discord_id_map(run_ctx: RunContext[commands.Context[Bot]]):
+def get_members_name_discord_id_map(run_ctx: RunContext[AgentContext]):
     """Generate a mapping of Discord member display names to their Discord IDs."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     return {member.display_name: member.id for member in ctx.bot.get_all_members()}
 
 
 @discord_toolset.tool
-def get_channels_name_channel_id_map(run_ctx: RunContext[commands.Context[Bot]]):
+def get_channels_name_channel_id_map(run_ctx: RunContext[AgentContext]):
     """Generate a mapping of Discord channel names to their channel IDs."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     return {channel.name: channel.id for channel in ctx.bot.get_all_channels()}
 
 
 @discord_toolset.tool
-async def get_parent_channel(run_ctx: RunContext[commands.Context[Bot]]):
+async def get_raw_parent_channel(run_ctx: RunContext[AgentContext]):
     """Retrieve the parent channel of the current thread in which the assistant is summoned."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     channel_id = (
         ctx.channel.parent.id
         if isinstance(ctx.channel, discord.Thread) and ctx.channel.parent
@@ -176,9 +183,9 @@ async def get_parent_channel(run_ctx: RunContext[commands.Context[Bot]]):
 
 
 @discord_toolset.tool
-async def get_replied_message(run_ctx: RunContext[commands.Context[Bot]]):
+async def get_raw_replied_message(run_ctx: RunContext[AgentContext]):
     """Retrieve the message that the current message is replying to, if any."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     if ctx.message.reference and ctx.message.reference.message_id:
         return await ctx._state.http.get_message(  # pyright: ignore[reportPrivateUsage]
             ctx.message.reference.channel_id,
@@ -188,26 +195,26 @@ async def get_replied_message(run_ctx: RunContext[commands.Context[Bot]]):
 
 
 @discord_toolset.tool
-async def fetch_channel(run_ctx: RunContext[commands.Context[Bot]], channel_id: str):
+async def fetch_raw_channel(run_ctx: RunContext[AgentContext], channel_id: str):
     """Fetch a channel."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
 
 
 @discord_toolset.tool
-async def fetch_message(
-    run_ctx: RunContext[commands.Context[Bot]],
+async def fetch_raw_message(
+    run_ctx: RunContext[AgentContext],
     channel_id: str,
     message_id: str,
 ):
     """Fetch a message from a channel."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     return await ctx._state.http.get_message(channel_id, message_id)  # pyright: ignore[reportPrivateUsage]
 
 
 @discord_toolset.tool
 async def channel_history(
-    run_ctx: RunContext[commands.Context[Bot]],
+    run_ctx: RunContext[AgentContext],
     channel_id: str,
     limit: int = 100,
     before: datetime | None = None,
@@ -219,7 +226,7 @@ async def channel_history(
     The before, after, and around parameters are mutually exclusive,
     only one may be passed at a time.
     """
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     if not AI_SKIP_PERMISSIONS_CHECK:
         assert isinstance(ctx.author, discord.Member)
         channel = ctx.bot.get_channel(int(channel_id))
@@ -243,9 +250,9 @@ async def channel_history(
 
 
 @discord_toolset.tool(retries=5)
-async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_query: str):
+async def retrieve_context(run_ctx: RunContext[AgentContext], search_query: str):
     """Find relevant past discussion sections using a simple French keyword search."""
-    ctx = run_ctx.deps
+    ctx = run_ctx.deps.ctx
     assert isinstance(ctx.author, discord.Member)
     resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=10)
     if not success(resp):
@@ -267,17 +274,15 @@ async def retrieve_context(run_ctx: RunContext[commands.Context[Bot]], search_qu
     return messages
 
 
-@multimodal_toolset.tool
+@multimodal_toolset.tool(retries=5)
 async def generate_image(
-    run_ctx: RunContext[commands.Context[Bot]],
+    run_ctx: RunContext[AgentContext],
     prompt: str,
-    base_image_urls: list[str] | None = None,
-    include_ctx_attachments: bool = False,
+    edited_image_urls: Sequence[str] = (),
 ):
     """
-    Generate an image and send it on Discord.
-    If base_image_urls are provided, these images will be included as base images for editing.
-    If include_ctx_attachments is True, images attached to the user prompt will also be included as base images for editing.
+    Generate or edit an image and send the results on Discord.
+    If edited_image_urls is provided, these images will be included as base images for editing.
 
     ## Establishing the vision: Story, subject and style
 
@@ -305,17 +310,19 @@ async def generate_image(
         'Content-Type': 'application/json',
     }
     input_content = [{'type': 'text', 'text': prompt}]
-    if base_image_urls:
-        for url in base_image_urls:
-            input_content.append({'type': 'image_url', 'image_url': url})
-    if include_ctx_attachments:
-        ctx = run_ctx.deps
-        for attachment in ctx.message.attachments:
-            if attachment.content_type and attachment.content_type.startswith('image/'):
-                image_bytes = await attachment.read()
+    for url in edited_image_urls:
+        if 'cdn.discordapp.com' in url:
+            if not all(q in url for q in ('ex=', 'is=', 'hm=')):
+                raise ModelRetry(
+                    f'Discord attachment URL {url} must include ex, is, and hm query parameters. '
+                    f'Extract the full URL from the raw message data.'
+                )
+            async with get_session().get(url) as resp:
+                resp.raise_for_status()
+                image_bytes = await resp.read()
                 encoded_image = base64.b64encode(image_bytes).decode('utf-8')
-                data_url = f'data:{attachment.content_type};base64,{encoded_image}'
-                input_content.append({'type': 'image_url', 'image_url': data_url})
+                url = f'data:{resp.content_type};base64,{encoded_image}'
+        input_content.append({'type': 'image_url', 'image_url': url})
     payload = {
         'model': AI_IMAGE_MODEL,
         'messages': [{'role': 'user', 'content': input_content}],
@@ -332,18 +339,22 @@ async def generate_image(
 
     message = result['choices'][0]['message']
     content = message['content']
-    image_url = message['images'][0]['image_url']['url']
+    sents = []
+    for img in message['images']:
+        image_url = img['image_url']['url']
 
-    # Extract base64 data from data URL
-    # Format: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
-    header, encoded = image_url.split(',', 1)
-    mime_type = header.split(';')[0].split(':')[1]
-    extension = mime_type.split('/')[1]
+        # Extract base64 data from data URL
+        # Format: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
+        header, encoded = image_url.split(',', 1)
+        mime_type = header.split(';')[0].split(':')[1]
+        extension = mime_type.split('/')[1]
 
-    # Decode base64 to bytes
-    image_data = base64.b64decode(encoded)
+        # Decode base64 to bytes
+        image_data = base64.b64decode(encoded)
 
-    # Create a Discord file and send it
-    file = discord.File(io.BytesIO(image_data), filename=f'generated.{extension}')
-    sent = await run_ctx.deps.send(content, file=file)
-    return repr(sent)
+        # Create a Discord file and send it
+        thread = run_ctx.deps.thread
+        file = discord.File(io.BytesIO(image_data), filename=f'generated.{extension}')
+        sent = await thread.send(content, file=file)
+        sents.append(sent.jump_url)
+    return f'{len(sents)} generated image(s) sent in the following message(s):\n{"\n".join(sents)}'

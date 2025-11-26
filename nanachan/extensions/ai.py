@@ -25,6 +25,7 @@ from nanachan.settings import (
     RequiresAI,
 )
 from nanachan.utils.ai import (
+    AgentContext,
     discord_toolset,
     get_model,
     iter_stream,
@@ -52,8 +53,8 @@ class AI(Cog, required_settings=RequiresAI):
     slash_ai = NanaGroup(name='ai', guild_ids=[ALL_GUILDS], description='AI commands')
 
     @staticmethod
-    def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
-        ctx = run_ctx.deps
+    def system_prompt(run_ctx: RunContext[AgentContext]):
+        ctx = run_ctx.deps.ctx
         assert ctx.bot.user and ctx.guild
         return f"""
 The assistant is {ctx.bot.user.display_name}, a Discord bot for the {ctx.guild.name} Discord server.
@@ -69,8 +70,8 @@ If the agent is asked to factcheck something, this something may be a replied me
 """  # noqa: E501
 
     @staticmethod
-    def author_instructions(run_ctx: RunContext[commands.Context[Bot]]):
-        ctx = run_ctx.deps
+    def author_instructions(run_ctx: RunContext[AgentContext]):
+        ctx = run_ctx.deps.ctx
         assert ctx.bot.user
         return (
             f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name} '
@@ -81,7 +82,7 @@ If the agent is asked to factcheck something, this something may be a replied me
         self.bot = bot
 
         self.agent = Agent(
-            deps_type=commands.Context[Bot],
+            deps_type=AgentContext,
             toolsets=[
                 nanapi_toolset,  # type: ignore
                 discord_toolset,
@@ -137,19 +138,30 @@ If the agent is asked to factcheck something, this something may be a replied me
         self,
         ctx: commands.Context[Bot],
         thread: discord.Thread,
-        prompt: str,
-        attachments: list[discord.Attachment],
         model_name: str | None = None,
     ):
         async with self.agent_lock, thread.typing():
             chat_ctx = self.contexts[thread.id]
             model = get_model(model_name or chat_ctx.model_name)
 
-            content: list[UserContent] = [prompt]
-            for attachment in attachments:
+            message = await ctx._state.http.get_message(ctx.channel.id, ctx.message.id)  # pyright: ignore[reportPrivateUsage]
+            content: list[UserContent] = [
+                ctx.message.content,
+                f'This is the raw user message: {json.dumps(message)}',
+            ]
+            for attachment in ctx.message.attachments:
                 if attachment.content_type:
                     data = await attachment.read()
-                    content.append(BinaryContent(data, media_type=attachment.content_type))
+                    content.extend(
+                        [
+                            f'This is attachment {attachment.filename}:',
+                            BinaryContent(
+                                data,
+                                media_type=attachment.content_type,
+                                identifier=attachment.filename,
+                            ),
+                        ]
+                    )
 
             send = (
                 ctx.message.reply
@@ -166,7 +178,7 @@ If the agent is asked to factcheck something, this something may be a replied me
                         user_prompt=content,
                         message_history=chat_ctx.history,
                         model=model,
-                        deps=ctx,
+                        deps=AgentContext(ctx, thread),
                     ):
                         resp = await send(part, allowed_mentions=allowed_mentions)
                         send = resp.reply
@@ -194,7 +206,7 @@ If the agent is asked to factcheck something, this something may be a replied me
         )
         if thread.id not in self.contexts:
             self.contexts[thread.id] = ChatContext(model_name or AI_DEFAULT_MODEL)
-        await self.chat(ctx, thread, message.content, message.attachments, model_name=model_name)
+        await self.chat(ctx, thread, model_name=model_name)
 
 
 async def setup(bot: Bot):
