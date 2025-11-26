@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 import discord
 from discord import AllowedMentions, Thread, app_commands
-from discord.app_commands import Choice
 from discord.app_commands.tree import ALL_GUILDS
 from discord.ext import commands
 from pydantic_ai import Agent, BinaryContent, RunContext
@@ -17,11 +16,9 @@ from nanachan.discord.application_commands import LegacyCommandContext, NanaGrou
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.helpers import Embed
-from nanachan.nanapi.client import get_nanapi, success
-from nanachan.nanapi.model import InsertPromptBody
+from nanachan.nanapi.client import get_nanapi
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
-    AI_FLAGSHIP_MODEL,
     AI_GROK_MODEL,
     ENABLE_MESSAGE_EXPORT,
     TZ,
@@ -36,7 +33,6 @@ from nanachan.utils.ai import (
     python_toolset,
     search_toolset,
 )
-from nanachan.utils.misc import autocomplete_truncate
 
 if TYPE_CHECKING:
     from discord.types.gateway import MessageCreateEvent
@@ -51,25 +47,9 @@ class ChatContext:
     history: list[ModelMessage] = field(default_factory=list)
 
 
-async def prompt_autocomplete(interaction: discord.Interaction, current: str) -> list[Choice[str]]:
-    resp = await get_nanapi().ai.ai_prompt_index()
-    if not success(resp):
-        raise RuntimeError(resp.result)
-    choices = [
-        Choice(
-            name=autocomplete_truncate(f'{prompt.name} ({prompt.description})'),
-            value=prompt.name,
-        )
-        for prompt in resp.result
-        if current.lower() in prompt.name.lower()
-    ]
-    return choices[:25]
-
-
 @app_commands.guild_only()
 class AI(Cog, required_settings=RequiresAI):
     slash_ai = NanaGroup(name='ai', guild_ids=[ALL_GUILDS], description='AI commands')
-    slash_pr = app_commands.Group(name='prompt', parent=slash_ai, description='AI prompts')
 
     @staticmethod
     def system_prompt(run_ctx: RunContext[commands.Context[Bot]]):
@@ -193,72 +173,6 @@ If the agent is asked to factcheck something, this something may be a replied me
             except Exception as e:
                 await send(f'An error occured while running the agent:\n```\n{e}\n```')
                 logger.exception(e)
-
-    @slash_pr.command(name='save')
-    @legacy_command()
-    async def prompt_save(self, ctx: LegacyCommandContext, name: str, what: str):
-        """Save a prompt"""
-        await ctx.defer()
-        async with self.agent_lock, self.agent:
-            result = await self.agent.run(
-                f'Create a prompt named `{name}` (make it snake_case) '
-                f'that does the following task:\n{what}',
-                output_type=InsertPromptBody,
-                model=get_model(AI_FLAGSHIP_MODEL),
-                deps=ctx,
-            )
-        body = result.output
-        resp = await get_nanapi().ai.ai_insert_prompt(body)
-        if not success(resp):
-            raise RuntimeError(resp.result)
-        embed = Embed(title=f'`{body.name}`', description=body.description)
-        embed.add_field(name='Prompt', value=body.prompt, inline=False)
-        for arg in body.arguments:
-            embed.add_field(name=f'`{arg.name}`', value=arg.description, inline=True)
-        await ctx.reply(embed=embed)
-
-    @slash_pr.command(name='delete')
-    @app_commands.autocomplete(name=prompt_autocomplete)
-    @legacy_command()
-    async def prompt_delete(self, ctx: LegacyCommandContext, name: str):
-        """Delete a prompt"""
-        resp = await get_nanapi().ai.ai_delete_prompt(name)
-        if not success(resp):
-            raise RuntimeError(resp.result)
-        await ctx.reply(self.bot.get_emoji_str('FubukiGO'))
-
-    @slash_pr.command(name='use')
-    @app_commands.autocomplete(name=prompt_autocomplete)
-    @legacy_command()
-    async def prompt_use(
-        self,
-        ctx: LegacyCommandContext,
-        name: str,
-        model_name: str | None = None,
-    ):
-        """Use a prompt"""
-        if not model_name:
-            model_name = AI_DEFAULT_MODEL
-
-        resp = await get_nanapi().ai.ai_get_prompt(name)
-        if not success(resp):
-            raise commands.CommandError('Prompt not found')
-        prompt = resp.result
-
-        chat_prompt = prompt.prompt
-        if prompt.arguments:
-            chat_prompt += '\n\nBefore proceeding, ask the user the following arguments:\n'
-            for arg in prompt.arguments:
-                chat_prompt += f'{arg.name}: {arg.description}\n'
-
-        embed = Embed(description=f'`/{prompt.name}`')
-        embed.set_footer(text=model_name)
-        resp = await ctx.reply(embed=embed)
-
-        thread = await self.get_chat_thread(resp, name_prefix=prompt.name, user_to_add=ctx.author)
-        self.contexts[thread.id] = ChatContext(model_name=model_name)
-
-        await self.chat(ctx, thread, chat_prompt, [])
 
     @NanaGroupCog.listener()
     async def on_message(self, message: discord.Message):
