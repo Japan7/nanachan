@@ -115,16 +115,6 @@ AI_ADDITIONAL_TOOLSETS = [
     # FunctionToolset([tavily_search_tool('')]),
     # MCPServerStreamableHTTP('https://mcp.deepwiki.com/mcp'),
     # MCPServerStdio('uvx', args=['mcp-run-python@latest', 'stdio'], timeout=10),
-    # MCPServerStdio(
-    #     'uvx',
-    #     args=['mcp-outline@latest'],
-    #     env={
-    #         'OUTLINE_API_URL': '',
-    #         'OUTLINE_API_KEY': '',
-    #         'OUTLINE_READ_ONLY': 'true',
-    #         'OUTLINE_DISABLE_AI_TOOLS': 'true',
-    #     },
-    # ),
 ]
 
 ## SauceNAO
