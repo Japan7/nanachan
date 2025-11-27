@@ -2,7 +2,7 @@ import io
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import AsyncGenerator, Iterable, Sequence
+from typing import Any, AsyncGenerator, Iterable, Sequence
 
 import discord
 from discord.ext import commands
@@ -27,7 +27,7 @@ from pydantic_ai import (
 )
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 from pydantic_ai.common_tools.tavily import tavily_search_tool
-from pydantic_ai.mcp import MCPServerStdio
+from pydantic_ai.mcp import MCPServerStdio, MCPServerStreamableHTTP
 from pydantic_ai.models import Model
 from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
@@ -144,9 +144,11 @@ def nanapi_tools() -> Iterable[Tool[None]]:
         yield Tool(endpoint, takes_ctx=None)
 
 
-nanapi_toolset = FunctionToolset(tools=list(nanapi_tools()))
+deepwiki_toolset = MCPServerStreamableHTTP('https://mcp.deepwiki.com/mcp')
 discord_toolset = FunctionToolset[AgentContext]()
 multimodal_toolset = FunctionToolset[AgentContext]()
+nanapi_toolset = FunctionToolset[Any](tools=list(nanapi_tools()))
+python_toolset = MCPServerStdio('uv', args=['run', 'mcp-run-python', 'stdio'], timeout=10)
 search_toolset = FunctionToolset(
     tools=[
         tavily_search_tool(AI_TAVILY_API_KEY)
@@ -154,7 +156,6 @@ search_toolset = FunctionToolset(
         else duckduckgo_search_tool()
     ]
 )
-python_toolset = MCPServerStdio('uv', args=['run', 'mcp-run-python', 'stdio'], timeout=10)
 
 
 def validate_discord_url(url: str):

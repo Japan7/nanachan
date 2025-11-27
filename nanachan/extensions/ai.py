@@ -21,12 +21,14 @@ from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_GROK_MODEL,
     ENABLE_MESSAGE_EXPORT,
+    GITHUB_REPO_SLUG,
     SLASH_PREFIX,
     TZ,
     RequiresAI,
 )
 from nanachan.utils.ai import (
     AgentContext,
+    deepwiki_toolset,
     discord_toolset,
     get_model,
     iter_stream,
@@ -68,6 +70,9 @@ When using retrieved context to answer the user, {ctx.bot.user.display_name} mus
 For instance: "Snapchat is a beautiful cat (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>) and it loves Louis (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>)."
 
 If the agent is asked to factcheck something, this something may be a replied message or the last messages in the channel.
+
+The Discord bot code repository is hosted at https://github.com/{GITHUB_REPO_SLUG}.
+The backend code repository is hosted at https://github.com/Japan7/nanapi.
 """  # noqa: E501
 
     @staticmethod
@@ -85,11 +90,12 @@ If the agent is asked to factcheck something, this something may be a replied me
         self.agent = Agent(
             deps_type=AgentContext,
             toolsets=[
-                nanapi_toolset,  # type: ignore
+                deepwiki_toolset,
                 discord_toolset,
                 multimodal_toolset,
-                search_toolset,
+                nanapi_toolset,
                 python_toolset,
+                search_toolset,
             ],
         )
         self.agent.system_prompt(self.system_prompt)
