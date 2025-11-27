@@ -1,4 +1,3 @@
-import base64
 import io
 import logging
 from dataclasses import dataclass
@@ -10,6 +9,8 @@ from discord.ext import commands
 from discord.utils import time_snowflake
 from pydantic_ai import (
     Agent,
+    BinaryContent,
+    BinaryImage,
     FunctionToolCallEvent,
     ModelMessage,
     ModelRetry,
@@ -156,6 +157,26 @@ search_toolset = FunctionToolset(
 python_toolset = MCPServerStdio('uv', args=['run', 'mcp-run-python', 'stdio'], timeout=10)
 
 
+def validate_discord_url(url: str):
+    if 'cdn.discordapp.com' in url and not all(q in url for q in ('ex=', 'is=', 'hm=')):
+        raise ModelRetry(
+            f'Discord attachment URL {url} must include ex, is, and hm query parameters. '
+            f'Extract the full URL from the raw message data.'
+        )
+
+
+@search_toolset.tool(retries=5)
+async def fetch_url(url: str):
+    """Fetch the content of a URL."""
+    validate_discord_url(url)
+    async with get_session().get(url) as resp:
+        if not resp.ok:
+            text = await resp.text()
+            raise ModelRetry(f'Failed to fetch URL {url}: {resp.status}\n\n{text}')
+        data = await resp.read()
+    return BinaryContent(data, media_type=resp.content_type)
+
+
 @discord_toolset.tool
 def get_members_name_discord_id_map(run_ctx: RunContext[AgentContext]):
     """Generate a mapping of Discord member display names to their Discord IDs."""
@@ -250,7 +271,7 @@ async def channel_history(
 
 
 @discord_toolset.tool(retries=5)
-async def retrieve_context(run_ctx: RunContext[AgentContext], search_query: str):
+async def retrieve_rag_context(run_ctx: RunContext[AgentContext], search_query: str):
     """Find relevant past discussion sections using a simple French keyword search."""
     ctx = run_ctx.deps.ctx
     assert isinstance(ctx.author, discord.Member)
@@ -283,6 +304,7 @@ async def generate_image(
     """
     Generate or edit an image and send the results on Discord.
     If edited_image_urls is provided, these images will be included as base images for editing.
+    Discord attachment URLs must include ex, is, and hm query parameters. Extract the full URLs from the raw message data.
 
     ## Establishing the vision: Story, subject and style
 
@@ -311,18 +333,12 @@ async def generate_image(
     }
     input_content = [{'type': 'text', 'text': prompt}]
     for url in edited_image_urls:
-        if 'cdn.discordapp.com' in url:
-            if not all(q in url for q in ('ex=', 'is=', 'hm=')):
-                raise ModelRetry(
-                    f'Discord attachment URL {url} must include ex, is, and hm query parameters. '
-                    f'Extract the full URL from the raw message data.'
-                )
-            async with get_session().get(url) as resp:
-                resp.raise_for_status()
-                image_bytes = await resp.read()
-                encoded_image = base64.b64encode(image_bytes).decode('utf-8')
-                url = f'data:{resp.content_type};base64,{encoded_image}'
-        input_content.append({'type': 'image_url', 'image_url': url})
+        validate_discord_url(url)
+        async with get_session().get(url) as resp:
+            resp.raise_for_status()
+            data = await resp.read()
+        image = BinaryImage(data, media_type=resp.content_type)
+        input_content.append({'type': 'image_url', 'image_url': image.data_uri})
     payload = {
         'model': AI_IMAGE_MODEL,
         'messages': [{'role': 'user', 'content': input_content}],
@@ -336,25 +352,16 @@ async def generate_image(
     ) as resp:
         resp.raise_for_status()
         result = await resp.json()
-
-    message = result['choices'][0]['message']
-    content = message['content']
+    thread = run_ctx.deps.thread
+    result_message = result['choices'][0]['message']
+    if reasoning := result_message['reasoning']:
+        await thread.send(f'>>> {reasoning}')
+    if content := result_message['content']:
+        await thread.send(content)
     sents = []
-    for img in message['images']:
-        image_url = img['image_url']['url']
-
-        # Extract base64 data from data URL
-        # Format: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
-        header, encoded = image_url.split(',', 1)
-        mime_type = header.split(';')[0].split(':')[1]
-        extension = mime_type.split('/')[1]
-
-        # Decode base64 to bytes
-        image_data = base64.b64decode(encoded)
-
-        # Create a Discord file and send it
-        thread = run_ctx.deps.thread
-        file = discord.File(io.BytesIO(image_data), filename=f'generated.{extension}')
-        sent = await thread.send(content, file=file)
+    for result_image in result_message['images']:
+        image = BinaryImage.from_data_uri(result_image['image_url']['url'])
+        file = discord.File(io.BytesIO(image.data), filename=f'{image.identifier}.{image.format}')
+        sent = await thread.send(file=file)
         sents.append(sent.jump_url)
     return f'{len(sents)} generated image(s) sent in the following message(s):\n{"\n".join(sents)}'

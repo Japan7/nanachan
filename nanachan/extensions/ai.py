@@ -21,6 +21,7 @@ from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_GROK_MODEL,
     ENABLE_MESSAGE_EXPORT,
+    SLASH_PREFIX,
     TZ,
     RequiresAI,
 )
@@ -147,7 +148,7 @@ If the agent is asked to factcheck something, this something may be a replied me
             message = await ctx._state.http.get_message(ctx.channel.id, ctx.message.id)  # pyright: ignore[reportPrivateUsage]
             content: list[UserContent] = [
                 ctx.message.content,
-                f'This is the raw user message: {json.dumps(message)}',
+                f'This is the raw user message data: {json.dumps(message)}',
             ]
             for attachment in ctx.message.attachments:
                 if attachment.content_type:
@@ -195,7 +196,7 @@ If the agent is asked to factcheck something, this something may be a replied me
             await self.on_chat_message(message)
             return
 
-        if message.content.startswith('@grok'):
+        if message.content.startswith(f'@{SLASH_PREFIX}grok'):
             await self.on_chat_message(message, model_name=AI_GROK_MODEL)
             return
 
