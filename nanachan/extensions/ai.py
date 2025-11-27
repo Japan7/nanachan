@@ -18,6 +18,7 @@ from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.helpers import Embed
 from nanachan.nanapi.client import get_nanapi
 from nanachan.settings import (
+    AI_ADDITIONAL_TOOLSETS,
     AI_DEFAULT_MODEL,
     AI_GROK_MODEL,
     ENABLE_MESSAGE_EXPORT,
@@ -26,17 +27,7 @@ from nanachan.settings import (
     TZ,
     RequiresAI,
 )
-from nanachan.utils.ai import (
-    AgentContext,
-    deepwiki_toolset,
-    discord_toolset,
-    get_model,
-    iter_stream,
-    multimodal_toolset,
-    nanapi_toolset,
-    python_toolset,
-    search_toolset,
-)
+from nanachan.utils.ai import ChatDeps, all_toolsets, get_model, iter_stream
 
 if TYPE_CHECKING:
     from discord.types.gateway import MessageCreateEvent
@@ -56,7 +47,7 @@ class AI(Cog, required_settings=RequiresAI):
     slash_ai = NanaGroup(name='ai', guild_ids=[ALL_GUILDS], description='AI commands')
 
     @staticmethod
-    def system_prompt(run_ctx: RunContext[AgentContext]):
+    def system_prompt(run_ctx: RunContext[ChatDeps]):
         ctx = run_ctx.deps.ctx
         assert ctx.bot.user and ctx.guild
         return f"""
@@ -76,7 +67,7 @@ The backend code repository is hosted at https://github.com/Japan7/nanapi.
 """  # noqa: E501
 
     @staticmethod
-    def author_instructions(run_ctx: RunContext[AgentContext]):
+    def author_instructions(run_ctx: RunContext[ChatDeps]):
         ctx = run_ctx.deps.ctx
         assert ctx.bot.user
         return (
@@ -88,15 +79,8 @@ The backend code repository is hosted at https://github.com/Japan7/nanapi.
         self.bot = bot
 
         self.agent = Agent(
-            deps_type=AgentContext,
-            toolsets=[
-                deepwiki_toolset,
-                discord_toolset,
-                multimodal_toolset,
-                nanapi_toolset,
-                python_toolset,
-                search_toolset,
-            ],
+            deps_type=ChatDeps,
+            toolsets=[*all_toolsets, *AI_ADDITIONAL_TOOLSETS],
         )
         self.agent.system_prompt(self.system_prompt)
         self.agent.instructions(self.author_instructions)
@@ -185,7 +169,7 @@ The backend code repository is hosted at https://github.com/Japan7/nanapi.
                         user_prompt=content,
                         message_history=chat_ctx.history,
                         model=model,
-                        deps=AgentContext(ctx, thread),
+                        deps=ChatDeps(ctx, thread),
                     ):
                         resp = await send(part, allowed_mentions=allowed_mentions)
                         send = resp.reply

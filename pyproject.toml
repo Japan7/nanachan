@@ -37,7 +37,6 @@ dependencies = [
     "tzdata==2025.2",
     "python-dateutil==2.9.0.post0",
     "pydantic-ai-slim[openrouter,mcp,duckduckgo,tavily]==1.24.0",
-    "mcp-run-python==0.0.21",
 ]
 
 [dependency-groups]
@@ -113,7 +112,5 @@ ignore_unused = [
     # https://github.com/tweag/FawltyDeps/issues/419
     "discord-py",
     "discord-ext-voice-recv",
-    # ai chat
-    "mcp-run-python",
 ]
 output_format = "human_detailed"

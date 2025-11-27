@@ -1,10 +1,11 @@
 # pyright: reportConstantRedefinition=false
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 from zoneinfo import ZoneInfo
 
 from aiohttp import BasicAuth
 from discord.utils import utcnow
+from pydantic_ai import AbstractToolset
 
 LOG_LEVEL = 'INFO'
 DEBUG = True
@@ -109,8 +110,8 @@ AI_DEFAULT_MODEL = 'openai/gpt-4.1-mini'
 AI_LOW_LATENCY_MODEL = 'openai/gpt-4.1-nano'
 AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
-AI_TAVILY_API_KEY: str | None = None
 AI_SKIP_PERMISSIONS_CHECK = False
+AI_ADDITIONAL_TOOLSETS: Sequence[AbstractToolset[Any]] = ()
 
 ## SauceNAO
 SAUCENAO_API_KEY: str | None = None

@@ -4,6 +4,10 @@
 # from zoneinfo import ZoneInfo
 
 from aiohttp import BasicAuth
+from pydantic_ai import FunctionToolset
+from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
+# from pydantic_ai.common_tools.tavily import tavily_search_tool
+# from pydantic_ai.mcp import MCPServerStdio, MCPServerStreamableHTTP
 
 # LOG_LEVEL = 'INFO'
 # DEBUG = True
@@ -105,8 +109,23 @@ REDIS_HOST = None
 # AI_LOW_LATENCY_MODEL = 'openai/gpt-4.1-nano'
 # AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 # AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
-# AI_TAVILY_API_KEY = ''
 # AI_SKIP_PERMISSIONS_CHECK = False
+AI_ADDITIONAL_TOOLSETS = [
+    FunctionToolset([duckduckgo_search_tool()]),
+    # FunctionToolset([tavily_search_tool('')]),
+    # MCPServerStreamableHTTP('https://mcp.deepwiki.com/mcp'),
+    # MCPServerStdio('uvx', args=['mcp-run-python@latest', 'stdio'], timeout=10),
+    # MCPServerStdio(
+    #     'uvx',
+    #     args=['mcp-outline@latest'],
+    #     env={
+    #         'OUTLINE_API_URL': '',
+    #         'OUTLINE_API_KEY': '',
+    #         'OUTLINE_READ_ONLY': 'true',
+    #         'OUTLINE_DISABLE_AI_TOOLS': 'true',
+    #     },
+    # ),
+]
 
 ## SauceNAO
 # SAUCENAO_API_KEY = None

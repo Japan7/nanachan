@@ -25,9 +25,6 @@ from pydantic_ai import (
     Tool,
     UserContent,
 )
-from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
-from pydantic_ai.common_tools.tavily import tavily_search_tool
-from pydantic_ai.mcp import MCPServerStdio, MCPServerStreamableHTTP
 from pydantic_ai.models import Model
 from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
@@ -35,19 +32,14 @@ from pydantic_ai.toolsets import FunctionToolset
 
 from nanachan.discord.bot import Bot
 from nanachan.nanapi.client import get_nanapi, success
-from nanachan.settings import (
-    AI_IMAGE_MODEL,
-    AI_OPENROUTER_API_KEY,
-    AI_SKIP_PERMISSIONS_CHECK,
-    AI_TAVILY_API_KEY,
-)
+from nanachan.settings import AI_IMAGE_MODEL, AI_OPENROUTER_API_KEY, AI_SKIP_PERMISSIONS_CHECK
 from nanachan.utils.misc import get_session
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class AgentContext:
+class ChatDeps:
     ctx: commands.Context[Bot]
     thread: discord.Thread
 
@@ -144,56 +136,29 @@ def nanapi_tools() -> Iterable[Tool[None]]:
         yield Tool(endpoint, takes_ctx=None)
 
 
-deepwiki_toolset = MCPServerStreamableHTTP('https://mcp.deepwiki.com/mcp')
-discord_toolset = FunctionToolset[AgentContext]()
-multimodal_toolset = FunctionToolset[AgentContext]()
 nanapi_toolset = FunctionToolset[Any](tools=list(nanapi_tools()))
-python_toolset = MCPServerStdio('uv', args=['run', 'mcp-run-python', 'stdio'], timeout=10)
-search_toolset = FunctionToolset(
-    tools=[
-        tavily_search_tool(AI_TAVILY_API_KEY)
-        if AI_TAVILY_API_KEY is not None
-        else duckduckgo_search_tool()
-    ]
-)
-
-
-def validate_discord_url(url: str):
-    if 'cdn.discordapp.com' in url and not all(q in url for q in ('ex=', 'is=', 'hm=')):
-        raise ModelRetry(
-            f'Discord attachment URL {url} must include ex, is, and hm query parameters. '
-            f'Extract the full URL from the raw message data.'
-        )
-
-
-@search_toolset.tool(retries=5)
-async def fetch_url(url: str):
-    """Fetch the content of a URL."""
-    validate_discord_url(url)
-    async with get_session().get(url) as resp:
-        if not resp.ok:
-            text = await resp.text()
-            raise ModelRetry(f'Failed to fetch URL {url}: {resp.status}\n\n{text}')
-        data = await resp.read()
-    return BinaryContent(data, media_type=resp.content_type)
+discord_toolset = FunctionToolset[ChatDeps]()
+multimodal_toolset = FunctionToolset[ChatDeps]()
+web_toolset = FunctionToolset[Any]()
+all_toolsets = (nanapi_toolset, discord_toolset, multimodal_toolset, web_toolset)
 
 
 @discord_toolset.tool
-def get_members_name_discord_id_map(run_ctx: RunContext[AgentContext]):
+def get_members_name_discord_id_map(run_ctx: RunContext[ChatDeps]):
     """Generate a mapping of Discord member display names to their Discord IDs."""
     ctx = run_ctx.deps.ctx
     return {member.display_name: member.id for member in ctx.bot.get_all_members()}
 
 
 @discord_toolset.tool
-def get_channels_name_channel_id_map(run_ctx: RunContext[AgentContext]):
+def get_channels_name_channel_id_map(run_ctx: RunContext[ChatDeps]):
     """Generate a mapping of Discord channel names to their channel IDs."""
     ctx = run_ctx.deps.ctx
     return {channel.name: channel.id for channel in ctx.bot.get_all_channels()}
 
 
 @discord_toolset.tool
-async def get_raw_parent_channel(run_ctx: RunContext[AgentContext]):
+async def get_raw_parent_channel(run_ctx: RunContext[ChatDeps]):
     """Retrieve the parent channel of the current thread in which the assistant is summoned."""
     ctx = run_ctx.deps.ctx
     channel_id = (
@@ -205,7 +170,7 @@ async def get_raw_parent_channel(run_ctx: RunContext[AgentContext]):
 
 
 @discord_toolset.tool
-async def get_raw_replied_message(run_ctx: RunContext[AgentContext]):
+async def get_raw_replied_message(run_ctx: RunContext[ChatDeps]):
     """Retrieve the message that the current message is replying to, if any."""
     ctx = run_ctx.deps.ctx
     if ctx.message.reference and ctx.message.reference.message_id:
@@ -217,7 +182,7 @@ async def get_raw_replied_message(run_ctx: RunContext[AgentContext]):
 
 
 @discord_toolset.tool
-async def fetch_raw_channel(run_ctx: RunContext[AgentContext], channel_id: str):
+async def fetch_raw_channel(run_ctx: RunContext[ChatDeps], channel_id: str):
     """Fetch a channel."""
     ctx = run_ctx.deps.ctx
     return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
@@ -225,7 +190,7 @@ async def fetch_raw_channel(run_ctx: RunContext[AgentContext], channel_id: str):
 
 @discord_toolset.tool
 async def fetch_raw_message(
-    run_ctx: RunContext[AgentContext],
+    run_ctx: RunContext[ChatDeps],
     channel_id: str,
     message_id: str,
 ):
@@ -236,7 +201,7 @@ async def fetch_raw_message(
 
 @discord_toolset.tool
 async def channel_history(
-    run_ctx: RunContext[AgentContext],
+    run_ctx: RunContext[ChatDeps],
     channel_id: str,
     limit: int = 100,
     before: datetime | None = None,
@@ -272,7 +237,7 @@ async def channel_history(
 
 
 @discord_toolset.tool(retries=5)
-async def retrieve_rag_context(run_ctx: RunContext[AgentContext], search_query: str):
+async def retrieve_rag_context(run_ctx: RunContext[ChatDeps], search_query: str):
     """Find relevant past discussion sections using a simple French keyword search."""
     ctx = run_ctx.deps.ctx
     assert isinstance(ctx.author, discord.Member)
@@ -298,7 +263,7 @@ async def retrieve_rag_context(run_ctx: RunContext[AgentContext], search_query: 
 
 @multimodal_toolset.tool(retries=5)
 async def generate_image(
-    run_ctx: RunContext[AgentContext],
+    run_ctx: RunContext[ChatDeps],
     prompt: str,
     edited_image_urls: Sequence[str] = (),
 ):
@@ -366,3 +331,23 @@ async def generate_image(
         sent = await thread.send(file=file)
         sents.append(sent.jump_url)
     return f'{len(sents)} generated image(s) sent in the following message(s):\n{"\n".join(sents)}'
+
+
+@web_toolset.tool
+async def fetch_url(url: str):
+    """Fetch the content of a URL. It be either text or binary."""
+    validate_discord_url(url)
+    async with get_session().get(url) as resp:
+        if not resp.ok:
+            text = await resp.text()
+            raise ModelRetry(f'Failed to fetch URL {url}: {resp.status}\n\n{text}')
+        data = await resp.read()
+    return BinaryContent(data, media_type=resp.content_type)
+
+
+def validate_discord_url(url: str):
+    if 'cdn.discordapp.com' in url and not all(q in url for q in ('ex=', 'is=', 'hm=')):
+        raise ModelRetry(
+            f'Discord attachment URL {url} must include ex, is, and hm query parameters. '
+            f'Extract the full URL from the raw message data.'
+        )
