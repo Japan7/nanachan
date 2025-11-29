@@ -274,6 +274,10 @@ class AMQBot(metaclass=MetaAMQBot):
         return new_settings
 
     async def send_command(self, command_type: str, command: str, **kwargs):
+        if self.connection_state != AMQBot.CONNECTED:
+            logger.warning(f'Cannot send command {command}: not connected')
+            return
+
         request: dict[str, Any] = {'type': command_type, 'command': command}
 
         if kwargs:
