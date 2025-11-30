@@ -2,7 +2,7 @@ import io
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, AsyncGenerator, Iterable, Sequence
+from typing import Any, AsyncGenerator, Iterable, Sequence, cast
 
 import discord
 from discord.ext import commands
@@ -293,21 +293,43 @@ async def generate_image(
     - Factual constraints (for diagrams): Specify the need for accuracy and ensure your inputs themselves are factual (e.g., "A scientifically accurate cross-section diagram," "Ensure historical accuracy for the Victorian era.").
     - Reference inputs: When using uploaded images, clearly define the role of each. (e.g., "Use Image A for the character's pose, Image B for the art style, and Image C for the background environment.")
     """  # noqa: E501
-    headers = {
-        'Authorization': f'Bearer {AI_OPENROUTER_API_KEY}',
-        'Content-Type': 'application/json',
-    }
-    input_content = [{'type': 'text', 'text': prompt}]
+    data_uris: list[str] = []
     for url in edited_image_urls:
         validate_discord_url(url)
         async with get_session().get(url) as resp:
             resp.raise_for_status()
             data = await resp.read()
         image = BinaryImage(data, media_type=resp.content_type)
-        input_content.append({'type': 'image_url', 'image_url': image.data_uri})
+        data_uris.append(image.data_uri)
+    reasoning, content, images = await openrouter_generate_image(prompt, image_urls=data_uris)
+    thread = run_ctx.deps.thread
+    if reasoning:
+        await thread.send(f'>>> {reasoning}')
+    if content:
+        await thread.send(content)
+    sents = []
+    for image in images:
+        file = discord.File(io.BytesIO(image.data), filename=f'{image.identifier}.{image.format}')
+        sent = await thread.send(file=file)
+        sents.append(sent.jump_url)
+    return f'{len(sents)} generated image(s) sent in the following message(s):\n{"\n".join(sents)}'
+
+
+async def openrouter_generate_image(
+    prompt: str,
+    image_urls: Sequence[str] = (),
+    model: str = AI_IMAGE_MODEL,
+):
+    headers = {
+        'Authorization': f'Bearer {AI_OPENROUTER_API_KEY}',
+        'Content-Type': 'application/json',
+    }
+    content = [{'type': 'text', 'text': prompt}]
+    for image_url in image_urls:
+        content.append({'type': 'image_url', 'image_url': image_url})
     payload = {
-        'model': AI_IMAGE_MODEL,
-        'messages': [{'role': 'user', 'content': input_content}],
+        'model': model,
+        'messages': [{'role': 'user', 'content': content}],
         'modalities': ['image', 'text'],
     }
     async with get_session().post(
@@ -317,20 +339,12 @@ async def generate_image(
         timeout=None,
     ) as resp:
         resp.raise_for_status()
-        result = await resp.json()
-    thread = run_ctx.deps.thread
-    result_message = result['choices'][0]['message']
-    if reasoning := result_message['reasoning']:
-        await thread.send(f'>>> {reasoning}')
-    if content := result_message['content']:
-        await thread.send(content)
-    sents = []
-    for result_image in result_message['images']:
-        image = BinaryImage.from_data_uri(result_image['image_url']['url'])
-        file = discord.File(io.BytesIO(image.data), filename=f'{image.identifier}.{image.format}')
-        sent = await thread.send(file=file)
-        sents.append(sent.jump_url)
-    return f'{len(sents)} generated image(s) sent in the following message(s):\n{"\n".join(sents)}'
+        data = await resp.json()
+    message = data['choices'][0]['message']
+    reasoning = cast(str, message['reasoning'])
+    content = cast(str, message['content'])
+    images = [BinaryImage.from_data_uri(image['image_url']['url']) for image in message['images']]
+    return reasoning, content, images
 
 
 @web_toolset.tool
