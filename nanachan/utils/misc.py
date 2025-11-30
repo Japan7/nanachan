@@ -149,7 +149,10 @@ async def _(file: str | URL) -> ProducerResponse:
         async with get_session().post(
             PRODUCER_UPLOAD_ENDPOINT, headers=headers, data=resp.content
         ) as req:
-            return await req.json()
+            result = await req.json()
+            if 'url' not in result:
+                raise RuntimeError(f'Producer upload failed: {result}')
+            return result
 
 
 async def chunk_iter(file: io.IOBase):
@@ -169,7 +172,10 @@ async def _(file: io.IOBase, filename: str) -> ProducerResponse:
     async with get_session().post(
         PRODUCER_UPLOAD_ENDPOINT, headers=headers, data=chunk_iter(file)
     ) as req:
-        return await req.json()
+        result = await req.json()
+        if 'url' not in result:
+            raise RuntimeError(f'Producer upload failed: {result}')
+        return result
 
 
 async def ignore(exception: Type[Exception], coro: Coroutine[Any, Any, Any]):
