@@ -32,7 +32,12 @@ from pydantic_ai.toolsets import FunctionToolset
 
 from nanachan.discord.bot import Bot
 from nanachan.nanapi.client import get_nanapi, success
-from nanachan.settings import AI_IMAGE_MODEL, AI_OPENROUTER_API_KEY, AI_SKIP_PERMISSIONS_CHECK
+from nanachan.settings import (
+    AI_IMAGE_MODEL,
+    AI_OPENROUTER_API_KEY,
+    AI_SEARCH_TOOL,
+    AI_SKIP_PERMISSIONS_CHECK,
+)
 from nanachan.utils.misc import get_session
 
 logger = logging.getLogger(__name__)
@@ -139,7 +144,7 @@ def nanapi_tools() -> Iterable[Tool[None]]:
 nanapi_toolset = FunctionToolset[Any](tools=list(nanapi_tools()))
 discord_toolset = FunctionToolset[ChatDeps]()
 multimodal_toolset = FunctionToolset[ChatDeps]()
-web_toolset = FunctionToolset[Any]()
+web_toolset = FunctionToolset[Any](tools=[AI_SEARCH_TOOL])
 all_toolsets = (nanapi_toolset, discord_toolset, multimodal_toolset, web_toolset)
 
 

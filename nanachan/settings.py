@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from aiohttp import BasicAuth
 from discord.utils import utcnow
 from pydantic_ai import AbstractToolset
+from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 
 LOG_LEVEL = 'INFO'
 DEBUG = True
@@ -111,6 +112,7 @@ AI_LOW_LATENCY_MODEL = 'openai/gpt-4.1-nano'
 AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
 AI_SKIP_PERMISSIONS_CHECK = False
+AI_SEARCH_TOOL = duckduckgo_search_tool()
 AI_ADDITIONAL_TOOLSETS: Sequence[AbstractToolset[Any]] = ()
 
 ## SauceNAO

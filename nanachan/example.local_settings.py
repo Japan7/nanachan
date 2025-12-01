@@ -4,8 +4,6 @@
 # from zoneinfo import ZoneInfo
 
 from aiohttp import BasicAuth
-from pydantic_ai import FunctionToolset
-from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
 # from pydantic_ai.common_tools.tavily import tavily_search_tool
 # from pydantic_ai.mcp import MCPServerStdio, MCPServerStreamableHTTP
 
@@ -110,9 +108,8 @@ REDIS_HOST = None
 # AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 # AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
 # AI_SKIP_PERMISSIONS_CHECK = False
+# AI_SEARCH_TOOL = tavily_search_tool('API_KEY')
 AI_ADDITIONAL_TOOLSETS = [
-    FunctionToolset([duckduckgo_search_tool()]),
-    # FunctionToolset([tavily_search_tool('')]),
     # MCPServerStreamableHTTP('https://mcp.deepwiki.com/mcp'),
     # MCPServerStdio('uvx', args=['mcp-run-python@latest', 'stdio'], timeout=10),
 ]
