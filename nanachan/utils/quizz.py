@@ -29,7 +29,7 @@ from nanachan.settings import (
     SAUCENAO_API_KEY,
     RequiresAI,
 )
-from nanachan.utils.ai import Agent, get_model
+from nanachan.utils.ai import Agent, get_model, web_toolset
 from nanachan.utils.misc import saucenao_lookup, to_producer
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class QuizzBase(ABC):
     HINTS_COUNT = 5
     REWARD = 100
 
-    agent = Agent(deps_type=RunDeps)
+    agent = Agent(deps_type=RunDeps, toolsets=[web_toolset])
 
     @agent.instructions
     @staticmethod
