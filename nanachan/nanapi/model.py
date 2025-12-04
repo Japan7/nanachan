@@ -2123,3 +2123,24 @@ class WhoamiResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     username: str
+
+
+class WordFrequencyAnalysis(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    total_messages: int
+    total_words: int
+    unique_words: int
+    top_words: list[dict[str, Any]]
+    suggested_triggers: list[dict[str, Any]]
+
+
+class UserWordAnalysis(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    user_id: str
+    user_messages: int
+    community_messages: int
+    user_total_words: int
+    community_total_words: int
+    characteristic_words: list[dict[str, Any]]
+    unique_words: list[dict[str, Any]]
+    comparison_summary: dict[str, Any]

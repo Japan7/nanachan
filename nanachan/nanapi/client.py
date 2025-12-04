@@ -63,6 +63,9 @@ def get_nanapi():
     return session
 
 
+get_nanapi_client = get_nanapi
+
+
 def wrap_request(_request):
     async def _wrapped(*args, **kwargs):
         if not bearer_ready.is_set():

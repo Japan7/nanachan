@@ -2066,6 +2066,112 @@ class DiscordModule:
                 headers=resp.headers,
             )
 
+    async def discord_get_word_frequency(
+        self,
+        guild_id: str,
+        days: int = 30,
+        top_n: int = 100,
+        client_id: UUID | None = None,
+    ) -> (
+        Success[Literal[200], 'WordFrequencyAnalysis']
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Get word frequency analysis for a guild."""
+        url = f'{self.server_url}/discord/word-frequency'
+        params = {
+            'guild_id': guild_id,
+            'days': days,
+            'top_n': top_n,
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.get(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                from nanachan.nanapi.model import WordFrequencyAnalysis
+
+                return Success[Literal[200], WordFrequencyAnalysis](
+                    code=200, result=WordFrequencyAnalysis(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def discord_get_user_characteristic_words(
+        self,
+        user_id: str,
+        guild_id: str,
+        days: int = 30,
+        top_n: int = 50,
+        client_id: UUID | None = None,
+    ) -> (
+        Success[Literal[200], 'UserWordAnalysis']
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Get characteristic words for a specific user."""
+        url = f'{self.server_url}/discord/user-words'
+        params = {
+            'user_id': user_id,
+            'guild_id': guild_id,
+            'days': days,
+            'top_n': top_n,
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.get(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                from nanachan.nanapi.model import UserWordAnalysis
+
+                return Success[Literal[200], UserWordAnalysis](
+                    code=200, result=UserWordAnalysis(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
 
 class HistoireModule:
     def __init__(self, session: 'ClientSession', server_url: str):
