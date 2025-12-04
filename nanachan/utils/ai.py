@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.utils import time_snowflake
 from pydantic_ai import (
     Agent,
+    AgentRunResultEvent,
     BinaryContent,
     BinaryImage,
     FunctionToolCallEvent,
@@ -89,6 +90,8 @@ async def iter_stream[AgentDepsT](
             case PartEndEvent():
                 if buf:
                     yield f'>>> {buf}' if thinking else buf
+            case AgentRunResultEvent(result=result):
+                message_history.extend(result.new_messages())
             case _:
                 ...
         if len(buf) > (2000 if not thinking else 1996):
@@ -354,7 +357,7 @@ async def openrouter_generate_image(
 
 @web_toolset.tool
 async def fetch_url(url: str):
-    """Fetch the content of a URL. It be either text or binary."""
+    """Fetch the content of a URL. It can be either text or binary data."""
     validate_discord_url(url)
     async with get_session().get(url) as resp:
         if not resp.ok:
