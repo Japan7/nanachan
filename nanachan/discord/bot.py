@@ -30,7 +30,7 @@ from discord import (
 )
 from discord import utils as dutils
 from discord.abc import MISSING, Snowflake
-from discord.app_commands.errors import AppCommandError
+from discord.app_commands.errors import AppCommandError, CommandInvokeError
 from discord.errors import IHateThe3SecondsTimeout
 from discord.ext import commands
 from discord.ext.commands import Context, Paginator
@@ -258,10 +258,21 @@ class Bot(commands.AutoShardedBot):
                 await ctx.send_help(ctx.command)
         else:
             error_msg = await self.extract_error(error)
-            if not isinstance(error, IHateThe3SecondsTimeout):
+            # Check if this is an IHateThe3SecondsTimeout error (either directly or wrapped)
+            original_error = (
+                error.original if isinstance(error, commands.CommandInvokeError) else error
+            )
+            if not isinstance(original_error, IHateThe3SecondsTimeout):
                 await self.send_error(error_msg, source=ctx.message, reply=ctx)
 
     async def on_app_command_error(self, interaction: Interaction, error: AppCommandError):
+        # Check if this is an IHateThe3SecondsTimeout error (either directly or wrapped)
+        original_error = error.original if isinstance(error, CommandInvokeError) else error
+        if isinstance(original_error, IHateThe3SecondsTimeout):
+            # Log the error but don't try to respond since the interaction has expired
+            await self.extract_error(error)
+            return
+
         error_msg = await self.extract_error(error)
         if interaction.response.is_done():
             interaction_reply = interaction.followup.send
