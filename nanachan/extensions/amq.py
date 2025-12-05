@@ -171,11 +171,6 @@ class Players(dict):
 
 
 class AMQBot(metaclass=MetaAMQBot):
-    DISCONNECTED = 0
-    LOGGING_IN = 1
-    CONNECTING = 2
-    CONNECTED = 3
-
     expr_answer = re.compile(r'^77+$')
 
     _commands: dict[str, dict[str, AMQCommand]]
@@ -195,7 +190,7 @@ class AMQBot(metaclass=MetaAMQBot):
         self.players = Players()
         self.settings = Settings()
 
-        self.connection_state = AMQBot.DISCONNECTED
+        self.connected = False
 
         self.bot_settings = None
 
@@ -233,7 +228,6 @@ class AMQBot(metaclass=MetaAMQBot):
         return diff
 
     async def login(self):
-        self.connection_state = AMQBot.LOGGING_IN
         req_data = {'username': self.username, 'password': AMQ_PASSWORD}
 
         async with get_session().post(LOGIN_URL, json=req_data) as resp:
@@ -303,7 +297,6 @@ class AMQBot(metaclass=MetaAMQBot):
             return await resp.json(content_type=None)
 
     async def connect(self, token: str, port: str):
-        self.connection_state = AMQBot.CONNECTING
         logger.info('connecting to socketio')
         # if it fails here check that the request uses EIO=4
         # in the browser as the current python-socketio doesn't
@@ -311,7 +304,7 @@ class AMQBot(metaclass=MetaAMQBot):
         await self.sio.connect(WS_URL % (port, token))
         logger.info('waiting for connection to end')
         await self.sio.wait()
-        return self.connection_state == AMQBot.CONNECTED  # type: ignore
+        return self.connected
 
     async def launch(self):
         logger.debug('logging in')
@@ -373,7 +366,7 @@ class AMQBot(metaclass=MetaAMQBot):
     @amq_command('amq_events', 'game closed')
     def disconnect(self, *_):
         logger.debug('disconnecting')
-        self.connection_state = AMQBot.DISCONNECTED
+        self.connected = False
         self.loop.create_task(self.sio.disconnect())
 
     @amq_command('amq_events', 'Host Game')
@@ -397,7 +390,7 @@ class AMQBot(metaclass=MetaAMQBot):
 
     @amq_command('amq_events', 'login complete')
     async def on_login_complete(self, data):
-        self.connection_state = AMQBot.CONNECTED
+        self.connected = True
 
         if logger.getEffectiveLevel() == PANIC_LEVEL:
             logger.log(PANIC_LEVEL, pformat(data))
@@ -928,7 +921,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         self.song_embed = None
 
     def start_session(self):
-        if self.amq is None or self.amq.connection_state == AMQBot.DISCONNECTED:
+        if self.amq is None or not self.amq.connected:
             self.amq = AMQBot(self.bot)
             self.bot.loop.create_task(self.amq.launch())
 
