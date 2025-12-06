@@ -125,6 +125,8 @@ Use `bot.get_emoji_str(name)` or `getEmojiStr(ctx, name)` to resolve custom guil
 - **Type checking**: Pyright in strict mode (see `[tool.pyright]`)
 - **Formatting**: Ruff with single quotes, 99 char line length
 
+For discord.py API and usage patterns, consult **Context7**: https://context7.com/websites/discordpy_readthedocs_io_en_stable
+
 ## Key Files
 
 - `nanachan/__main__.py` - Entry point, sets up logging and Rich traceback

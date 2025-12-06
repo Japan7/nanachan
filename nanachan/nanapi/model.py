@@ -6,41 +6,6 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class AnilistCharacterRole(str, Enum):
-    MAIN = 'MAIN'
-    SUPPORTING = 'SUPPORTING'
-    BACKGROUND = 'BACKGROUND'
-
-
-class AnilistEntryStatus(str, Enum):
-    CURRENT = 'CURRENT'
-    COMPLETED = 'COMPLETED'
-    PAUSED = 'PAUSED'
-    DROPPED = 'DROPPED'
-    PLANNING = 'PLANNING'
-    REPEATING = 'REPEATING'
-
-
-class AnilistMediaSeason(str, Enum):
-    WINTER = 'WINTER'
-    SPRING = 'SPRING'
-    SUMMER = 'SUMMER'
-    FALL = 'FALL'
-
-
-class AnilistMediaStatus(str, Enum):
-    FINISHED = 'FINISHED'
-    RELEASING = 'RELEASING'
-    NOT_YET_RELEASED = 'NOT_YET_RELEASED'
-    CANCELLED = 'CANCELLED'
-    HIATUS = 'HIATUS'
-
-
-class AnilistMediaType(str, Enum):
-    ANIME = 'ANIME'
-    MANGA = 'MANGA'
-
-
 class AnilistService(str, Enum):
     ANILIST = 'ANILIST'
     MYANIMELIST = 'MYANIMELIST'
@@ -57,26 +22,10 @@ class PresencePresenceType(str, Enum):
     WATCHING = 'WATCHING'
 
 
-class ProjectionStatus(str, Enum):
-    ONGOING = 'ONGOING'
-    COMPLETED = 'COMPLETED'
-
-
-class QuizzStatus(str, Enum):
-    STARTED = 'STARTED'
-    ENDED = 'ENDED'
-
-
-class WaicolleCollagePosition(str, Enum):
-    DEFAULT = 'DEFAULT'
-    LEFT_OF = 'LEFT_OF'
-    RIGHT_OF = 'RIGHT_OF'
-
-
-class WaicolleGameMode(str, Enum):
-    WAIFU = 'WAIFU'
-    HUSBANDO = 'HUSBANDO'
-    ALL = 'ALL'
+class AnilistCharacterRole(str, Enum):
+    MAIN = 'MAIN'
+    SUPPORTING = 'SUPPORTING'
+    BACKGROUND = 'BACKGROUND'
 
 
 class WaicolleRank(str, Enum):
@@ -88,9 +37,55 @@ class WaicolleRank(str, Enum):
     E = 'E'
 
 
-class AccountMergeResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+class AnilistMediaSeason(str, Enum):
+    WINTER = 'WINTER'
+    SPRING = 'SPRING'
+    SUMMER = 'SUMMER'
+    FALL = 'FALL'
+
+
+class AnilistEntryStatus(str, Enum):
+    CURRENT = 'CURRENT'
+    COMPLETED = 'COMPLETED'
+    PAUSED = 'PAUSED'
+    DROPPED = 'DROPPED'
+    PLANNING = 'PLANNING'
+    REPEATING = 'REPEATING'
+
+
+class AnilistMediaStatus(str, Enum):
+    FINISHED = 'FINISHED'
+    RELEASING = 'RELEASING'
+    NOT_YET_RELEASED = 'NOT_YET_RELEASED'
+    CANCELLED = 'CANCELLED'
+    HIATUS = 'HIATUS'
+
+
+class ProjectionStatus(str, Enum):
+    ONGOING = 'ONGOING'
+    COMPLETED = 'COMPLETED'
+
+
+class QuizzStatus(str, Enum):
+    STARTED = 'STARTED'
+    ENDED = 'ENDED'
+
+
+class AnilistMediaType(str, Enum):
+    ANIME = 'ANIME'
+    MANGA = 'MANGA'
+
+
+class WaicolleGameMode(str, Enum):
+    WAIFU = 'WAIFU'
+    HUSBANDO = 'HUSBANDO'
+    ALL = 'ALL'
+
+
+class WaicolleCollagePosition(str, Enum):
+    DEFAULT = 'DEFAULT'
+    LEFT_OF = 'LEFT_OF'
+    RIGHT_OF = 'RIGHT_OF'
 
 
 class AccountSelectAllResult(BaseModel):
@@ -125,7 +120,7 @@ class AddPlayerCoinsBody(BaseModel):
 class Body_client_login(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     username: str
-    password: str
+    password: Any
     grant_type: str | None = None
     scope: str | None = None
     client_id: str | None = None
@@ -2123,3 +2118,30 @@ class WhoamiResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
     username: str
+
+
+class WrappedEmbed(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    title: str | None = None
+    description: str | None = None
+    color: int | None = None
+    fields: list['WrappedEmbedField'] | None = None
+    footer: str | None = None
+    image_url: str | None = None
+
+
+class WrappedEmbedField(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str
+    value: str
+    inline: bool | None = None
+
+
+class WrappedResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    embeds: list['WrappedEmbed']
+
+
+class AccountMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID

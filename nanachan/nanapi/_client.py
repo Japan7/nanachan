@@ -176,6 +176,7 @@ from .model import (
     WaifuSelectResult,
     WaifuUpdateCustomImageNameResult,
     WhoamiResponse,
+    WrappedResponse,
 )
 
 
@@ -6628,6 +6629,53 @@ class WaicolleModule:
             )
 
 
+class WrappedModule:
+    def __init__(self, session: 'ClientSession', server_url: str):
+        self.session: ClientSession = session
+        self.server_url: str = server_url
+
+    async def wrapped_get_wrapped(
+        self, discord_id: str, year: int | None = None, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], WrappedResponse]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Get wrapped statistics for a user for a given year.
+
+        Returns a list of embeds with fun statistics and absurdist comparisons."""
+        url = f'{self.server_url}/wrapped/{discord_id}'
+        params = {
+            'year': year,
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.get(
+            url,
+            params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], WrappedResponse](
+                    code=200, result=WrappedResponse(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+
 class ClientSession(aiohttp.ClientSession):
     def __init__(self, server_url: str, **kwargs):
         super().__init__(**kwargs)
@@ -6646,6 +6694,7 @@ class ClientSession(aiohttp.ClientSession):
         self.role: RoleModule = RoleModule(self, server_url)
         self.user: UserModule = UserModule(self, server_url)
         self.waicolle: WaicolleModule = WaicolleModule(self, server_url)
+        self.wrapped: WrappedModule = WrappedModule(self, server_url)
 
 
 def get_session(
