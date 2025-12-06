@@ -7,6 +7,7 @@ from functools import wraps
 from typing import Callable, Concatenate, Coroutine, override
 
 from discord import Interaction, InteractionCallbackResponse, app_commands
+from discord.errors import IHateThe3SecondsTimeout
 from discord.ext.commands import CommandError, Context
 from discord.interactions import InteractionMessage
 from discord.webhook import WebhookMessage
@@ -119,6 +120,9 @@ def handle_command_errors[**P, R: Coroutine](func: Callable[Concatenate[Interact
                 await interaction.followup.send(str(e))
             else:
                 await interaction.response.send_message(str(e))
+        except IHateThe3SecondsTimeout:
+            # Silently ignore expired interaction tokens (e.g., user took too long)
+            pass
 
     return decorated
 
@@ -140,6 +144,9 @@ def legacy_command(ephemeral: bool = False):
                 return await func(cog, ctx, *args, **kwargs)
             except CommandError as e:
                 await ctx.send(str(e))
+            except IHateThe3SecondsTimeout:
+                # Silently ignore expired interaction tokens (e.g., user took too long)
+                pass
 
         return decorated
 
