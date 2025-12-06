@@ -28,6 +28,7 @@ __all__ = (
     'async_dummy',
     'get_session',
     'to_producer',
+    'ProducerError',
     'ignore',
     'get_console',
     'get_traceback',
@@ -128,6 +129,14 @@ class ProducerResponse(TypedDict):
     url: str
 
 
+class ProducerError(Exception):
+    """Raised when producer upload fails."""
+
+    def __init__(self, response: Any):
+        self.response = response
+        super().__init__(f'Producer upload failed: {response}')
+
+
 @singledispatch
 async def to_producer(file: str | URL | io.IOBase) -> ProducerResponse:
     raise RuntimeError('shouldn’t be here')
@@ -149,7 +158,10 @@ async def _(file: str | URL) -> ProducerResponse:
         async with get_session().post(
             PRODUCER_UPLOAD_ENDPOINT, headers=headers, data=resp.content
         ) as req:
-            return await req.json()
+            result = await req.json()
+            if 'url' not in result:
+                raise ProducerError(result)
+            return result
 
 
 async def chunk_iter(file: io.IOBase):
@@ -169,7 +181,10 @@ async def _(file: io.IOBase, filename: str) -> ProducerResponse:
     async with get_session().post(
         PRODUCER_UPLOAD_ENDPOINT, headers=headers, data=chunk_iter(file)
     ) as req:
-        return await req.json()
+        result = await req.json()
+        if 'url' not in result:
+            raise ProducerError(result)
+        return result
 
 
 async def ignore(exception: Type[Exception], coro: Coroutine[Any, Any, Any]):
