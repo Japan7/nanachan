@@ -28,6 +28,7 @@ __all__ = (
     'async_dummy',
     'get_session',
     'to_producer',
+    'ProducerError',
     'ignore',
     'get_console',
     'get_traceback',
@@ -128,6 +129,14 @@ class ProducerResponse(TypedDict):
     url: str
 
 
+class ProducerError(Exception):
+    """Raised when producer upload fails."""
+
+    def __init__(self, response: Any):
+        self.response = response
+        super().__init__(f'Producer upload failed: {response}')
+
+
 @singledispatch
 async def to_producer(file: str | URL | io.IOBase) -> ProducerResponse:
     raise RuntimeError('shouldn’t be here')
@@ -151,7 +160,7 @@ async def _(file: str | URL) -> ProducerResponse:
         ) as req:
             result = await req.json()
             if 'url' not in result:
-                raise RuntimeError(f'Producer upload failed: {result}')
+                raise ProducerError(result)
             return result
 
 
@@ -174,7 +183,7 @@ async def _(file: io.IOBase, filename: str) -> ProducerResponse:
     ) as req:
         result = await req.json()
         if 'url' not in result:
-            raise RuntimeError(f'Producer upload failed: {result}')
+            raise ProducerError(result)
         return result
 
 
