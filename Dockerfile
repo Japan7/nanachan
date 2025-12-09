@@ -7,8 +7,6 @@ RUN apt update && apt upgrade -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     ln -s /usr/lib/x86_64-linux-gnu/libopus.so.0 /usr/lib/
 
-COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
-
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
