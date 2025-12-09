@@ -102,9 +102,8 @@ REDIS_HOST = None
 
 ## AI
 # AI_OPENROUTER_API_KEY = ''
-# AI_FLAGSHIP_MODEL = 'openai/gpt-4.1'
-# AI_DEFAULT_MODEL = 'openai/gpt-4.1-mini'
-# AI_LOW_LATENCY_MODEL = 'openai/gpt-4.1-nano'
+# AI_FLAGSHIP_MODEL = 'anthropic/claude-sonnet-4.5'
+# AI_DEFAULT_MODEL = 'anthropic/claude-haiku-4.5'
 # AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 # AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
 # AI_SKIP_PERMISSIONS_CHECK = False

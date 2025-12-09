@@ -52,7 +52,7 @@ from nanachan.nanapi.model import (
     ReminderInsertSelectResult,
     ReminderSelectAllResult,
 )
-from nanachan.settings import AI_LOW_LATENCY_MODEL, SLASH_PREFIX, TZ, RequiresAI
+from nanachan.settings import AI_DEFAULT_MODEL, SLASH_PREFIX, TZ, RequiresAI
 from nanachan.utils.ai import get_model
 from nanachan.utils.misc import get_session, saucenao_lookup, tldr_get_page
 
@@ -493,7 +493,7 @@ class BasicCommands(Cog, name='Basic Commands'):
                 json.dumps(channel, default=str),
                 json.dumps(messages, default=str),
             ],
-            model=get_model(AI_LOW_LATENCY_MODEL),
+            model=get_model(AI_DEFAULT_MODEL),
         )
         return thread, resp.output.replace('\n', ' ').strip()
 
