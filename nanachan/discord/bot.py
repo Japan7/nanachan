@@ -131,7 +131,7 @@ class Bot(commands.AutoShardedBot):
     def wrap_parse_message_create(self, parse_message_create):
         @wraps(parse_message_create)
         def wrapper(data):
-            self.dispatch('raw_message', data)
+            self.dispatch('raw_message_create', data)
             return parse_message_create(data)
 
         return wrapper

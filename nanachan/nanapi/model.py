@@ -28,13 +28,9 @@ class AnilistCharacterRole(str, Enum):
     BACKGROUND = 'BACKGROUND'
 
 
-class WaicolleRank(str, Enum):
-    S = 'S'
-    A = 'A'
-    B = 'B'
-    C = 'C'
-    D = 'D'
-    E = 'E'
+class AnilistMediaType(str, Enum):
+    ANIME = 'ANIME'
+    MANGA = 'MANGA'
 
 
 class AnilistMediaSeason(str, Enum):
@@ -42,6 +38,15 @@ class AnilistMediaSeason(str, Enum):
     SPRING = 'SPRING'
     SUMMER = 'SUMMER'
     FALL = 'FALL'
+
+
+class WaicolleRank(str, Enum):
+    S = 'S'
+    A = 'A'
+    B = 'B'
+    C = 'C'
+    D = 'D'
+    E = 'E'
 
 
 class AnilistEntryStatus(str, Enum):
@@ -69,11 +74,6 @@ class ProjectionStatus(str, Enum):
 class QuizzStatus(str, Enum):
     STARTED = 'STARTED'
     ENDED = 'ENDED'
-
-
-class AnilistMediaType(str, Enum):
-    ANIME = 'ANIME'
-    MANGA = 'MANGA'
 
 
 class WaicolleGameMode(str, Enum):
@@ -1566,6 +1566,22 @@ class Rank(BaseModel):
     blood_price: int
     color: int
     emoji: str
+
+
+class ReactionAddBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    animated: bool | None = None
+    burst: bool | None = None
+
+
+class ReactionDeleteResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
+class ReactionInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
 
 
 class ReminderDeleteByIdResult(BaseModel):

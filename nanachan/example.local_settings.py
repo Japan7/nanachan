@@ -109,9 +109,10 @@ REDIS_HOST = None
 # AI_SKIP_PERMISSIONS_CHECK = False
 # AI_SEARCH_TOOL = tavily_search_tool('API_KEY')
 AI_ADDITIONAL_TOOLSETS = [
+    # MCPServerStdio('uvx', args=['mcp-run-python@latest', 'stdio'], timeout=10),
+    # MCPServerStdio('npx', args=['@playwright/mcp@latest', '--headless', '--isolated']),
     # MCPServerStreamableHTTP('https://mcp.context7.com/mcp'),
     # MCPServerStreamableHTTP('https://mcp.deepwiki.com/mcp'),
-    # MCPServerStdio('uvx', args=['mcp-run-python@latest', 'stdio'], timeout=10),
 ]
 
 ## SauceNAO
