@@ -165,3 +165,4 @@ RequiresAI = RequiredSettings(
     AI_IMAGE_MODEL,
 )
 RequiresGitHub = RequiredSettings(GITHUB_REPO_SLUG, GITHUB_TOKEN)
+RequiresMessageExport = RequiredSettings(ENABLE_MESSAGE_EXPORT)

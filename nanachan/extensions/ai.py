@@ -3,10 +3,9 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 import discord
-from discord import AllowedMentions, Thread, app_commands
+from discord import AllowedMentions, app_commands
 from discord.app_commands.tree import ALL_GUILDS
 from discord.ext import commands
 from pydantic_ai import Agent, BinaryContent, RunContext
@@ -16,22 +15,16 @@ from nanachan.discord.application_commands import LegacyCommandContext, NanaGrou
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.helpers import Embed
-from nanachan.nanapi.client import get_nanapi
 from nanachan.settings import (
     AI_ADDITIONAL_TOOLSETS,
     AI_DEFAULT_MODEL,
     AI_GROK_MODEL,
-    ENABLE_MESSAGE_EXPORT,
     GITHUB_REPO_SLUG,
     SLASH_PREFIX,
     TZ,
     RequiresAI,
 )
 from nanachan.utils.ai import ChatDeps, all_toolsets, get_model, iter_stream
-
-if TYPE_CHECKING:
-    from discord.types.gateway import MessageCreateEvent
-    from discord.types.message import Message
 
 logger = logging.getLogger(__name__)
 
@@ -202,40 +195,3 @@ The backend code repository is hosted at https://github.com/Japan7/nanapi.
 
 async def setup(bot: Bot):
     await bot.add_cog(AI(bot))
-
-    async def on_raw_message(data: 'MessageCreateEvent'):
-        await upsert_message(data)
-
-    async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
-        await upsert_message(payload.data)
-
-    async def upsert_message(data: 'Message'):
-        noindex = None
-        if str(data['author']['id']) == str(bot.bot_id):
-            noindex = 'nanachan'
-        elif data['author'].get('bot'):
-            noindex = 'bot'
-        elif await is_nana_thread(data):
-            noindex = 'nanachan thread'  # AI chat ?
-        await get_nanapi().discord.discord_upsert_message(
-            str(data['id']), json.dumps(data), noindex=noindex
-        )
-
-    async def is_nana_thread(data: 'Message'):
-        if (thread := data.get('thread')) and str(thread['owner_id']) == str(bot.bot_id):
-            return True
-        channel_id = int(data['channel_id'])
-        channel = bot.get_channel(channel_id) or await bot.fetch_channel(channel_id)
-        return isinstance(channel, Thread) and channel.owner_id == bot.bot_id
-
-    async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
-        await get_nanapi().discord.discord_delete_messages(str(payload.message_id))
-
-    async def on_raw_bulk_message_delete(payload: discord.RawBulkMessageDeleteEvent):
-        await get_nanapi().discord.discord_delete_messages(','.join(map(str, payload.message_ids)))
-
-    if ENABLE_MESSAGE_EXPORT:
-        bot.add_listener(on_raw_message)
-        bot.add_listener(on_raw_message_edit)
-        bot.add_listener(on_raw_message_delete)
-        bot.add_listener(on_raw_bulk_message_delete)
