@@ -106,8 +106,8 @@ NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## AI
 AI_OPENROUTER_API_KEY: str | None = None
-AI_FLAGSHIP_MODEL = 'anthropic/claude-sonnet-4.5'
-AI_DEFAULT_MODEL = 'anthropic/claude-haiku-4.5'
+AI_FLAGSHIP_MODEL = 'google/gemini-3-pro-preview'
+AI_DEFAULT_MODEL = 'openai/gpt-5.1'
 AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
 AI_SKIP_PERMISSIONS_CHECK = False
