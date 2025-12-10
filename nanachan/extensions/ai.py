@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import textwrap
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -24,7 +25,14 @@ from nanachan.settings import (
     TZ,
     RequiresAI,
 )
-from nanachan.utils.ai import ChatDeps, all_toolsets, get_model, iter_stream
+from nanachan.utils.ai import (
+    ChatDeps,
+    chat_stream,
+    chat_toolset,
+    get_model,
+    get_nanapi_toolset,
+    web_toolset,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,40 +51,62 @@ class AI(Cog, required_settings=RequiresAI):
     def system_prompt(run_ctx: RunContext[ChatDeps]):
         ctx = run_ctx.deps.ctx
         assert ctx.bot.user and ctx.guild
-        return f"""
-The assistant is {ctx.bot.user.display_name}, a Discord bot for the {ctx.guild.name} Discord server.
+        prompt = f"""
+        # Identity
 
-The current date is {datetime.now(TZ)}.
+        You are {ctx.bot.user.display_name}, a Discord bot assistant for the {ctx.guild.name} Discord server.
 
-{ctx.bot.user.display_name}'s Discord ID is {ctx.bot.user.id}.
+        - Your Discord ID: {ctx.bot.user.id}
+        - Current date: {datetime.now(TZ)}
 
-When using retrieved context to answer the user, {ctx.bot.user.display_name} must reference the pertinent messages and provide their links.
-For instance: "Snapchat is a beautiful cat (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>) and it loves Louis (https://discord.com/channels/<guild_id>/<channel_id>/<message_id>)."
+        # Core Behavior
 
-If the agent is asked to factcheck something, this something may be a replied message or the last messages in the channel.
+        - Use available tools to retrieve accurate information before responding
+        - When uncertain, admit it rather than guessing
 
-The Discord bot code repository is hosted at https://github.com/{GITHUB_REPO_SLUG}.
-The backend code repository is hosted at https://github.com/Japan7/nanapi.
-"""  # noqa: E501
+        # Message References & Citations
 
-    @staticmethod
-    def author_instructions(run_ctx: RunContext[ChatDeps]):
-        ctx = run_ctx.deps.ctx
-        assert ctx.bot.user
-        return (
-            f'{ctx.bot.user.display_name} is now being connected with {ctx.author.display_name} '
-            f'(ID {ctx.author.id}).'
-        )
+        When referencing information from Discord messages:
+
+        - Always provide clickable message links in this format: https://discord.com/channels/<guild_id>/<channel_id>/<message_id>
+        - Cite sources naturally in your response
+        - Example: "Snapchat is a beautiful cat (https://discord.com/channels/123/456/789) and loves Louis (https://discord.com/channels/123/456/790)."
+
+        # Factchecking
+
+        When asked to factcheck:
+
+        - Check the replied message if present
+        - Otherwise, examine recent messages in the channel
+        - Search message history using available tools
+        - Be thorough but cite your sources with message links
+
+        # Available Tools
+
+        You have access to tools for:
+
+        - Searching Discord message history
+        - Fetching web content and documentation
+        - Calling backend API functions (user data, anime lists, collections, etc.)
+        - Use tools proactively to provide accurate, up-to-date information
+
+        # Codebase Information
+
+        - Discord bot repository: https://github.com/{GITHUB_REPO_SLUG}
+        - Backend API repository: https://github.com/Japan7/nanapi
+        - Use these when discussing bot functionality or code-related questions.
+        - Context7 and Deepwiki tools are available for contextual information retrieval.
+        """  # noqa: E501
+        return textwrap.dedent(prompt).strip()
 
     def __init__(self, bot: Bot):
         self.bot = bot
 
         self.agent = Agent(
             deps_type=ChatDeps,
-            toolsets=[*all_toolsets, *AI_ADDITIONAL_TOOLSETS],
+            toolsets=[get_nanapi_toolset(), chat_toolset, web_toolset, *AI_ADDITIONAL_TOOLSETS],
         )
         self.agent.system_prompt(self.system_prompt)
-        self.agent.instructions(self.author_instructions)
         self.agent_lock = asyncio.Lock()
 
         self.contexts = dict[int, ChatContext]()
@@ -131,7 +161,8 @@ The backend code repository is hosted at https://github.com/Japan7/nanapi.
             message = await ctx._state.http.get_message(ctx.channel.id, ctx.message.id)  # pyright: ignore[reportPrivateUsage]
             content: list[UserContent] = [
                 ctx.message.content,
-                f'This is the raw user message data: {json.dumps(message)}',
+                'This is the raw user message data:',
+                json.dumps(message),
             ]
             for attachment in ctx.message.attachments:
                 if attachment.content_type:
@@ -157,7 +188,7 @@ The backend code repository is hosted at https://github.com/Japan7/nanapi.
 
             try:
                 async with self.agent:
-                    async for part in iter_stream(
+                    async for part in chat_stream(
                         self.agent,
                         user_prompt=content,
                         message_history=chat_ctx.history,

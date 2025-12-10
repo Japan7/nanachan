@@ -34,6 +34,7 @@ from pydantic_ai.toolsets import FunctionToolset
 from nanachan.discord.bot import Bot
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.settings import (
+    AI_DEFAULT_MODEL,
     AI_IMAGE_MODEL,
     AI_OPENROUTER_API_KEY,
     AI_SEARCH_TOOL,
@@ -44,18 +45,12 @@ from nanachan.utils.misc import get_session
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class ChatDeps:
-    ctx: commands.Context[Bot]
-    thread: discord.Thread
-
-
-def get_model(model_name: str) -> Model:
+def get_model(model_name: str = AI_DEFAULT_MODEL) -> Model:
     assert AI_OPENROUTER_API_KEY
     return OpenRouterModel(model_name, provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY))
 
 
-async def iter_stream[AgentDepsT](
+async def chat_stream[AgentDepsT](
     agent: Agent[AgentDepsT],
     *,
     user_prompt: Sequence[UserContent],
@@ -144,28 +139,34 @@ def nanapi_tools() -> Iterable[Tool[None]]:
         yield Tool(endpoint, takes_ctx=None)
 
 
-nanapi_toolset = FunctionToolset[Any](tools=list(nanapi_tools()))
-discord_toolset = FunctionToolset[ChatDeps]()
-multimodal_toolset = FunctionToolset[ChatDeps]()
-web_toolset = FunctionToolset[Any](tools=[AI_SEARCH_TOOL])
-all_toolsets = (nanapi_toolset, discord_toolset, multimodal_toolset, web_toolset)
+def get_nanapi_toolset():
+    return FunctionToolset[Any](tools=[*nanapi_tools()])
 
 
-@discord_toolset.tool
+@dataclass
+class ChatDeps:
+    ctx: commands.Context[Bot]
+    thread: discord.Thread
+
+
+chat_toolset = FunctionToolset[ChatDeps]()
+
+
+@chat_toolset.tool
 def get_members_name_discord_id_map(run_ctx: RunContext[ChatDeps]):
     """Generate a mapping of Discord member display names to their Discord IDs."""
     ctx = run_ctx.deps.ctx
     return {member.display_name: member.id for member in ctx.bot.get_all_members()}
 
 
-@discord_toolset.tool
+@chat_toolset.tool
 def get_channels_name_channel_id_map(run_ctx: RunContext[ChatDeps]):
     """Generate a mapping of Discord channel names to their channel IDs."""
     ctx = run_ctx.deps.ctx
     return {channel.name: channel.id for channel in ctx.bot.get_all_channels()}
 
 
-@discord_toolset.tool
+@chat_toolset.tool
 async def get_raw_parent_channel(run_ctx: RunContext[ChatDeps]):
     """Retrieve the parent channel of the current thread in which the assistant is summoned."""
     ctx = run_ctx.deps.ctx
@@ -177,7 +178,7 @@ async def get_raw_parent_channel(run_ctx: RunContext[ChatDeps]):
     return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
 
 
-@discord_toolset.tool
+@chat_toolset.tool
 async def get_raw_replied_message(run_ctx: RunContext[ChatDeps]):
     """Retrieve the message that the current message is replying to, if any."""
     ctx = run_ctx.deps.ctx
@@ -189,14 +190,14 @@ async def get_raw_replied_message(run_ctx: RunContext[ChatDeps]):
     return None
 
 
-@discord_toolset.tool
+@chat_toolset.tool
 async def fetch_raw_channel(run_ctx: RunContext[ChatDeps], channel_id: str):
     """Fetch a channel."""
     ctx = run_ctx.deps.ctx
     return await ctx._state.http.get_channel(channel_id)  # pyright: ignore[reportPrivateUsage]
 
 
-@discord_toolset.tool
+@chat_toolset.tool
 async def fetch_raw_message(
     run_ctx: RunContext[ChatDeps],
     channel_id: str,
@@ -207,7 +208,7 @@ async def fetch_raw_message(
     return await ctx._state.http.get_message(channel_id, message_id)  # pyright: ignore[reportPrivateUsage]
 
 
-@discord_toolset.tool
+@chat_toolset.tool
 async def channel_history(
     run_ctx: RunContext[ChatDeps],
     channel_id: str,
@@ -244,7 +245,7 @@ async def channel_history(
     )
 
 
-@discord_toolset.tool(retries=5)
+@chat_toolset.tool(retries=5)
 async def retrieve_rag_context(run_ctx: RunContext[ChatDeps], search_query: str):
     """Find relevant past discussion sections using a simple French keyword search."""
     ctx = run_ctx.deps.ctx
@@ -269,7 +270,7 @@ async def retrieve_rag_context(run_ctx: RunContext[ChatDeps], search_query: str)
     return messages
 
 
-@multimodal_toolset.tool(retries=5)
+@chat_toolset.tool(retries=5)
 async def generate_image(
     run_ctx: RunContext[ChatDeps],
     prompt: str,
@@ -353,6 +354,9 @@ async def openrouter_generate_image(
     content = cast(str, message['content'])
     images = [BinaryImage.from_data_uri(image['image_url']['url']) for image in message['images']]
     return reasoning, content, images
+
+
+web_toolset = FunctionToolset[Any](tools=[AI_SEARCH_TOOL])
 
 
 @web_toolset.tool

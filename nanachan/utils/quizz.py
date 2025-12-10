@@ -3,10 +3,10 @@ import io
 import random
 import re
 import string
+import textwrap
 import unicodedata
 from abc import ABC, abstractmethod
 from contextlib import suppress
-from dataclasses import dataclass
 from importlib import resources
 from typing import TYPE_CHECKING, cast
 from uuid import UUID
@@ -14,7 +14,8 @@ from uuid import UUID
 import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
-from pydantic_ai import RunContext
+from pydantic_ai import BinaryContent
+from pydantic_ai.messages import UserContent
 
 import nanachan.resources
 from nanachan.discord.bot import Bot
@@ -22,13 +23,7 @@ from nanachan.discord.helpers import Embed, MultiplexingMessage, UserType
 from nanachan.extensions.waicolle import WaifuCollection
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
-from nanachan.settings import (
-    AI_FLAGSHIP_MODEL,
-    GLOBAL_COIN_MULTIPLIER,
-    PREFIX,
-    SAUCENAO_API_KEY,
-    RequiresAI,
-)
+from nanachan.settings import GLOBAL_COIN_MULTIPLIER, PREFIX, SAUCENAO_API_KEY, RequiresAI
 from nanachan.utils.ai import Agent, get_model, web_toolset
 from nanachan.utils.misc import saucenao_lookup, to_producer
 
@@ -38,27 +33,12 @@ if TYPE_CHECKING:
 COLOR_BANANA = 0xF6D68D
 
 
-@dataclass
-class RunDeps:
-    question: str | None
-    answer: str | None
-
-
 class QuizzBase(ABC):
+    HINTS_PROMPT: str
     HINTS_COUNT = 5
     REWARD = 100
 
-    agent = Agent(deps_type=RunDeps, toolsets=[web_toolset])
-
-    @agent.instructions
-    @staticmethod
-    def instructions(run_ctx: RunContext[RunDeps]) -> str:
-        prompt: list[str] = []
-        if question := run_ctx.deps.question:
-            prompt.append(f'The quizz question is: {question}')
-        if answer := run_ctx.deps.answer:
-            prompt.append(f'The quizz answer is: {answer}')
-        return '\n'.join(prompt)
+    agent = Agent(toolsets=[web_toolset])
 
     def __init__(self, bot: Bot, channel_id: int):
         self.bot = bot
@@ -74,23 +54,66 @@ class QuizzBase(ABC):
     ) -> UUID: ...
 
     @classmethod
-    async def generate_hints(cls, question: str | None, answer: str) -> list[str] | None:
+    async def generate_hints(
+        cls,
+        question: str,
+        answer: str,
+        attachment: discord.Attachment | None,
+    ) -> list[str] | None:
         return (
-            await QuizzBase.generate_ai_hints(question, answer)
+            await QuizzBase.generate_ai_hints(question, answer, attachment)
             if RequiresAI.configured
             else QuizzBase.generate_banana_hints(answer)
         )
 
     @classmethod
-    async def generate_ai_hints(cls, question: str | None, answer: str) -> list[str] | None:
-        run = await cls.agent.run(
-            f'Create {cls.HINTS_COUNT} hints for the quiz answer, each offering gradually more '
-            f'assistance.\n'
-            f'Be careful not to disclose the answer directly, or offer any translation of it.',
-            output_type=list[str],
-            model=get_model(AI_FLAGSHIP_MODEL),
-            deps=RunDeps(question, answer),
-        )
+    async def generate_ai_hints(
+        cls,
+        question: str,
+        answer: str,
+        attachment: discord.Attachment | None,
+    ) -> list[str] | None:
+        prompt = f"""
+        You are creating hints for a quiz game. All hints must be in English.
+
+        {textwrap.indent(cls.HINTS_PROMPT, '    ').strip()}
+
+        **Rules for creating hints**:
+
+        - Create exactly {cls.HINTS_COUNT} hints with progressive difficulty
+        - Hint 1: Very abstract, cryptic, thematic (hardest)
+        - Hint 2-{cls.HINTS_COUNT - 1}: Gradually more specific information
+        - Hint {cls.HINTS_COUNT}: Nearly obvious, but still requires the final connection
+
+        **What to AVOID**:
+
+        - Do NOT provide translations of the answer
+        - Do NOT use alternate romanizations or spellings that directly reveal the answer
+        - Do NOT mention character names that would immediately reveal the source
+        - Do NOT include release year or specific dates
+        - Do NOT give away the answer through synonyms or word play
+
+        **Question**: {question}
+        **Answer**: {answer}
+
+        Create {cls.HINTS_COUNT} hints for this quiz that progressively reveal information.
+        """
+
+        content: list[UserContent] = [textwrap.dedent(prompt).strip()]
+        if attachment and attachment.content_type:
+            data = await attachment.read()
+            content.extend(
+                [
+                    'This is the attachment for the quiz question:',
+                    BinaryContent(
+                        data,
+                        media_type=attachment.content_type,
+                        identifier=attachment.filename,
+                    ),
+                ]
+            )
+
+        run = await cls.agent.run(content, output_type=list[str], model=get_model())
         hints = run.output
         if len(hints) == cls.HINTS_COUNT:
             return hints
@@ -181,6 +204,15 @@ class QuizzBase(ABC):
 
 
 class AnimeMangaQuizz(QuizzBase):
+    HINTS_PROMPT = """
+    **Quiz Type**: Anime/Manga image quiz
+
+    - For Japanese titles, use romaji (romanized Japanese)
+    - An image is provided showing a scene from an anime, manga or video game
+    - Use visual cues from the image: art style, color palette, setting, character designs
+    - Reference genre, era, or themes without naming the title directly
+    """
+
     async def create_quizz(
         self,
         author: UserType,
@@ -199,7 +231,15 @@ class AnimeMangaQuizz(QuizzBase):
         url = (await to_producer(attachment.url))['url']
         if answer is None and SAUCENAO_API_KEY is not None:
             answer = await self.saucenao(url)
-        hints = await self.generate_hints(question, answer) if answer is not None else None
+        hints = (
+            await self.generate_hints(
+                question or 'Guess the source of this image.',
+                answer,
+                attachment=attachment,
+            )
+            if answer is not None
+            else None
+        )
         body = NewQuizzBody(
             channel_id=str(self.channel_id),
             attachment_url=url,
@@ -313,6 +353,13 @@ class AnimeMangaQuizz(QuizzBase):
 
 
 class LouisQuizz(QuizzBase):
+    HINTS_PROMPT = """
+    **Quiz Type**: General trivia quiz
+
+    - Focus on category, time period, or related concepts
+    - Build hints around context clues without giving away the answer
+    """
+
     async def create_quizz(
         self,
         author: UserType,
@@ -321,7 +368,11 @@ class LouisQuizz(QuizzBase):
         answer: str | None,
     ):
         url = (await to_producer(attachment.url))['url'] if attachment is not None else None
-        hints = await self.generate_hints(question, answer) if answer is not None else None
+        hints = (
+            await self.generate_hints(str(question), answer, attachment=attachment)
+            if answer is not None
+            else None
+        )
         body = NewQuizzBody(
             channel_id=str(self.channel_id),
             question=question,

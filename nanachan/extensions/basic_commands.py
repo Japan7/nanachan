@@ -52,7 +52,7 @@ from nanachan.nanapi.model import (
     ReminderInsertSelectResult,
     ReminderSelectAllResult,
 )
-from nanachan.settings import AI_DEFAULT_MODEL, SLASH_PREFIX, TZ, RequiresAI
+from nanachan.settings import SLASH_PREFIX, TZ, RequiresAI
 from nanachan.utils.ai import get_model
 from nanachan.utils.misc import get_session, saucenao_lookup, tldr_get_page
 
@@ -485,15 +485,15 @@ class BasicCommands(Cog, name='Basic Commands'):
         if not RequiresAI.configured:
             return thread, ''
         channel = await thread._state.http.get_channel(thread.id)  # pyright: ignore[reportPrivateUsage]
-        messages = await thread._state.http.logs_from(thread.id, limit=50)  # pyright: ignore[reportPrivateUsage]
+        messages = await thread._state.http.logs_from(thread.id, limit=20)  # pyright: ignore[reportPrivateUsage]
         resp = await self.agent.run(
             [
-                'Given this channel informations and the last 50 messages, '
-                'give a summary in a single sentence, in French, of what this thread is about.',
+                'Given this channel informations and the last 20 messages, '
+                'provide a summary in a single sentence, in French, of what this thread is about.',
                 json.dumps(channel, default=str),
                 json.dumps(messages, default=str),
             ],
-            model=get_model(AI_DEFAULT_MODEL),
+            model=get_model(),
         )
         return thread, resp.output.replace('\n', ' ').strip()
 
