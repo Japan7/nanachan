@@ -9,7 +9,7 @@ import discord
 from discord import AllowedMentions, app_commands
 from discord.app_commands.tree import ALL_GUILDS
 from discord.ext import commands
-from pydantic_ai import Agent, BinaryContent, RunContext
+from pydantic_ai import Agent, RunContext
 from pydantic_ai.messages import ModelMessage, UserContent
 
 from nanachan.discord.application_commands import LegacyCommandContext, NanaGroup, legacy_command
@@ -31,6 +31,7 @@ from nanachan.utils.ai import (
     chat_toolset,
     get_model,
     get_nanapi_toolset,
+    to_binary_content,
     web_toolset,
 )
 
@@ -165,18 +166,8 @@ class AI(Cog, required_settings=RequiresAI):
                 json.dumps(message),
             ]
             for attachment in ctx.message.attachments:
-                if attachment.content_type:
-                    data = await attachment.read()
-                    content.extend(
-                        [
-                            f'This is attachment {attachment.filename}:',
-                            BinaryContent(
-                                data,
-                                media_type=attachment.content_type,
-                                identifier=attachment.filename,
-                            ),
-                        ]
-                    )
+                if bin_content := await to_binary_content(attachment):
+                    content.extend([f'This is attachment {attachment.filename}:', bin_content])
 
             send = (
                 ctx.message.reply

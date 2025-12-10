@@ -24,7 +24,7 @@ from nanachan.extensions.waicolle import WaifuCollection
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
 from nanachan.settings import GLOBAL_COIN_MULTIPLIER, PREFIX, SAUCENAO_API_KEY, RequiresAI
-from nanachan.utils.ai import Agent, get_model, web_toolset
+from nanachan.utils.ai import Agent, get_model, to_binary_content, web_toolset
 from nanachan.utils.misc import saucenao_lookup, to_producer
 
 if TYPE_CHECKING:
@@ -34,6 +34,7 @@ COLOR_BANANA = 0xF6D68D
 
 
 class QuizzBase(ABC):
+    DEFAULT_QUESTION = 'Unknown'
     HINTS_PROMPT: str
     HINTS_COUNT = 5
     REWARD = 100
@@ -56,12 +57,16 @@ class QuizzBase(ABC):
     @classmethod
     async def generate_hints(
         cls,
-        question: str,
+        question: str | None,
         answer: str,
-        attachment: discord.Attachment | None,
+        bin_content: BinaryContent | None,
     ) -> list[str] | None:
         return (
-            await QuizzBase.generate_ai_hints(question, answer, attachment)
+            await QuizzBase.generate_ai_hints(
+                question or cls.DEFAULT_QUESTION,
+                answer,
+                bin_content,
+            )
             if RequiresAI.configured
             else QuizzBase.generate_banana_hints(answer)
         )
@@ -71,7 +76,7 @@ class QuizzBase(ABC):
         cls,
         question: str,
         answer: str,
-        attachment: discord.Attachment | None,
+        bin_content: BinaryContent | None,
     ) -> list[str] | None:
         prompt = f"""
         You are creating hints for a quiz game. All hints must be in English.
@@ -100,18 +105,8 @@ class QuizzBase(ABC):
         """
 
         content: list[UserContent] = [textwrap.dedent(prompt).strip()]
-        if attachment and attachment.content_type:
-            data = await attachment.read()
-            content.extend(
-                [
-                    'This is the attachment for the quiz question:',
-                    BinaryContent(
-                        data,
-                        media_type=attachment.content_type,
-                        identifier=attachment.filename,
-                    ),
-                ]
-            )
+        if bin_content:
+            content.extend(['This is the attachment for the quiz question:', bin_content])
 
         run = await cls.agent.run(content, output_type=list[str], model=get_model())
         hints = run.output
@@ -204,6 +199,7 @@ class QuizzBase(ABC):
 
 
 class AnimeMangaQuizz(QuizzBase):
+    DEFAULT_QUESTION = 'Guess the source of this image.'
     HINTS_PROMPT = """
     **Quiz Type**: Anime/Manga image quiz
 
@@ -231,15 +227,10 @@ class AnimeMangaQuizz(QuizzBase):
         url = (await to_producer(attachment.url))['url']
         if answer is None and SAUCENAO_API_KEY is not None:
             answer = await self.saucenao(url)
-        hints = (
-            await self.generate_hints(
-                question or 'Guess the source of this image.',
-                answer,
-                attachment=attachment,
-            )
-            if answer is not None
-            else None
-        )
+        hints = None
+        if answer:
+            bin_content = await to_binary_content(attachment)
+            hints = await self.generate_hints(question, answer, bin_content)
         body = NewQuizzBody(
             channel_id=str(self.channel_id),
             attachment_url=url,
@@ -368,11 +359,10 @@ class LouisQuizz(QuizzBase):
         answer: str | None,
     ):
         url = (await to_producer(attachment.url))['url'] if attachment is not None else None
-        hints = (
-            await self.generate_hints(str(question), answer, attachment=attachment)
-            if answer is not None
-            else None
-        )
+        hints = None
+        if answer:
+            bin_content = await to_binary_content(attachment) if attachment else None
+            hints = await self.generate_hints(question, answer, bin_content)
         body = NewQuizzBody(
             channel_id=str(self.channel_id),
             question=question,

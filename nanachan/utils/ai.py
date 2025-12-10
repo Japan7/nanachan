@@ -377,3 +377,14 @@ def validate_discord_url(url: str):
             f'Discord attachment URL {url} must include ex, is, and hm query parameters. '
             f'Extract the full URL from the raw message data.'
         )
+
+
+async def to_binary_content(attachment: discord.Attachment) -> BinaryContent | None:
+    """Convert a Discord attachment to BinaryContent."""
+    if attachment and attachment.content_type:
+        data = await attachment.read()
+        return BinaryContent(
+            data,
+            media_type=attachment.content_type,
+            identifier=attachment.filename,
+        )

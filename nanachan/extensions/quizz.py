@@ -9,6 +9,7 @@ import discord
 from discord import Member, app_commands
 from discord.app_commands.tree import ALL_GUILDS
 from discord.ext import commands
+from pydantic_ai import BinaryContent
 
 from nanachan.discord.application_commands import LegacyCommandContext, NanaGroup, legacy_command
 from nanachan.discord.bot import Bot
@@ -29,6 +30,7 @@ from nanachan.settings import (
     PREFIX,
     RequiresQuizz,
 )
+from nanachan.utils.misc import get_session
 from nanachan.utils.quizz import COLOR_BANANA, AnimeMangaQuizz, LouisQuizz, QuizzBase
 
 
@@ -254,8 +256,14 @@ class Quizz(Cog, required_settings=RequiresQuizz):
 
         cls = self.quizz_cls[int(game.quizz.channel_id)]
 
-        if answer is not None:
-            hints = await cls.generate_hints(game.quizz.question, answer)
+        if answer:
+            bin_content = None
+            if url := game.quizz.attachment_url:
+                async with get_session().get(url) as resp:
+                    if content_type := resp.headers.get('Content-Type'):
+                        data = await resp.read()
+                        bin_content = BinaryContent(data, media_type=content_type)
+            hints = await cls.generate_hints(game.quizz.question, answer, bin_content)
             body = SetQuizzAnswerBody(answer=answer, hints=hints)
         else:
             body = SetQuizzAnswerBody()
