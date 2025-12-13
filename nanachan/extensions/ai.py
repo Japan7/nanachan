@@ -197,7 +197,7 @@ class AI(Cog, required_settings=RequiresAI):
         if message.author.bot:
             return
 
-        if self.bot.user in message.mentions:
+        if self.bot.user and message.content.startswith(self.bot.user.mention):
             await self.on_chat_message(message)
             return
 
