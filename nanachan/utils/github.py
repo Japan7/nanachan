@@ -9,7 +9,12 @@ import logging
 import traceback
 from typing import Any
 
-from aiohttp import ClientConnectorError, ClientResponseError, ClientSession
+from aiohttp import (
+    ClientConnectorError,
+    ClientResponseError,
+    ClientSession,
+    ServerDisconnectedError,
+)
 from discord.ext import commands
 
 from nanachan.settings import GITHUB_REPO_SLUG, GITHUB_TOKEN
@@ -18,7 +23,12 @@ from nanachan.utils.misc import get_session
 logger = logging.getLogger(__name__)
 
 # Exceptions that should not be reported to GitHub
-FILTERED_EXCEPTIONS = (ClientConnectorError, ClientResponseError, TimeoutError)
+FILTERED_EXCEPTIONS = (
+    ClientConnectorError,
+    ClientResponseError,
+    TimeoutError,
+    ServerDisconnectedError,
+)
 
 GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql'
 cached_ids = None
