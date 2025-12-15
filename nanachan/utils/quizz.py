@@ -62,13 +62,13 @@ class QuizzBase(ABC):
         bin_content: BinaryContent | None,
     ) -> list[str] | None:
         return (
-            await QuizzBase.generate_ai_hints(
+            await cls.generate_ai_hints(
                 question or cls.DEFAULT_QUESTION,
                 answer,
                 bin_content,
             )
             if RequiresAI.configured
-            else QuizzBase.generate_banana_hints(answer)
+            else cls.generate_banana_hints(answer)
         )
 
     @classmethod
