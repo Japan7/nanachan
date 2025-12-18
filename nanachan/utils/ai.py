@@ -250,7 +250,7 @@ async def retrieve_rag_context(run_ctx: RunContext[ChatDeps], search_query: str)
     """Find relevant past discussion sections using a simple French keyword search."""
     ctx = run_ctx.deps.ctx
     assert isinstance(ctx.author, discord.Member)
-    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=10)
+    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=25)
     if not success(resp):
         raise RuntimeError(resp.result)
     messages = [
