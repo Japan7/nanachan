@@ -41,7 +41,10 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
             body=ReactionAddBody(animated=payload.emoji.animated, burst=payload.burst),
         )
         if not success(resp):
-            raise RuntimeError(resp.result)
+            error_msg = f'Failed to add reaction (status {resp.code})'
+            if resp.result is not None:
+                error_msg += f': {resp.result}'
+            raise RuntimeError(error_msg)
 
     @Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
