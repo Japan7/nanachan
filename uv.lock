@@ -1448,7 +1448,7 @@ requires-dist = [
     { name = "pydantic", specifier = "==2.12.5" },
     { name = "pydantic-ai-slim", extras = ["openrouter", "mcp", "duckduckgo", "tavily"], specifier = "==1.39.0" },
     { name = "python-dateutil", specifier = "==2.9.0.post0" },
-    { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.15.1" },
+    { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.16.0" },
     { name = "rich", specifier = "==14.2.0" },
     { name = "tldr", specifier = "==3.4.3" },
     { name = "tzdata", specifier = "==2025.3" },
@@ -2060,15 +2060,15 @@ wheels = [
 
 [[package]]
 name = "python-socketio"
-version = "5.15.1"
+version = "5.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bidict" },
     { name = "python-engineio" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5c/b5/56d070ade9ae60ed90ce2cdb41da927791cdae31f1059aab4b6b60d223b3/python_socketio-5.15.1.tar.gz", hash = "sha256:54fe3e5580ea06a1b29b541e8ef32fe956846c99a76059e343e43aada754efdd", size = 127172, upload-time = "2025-12-16T23:48:40.577Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/55/5d8af5884283b58e4405580bcd84af1d898c457173c708736e065f10ca4a/python_socketio-5.16.0.tar.gz", hash = "sha256:f79403c7f1ba8b84460aa8fe4c671414c8145b21a501b46b676f3740286356fd", size = 127120, upload-time = "2025-12-24T23:51:48.826Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/47/45a805fc1e4c3104df1193a78aeb98734497e32931efd1dfe9897c19188b/python_socketio-5.15.1-py3-none-any.whl", hash = "sha256:abc3528803563ed9a2010bc76829afe21d7a308a1e5651171fdb582d12e2ace0", size = 79561, upload-time = "2025-12-16T23:48:39.164Z" },
+    { url = "https://files.pythonhosted.org/packages/28/d2/2ccc2b69a187b80fda3152745670cfba936704f296a9fa54c6c8ac694d12/python_socketio-5.16.0-py3-none-any.whl", hash = "sha256:d95802961e15c7bd54ecf884c6e7644f81be8460f0a02ee66b473df58088ee8a", size = 79607, upload-time = "2025-12-24T23:51:47.2Z" },
 ]
 
 [package.optional-dependencies]
