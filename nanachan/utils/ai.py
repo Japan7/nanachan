@@ -50,6 +50,37 @@ def get_model(model_name: str = AI_DEFAULT_MODEL) -> Model:
     return OpenRouterModel(model_name, provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY))
 
 
+class StreamBuffer:
+    def __init__(self, prefix: str = ''):
+        self.prefix = prefix
+        self.buf = ''
+
+    def begin(self, content: str) -> Iterable[str]:
+        self.buf = content
+        yield from self._flush(final=False)
+
+    def append(self, content: str) -> Iterable[str]:
+        self.buf += content
+        yield from self._flush(final=False)
+
+    def flush(self) -> Iterable[str]:
+        yield from self._flush(final=True)
+
+    def _flush(self, final: bool) -> Iterable[str]:
+        lines = self.buf.splitlines(keepends=True)
+        remainder = ''
+        for line in lines:
+            if len(remainder) + len(line) > (2000 - len(self.prefix)):
+                yield self.prefix + remainder.rstrip('\n')
+                remainder = line
+            else:
+                remainder += line
+        if final and remainder:
+            yield self.prefix + remainder.rstrip('\n')
+            remainder = ''
+        self.buf = remainder
+
+
 async def chat_stream[AgentDepsT](
     agent: Agent[AgentDepsT],
     *,
@@ -59,8 +90,8 @@ async def chat_stream[AgentDepsT](
     deps: AgentDepsT,
 ) -> AsyncGenerator[str]:
     """https://ai.pydantic.dev/agents/#streaming"""
-    buf = ''
-    thinking = False
+    thinking = StreamBuffer(prefix='>>> ')
+    text = StreamBuffer()
     async for event in agent.run_stream_events(
         user_prompt,
         message_history=message_history,
@@ -69,35 +100,28 @@ async def chat_stream[AgentDepsT](
     ):
         match event:
             case PartStartEvent(part=ThinkingPart(content=content)):
-                thinking = True
-                buf = content
+                for chunk in thinking.begin(content):
+                    yield chunk
             case PartStartEvent(part=TextPart(content=content)):
-                thinking = False
-                buf = content
-            case PartDeltaEvent(delta=ThinkingPartDelta(content_delta=content_delta)) if (
-                content_delta is not None
-            ):
-                buf += content_delta
-            case PartDeltaEvent(delta=TextPartDelta(content_delta=content_delta)):
-                buf += content_delta
+                for chunk in text.begin(content):
+                    yield chunk
+            case PartDeltaEvent(delta=ThinkingPartDelta(content_delta=delta)) if delta:
+                for chunk in thinking.append(delta):
+                    yield chunk
+            case PartDeltaEvent(delta=TextPartDelta(content_delta=delta)):
+                for chunk in text.append(delta):
+                    yield chunk
             case FunctionToolCallEvent(part=part):
                 yield f'```\n[TOOL] {part.tool_name} {part.args}\n```'
-            case PartEndEvent():
-                if buf:
-                    yield f'>>> {buf}' if thinking else buf
+            case PartEndEvent(part=ThinkingPart()):
+                for chunk in thinking.flush():
+                    yield chunk
             case AgentRunResultEvent(result=result):
+                for chunk in text.flush():
+                    yield chunk
                 message_history.extend(result.new_messages())
             case _:
                 ...
-        if len(buf) > (2000 if not thinking else 1996):
-            lines = buf.splitlines()
-            buf = ''
-            for line in lines:
-                if len(buf) + len(line) > (2000 if not thinking else 1996):
-                    yield f'>>> {buf}' if thinking else buf
-                    buf = line
-                else:
-                    buf += '\n' + line
 
 
 def nanapi_tools() -> Iterable[Tool[None]]:
