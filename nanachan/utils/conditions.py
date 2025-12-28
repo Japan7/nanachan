@@ -112,9 +112,10 @@ class Conditions:
                 except Exception as e:
                     logger.exception(e)
 
-            self.ready.set()
         except Exception:
             await waifu_cog.bot.on_error('load_conditions')
+        finally:
+            self.ready.set()
 
     def condition(self, condition_class: Type[Condition]):
         name = condition_class.condition_name
