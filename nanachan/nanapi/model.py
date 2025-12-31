@@ -6,6 +6,41 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class AnilistCharacterRole(str, Enum):
+    MAIN = 'MAIN'
+    SUPPORTING = 'SUPPORTING'
+    BACKGROUND = 'BACKGROUND'
+
+
+class AnilistEntryStatus(str, Enum):
+    CURRENT = 'CURRENT'
+    COMPLETED = 'COMPLETED'
+    PAUSED = 'PAUSED'
+    DROPPED = 'DROPPED'
+    PLANNING = 'PLANNING'
+    REPEATING = 'REPEATING'
+
+
+class AnilistMediaSeason(str, Enum):
+    WINTER = 'WINTER'
+    SPRING = 'SPRING'
+    SUMMER = 'SUMMER'
+    FALL = 'FALL'
+
+
+class AnilistMediaStatus(str, Enum):
+    FINISHED = 'FINISHED'
+    RELEASING = 'RELEASING'
+    NOT_YET_RELEASED = 'NOT_YET_RELEASED'
+    CANCELLED = 'CANCELLED'
+    HIATUS = 'HIATUS'
+
+
+class AnilistMediaType(str, Enum):
+    ANIME = 'ANIME'
+    MANGA = 'MANGA'
+
+
 class AnilistService(str, Enum):
     ANILIST = 'ANILIST'
     MYANIMELIST = 'MYANIMELIST'
@@ -22,22 +57,26 @@ class PresencePresenceType(str, Enum):
     WATCHING = 'WATCHING'
 
 
-class AnilistCharacterRole(str, Enum):
-    MAIN = 'MAIN'
-    SUPPORTING = 'SUPPORTING'
-    BACKGROUND = 'BACKGROUND'
+class ProjectionStatus(str, Enum):
+    ONGOING = 'ONGOING'
+    COMPLETED = 'COMPLETED'
 
 
-class AnilistMediaType(str, Enum):
-    ANIME = 'ANIME'
-    MANGA = 'MANGA'
+class QuizzStatus(str, Enum):
+    STARTED = 'STARTED'
+    ENDED = 'ENDED'
 
 
-class AnilistMediaSeason(str, Enum):
-    WINTER = 'WINTER'
-    SPRING = 'SPRING'
-    SUMMER = 'SUMMER'
-    FALL = 'FALL'
+class WaicolleCollagePosition(str, Enum):
+    DEFAULT = 'DEFAULT'
+    LEFT_OF = 'LEFT_OF'
+    RIGHT_OF = 'RIGHT_OF'
+
+
+class WaicolleGameMode(str, Enum):
+    WAIFU = 'WAIFU'
+    HUSBANDO = 'HUSBANDO'
+    ALL = 'ALL'
 
 
 class WaicolleRank(str, Enum):
@@ -49,43 +88,9 @@ class WaicolleRank(str, Enum):
     E = 'E'
 
 
-class AnilistEntryStatus(str, Enum):
-    CURRENT = 'CURRENT'
-    COMPLETED = 'COMPLETED'
-    PAUSED = 'PAUSED'
-    DROPPED = 'DROPPED'
-    PLANNING = 'PLANNING'
-    REPEATING = 'REPEATING'
-
-
-class AnilistMediaStatus(str, Enum):
-    FINISHED = 'FINISHED'
-    RELEASING = 'RELEASING'
-    NOT_YET_RELEASED = 'NOT_YET_RELEASED'
-    CANCELLED = 'CANCELLED'
-    HIATUS = 'HIATUS'
-
-
-class ProjectionStatus(str, Enum):
-    ONGOING = 'ONGOING'
-    COMPLETED = 'COMPLETED'
-
-
-class QuizzStatus(str, Enum):
-    STARTED = 'STARTED'
-    ENDED = 'ENDED'
-
-
-class WaicolleGameMode(str, Enum):
-    WAIFU = 'WAIFU'
-    HUSBANDO = 'HUSBANDO'
-    ALL = 'ALL'
-
-
-class WaicolleCollagePosition(str, Enum):
-    DEFAULT = 'DEFAULT'
-    LEFT_OF = 'LEFT_OF'
-    RIGHT_OF = 'RIGHT_OF'
+class AccountMergeResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
 
 
 class AccountSelectAllResult(BaseModel):
@@ -125,6 +130,12 @@ class Body_client_login(BaseModel):
     scope: str | None = None
     client_id: str | None = None
     client_secret: str | None = None
+
+
+class BulkUpdateMessageNoindexBodyItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    message_id: str
+    noindex: str
 
 
 class BulkUpdateWaifusBody(BaseModel):
@@ -887,18 +898,11 @@ class HistoireSelectIdTitleResult(BaseModel):
     title: str
 
 
-class InsertPromptBody(BaseModel):
+class InsertSkillBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     name: str
-    prompt: str
-    arguments: list['InsertPromptBodyArgument']
-    description: str | None = None
-
-
-class InsertPromptBodyArgument(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    name: str
-    description: str | None = None
+    description: str
+    content: str
 
 
 class LoginResponse(BaseModel):
@@ -960,6 +964,11 @@ class MessageBulkDeleteResult(BaseModel):
 
 
 class MessageBulkInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
+class MessageBulkUpdateNoindexResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
 
@@ -1465,36 +1474,6 @@ class ProjoUpdateStatusResult(BaseModel):
     id: UUID
 
 
-class PromptDeleteResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-
-
-class PromptInsertResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-
-
-class PromptSelectByNameResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    name: str
-    description: str | None
-    prompt: str
-    arguments: list['PromptSelectByNameResultArguments']
-
-
-class PromptSelectByNameResultArguments(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    name: str
-    description: str | None
-
-
-class PromptSelectNameDescResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    name: str
-    description: str | None
-
-
 class QuizzDeleteByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
@@ -1690,6 +1669,24 @@ class SettingsSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     key: str
     value: str
+
+
+class SkillDeleteByIdResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
+class SkillInsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+
+
+class SkillSelectAllResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
+    name: str
+    content: str
+    description: str
 
 
 class StaffAlbumResult(BaseModel):
@@ -2156,8 +2153,3 @@ class WrappedEmbedField(BaseModel):
 class WrappedResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     embeds: list['WrappedEmbed']
-
-
-class AccountMergeResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    id: UUID

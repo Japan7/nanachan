@@ -18,6 +18,7 @@ from .model import (
     AccountSelectResult,
     AddPlayerCoinsBody,
     Body_client_login,
+    BulkUpdateMessageNoindexBodyItem,
     BulkUpdateWaifusBody,
     CEdgeSelectFilterCharaResult,
     CEdgeSelectFilterMediaResult,
@@ -63,7 +64,7 @@ from .model import (
     HistoireSelectIdTitleResult,
     HTTPExceptionModel,
     HTTPValidationError,
-    InsertPromptBody,
+    InsertSkillBody,
     LoginResponse,
     MediaAlbumResult,
     MediaSelectResult,
@@ -71,6 +72,7 @@ from .model import (
     MediaTitleAutocompleteResult,
     MessageBulkDeleteResult,
     MessageBulkInsertResult,
+    MessageBulkUpdateNoindexResult,
     MessageMergeResult,
     MessagesRagResult,
     MessageUpdateNoindexResult,
@@ -125,10 +127,6 @@ from .model import (
     ProjoUpdateMessageIdResult,
     ProjoUpdateNameResult,
     ProjoUpdateStatusResult,
-    PromptDeleteResult,
-    PromptInsertResult,
-    PromptSelectByNameResult,
-    PromptSelectNameDescResult,
     QuizzDeleteByIdResult,
     QuizzGetByIdResult,
     QuizzGetOldestResult,
@@ -154,6 +152,9 @@ from .model import (
     SetQuizzAnswerBody,
     SettingsMergeResult,
     SettingsSelectAllResult,
+    SkillDeleteByIdResult,
+    SkillInsertResult,
+    SkillSelectAllResult,
     StaffAlbumResult,
     StaffNameAutocompleteResult,
     StaffSelectResult,
@@ -247,15 +248,15 @@ class AiModule:
         self.session: ClientSession = session
         self.server_url: str = server_url
 
-    async def ai_prompt_index(
+    async def ai_skill_index(
         self, client_id: UUID | None = None
     ) -> (
-        Success[Literal[200], list[PromptSelectNameDescResult]]
+        Success[Literal[200], list[SkillSelectAllResult]]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """List all prompts (name and description)."""
-        url = f'{self.server_url}/ai/prompts'
+        """List all skills."""
+        url = f'{self.server_url}/ai/skills'
         params = {
             'client_id': client_id,
         }
@@ -266,8 +267,8 @@ class AiModule:
             params=params,
         ) as resp:
             if resp.status == 200:
-                return Success[Literal[200], list[PromptSelectNameDescResult]](
-                    code=200, result=[PromptSelectNameDescResult(**e) for e in (await resp.json())]
+                return Success[Literal[200], list[SkillSelectAllResult]](
+                    code=200, result=[SkillSelectAllResult(**e) for e in (await resp.json())]
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
@@ -285,16 +286,16 @@ class AiModule:
                 headers=resp.headers,
             )
 
-    async def ai_insert_prompt(
-        self, body: InsertPromptBody, client_id: UUID | None = None
+    async def ai_insert_skill(
+        self, body: InsertSkillBody, client_id: UUID | None = None
     ) -> (
-        Success[Literal[200], PromptInsertResult]
+        Success[Literal[200], SkillInsertResult]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Insert a new prompt."""
-        url = f'{self.server_url}/ai/prompts'
+        """Insert a new skill."""
+        url = f'{self.server_url}/ai/skills'
         params = {
             'client_id': client_id,
         }
@@ -306,8 +307,8 @@ class AiModule:
             json=body,
         ) as resp:
             if resp.status == 200:
-                return Success[Literal[200], PromptInsertResult](
-                    code=200, result=PromptInsertResult(**(await resp.json()))
+                return Success[Literal[200], SkillInsertResult](
+                    code=200, result=SkillInsertResult(**(await resp.json()))
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
@@ -329,58 +330,17 @@ class AiModule:
                 headers=resp.headers,
             )
 
-    async def ai_get_prompt(
-        self, name: str, client_id: UUID | None = None
+    async def ai_delete_skill(
+        self, id: UUID, client_id: UUID | None = None
     ) -> (
-        Success[Literal[200], PromptSelectByNameResult]
-        | Error[Literal[404], None]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        """Get a prompt by name."""
-        url = f'{self.server_url}/ai/prompts/{name}'
-        params = {
-            'client_id': client_id,
-        }
-        params = prep_serialization(params)
-
-        async with self.session.get(
-            url,
-            params=params,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], PromptSelectByNameResult](
-                    code=200, result=PromptSelectByNameResult(**(await resp.json()))
-                )
-            if resp.status == 404:
-                return Error[Literal[404], None](code=404, result=None)
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def ai_delete_prompt(
-        self, name: str, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], PromptDeleteResult]
+        Success[Literal[200], SkillDeleteByIdResult]
         | Success[Literal[204], None]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
     ):
-        """Delete a prompt by name."""
-        url = f'{self.server_url}/ai/prompts/{name}'
+        """Delete a skill."""
+        url = f'{self.server_url}/ai/skills/{id}'
         params = {
             'client_id': client_id,
         }
@@ -391,8 +351,8 @@ class AiModule:
             params=params,
         ) as resp:
             if resp.status == 200:
-                return Success[Literal[200], PromptDeleteResult](
-                    code=200, result=PromptDeleteResult(**(await resp.json()))
+                return Success[Literal[200], SkillDeleteByIdResult](
+                    code=200, result=SkillDeleteByIdResult(**(await resp.json()))
                 )
             if resp.status == 204:
                 return Success[Literal[204], None](code=204, result=None)
@@ -2000,6 +1960,51 @@ class DiscordModule:
             if resp.status == 400:
                 return Error[Literal[400], HTTPExceptionModel](
                     code=400, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 403:
+                return Error[Literal[403], HTTPExceptionModel](
+                    code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def discord_bulk_update_message_noindex(
+        self, body: list[BulkUpdateMessageNoindexBodyItem], client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], list[MessageBulkUpdateNoindexResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[403], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Update indexation instructions for multiple Discord messages."""
+        url = f'{self.server_url}/discord/noindex'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.put(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[MessageBulkUpdateNoindexResult]](
+                    code=200,
+                    result=[MessageBulkUpdateNoindexResult(**e) for e in (await resp.json())],
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](

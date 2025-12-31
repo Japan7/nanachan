@@ -1,5 +1,6 @@
 import io
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, AsyncGenerator, Iterable, Sequence, cast
@@ -396,11 +397,21 @@ async def fetch_url(url: str):
 
 
 def validate_discord_url(url: str):
-    if 'cdn.discordapp.com' in url and not all(q in url for q in ('ex=', 'is=', 'hm=')):
-        raise ModelRetry(
-            f'Discord attachment URL {url} must include ex, is, and hm query parameters. '
-            f'Extract the full URL from the raw message data.'
-        )
+    if 'cdn.discordapp.com' in url:
+        if not all(q in url for q in ('ex=', 'is=', 'hm=')):
+            raise ModelRetry(
+                f'Discord attachment URL {url} must include ex, is, and hm query parameters. '
+                f'Extract the full URL from the raw message data.'
+            )
+        match = re.search(r'ex=([0-9a-fA-F]+)', url)
+        assert match
+        ex_timestamp = int(match.group(1), 16)
+        expiry_time = datetime.fromtimestamp(ex_timestamp)
+        if datetime.now() >= expiry_time:
+            raise ModelRetry(
+                f'Discord attachment URL {url} has expired. '
+                f'Retrieve a fresh URL by fetching the raw message data again.'
+            )
 
 
 async def to_binary_content(attachment: discord.Attachment) -> BinaryContent | None:
