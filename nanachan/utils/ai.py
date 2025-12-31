@@ -34,6 +34,7 @@ from pydantic_ai.toolsets import FunctionToolset
 
 from nanachan.discord.bot import Bot
 from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.model import SkillSelectAllResult
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_IMAGE_MODEL,
@@ -128,6 +129,7 @@ async def chat_stream[AgentDepsT](
 def nanapi_tools() -> Iterable[Tool[None]]:
     nanapi = get_nanapi()
     endpoints = [
+        nanapi.ai.ai_insert_skill,
         nanapi.amq.amq_get_accounts,
         nanapi.anilist.anilist_get_accounts,
         nanapi.anilist.anilist_get_account_entries,
@@ -172,9 +174,22 @@ def get_nanapi_toolset():
 class ChatDeps:
     ctx: commands.Context[Bot]
     thread: discord.Thread
+    skills: list[SkillSelectAllResult]
 
 
 chat_toolset = FunctionToolset[ChatDeps]()
+
+
+@chat_toolset.tool
+def load_skill(run_ctx: RunContext[ChatDeps], skill_name: str):
+    for skill in run_ctx.deps.skills:
+        if skill.name == skill_name:
+            return skill.content
+    else:
+        raise ModelRetry(
+            f'Skill "{skill_name}" not found. '
+            f'Available skills: {", ".join(s.name for s in run_ctx.deps.skills)}'
+        )
 
 
 @chat_toolset.tool

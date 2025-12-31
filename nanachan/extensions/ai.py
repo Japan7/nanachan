@@ -16,6 +16,8 @@ from nanachan.discord.application_commands import LegacyCommandContext, NanaGrou
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.helpers import Embed
+from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.model import SkillSelectAllResult
 from nanachan.settings import (
     AI_ADDITIONAL_TOOLSETS,
     AI_DEFAULT_MODEL,
@@ -41,7 +43,15 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ChatContext:
     model_name: str
+    skills: list[SkillSelectAllResult]
     history: list[ModelMessage] = field(default_factory=list)
+
+
+async def fetch_skills():
+    resp = await get_nanapi().ai.ai_skill_index()
+    if not success(resp):
+        raise RuntimeError(resp.result)
+    return resp.result
 
 
 @app_commands.guild_only()
@@ -52,6 +62,9 @@ class AI(Cog, required_settings=RequiresAI):
     def system_prompt(run_ctx: RunContext[ChatDeps]):
         ctx = run_ctx.deps.ctx
         assert ctx.bot.user and ctx.guild
+        skills_list = '\n'.join(
+            f'- {skill.name}: {skill.description}' for skill in run_ctx.deps.skills
+        )
         prompt = f"""
         # Identity
 
@@ -82,7 +95,7 @@ class AI(Cog, required_settings=RequiresAI):
         - Search message history using available tools
         - Be thorough but cite your sources with message links
 
-        # Available Tools
+        # Tools
 
         You have access to tools for:
 
@@ -90,6 +103,15 @@ class AI(Cog, required_settings=RequiresAI):
         - Fetching web content and documentation
         - Calling backend API functions (user data, anime lists, collections, etc.)
         - Use tools proactively to provide accurate, up-to-date information
+
+        # Skills
+
+        Skills are pre-defined instructions that can help you perform complex tasks. Available skills:
+
+        {textwrap.indent(skills_list, '    ').strip() if skills_list else '(None)'}
+
+        Use `load_skill` tool to load a chosen skill.
+        Use `ai_insert_skill` tool to save a new skill in the collection. Name of the skill must be in snake_case.
 
         # Codebase Information
 
@@ -124,7 +146,8 @@ class AI(Cog, required_settings=RequiresAI):
         resp = await ctx.reply(embed=embed)
 
         thread = await self.get_chat_thread(resp, name_prefix=model_name, user_to_add=ctx.author)
-        self.contexts[thread.id] = ChatContext(model_name=model_name)
+        skills = await fetch_skills()
+        self.contexts[thread.id] = ChatContext(model_name, skills)
 
         assert self.bot.user
         await thread.send(
@@ -184,7 +207,7 @@ class AI(Cog, required_settings=RequiresAI):
                         user_prompt=content,
                         message_history=chat_ctx.history,
                         model=model,
-                        deps=ChatDeps(ctx, thread),
+                        deps=ChatDeps(ctx, thread, chat_ctx.skills),
                     ):
                         resp = await send(part, allowed_mentions=allowed_mentions)
                         send = resp.reply
@@ -211,7 +234,8 @@ class AI(Cog, required_settings=RequiresAI):
             message, name_prefix=model_name or AI_DEFAULT_MODEL, user_to_add=message.author
         )
         if thread.id not in self.contexts:
-            self.contexts[thread.id] = ChatContext(model_name or AI_DEFAULT_MODEL)
+            skills = await fetch_skills()
+            self.contexts[thread.id] = ChatContext(model_name or AI_DEFAULT_MODEL, skills)
         await self.chat(ctx, thread, model_name=model_name)
 
 
