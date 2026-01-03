@@ -16,7 +16,7 @@ dependencies = [
     "discord-ext-voice-recv==0.5.2a179",
     "matplotlib==3.10.8",
     "python-socketio[asyncio_client]==5.16.0",
-    "aiohttp[speedups]==3.13.2",
+    "aiohttp[speedups]==3.13.3",
     "aiofiles==25.1.0",
     "Pillow==12.1.0",
     "html2text==2025.4.15",
