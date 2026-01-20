@@ -25,7 +25,7 @@ from discord.ext import commands, tasks
 from nanachan.discord.application_commands import LegacyCommandContext, legacy_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog, NanaGroupCog
-from nanachan.discord.helpers import get_option
+from nanachan.discord.helpers import get_option, parse_timestamp, timestamp_autocomplete
 from nanachan.discord.views import AutoNavigatorView
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
@@ -431,26 +431,20 @@ class ProjectionCog(
         online = 'online'
 
     @slash_projo_event.command(name='add')
-    @app_commands.describe(date_str='YYYY-MM-DD')
-    @app_commands.rename(date_str='date')
+    @app_commands.describe(time='Event time')
+    @app_commands.autocomplete(time=timestamp_autocomplete)
     @legacy_command()
     async def event_add(
         self,
         ctx: LegacyCommandContext,
         event_type: EventChoice,
         name: str,
-        date_str: str,
-        hour: int,
-        minute: int,
+        time: str,
     ):
         """Plan an new event"""
         await ctx.defer()
 
-        try:
-            date: datetime = datetime.fromisoformat(date_str)
-        except ValueError:
-            raise commands.BadArgument('Date format is `YYYY-MM-DD`')
-        date = date.replace(hour=hour, minute=minute, tzinfo=TZ)
+        date = parse_timestamp(time)
 
         today = datetime.today()
         today = today.replace(tzinfo=TZ)
