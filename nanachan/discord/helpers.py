@@ -23,6 +23,7 @@ from typing import (
 )
 
 import discord
+import parsedatetime.parsedatetime as pdt
 from discord import (
     ForumChannel,
     HTTPException,
@@ -45,7 +46,7 @@ from discord.types.embed import EmbedType
 from discord.webhook import WebhookMessage as DpyWebhookMessage
 from yarl import URL
 
-from nanachan.settings import DEFAULT_COLOUR, PREFIX
+from nanachan.settings import DEFAULT_COLOUR, PREFIX, TZ
 from nanachan.utils.misc import default_backoff, run_coro, truncate_at
 
 if TYPE_CHECKING:
@@ -54,24 +55,25 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    'getEmojiStr',
+    'ChannelListener',
     'Colour',
     'Embed',
-    'clean_markdown',
-    'get_multiplexing_level',
-    'context_modifier',
-    'MultiplexingContext',
-    'MultiplexingMessage',
-    'ChannelListener',
     'Emoji',
     'EmojiConverter',
-    'WebhookMessage',
-    'typing',
-    'default_backoff',
-    'MembersTransformer',
     'Members',
+    'MembersTransformer',
+    'MultiplexingContext',
+    'MultiplexingMessage',
     'UserType',
+    'WebhookMessage',
+    'clean_markdown',
+    'context_modifier',
+    'default_backoff',
+    'getEmojiStr',
+    'get_multiplexing_level',
     'get_option',
+    'parse_timestamp',
+    'typing',
 )
 
 logger = logging.getLogger(__name__)
@@ -578,11 +580,32 @@ class Emoji(PartialEmoji):
 class EmojiConverter(commands.Converter):
     emoji_re = re.compile(r'(?:<)?:(?P<name>[\w\d_]+):(?:(?P<emoji_id>\d+)>)?')
 
-    async def convert(self, ctx, argument):
+    async def convert(self, ctx, argument: str):
         if emoji := Emoji.from_string(cast(Bot, ctx.bot), argument):
             return emoji
         else:
             raise BadArgument(f"could not parse '{argument}'")
+
+
+timestamp_re = re.compile(r'<t:(\d+)(:[a-z]?)?>', re.IGNORECASE)
+
+
+def parse_timestamp(time_str: str) -> datetime.datetime:
+    if parsed_ts := timestamp_re.search(time_str):
+        return datetime.datetime.fromtimestamp(float(parsed_ts.group(1)), tz=datetime.UTC)
+    else:
+        # fallback for text
+        cal = pdt.Calendar()
+        try:
+            holdTime = cal.parse(time_str, datetime.datetime.now(TZ))
+        except (ValueError, OverflowError):
+            # year too long
+            holdTime = cal.parse('9999-12-31')
+
+        if holdTime[1] == 0:
+            raise BadArgument(f'Could not parse "{time_str}" as a valid time')
+
+        return datetime.datetime(*(holdTime[0])[:6], tzinfo=TZ)
 
 
 class WebhookMessage:
