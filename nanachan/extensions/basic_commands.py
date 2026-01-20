@@ -11,7 +11,6 @@ from random import choice
 from typing import MutableSequence, Optional, Union
 
 import discord
-import parsedatetime.parsedatetime as pdt
 from discord import (
     AllowedMentions,
     File,
@@ -44,7 +43,13 @@ from nanachan.discord.application_commands import (
 )
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
-from nanachan.discord.helpers import ChannelListener, Embed, MultiplexingMessage, getEmojiStr
+from nanachan.discord.helpers import (
+    ChannelListener,
+    Embed,
+    MultiplexingMessage,
+    getEmojiStr,
+    parse_timestamp,
+)
 from nanachan.discord.views import AutoNavigatorView
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import (
@@ -366,22 +371,10 @@ class BasicCommands(Cog, name='Basic Commands'):
 
     @nana_command(description='Make me remind you something in the future')
     @app_commands.guild_only()
-    @app_commands.describe(time='Reminder time', message='Reminder description')
+    @app_commands.describe(time='Reminder time (tip: use @time)', message='Reminder description')
     async def remindme(self, interaction: Interaction, time: str, message: str):
-        cal = pdt.Calendar()
-        try:
-            holdTime = cal.parse(time, datetime.now(TZ))
-        except (ValueError, OverflowError):
-            # year too long
-            holdTime = cal.parse('9999-12-31')
-        if holdTime[1] == 0:
-            # parsing failed
-            await interaction.response.send_message(
-                f'Could not parse "{time}" as a valid time', ephemeral=True
-            )
-            return
+        dt = parse_timestamp(time)
 
-        dt = datetime(*(holdTime[0])[:6], tzinfo=TZ)
         assert interaction.channel_id is not None
         resp = await get_nanapi().reminder.reminder_new_reminder(
             NewReminderBody(
@@ -400,7 +393,7 @@ class BasicCommands(Cog, name='Basic Commands'):
             self.reminders_processor_task_sleep.cancel()
 
         await interaction.response.send_message(
-            f'Reminder "{message}" set for {dt}', ephemeral=True
+            f'Reminder "{message}" set for <t:{int(dt.timestamp())}:f>', ephemeral=True
         )
 
     @commands.has_permissions(administrator=True)
