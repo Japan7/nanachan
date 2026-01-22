@@ -1,6 +1,7 @@
 import asyncio
 from functools import cache
 
+import aiohttp
 import backoff
 from aiohttp import ClientResponse
 
@@ -22,6 +23,19 @@ def check_invalid(r: ClientResponse):
     )
 
 
+# Connection error backoff - retries on network-level errors
+conn_exception_backoff = backoff.on_exception(
+    backoff.expo,
+    (
+        aiohttp.ClientConnectorError,
+        aiohttp.ClientConnectionError,
+        aiohttp.ClientOSError,
+        aiohttp.ServerTimeoutError,
+    ),
+    max_time=600,
+)
+
+
 async def load_bearer_token():
     global bearer_token
     if load_lock.locked():
@@ -31,7 +45,10 @@ async def load_bearer_token():
 
         session = get_session(NANAPI_URL)
         session_backoff = backoff.on_predicate(backoff.expo, check_invalid)
-        session._request = session_backoff(session._request)  # pyright: ignore[reportPrivateUsage]
+        # Apply connection error backoff and status code backoff
+        session._request = conn_exception_backoff(  # pyright: ignore[reportPrivateUsage]
+            session_backoff(session._request)
+        )
 
         body = Body_client_login(
             grant_type='password', username=NANAPI_CLIENT_USERNAME, password=NANAPI_CLIENT_PASSWORD
@@ -58,7 +75,10 @@ def get_nanapi():
         backoff.expo, lambda r: r.status == 401, max_tries=2, on_backoff=auth_on_backoff
     )
 
-    session._request = auth_backoff(session_backoff(wrap_request(session._request)))  # pyright: ignore[reportPrivateUsage]
+    # Apply connection error backoff, auth backoff, and status code backoff
+    session._request = conn_exception_backoff(  # pyright: ignore[reportPrivateUsage]
+        auth_backoff(session_backoff(wrap_request(session._request)))
+    )
 
     return session
 

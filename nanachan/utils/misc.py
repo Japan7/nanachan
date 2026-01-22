@@ -47,7 +47,12 @@ EXECUTOR = ProcessPoolExecutor()
 
 conn_backoff = backoff.on_exception(
     backoff.expo,
-    (aiohttp.ClientConnectorError, aiohttp.ClientConnectionError, aiohttp.ContentTypeError),
+    (
+        aiohttp.ClientConnectorError,
+        aiohttp.ClientConnectionError,
+        aiohttp.ClientOSError,
+        aiohttp.ContentTypeError,
+    ),
     max_time=600,
 )
 
