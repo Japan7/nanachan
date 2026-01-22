@@ -59,7 +59,6 @@ __all__ = (
     'Colour',
     'Embed',
     'Emoji',
-    'EmojiConverter',
     'Members',
     'MembersTransformer',
     'MultiplexingContext',
@@ -69,7 +68,6 @@ __all__ = (
     'clean_markdown',
     'context_modifier',
     'default_backoff',
-    'getEmojiStr',
     'get_multiplexing_level',
     'get_option',
     'parse_timestamp',
@@ -78,10 +76,6 @@ __all__ = (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def getEmojiStr(ctx, emoji_name):
-    return ctx.bot.get_emoji_str(emoji_name)
 
 
 class Colour(discord.Colour):

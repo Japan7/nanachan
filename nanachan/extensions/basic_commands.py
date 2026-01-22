@@ -47,7 +47,6 @@ from nanachan.discord.helpers import (
     ChannelListener,
     Embed,
     MultiplexingMessage,
-    getEmojiStr,
     parse_timestamp,
     timestamp_autocomplete,
 )
@@ -313,14 +312,14 @@ class BasicCommands(Cog, name='Basic Commands'):
             choice1, choice2 = map(shapes.index, map(str, choices))
 
             if choice1 == choice2:
-                resp += f"**It's a tie! {getEmojiStr(ctx, 'amoesip')}**"
+                resp += f"**It's a tie! {ctx.bot.get_emoji_str('amoesip')}**"
             elif (choice1 - choice2) in (-1, 2):
-                resp += f'**{player2.mention} won! {getEmojiStr(ctx, "chousen")}**'
+                resp += f'**{player2.mention} won! {ctx.bot.get_emoji_str("chousen")}**'
             elif (choice1 - choice2) in (1, -2):
-                resp += f'**{player1.mention} won! {getEmojiStr(ctx, "chousen")}**'
+                resp += f'**{player1.mention} won! {ctx.bot.get_emoji_str("chousen")}**'
 
         except asyncio.TimeoutError:
-            emoji = getEmojiStr(ctx, 'ChrisDespair')
+            emoji = ctx.bot.get_emoji_str('ChrisDespair')
             resp = f'janken is cancelled {emoji}'
 
         await ctx.send(resp)

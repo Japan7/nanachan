@@ -115,7 +115,7 @@ class WaiColle(Cog, required_settings=RequiresWaicolle):
 
 ### Custom Emoji Handling
 
-Use `bot.get_emoji_str(name)` or `getEmojiStr(ctx, name)` to resolve custom guild emojis or fall back to `:name:` format. The bot searches across all guilds it's in.
+Use `bot.get_emoji_str(name)` to resolve custom guild emojis or fall back to `:name:` format. The bot searches across all guilds it's in.
 
 ## Dependencies
 
