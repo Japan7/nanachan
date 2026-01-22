@@ -39,6 +39,8 @@ __all__ = (
     'tldr_get_page',
     'async_all',
     'EXECUTOR',
+    'conn_backoff',
+    'timeout_backoff',
 )
 
 

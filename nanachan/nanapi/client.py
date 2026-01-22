@@ -1,9 +1,9 @@
 import asyncio
 from functools import cache
 
-import aiohttp
-import backoff
 from aiohttp import ClientResponse
+
+import backoff
 
 from nanachan.nanapi._client import Error as Error  # noqa: F401
 from nanachan.nanapi._client import Success as Success  # noqa: F401
@@ -11,6 +11,7 @@ from nanachan.nanapi._client import get_session
 from nanachan.nanapi._client import success as success
 from nanachan.nanapi.model import Body_client_login
 from nanachan.settings import NANAPI_CLIENT_PASSWORD, NANAPI_CLIENT_USERNAME, NANAPI_URL
+from nanachan.utils.misc import conn_backoff, timeout_backoff
 
 bearer_token: str | None = None
 bearer_ready = asyncio.Event()
@@ -23,17 +24,8 @@ def check_invalid(r: ClientResponse):
     )
 
 
-# Connection error backoff - retries on network-level errors
-conn_exception_backoff = backoff.on_exception(
-    backoff.expo,
-    (
-        aiohttp.ClientConnectorError,
-        aiohttp.ClientConnectionError,
-        aiohttp.ClientOSError,
-        aiohttp.ServerTimeoutError,
-    ),
-    max_time=600,
-)
+# Compose connection and timeout backoff for complete error handling
+conn_exception_backoff = timeout_backoff(conn_backoff)
 
 
 async def load_bearer_token():
