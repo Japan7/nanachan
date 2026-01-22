@@ -49,6 +49,7 @@ from nanachan.discord.helpers import (
     MultiplexingMessage,
     getEmojiStr,
     parse_timestamp,
+    timestamp_autocomplete,
 )
 from nanachan.discord.views import AutoNavigatorView
 from nanachan.nanapi.client import get_nanapi, success
@@ -371,7 +372,8 @@ class BasicCommands(Cog, name='Basic Commands'):
 
     @nana_command(description='Make me remind you something in the future')
     @app_commands.guild_only()
-    @app_commands.describe(time='Reminder time (tip: use @time)', message='Reminder description')
+    @app_commands.describe(time='Reminder time', message='Reminder description')
+    @app_commands.autocomplete(time=timestamp_autocomplete)
     async def remindme(self, interaction: Interaction, time: str, message: str):
         dt = parse_timestamp(time)
 
