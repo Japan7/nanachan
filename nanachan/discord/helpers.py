@@ -6,7 +6,6 @@ import datetime
 import logging
 import random
 import re
-import unicodedata
 from collections.abc import Sequence
 from contextlib import suppress
 from dataclasses import dataclass
@@ -28,7 +27,6 @@ from discord import (
     ForumChannel,
     HTTPException,
     Message,
-    PartialEmoji,
     StickerItem,
     TextChannel,
     Thread,
@@ -58,7 +56,6 @@ __all__ = (
     'ChannelListener',
     'Colour',
     'Embed',
-    'Emoji',
     'Members',
     'MembersTransformer',
     'MultiplexingContext',
@@ -534,52 +531,6 @@ class ChannelListener(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     async def on_message(self, message: Message):
         pass
-
-
-class Emoji(PartialEmoji):
-    def __init__(self, name: str | None = None, emoji_id=None, emoji: str | None = None):
-        self.emoji = emoji
-        self.id = emoji_id
-        if emoji is not None:
-            self.name = emoji
-        else:
-            assert name is not None
-            self.name = name
-
-    def _as_reaction(self):
-        return f'{self.name}:{self.id}'
-
-    def __str__(self):
-        if self.emoji:
-            return self.emoji
-        if self.id:
-            return f'<:{self.name}:{self.id}>'
-        else:
-            return f':{self.name}:'
-
-    @classmethod
-    def from_string(cls, bot: 'Bot', emoji_str: str):
-        emoji_str = emoji_str.strip()
-
-        if match := EmojiConverter.emoji_re.match(emoji_str):
-            if emoji := bot.get_nana_emoji(match.group('name')):
-                return emoji
-            else:
-                return Emoji(**match.groupdict())
-        else:
-            for category, c in zip(map(unicodedata.category, emoji_str), emoji_str):
-                if category == 'So':
-                    return Emoji(emoji=c)
-
-
-class EmojiConverter(commands.Converter):
-    emoji_re = re.compile(r'(?:<)?:(?P<name>[\w\d_]+):(?:(?P<emoji_id>\d+)>)?')
-
-    async def convert(self, ctx, argument: str):
-        if emoji := Emoji.from_string(cast(Bot, ctx.bot), argument):
-            return emoji
-        else:
-            raise BadArgument(f"could not parse '{argument}'")
 
 
 timestamp_re = re.compile(r'<t:(\d+)(:[a-z]?)?>', re.IGNORECASE)
