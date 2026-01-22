@@ -73,6 +73,7 @@ __all__ = (
     'get_multiplexing_level',
     'get_option',
     'parse_timestamp',
+    'timestamp_autocomplete',
     'typing',
 )
 
@@ -588,6 +589,18 @@ class EmojiConverter(commands.Converter):
 
 
 timestamp_re = re.compile(r'<t:(\d+)(:[a-z]?)?>', re.IGNORECASE)
+
+
+async def timestamp_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[discord.app_commands.Choice[str]]:
+    dt = parse_timestamp(current)
+    ts = f'<t:{int(dt.timestamp())}:f>'
+    return [
+        discord.app_commands.Choice(
+            name=dt.astimezone(tz=TZ).strftime('%a %d %b %Y at %H:%M %Z'), value=ts
+        )
+    ]
 
 
 def parse_timestamp(time_str: str) -> datetime.datetime:
