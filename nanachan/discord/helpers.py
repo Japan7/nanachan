@@ -539,7 +539,11 @@ timestamp_re = re.compile(r'<t:(\d+)(:[a-z]?)?>', re.IGNORECASE)
 async def timestamp_autocomplete(
     interaction: discord.Interaction, current: str
 ) -> list[discord.app_commands.Choice[str]]:
-    dt = parse_timestamp(current)
+    try:
+        dt = parse_timestamp(current)
+    except BadArgument:
+        return []
+
     ts = f'<t:{int(dt.timestamp())}:f>'
     return [
         discord.app_commands.Choice(
