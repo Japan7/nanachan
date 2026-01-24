@@ -82,6 +82,7 @@ async def graphql_request(query: str, variables: dict[str, Any]) -> dict[str, An
     headers = {
         'Authorization': f'Bearer {GITHUB_TOKEN}',
         'Content-Type': 'application/json',
+        'GraphQL-Features': 'issues_copilot_assignment_api_support,coding_agent_model_selection',
     }
 
     async with session.post(
@@ -205,6 +206,9 @@ async def create_issue(
           title: $title
           body: $body
           assigneeIds: $assigneeIds
+          agentAssignment: {
+            model: "claude-opus-4.5"
+          }
         }
       ) {
         issue {
