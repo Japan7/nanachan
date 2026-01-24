@@ -222,10 +222,8 @@ class AMQBot(metaclass=MetaAMQBot):
         }
 
     def update_settings(self, new_settings):
-        diff = self.settings_diff(new_settings)
         self.settings.update(new_settings)
         logger.log(PANIC_LEVEL, f'new settings \n{dict(self.settings)}')
-        return diff
 
     async def login(self):
         req_data = {'username': self.username, 'password': AMQ_PASSWORD}
@@ -263,7 +261,12 @@ class AMQBot(metaclass=MetaAMQBot):
         new_settings_diff = self.settings_diff(new_settings)
 
         if new_settings_diff:
-            await self.send_command('lobby', 'change game settings', **new_settings_diff)
+            await self.send_command(
+                'lobby',
+                'change game settings',
+                settingChanges=new_settings_diff,
+                communityMode=False,
+            )
 
         return new_settings
 
@@ -278,7 +281,9 @@ class AMQBot(metaclass=MetaAMQBot):
 
     async def create_room(self):
         settings = await self.default_settings
-        await self.send_command('roombrowser', 'host room', settings=settings)
+        await self.send_command(
+            'roombrowser', 'host room', settings=settings, community_mode=False
+        )
 
     async def invite(self, name):
         logger.info('inviting ' + name)
@@ -414,9 +419,13 @@ class AMQBot(metaclass=MetaAMQBot):
             return
 
         if len(data):
-            settings = Settings(data[0]['settings'])
-            settings.pre_load()
-            self.default_settings.set_result(settings)
+            # there’s a "standard" key but I don’t know what it’s about
+            # so let’s take whatever comes
+            for v in data.values():
+                settings = Settings(v[0]['settings'])
+                settings.pre_load()
+                self.default_settings.set_result(settings)
+                break
 
     async def send_request(self, name):
         if name not in self.friends:
@@ -496,7 +505,7 @@ class AMQBot(metaclass=MetaAMQBot):
         for player in self.players.values():
             player.ready = False
 
-        self.update_settings(data)
+        self.update_settings(data["changes"])
 
     @amq_command('amq_events', 'Quiz no songs')
     @amq_command('amq_events', 'quiz ready')
@@ -1331,7 +1340,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
                 logger.error(stderr.decode())
             duration = float(stdout.decode())
 
-            startPercent = data['startPont'] / 100
+            startPercent = data['startPoint'] / 100
             bufferLength = (data['playLength'] + 13) * data['playbackSpeed']
 
             startFromDuration = duration - bufferLength
