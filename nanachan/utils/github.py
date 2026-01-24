@@ -10,12 +10,14 @@ import traceback
 from typing import Any
 
 from aiohttp import (
-    ClientConnectorError,
+    ClientOSError,
     ClientResponseError,
     ClientSession,
     ServerDisconnectedError,
 )
+from discord.errors import IHateThe3SecondsTimeout
 from discord.ext import commands
+from valkey.exceptions import ConnectionError as ValkeyConnectionError
 
 from nanachan.settings import GITHUB_REPO_SLUG, GITHUB_TOKEN
 from nanachan.utils.misc import get_session
@@ -24,10 +26,14 @@ logger = logging.getLogger(__name__)
 
 # Exceptions that should not be reported to GitHub
 FILTERED_EXCEPTIONS = (
-    ClientConnectorError,
+    ClientOSError,
     ClientResponseError,
-    TimeoutError,
+    ConnectionRefusedError,
+    ConnectionResetError,
+    IHateThe3SecondsTimeout,
     ServerDisconnectedError,
+    TimeoutError,
+    ValkeyConnectionError,
 )
 
 GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql'
