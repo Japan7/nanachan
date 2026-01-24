@@ -505,7 +505,7 @@ class AMQBot(metaclass=MetaAMQBot):
         for player in self.players.values():
             player.ready = False
 
-        self.update_settings(data["changes"])
+        self.update_settings(data['changes'])
 
     @amq_command('amq_events', 'Quiz no songs')
     @amq_command('amq_events', 'quiz ready')
