@@ -23,7 +23,7 @@ dependencies = [
     # https://github.com/PyYoshi/cChardet/issues/81
     "faust-cchardet==2.1.19",
     "yarl==1.22.0",
-    "rich==14.2.0",
+    "rich==14.3.0",
     "pydantic==2.12.5",
     "numpy==2.4.1",
     "tldr==3.4.3",
