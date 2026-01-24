@@ -1195,6 +1195,9 @@ class AMQ(Cog, required_settings=RequiresAMQ):
         if self.amq is None:
             return
 
+        if self.amq.connected:
+            return
+
         if ctx.author.bot:
             return
 
