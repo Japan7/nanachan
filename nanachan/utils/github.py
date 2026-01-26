@@ -190,7 +190,7 @@ async def create_issue(
           assigneeIds: $assigneeIds
           agentAssignment: {
             targetRepositoryId: $repoId
-            baseRef: "main"
+            baseRef: "master"
             customInstructions: "Use context7 to fetch relevant documentation and deepwiki to ask questions about other projects."
             customAgent: "",
             model: "claude-opus-4.5"
