@@ -3,7 +3,7 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, AsyncGenerator, Iterable, Sequence, cast
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Iterable, Sequence, cast
 
 import discord
 from discord.ext import commands
@@ -32,7 +32,6 @@ from pydantic_ai.models.openrouter import OpenRouterModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.toolsets import FunctionToolset
 
-from nanachan.discord.bot import Bot
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import SkillSelectAllResult
 from nanachan.settings import (
@@ -43,6 +42,10 @@ from nanachan.settings import (
     AI_SKIP_PERMISSIONS_CHECK,
 )
 from nanachan.utils.misc import get_session
+
+if TYPE_CHECKING:
+    from nanachan.discord.bot import Bot
+
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +175,7 @@ def get_nanapi_toolset():
 
 @dataclass
 class ChatDeps:
-    ctx: commands.Context[Bot]
+    ctx: commands.Context['Bot']
     thread: discord.Thread
     skills: list[SkillSelectAllResult]
 

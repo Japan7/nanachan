@@ -9,32 +9,14 @@ import logging
 import traceback
 from typing import Any
 
-from aiohttp import (
-    ClientOSError,
-    ClientResponseError,
-    ClientSession,
-    ServerDisconnectedError,
-)
-from discord.errors import IHateThe3SecondsTimeout
-from discord.ext import commands
-from valkey.exceptions import ConnectionError as ValkeyConnectionError
+from aiohttp import ClientSession
+from pydantic_ai import Agent
 
-from nanachan.settings import GITHUB_REPO_SLUG, GITHUB_TOKEN
+from nanachan.settings import GITHUB_REPO_SLUG, GITHUB_TOKEN, RequiresAI
+from nanachan.utils.ai import get_model
 from nanachan.utils.misc import get_session
 
 logger = logging.getLogger(__name__)
-
-# Exceptions that should not be reported to GitHub
-FILTERED_EXCEPTIONS = (
-    ClientOSError,
-    ClientResponseError,
-    ConnectionRefusedError,
-    ConnectionResetError,
-    IHateThe3SecondsTimeout,
-    ServerDisconnectedError,
-    TimeoutError,
-    ValkeyConnectionError,
-)
 
 GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql'
 cached_ids = None
@@ -207,6 +189,10 @@ async def create_issue(
           body: $body
           assigneeIds: $assigneeIds
           agentAssignment: {
+            targetRepositoryId: $repoId
+            baseRef: "main"
+            customInstructions: "Use context7 to fetch relevant documentation and deepwiki to ask questions about other projects."
+            customAgent: "",
             model: "claude-opus-4.5"
           }
         }
@@ -223,7 +209,7 @@ async def create_issue(
         }
       }
     }
-    """
+    """  # noqa: E501
     variables = {
         'repoId': repo_id,
         'title': title,
@@ -241,12 +227,12 @@ async def report_error_to_github(error: BaseException, source: Any) -> str | Non
 
     Note: GITHUB_ISSUE_ENABLE and RequiresGitHub checks are performed by caller.
     """
+    # Format the exception as a traceback string
+    error_msg = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
+
     # Filter out exceptions we don't want to report
-    if isinstance(
-        error.original if isinstance(error, commands.CommandInvokeError) else error,
-        FILTERED_EXCEPTIONS,
-    ):
-        logger.debug(f'Skipping GitHub report for filtered exception: {type(error).__name__}')
+    if await check_transient_error(error_msg):
+        logger.debug(f'Skipping GitHub report for transient exception: {type(error).__name__}')
         return None
 
     try:
@@ -256,9 +242,6 @@ async def report_error_to_github(error: BaseException, source: Any) -> str | Non
         return None
 
     try:
-        # Format the exception as a traceback string
-        error_msg = ''.join(traceback.format_exception(type(error), error, error.__traceback__))
-
         signature = compute_error_signature(error_msg)
         logger.debug(f'Error signature: {signature}')
 
@@ -300,3 +283,19 @@ async def report_error_to_github(error: BaseException, source: Any) -> str | Non
         logger.error(f'Failed to report error to GitHub: {e}')
         logger.debug(traceback.format_exc())
         return None
+
+
+agent = Agent(
+    output_type=bool,
+    system_prompt=(
+        'Determine if the exception traceback represents a transient error that is likely to '
+        'resolve on its own without code changes (e.g., network issues, timeouts).'
+    ),
+)
+
+
+async def check_transient_error(traceback: str) -> bool:
+    if not RequiresAI.configured:
+        return False
+    result = await agent.run(traceback, model=get_model())
+    return result.output
