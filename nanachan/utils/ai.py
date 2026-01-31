@@ -28,7 +28,11 @@ from pydantic_ai import (
     UserContent,
 )
 from pydantic_ai.models import Model
-from pydantic_ai.models.openrouter import OpenRouterModel
+from pydantic_ai.models.openrouter import (
+    OpenRouterModel,
+    OpenRouterModelSettings,
+    OpenRouterProviderConfig,
+)
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.toolsets import FunctionToolset
 
@@ -52,7 +56,13 @@ logger = logging.getLogger(__name__)
 
 def get_model(model_name: str = AI_DEFAULT_MODEL) -> Model:
     assert AI_OPENROUTER_API_KEY
-    return OpenRouterModel(model_name, provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY))
+    return OpenRouterModel(
+        model_name,
+        provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY),
+        settings=OpenRouterModelSettings(
+            openrouter_provider=OpenRouterProviderConfig(zdr=not model_name.startswith('x-ai/'))
+        ),
+    )
 
 
 class StreamBuffer:
