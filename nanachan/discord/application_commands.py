@@ -7,6 +7,7 @@ from functools import wraps
 from typing import Callable, Concatenate, Coroutine, override
 
 from discord import Interaction, InteractionCallbackResponse, app_commands
+from discord.errors import IHateThe3SecondsTimeout
 from discord.ext.commands import CommandError, Context
 from discord.interactions import InteractionMessage
 from discord.webhook import WebhookMessage
@@ -52,7 +53,7 @@ class LegacyCommandContext(Context[Bot]):
 
     async def send(
         self, content: str | None = None, **kwargs
-    ) -> InteractionMessage | WebhookMessage:
+    ) -> InteractionMessage | WebhookMessage | None:
         assert self.interaction is not None
         if content is not None:
             kwargs['content'] = content
@@ -70,7 +71,11 @@ class LegacyCommandContext(Context[Bot]):
                 logger.info(f'ignoring {key}')
                 del kwargs[key]
 
-            message = await send(**kwargs)
+            try:
+                message = await send(**kwargs)
+            except IHateThe3SecondsTimeout:
+                logger.warning('Interaction webhook expired, message not sent')
+                return None
             if isinstance(message, InteractionCallbackResponse) or message is None:
                 self._message = await self.interaction.original_response()
                 return self._message
