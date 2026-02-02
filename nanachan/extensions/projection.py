@@ -509,7 +509,7 @@ class ProjectionCog(
             if desc_len(ev_desc, entry) < 1000:
                 ev_desc.append(entry)
 
-        date = date.replace(tzinfo=TZ)
+        date = date.astimezone(tz=TZ)
         if event_type is self.EventChoice.online:
             projo_voice = self.bot.get_channel(PROJO_VOICE)
             assert isinstance(projo_voice, discord.VoiceChannel)
