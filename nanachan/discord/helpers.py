@@ -21,8 +21,8 @@ from typing import (
     cast,
 )
 
+import dateparser
 import discord
-import parsedatetime.parsedatetime as pdt
 from discord import (
     ForumChannel,
     HTTPException,
@@ -552,22 +552,30 @@ async def timestamp_autocomplete(
     ]
 
 
+h_re = re.compile(r'\d\d?h')
+
+
+def h_repl(m: re.Match) -> str:
+    return m.group(0) + '00'
+
+
 def parse_timestamp(time_str: str) -> datetime.datetime:
     if parsed_ts := timestamp_re.search(time_str):
         return datetime.datetime.fromtimestamp(float(parsed_ts.group(1)), tz=datetime.UTC)
     else:
         # fallback for text
-        cal = pdt.Calendar()
-        try:
-            holdTime = cal.parse(time_str, datetime.datetime.now(TZ))
-        except (ValueError, OverflowError):
-            # year too long
-            holdTime = cal.parse('9999-12-31')
-
-        if holdTime[1] == 0:
+        settings: 'dateparser._Settings' = {  # type: ignore[reportPrivateUsage]
+            'DATE_ORDER': 'DMY',
+            'TIMEZONE': TZ.key,
+            'RETURN_AS_TIMEZONE_AWARE': True,
+            'PREFER_DATES_FROM': 'future',
+        }
+        # make it so 21h = 21h00
+        time_str = h_re.sub(h_repl, time_str)
+        dt = dateparser.parse(time_str, settings=settings)
+        if dt is None:
             raise BadArgument(f'Could not parse "{time_str}" as a valid time')
-
-        return datetime.datetime(*(holdTime[0])[:6], tzinfo=TZ)
+        return dt
 
 
 class WebhookMessage:
