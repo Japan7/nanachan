@@ -44,7 +44,7 @@ from discord.types.embed import EmbedType
 from discord.webhook import WebhookMessage as DpyWebhookMessage
 from yarl import URL
 
-from nanachan.settings import DEFAULT_COLOUR, PREFIX, TZ
+from nanachan.settings import ALT_TZ, DEFAULT_COLOUR, PREFIX, TZ
 from nanachan.utils.misc import default_backoff, run_coro, truncate_at
 
 if TYPE_CHECKING:
@@ -547,8 +547,9 @@ async def timestamp_autocomplete(
     ts = f'<t:{int(dt.timestamp())}:f>'
     return [
         discord.app_commands.Choice(
-            name=dt.astimezone(tz=TZ).strftime('%a %d %b %Y at %H:%M %Z'), value=ts
+            name=dt.astimezone(tz=tz).strftime('%a %d %b %Y at %H:%M %Z'), value=ts
         )
+        for tz in (TZ, *ALT_TZ)
     ]
 
 
