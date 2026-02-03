@@ -26,6 +26,8 @@ SLASH_PREFIX = ''
 # BOT_ROOM_ID = 0000
 # BOT_VOICE_ID = 0000
 TZ = ZoneInfo('Europe/Paris')
+# Timezones shown in autocompletions
+ALT_TZ = [ZoneInfo('America/Montreal'), ZoneInfo('Asia/Tokyo')]
 DEFAULT_COLOUR = 0xE91E63
 DISABLED_EXTENSIONS = set('snowflake')
 ENABLE_MESSAGE_EXPORT = False
