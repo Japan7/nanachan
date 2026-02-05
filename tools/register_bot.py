@@ -3,8 +3,11 @@ import asyncio
 import pathlib
 import sys
 from getpass import getpass
+from typing import cast
 
 import rich
+
+from nanachan.nanapi._client import ClientModule
 
 sys.path.append(str(pathlib.Path(__file__).parent.parent))
 
@@ -28,7 +31,9 @@ async def main() -> None:
             username=NANAPI_CLIENT_USERNAME, password=NANAPI_CLIENT_PASSWORD
         )
 
-        res = await client.client.client_register(new_client)
+        # FIXME: ugly hack
+        client_mod = cast(ClientModule, client.client)  # pyright: ignore[reportAttributeAccessIssue]
+        res = await client_mod.client_register(new_client)
         match res:
             case Success():
                 print('successfully registered new client')
