@@ -29,6 +29,10 @@ On the “Bot” page enable the server member intent and message content intent
 Then copy [`nanachan/example.local_settings.py`](nanachan/example.local_settings.py)
 to `nanachan/local_settings.py` and edit it appropriately.
 
+You can run `uv run tools/register_bot.py` to create a client account in nanapi
+for your bot. It will ask for the basic auth credentials and create an account
+with the username and password set in your `local_settings.py` file.
+
 You can invite your bot to a server with a link similar to this (using the client ID of your application):
 https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=0&scope=bot+applications.commands
 

@@ -1,5 +1,8 @@
 import asyncio
+import base64
 from functools import cache
+from types import CoroutineType
+from typing import Any, Callable, cast
 
 import backoff
 from aiohttp import ClientResponse
@@ -63,13 +66,40 @@ def get_nanapi():
     return session
 
 
-def wrap_request(_request):
-    async def _wrapped(*args, **kwargs):
+@cache
+def get_nanapi_basic_auth(username: str, password: str):
+    session = get_session(NANAPI_URL)
+
+    session._request = wrap_basic_auth(session._request, username, password)  # type: ignore[reportPrivateUsage]
+
+    return session
+
+
+def wrap_request[**P, T](
+    _request: Callable[P, CoroutineType[Any, Any, T]],
+) -> Callable[P, CoroutineType[Any, Any, T]]:
+    """Adds bearer authorization token to requests"""
+
+    async def _wrapped(*args: P.args, **kwargs: P.kwargs):
         if not bearer_ready.is_set():
             await load_bearer_token()
         await bearer_ready.wait()
         headers = {'Authorization': f'Bearer {bearer_token}'}
-        kwargs.setdefault('headers', {}).update(headers)
+        cast(dict[str, Any], kwargs.setdefault('headers', {})).update(headers)
+        return await _request(*args, **kwargs)
+
+    return _wrapped
+
+
+def wrap_basic_auth[**P, T](
+    _request: Callable[P, CoroutineType[Any, Any, T]], username: str, password: str
+) -> Callable[P, CoroutineType[Any, Any, T]]:
+    """Adds basic authorization header to requests"""
+    basic_hash = base64.b64encode(f'{username}:{password}'.encode()).decode()
+
+    async def _wrapped(*args: P.args, **kwargs: P.kwargs):
+        headers = {'Authorization': f'Basic {basic_hash}'}
+        cast(dict[str, Any], kwargs.setdefault('headers', {})).update(headers)
         return await _request(*args, **kwargs)
 
     return _wrapped
