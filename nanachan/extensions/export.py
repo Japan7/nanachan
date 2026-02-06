@@ -34,10 +34,13 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
 
     @Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        emoji = format_partial_emoji(payload.emoji)
+        if emoji is None:
+            return  # Skip deleted or invalid emojis
         resp = await get_nanapi().discord.discord_add_message_reaction(
             message_id=str(payload.message_id),
             user_id=str(payload.user_id),
-            emoji=format_partial_emoji(payload.emoji),
+            emoji=emoji,
             body=ReactionAddBody(animated=payload.emoji.animated, burst=payload.burst),
         )
         if not success(resp):
@@ -45,17 +48,23 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
 
     @Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        emoji = format_partial_emoji(payload.emoji)
+        if emoji is None:
+            return  # Skip deleted or invalid emojis
         await get_nanapi().discord.discord_remove_message_reaction(
             message_id=str(payload.message_id),
             user_id=str(payload.user_id),
-            emoji=format_partial_emoji(payload.emoji),
+            emoji=emoji,
         )
 
     @Cog.listener()
     async def on_raw_reaction_clear_emoji(self, payload: discord.RawReactionClearEmojiEvent):
+        emoji = format_partial_emoji(payload.emoji)
+        if emoji is None:
+            return  # Skip deleted or invalid emojis
         await get_nanapi().discord.discord_clear_message_reactions(
             message_id=str(payload.message_id),
-            emoji=format_partial_emoji(payload.emoji),
+            emoji=emoji,
         )
 
     @Cog.listener()
@@ -84,7 +93,13 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
         return isinstance(channel, Thread) and channel.owner_id == self.bot.bot_id
 
 
-def format_partial_emoji(emoji: discord.PartialEmoji):
+def format_partial_emoji(emoji: discord.PartialEmoji) -> str | None:
+    """Format a PartialEmoji for API requests.
+
+    Returns None if the emoji name is None (e.g., deleted emoji).
+    """
+    if emoji.name is None:
+        return None
     emoji_str = emoji.name
     if emoji.id:
         emoji_str += f':{emoji.id}'
