@@ -1,5 +1,6 @@
 import json
 from typing import TYPE_CHECKING
+from urllib.parse import quote
 
 import discord
 from discord import Thread
@@ -85,7 +86,7 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
 
 
 def format_partial_emoji(emoji: discord.PartialEmoji):
-    emoji_str = emoji.name
+    emoji_str = quote(emoji.name, safe='')
     if emoji.id:
         emoji_str += f':{emoji.id}'
     return emoji_str
