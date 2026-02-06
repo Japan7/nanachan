@@ -36,7 +36,7 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         emoji = format_partial_emoji(payload.emoji)
         if emoji is None:
-            return  # Skip deleted or invalid emojis
+            return  # Skip reactions with deleted emojis (emoji.name is None)
         resp = await get_nanapi().discord.discord_add_message_reaction(
             message_id=str(payload.message_id),
             user_id=str(payload.user_id),
@@ -50,7 +50,7 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
         emoji = format_partial_emoji(payload.emoji)
         if emoji is None:
-            return  # Skip deleted or invalid emojis
+            return  # Skip reactions with deleted emojis (emoji.name is None)
         await get_nanapi().discord.discord_remove_message_reaction(
             message_id=str(payload.message_id),
             user_id=str(payload.user_id),
@@ -61,7 +61,7 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
     async def on_raw_reaction_clear_emoji(self, payload: discord.RawReactionClearEmojiEvent):
         emoji = format_partial_emoji(payload.emoji)
         if emoji is None:
-            return  # Skip deleted or invalid emojis
+            return  # Skip reactions with deleted emojis (emoji.name is None)
         await get_nanapi().discord.discord_clear_message_reactions(
             message_id=str(payload.message_id),
             emoji=emoji,
