@@ -12,7 +12,7 @@ from typing import Any
 from aiohttp import ClientSession
 from pydantic_ai import Agent
 
-from nanachan.settings import GITHUB_REPO_SLUG, GITHUB_TOKEN, RequiresAI
+from nanachan.settings import GITHUB_AGENT_MODEL, GITHUB_REPO_SLUG, GITHUB_TOKEN, RequiresAI
 from nanachan.utils.ai import get_model
 from nanachan.utils.misc import get_session
 
@@ -193,7 +193,7 @@ async def create_issue(
             baseRef: "master"
             customInstructions: "Use context7 to fetch relevant documentation and deepwiki to ask questions about other projects."
             customAgent: "",
-            model: "claude-opus-4.5"
+            model: $model
           }
         }
       ) {
@@ -215,6 +215,7 @@ async def create_issue(
         'title': title,
         'body': body,
         'assigneeIds': assignee_ids or [],
+        'model': GITHUB_AGENT_MODEL,
     }
     data = await graphql_request(mutation, variables)
     return data['createIssue']['issue']

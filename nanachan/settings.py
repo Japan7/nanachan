@@ -17,6 +17,7 @@ TADAIMA = False
 GITHUB_ISSUE_ENABLE = not DEBUG
 GITHUB_REPO_SLUG = 'Japan7/nanachan'
 GITHUB_TOKEN: str | None = None
+GITHUB_AGENT_MODEL = 'claude-opus-4.6'
 
 ## Bot
 # TOKEN = ''
