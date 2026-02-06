@@ -1,5 +1,6 @@
 import json
 from typing import TYPE_CHECKING
+from urllib.parse import quote
 
 import discord
 from discord import Thread
@@ -94,16 +95,18 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
 
 
 def format_partial_emoji(emoji: discord.PartialEmoji) -> str | None:
-    """Format a PartialEmoji for API requests.
+    """Format a PartialEmoji as a URL-encoded string for API requests.
 
     Returns None if the emoji name is None (e.g., deleted emoji).
+    The returned value is URL-encoded to handle special characters like '#'
+    which would otherwise be interpreted as URL fragment delimiters.
     """
     if emoji.name is None:
         return None
     emoji_str = emoji.name
     if emoji.id:
         emoji_str += f':{emoji.id}'
-    return emoji_str
+    return quote(emoji_str, safe='')
 
 
 async def setup(bot: Bot):
