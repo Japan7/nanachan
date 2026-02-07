@@ -1462,7 +1462,7 @@ requires-dist = [
     { name = "python-dateutil", specifier = "==2.9.0.post0" },
     { name = "python-socketio", extras = ["asyncio-client"], specifier = "==5.16.1" },
     { name = "rich", specifier = "==14.3.2" },
-    { name = "tldr", specifier = "==3.4.3" },
+    { name = "tldr", specifier = "==3.4.4" },
     { name = "tzdata", specifier = "==2025.3" },
     { name = "valkey", extras = ["libvalkey"], specifier = "==6.1.1" },
     { name = "watchfiles", specifier = "==1.1.1" },
@@ -2476,16 +2476,16 @@ wheels = [
 
 [[package]]
 name = "tldr"
-version = "3.4.3"
+version = "3.4.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "shtab" },
     { name = "termcolor" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c2/6c/0ced5f6fac4bb65e7b07070f58991739f4b617dc698a8ba9b3d77528b03d/tldr-3.4.3.tar.gz", hash = "sha256:9238a1ce7de05d0ac32a9316db2b199bbac5634448d48ec7012a3817109392a4", size = 17360, upload-time = "2025-09-22T16:06:03.194Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/2a/3a55692e24d879ae6e8d15c08b0ecdc76ba92ee8160b4dac8a07bfff021e/tldr-3.4.4.tar.gz", hash = "sha256:8355f2ca96991c61a2daa166050af5d3bdf93507817fcde5de36259c3908eca1", size = 17901, upload-time = "2026-02-07T18:18:54.263Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/73/679b1fbdd197c12b9259935cbfc8dfd43253d36387cf28c4dbf2094c7bb4/tldr-3.4.3-py3-none-any.whl", hash = "sha256:b5088cec8cd40a8a30a9cdab1794b4dcee6d1c1b4aa11dd8f2a8bfc07706c821", size = 13772, upload-time = "2025-09-22T16:06:02.094Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/d6/f84aa2548de0d6fbf3aa2dd0b750ade13b7ed2aa110907859f624f02b0ac/tldr-3.4.4-py3-none-any.whl", hash = "sha256:060e0f11e71b97658b3e6de384a0b28069820a20a4070ffae91c6f9a3167430a", size = 14145, upload-time = "2026-02-07T18:18:52.797Z" },
 ]
 
 [[package]]
