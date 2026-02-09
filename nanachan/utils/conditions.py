@@ -304,7 +304,11 @@ class StringCondition(Condition):
         Word.simple('vacances'),
         Word.simple('trump'),
         Word.simple('1A'),
-        Word.simple('feur'),
+        Word(
+            'feur',
+            'gets the correct answer to the question "Quoi ?"',
+            'got the correct answer to the question "Quoi ?"'
+        ),
     ]
 
     def __init__(self, waifu_cog: WaifuCollection, user: User | Member, word: Word):
