@@ -307,7 +307,7 @@ class StringCondition(Condition):
         Word(
             'feur',
             'gets the correct answer to the question "Quoi ?"',
-            'got the correct answer to the question "Quoi ?"'
+            'got the correct answer to the question "Quoi ?"',
         ),
     ]
 
