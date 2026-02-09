@@ -304,6 +304,7 @@ class StringCondition(Condition):
         Word.simple('vacances'),
         Word.simple('trump'),
         Word.simple('1A'),
+        Word.simple('feur'),
     ]
 
     def __init__(self, waifu_cog: WaifuCollection, user: User | Member, word: Word):
