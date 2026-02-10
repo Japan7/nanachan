@@ -6,7 +6,7 @@ from nanachan.discord.application_commands import nana_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.nanapi._client import Error, Success
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import CollectPotBody, PotAddResult, PotGetByUserResult
 
 
