@@ -1,10 +1,11 @@
 from decimal import ROUND_DOWN, Decimal
 
-from discord import Embed, Member
-from discord.ext.commands import CommandError, Context, command, guild_only
+from discord import Embed, Interaction, Member, app_commands
 
+from nanachan.discord.application_commands import nana_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
+from nanachan.nanapi._client import Error, Success
 from nanachan.nanapi.client import get_nanapi, success
 from nanachan.nanapi.model import CollectPotBody, PotAddResult, PotGetByUserResult
 
@@ -14,43 +15,62 @@ class Pot(Cog):
 
     emoji = '💸'
 
-    @guild_only()
-    @command(help='Collect some money for the poor')
-    async def collect(self, ctx: Context, member: Member, amount: Decimal | None = None):
+    @nana_command(description='Collect some money for the poor')
+    @app_commands.guild_only()
+    async def collect(
+        self, interaction: Interaction, member: Member, amount: Decimal | None = None
+    ):
         if amount is None:
             amount = Decimal('1')
 
         if amount <= 0:
-            raise CommandError('The amount must be positive')
+            await interaction.response.send_message('The amount must be positive')
+            return
 
-        if ctx.author.id == member.id:
-            raise CommandError('It would be too easy...')
+        if interaction.user.id == member.id:
+            await interaction.response.send_message('It would be too easy...')
+            return
 
         amount = amount.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+
+        await interaction.response.defer()
 
         resp = await get_nanapi().pot.pot_collect_pot(
             str(member.id), CollectPotBody(discord_username=str(member), amount=float(amount))
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        match resp:
+            case Error():
+                resp.raise_exc()
+            case Success():
+                pass
+
         funding = resp.result
 
-        await self._send_pot(ctx, member, funding)
+        await self._send_pot(interaction, member, funding)
 
-    @command(help='Show someone’s collected amount')
-    async def pot(self, ctx, member: Member):
+    @nana_command(description='Show someone’s collected amount of money')
+    async def pot(self, interaction: Interaction, member: Member):
+        await interaction.response.defer()
         resp = await get_nanapi().pot.pot_get_pot(str(member.id))
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise CommandError(f'No one has ever collected for {member} :cry:')
-                case _:
-                    raise RuntimeError(resp.result)
+
+        match resp:
+            case Success():
+                pass
+            case Error(404):
+                await interaction.response.send_message(
+                    f'No one has ever collected for {member} :cry:'
+                )
+                return
+            case Error():
+                resp.raise_exc()
+
         funding = resp.result
-        await self._send_pot(ctx, member, funding)
+        await self._send_pot(interaction, member, funding)
 
     @staticmethod
-    async def _send_pot(ctx, member: Member, funding: PotAddResult | PotGetByUserResult) -> None:
+    async def _send_pot(
+        interaction: Interaction, member: Member, funding: PotAddResult | PotGetByUserResult
+    ) -> None:
         average = funding.amount / funding.count
 
         embed = (
@@ -61,7 +81,7 @@ class Pot(Cog):
             .add_field(name='Average', value=f'{average:.2f} €')
         )
 
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot: Bot):
