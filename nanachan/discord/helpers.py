@@ -26,6 +26,8 @@ import discord
 from discord import (
     ForumChannel,
     HTTPException,
+    Interaction,
+    Member,
     Message,
     StickerItem,
     TextChannel,
@@ -873,3 +875,11 @@ def _iter_opt(name, cast_func, option):
 
 
 UserType = discord.User | discord.Member
+
+
+def is_admin(interaction: Interaction[Any]):
+    # only makes sense in a guild context
+    assert interaction.channel is not None
+    assert isinstance(interaction.user, Member)
+
+    return interaction.channel.permissions_for(interaction.user).administrator
