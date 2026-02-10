@@ -45,11 +45,7 @@ class Pot(Cog):
         resp = await get_nanapi().pot.pot_collect_pot(
             str(member.id), CollectPotBody(discord_username=str(member), amount=float(amount))
         )
-        match resp:
-            case Error():
-                resp.raise_exc()
-            case Success():
-                pass
+        resp = resp.raise_exc()
 
         funding = resp.result
 
