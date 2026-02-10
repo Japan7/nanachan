@@ -60,9 +60,7 @@ class Pot(Cog):
             case Success():
                 pass
             case Error(404):
-                await interaction.response.send_message(
-                    f'No one has ever collected for {member} :cry:'
-                )
+                await interaction.followup.send(f'No one has ever collected for {member} :cry:')
                 return
             case Error():
                 resp.raise_exc()
@@ -84,7 +82,11 @@ class Pot(Cog):
             .add_field(name='Average', value=f'{average:.2f} €')
         )
 
-        await interaction.response.send_message(embed=embed)
+        # work with or without previously sending a response
+        if interaction.response.is_done():
+            await interaction.followup.send(embed=embed)
+        else:
+            await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot: Bot):
