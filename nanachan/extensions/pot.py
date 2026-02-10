@@ -1,4 +1,4 @@
-from decimal import ROUND_DOWN, Decimal
+from decimal import ROUND_DOWN, Decimal, InvalidOperation
 
 from discord import Embed, Interaction, Member, app_commands
 
@@ -16,12 +16,19 @@ class Pot(Cog):
     emoji = '💸'
 
     @nana_command(description='Collect some money for the poor')
+    @app_commands.rename(amount_str='amount')
     @app_commands.guild_only()
     async def collect(
-        self, interaction: Interaction, member: Member, amount: Decimal | None = None
+        self, interaction: Interaction, member: Member, amount_str: str | None = None
     ):
-        if amount is None:
+        if amount_str is None:
             amount = Decimal('1')
+        else:
+            try:
+                amount = Decimal(amount_str)
+            except InvalidOperation:
+                await interaction.response.send_message(f'invalid amount: {amount_str}')
+                return
 
         if amount <= 0:
             await interaction.response.send_message('The amount must be positive')
