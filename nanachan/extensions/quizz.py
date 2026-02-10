@@ -319,7 +319,7 @@ class Quizz(Cog, required_settings=RequiresQuizz):
         await AnimeMangaQuizz.imaaage(ctx.message, nb)
 
     @commands.guild_only()
-    @commands.command()
+    @commands.command(hidden=True)
     async def kininarimasu(self, ctx: commands.Context):
         """Watashi... KININARIMASU"""
         await LouisQuizz.kininarimasu(ctx.channel)
