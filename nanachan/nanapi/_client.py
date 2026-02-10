@@ -4,7 +4,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from enum import Enum
-from typing import Any, Literal, TypeGuard
+from typing import Any, Literal, NoReturn, TypeGuard
 from uuid import UUID
 
 import aiohttp
@@ -184,6 +184,10 @@ from .model import (
 )
 
 
+class MahouException(Exception):
+    pass
+
+
 @dataclass(slots=True)
 class Success[TCode, TSuccess]:
     code: TCode
@@ -194,6 +198,9 @@ class Success[TCode, TSuccess]:
 class Error[TCode, TError]:
     code: TCode
     result: TError
+
+    def raise_exc(self) -> NoReturn:
+        raise MahouException(f'{self.code}: {self.result}')
 
 
 def success[S: Success[Any, Any]](maybe: S | Error[Any, Any]) -> TypeGuard[S]:

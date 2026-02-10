@@ -1978,6 +1978,8 @@ class ValidationError(BaseModel):
     loc: list[str | int]
     msg: str
     type: str
+    input: Any | None = None
+    ctx: dict[str, Any] | None = None
 
 
 class WaifuBulkUpdateResult(BaseModel):

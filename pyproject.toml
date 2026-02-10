@@ -50,7 +50,7 @@ dev = [
 
 [tool.uv.sources]
 discord-py = { git = "https://github.com/Japan7/discord.py.git", rev = "27cc8196e457d009238876219168b223f700968c" }
-mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "b726a9c2a6f548571e886a37eebdb3cb29c06377" }
+mahou-py = { git = "https://github.com/Japan7/mahou.py.git", rev = "5dad62b4210966530aac196f1599c0a8c77aca3a" }
 
 [project.urls]
 homepage = "https://github.com/Japan7/nanachan"
