@@ -7,11 +7,10 @@ from typing import cast
 
 import rich
 
-from nanachan.nanapi._client import ClientModule
-
 sys.path.append(str(pathlib.Path(__file__).parent.parent))
 
 from nanachan.local_settings import NANAPI_CLIENT_PASSWORD, NANAPI_CLIENT_USERNAME
+from nanachan.nanapi._client import ClientModule
 from nanachan.nanapi.client import Error, Success, get_nanapi_basic_auth
 from nanachan.nanapi.model import NewClientBody
 
