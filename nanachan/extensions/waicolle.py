@@ -258,13 +258,18 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 resp3 = await get_nanapi().waicolle.waicolle_player_roll(
                     str(interaction.user.id), nb=10, reason='register'
                 )
-                if not success(resp3):
-                    raise RuntimeError(resp3.result)
-                assert resp3.code == 201
-                waifus = resp3.result
-                await self.drop_alert(
-                    interaction.user, waifus, 'Register', messageable=interaction.followup
-                )
+                match resp3:
+                    case Success(code=201):
+                        waifus = resp3.result
+                        await self.drop_alert(
+                            interaction.user, waifus, 'Register', messageable=interaction.followup
+                        )
+                    case Success(code=204):
+                        await interaction.followup.send(f'{interaction.user} is frozen')
+                    case Error(code=418):
+                        await interaction.followup.send('Sorry, kids can’t gamba')
+                    case _:
+                        resp3.raise_exc()
 
     @slash_waifu_utils.command()
     @app_commands.check(is_admin_or_bureau)
@@ -475,8 +480,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     await replyable.send(
                         f'{member} {resp.result.detail} {self.bot.get_emoji_str("saladedefruits")}'
                     )
+                case Error(code=418):
+                    await replyable.send('Sorry, kids can’t gamba')
                 case Error():
-                    raise RuntimeError(resp.result)
+                    resp.raise_exc()
                 case Success(code=204):
                     await replyable.send(f'{member} is frozen 🧊')
                 case Success():
@@ -1070,15 +1077,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
                 discord_id=str(ctx.author.id), locked=0, trade_locked=0, blooded=0
             )
-            if not success(resp1):
-                match resp1.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{ctx.author}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(resp1.result)
+            match resp1:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    resp1 = resp1.raise_exc()
+
             waifus = resp1.result
 
             rerolled = await self.waifus_selector(ctx, waifus, 'reroll', ctx.author)
@@ -1106,8 +1113,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     bot_discord_id=str(self.bot.bot_id),
                 )
                 resp2 = await get_nanapi().waicolle.waicolle_reroll(body)
-                if not success(resp2):
-                    raise RuntimeError(resp2.result)
+                resp2 = resp2.raise_exc()
                 result = resp2.result
 
                 await self.drop_alert(ctx.author, result.obtained, 'Reroll', messageable=ctx)

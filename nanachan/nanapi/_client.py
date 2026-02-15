@@ -167,6 +167,7 @@ from .model import (
     UpsertGuildEventBody,
     UpsertPlayerBody,
     UpsertProfileBody,
+    UpsertUser,
     UpsertUserCalendarBody,
     UserBulkMergeResult,
     UserCalendarDeleteResult,
@@ -174,6 +175,7 @@ from .model import (
     UserCalendarSelectAllResult,
     UserCalendarSelectResult,
     UserSelectResult,
+    UserUpsertResult,
     WaifuBulkUpdateResult,
     WaifuExportResult,
     WaifuReplaceCustomPositionResult,
@@ -4247,6 +4249,40 @@ class UserModule:
                 headers=resp.headers,
             )
 
+    async def user_upsert_user(
+        self, body: UpsertUser
+    ) -> (
+        Success[Literal[200], UserUpsertResult]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """upsert an user."""
+        url = f'{self.server_url}/user/account'
+
+        async with self.session.patch(
+            url,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], UserUpsertResult](
+                    code=200, result=UserUpsertResult(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
     async def user_profile_search(
         self, discord_ids: str | None = None, pattern: str | None = None
     ) -> (
@@ -4671,6 +4707,7 @@ class WaicolleModule:
         | Error[Literal[400], HTTPExceptionModel]
         | Error[Literal[404], HTTPExceptionModel]
         | Error[Literal[409], HTTPExceptionModel]
+        | Error[Literal[418], HTTPExceptionModel]
         | Error[Literal[401], HTTPExceptionModel]
         | Error[Literal[403], HTTPExceptionModel]
         | Error[Literal[422], HTTPValidationError]
@@ -4712,6 +4749,10 @@ class WaicolleModule:
             if resp.status == 409:
                 return Error[Literal[409], HTTPExceptionModel](
                     code=409, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 418:
+                return Error[Literal[418], HTTPExceptionModel](
+                    code=418, result=HTTPExceptionModel(**(await resp.json()))
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
