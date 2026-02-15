@@ -7,33 +7,33 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class AnilistCharacterRole(str, Enum):
+    BACKGROUND = 'BACKGROUND'
     MAIN = 'MAIN'
     SUPPORTING = 'SUPPORTING'
-    BACKGROUND = 'BACKGROUND'
 
 
 class AnilistEntryStatus(str, Enum):
-    CURRENT = 'CURRENT'
     COMPLETED = 'COMPLETED'
-    PAUSED = 'PAUSED'
+    CURRENT = 'CURRENT'
     DROPPED = 'DROPPED'
+    PAUSED = 'PAUSED'
     PLANNING = 'PLANNING'
     REPEATING = 'REPEATING'
 
 
 class AnilistMediaSeason(str, Enum):
-    WINTER = 'WINTER'
+    FALL = 'FALL'
     SPRING = 'SPRING'
     SUMMER = 'SUMMER'
-    FALL = 'FALL'
+    WINTER = 'WINTER'
 
 
 class AnilistMediaStatus(str, Enum):
-    FINISHED = 'FINISHED'
-    RELEASING = 'RELEASING'
-    NOT_YET_RELEASED = 'NOT_YET_RELEASED'
     CANCELLED = 'CANCELLED'
+    FINISHED = 'FINISHED'
     HIATUS = 'HIATUS'
+    NOT_YET_RELEASED = 'NOT_YET_RELEASED'
+    RELEASING = 'RELEASING'
 
 
 class AnilistMediaType(str, Enum):
@@ -52,19 +52,19 @@ class MediaType(str, Enum):
 
 
 class PresencePresenceType(str, Enum):
-    PLAYING = 'PLAYING'
     LISTENING = 'LISTENING'
+    PLAYING = 'PLAYING'
     WATCHING = 'WATCHING'
 
 
 class ProjectionStatus(str, Enum):
-    ONGOING = 'ONGOING'
     COMPLETED = 'COMPLETED'
+    ONGOING = 'ONGOING'
 
 
 class QuizzStatus(str, Enum):
-    STARTED = 'STARTED'
     ENDED = 'ENDED'
+    STARTED = 'STARTED'
 
 
 class WaicolleCollagePosition(str, Enum):
@@ -74,18 +74,18 @@ class WaicolleCollagePosition(str, Enum):
 
 
 class WaicolleGameMode(str, Enum):
-    WAIFU = 'WAIFU'
-    HUSBANDO = 'HUSBANDO'
     ALL = 'ALL'
+    HUSBANDO = 'HUSBANDO'
+    WAIFU = 'WAIFU'
 
 
 class WaicolleRank(str, Enum):
-    S = 'S'
     A = 'A'
     B = 'B'
     C = 'C'
     D = 'D'
     E = 'E'
+    S = 'S'
 
 
 class AccountMergeResult(BaseModel):
@@ -96,8 +96,8 @@ class AccountMergeResult(BaseModel):
 class AccountSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     service: 'AnilistService'
-    username: str
     user: 'AccountSelectAllResultUser'
+    username: str
 
 
 class AccountSelectAllResultUser(BaseModel):
@@ -107,8 +107,8 @@ class AccountSelectAllResultUser(BaseModel):
 
 class AccountSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    username: str
     user: 'AccountSelectResultUser'
+    username: str
 
 
 class AccountSelectResultUser(BaseModel):
@@ -156,146 +156,146 @@ class CEdgeSelectFilterCharaResult(BaseModel):
 
 class CEdgeSelectFilterCharaResultMedia(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
-    favourites: int
-    site_url: str
-    type: 'AnilistMediaType'
-    id_mal: int | None
-    title_user_preferred: str
-    title_native: str | None
-    title_english: str | None
-    synonyms: list[str]
+    chapters: int | None
+    cover_image_color: str | None
+    cover_image_extra_large: str
     description: str | None
-    status: 'AnilistMediaStatus | None'
+    duration: int | None
+    episodes: int | None
+    favourites: int
+    genres: list[str]
+    id_al: int
+    id_mal: int | None
+    is_adult: bool
+    popularity: int
     season: 'AnilistMediaSeason | None'
     season_year: int | None
-    episodes: int | None
-    duration: int | None
-    chapters: int | None
-    cover_image_extra_large: str
-    cover_image_color: str | None
-    popularity: int
-    is_adult: bool
-    genres: list[str]
+    site_url: str
+    status: 'AnilistMediaStatus | None'
+    synonyms: list[str]
+    title_english: str | None
+    title_native: str | None
+    title_user_preferred: str
+    type: 'AnilistMediaType'
 
 
 class CEdgeSelectFilterCharaResultVoiceActors(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
-    favourites: int
-    site_url: str
-    name_user_preferred: str
-    name_native: str | None
-    name_alternative: list[str]
-    description: str | None
-    image_large: str
-    gender: str | None
     age: int | None
-    date_of_birth_year: int | None
-    date_of_birth_month: int | None
     date_of_birth_day: int | None
-    date_of_death_year: int | None
-    date_of_death_month: int | None
+    date_of_birth_month: int | None
+    date_of_birth_year: int | None
     date_of_death_day: int | None
+    date_of_death_month: int | None
+    date_of_death_year: int | None
+    description: str | None
+    favourites: int
+    gender: str | None
+    id_al: int
+    image_large: str
+    name_alternative: list[str]
+    name_native: str | None
+    name_user_preferred: str
+    site_url: str
 
 
 class CEdgeSelectFilterMediaResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    character_role: 'AnilistCharacterRole'
     character: 'CEdgeSelectFilterMediaResultCharacter'
+    character_role: 'AnilistCharacterRole'
     voice_actors: list['CEdgeSelectFilterMediaResultVoiceActors']
 
 
 class CEdgeSelectFilterMediaResultCharacter(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
+    age: str | None
+    date_of_birth_day: int | None
+    date_of_birth_month: int | None
+    date_of_birth_year: int | None
+    description: str | None
     favourites: int
-    site_url: str
-    name_user_preferred: str
+    fuzzy_gender: str | None
+    gender: str | None
+    id_al: int
+    image_large: str
     name_alternative: list[str]
     name_alternative_spoiler: list[str]
     name_native: str | None
-    description: str | None
-    image_large: str
-    gender: str | None
-    age: str | None
-    date_of_birth_year: int | None
-    date_of_birth_month: int | None
-    date_of_birth_day: int | None
+    name_user_preferred: str
     rank: 'WaicolleRank'
-    fuzzy_gender: str | None
+    site_url: str
 
 
 class CEdgeSelectFilterMediaResultVoiceActors(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
-    favourites: int
-    site_url: str
-    name_user_preferred: str
-    name_native: str | None
-    name_alternative: list[str]
-    description: str | None
-    image_large: str
-    gender: str | None
     age: int | None
-    date_of_birth_year: int | None
-    date_of_birth_month: int | None
     date_of_birth_day: int | None
-    date_of_death_year: int | None
-    date_of_death_month: int | None
+    date_of_birth_month: int | None
+    date_of_birth_year: int | None
     date_of_death_day: int | None
+    date_of_death_month: int | None
+    date_of_death_year: int | None
+    description: str | None
+    favourites: int
+    gender: str | None
+    id_al: int
+    image_large: str
+    name_alternative: list[str]
+    name_native: str | None
+    name_user_preferred: str
+    site_url: str
 
 
 class CEdgeSelectFilterStaffResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    character: 'CEdgeSelectFilterStaffResultCharacter'
     character_role: 'AnilistCharacterRole'
     media: 'CEdgeSelectFilterStaffResultMedia'
-    character: 'CEdgeSelectFilterStaffResultCharacter'
 
 
 class CEdgeSelectFilterStaffResultCharacter(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
+    age: str | None
+    date_of_birth_day: int | None
+    date_of_birth_month: int | None
+    date_of_birth_year: int | None
+    description: str | None
     favourites: int
-    site_url: str
-    name_user_preferred: str
+    fuzzy_gender: str | None
+    gender: str | None
+    id_al: int
+    image_large: str
     name_alternative: list[str]
     name_alternative_spoiler: list[str]
     name_native: str | None
-    description: str | None
-    image_large: str
-    gender: str | None
-    age: str | None
-    date_of_birth_year: int | None
-    date_of_birth_month: int | None
-    date_of_birth_day: int | None
+    name_user_preferred: str
     rank: 'WaicolleRank'
-    fuzzy_gender: str | None
+    site_url: str
 
 
 class CEdgeSelectFilterStaffResultMedia(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
-    favourites: int
-    site_url: str
-    type: 'AnilistMediaType'
-    id_mal: int | None
-    title_user_preferred: str
-    title_native: str | None
-    title_english: str | None
-    synonyms: list[str]
+    chapters: int | None
+    cover_image_color: str | None
+    cover_image_extra_large: str
     description: str | None
-    status: 'AnilistMediaStatus | None'
+    duration: int | None
+    episodes: int | None
+    favourites: int
+    genres: list[str]
+    id_al: int
+    id_mal: int | None
+    is_adult: bool
+    popularity: int
     season: 'AnilistMediaSeason | None'
     season_year: int | None
-    episodes: int | None
-    duration: int | None
-    chapters: int | None
-    cover_image_extra_large: str
-    cover_image_color: str | None
-    popularity: int
-    is_adult: bool
-    genres: list[str]
+    site_url: str
+    status: 'AnilistMediaStatus | None'
+    synonyms: list[str]
+    title_english: str | None
+    title_native: str | None
+    title_user_preferred: str
+    type: 'AnilistMediaType'
 
 
 class CharaNameAutocompleteResult(BaseModel):
@@ -307,22 +307,22 @@ class CharaNameAutocompleteResult(BaseModel):
 
 class CharaSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
+    age: str | None
+    date_of_birth_day: int | None
+    date_of_birth_month: int | None
+    date_of_birth_year: int | None
+    description: str | None
     favourites: int
-    site_url: str
-    name_user_preferred: str
+    fuzzy_gender: str | None
+    gender: str | None
+    id_al: int
+    image_large: str
     name_alternative: list[str]
     name_alternative_spoiler: list[str]
     name_native: str | None
-    description: str | None
-    image_large: str
-    gender: str | None
-    age: str | None
-    date_of_birth_year: int | None
-    date_of_birth_month: int | None
-    date_of_birth_day: int | None
+    name_user_preferred: str
     rank: 'WaicolleRank'
-    fuzzy_gender: str | None
+    site_url: str
 
 
 class ClientInsertResult(BaseModel):
@@ -357,8 +357,8 @@ class CollectionAddMediaResultCollection(BaseModel):
 class CollectionAddMediaResultMedia(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
-    type: 'AnilistMediaType'
     title_user_preferred: str
+    type: 'AnilistMediaType'
 
 
 class CollectionAddStaffResult(BaseModel):
@@ -376,8 +376,8 @@ class CollectionAddStaffResultCollection(BaseModel):
 class CollectionAddStaffResultStaff(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
-    name_user_preferred: str
     name_native: str | None
+    name_user_preferred: str
 
 
 class CollectionAlbumResult(BaseModel):
@@ -395,12 +395,12 @@ class CollectionDeleteResult(BaseModel):
 
 class CollectionGetByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    name: str
     author: 'CollectionGetByIdResultAuthor'
-    medias_ids_al: list[int]
-    staffs_ids_al: list[int]
     characters_ids_al: list[int]
+    id: UUID
+    medias_ids_al: list[int]
+    name: str
+    staffs_ids_al: list[int]
 
 
 class CollectionGetByIdResultAuthor(BaseModel):
@@ -415,9 +415,9 @@ class CollectionGetByIdResultAuthorUser(BaseModel):
 
 class CollectionInsertResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    author: 'CollectionInsertResultAuthor'
     id: UUID
     name: str
-    author: 'CollectionInsertResultAuthor'
 
 
 class CollectionInsertResultAuthor(BaseModel):
@@ -465,8 +465,8 @@ class CouponInsertResult(BaseModel):
 
 class CouponSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    code: str
     claimed_by: list['CouponSelectAllResultClaimedBy']
+    code: str
 
 
 class CouponSelectAllResultClaimedBy(BaseModel):
@@ -498,11 +498,11 @@ class EndGameBody(BaseModel):
 
 class EntrySelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    status: 'AnilistEntryStatus'
+    account: 'EntrySelectAllResultAccount'
+    media: 'EntrySelectAllResultMedia'
     progress: int
     score: float
-    media: 'EntrySelectAllResultMedia'
-    account: 'EntrySelectAllResultAccount'
+    status: 'AnilistEntryStatus'
 
 
 class EntrySelectAllResultAccount(BaseModel):
@@ -522,10 +522,10 @@ class EntrySelectAllResultMedia(BaseModel):
 
 class EntrySelectFilterMediaResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    status: 'AnilistEntryStatus'
+    account: 'EntrySelectFilterMediaResultAccount'
     progress: int
     score: float
-    account: 'EntrySelectFilterMediaResultAccount'
+    status: 'AnilistEntryStatus'
 
 
 class EntrySelectFilterMediaResultAccount(BaseModel):
@@ -545,23 +545,23 @@ class GameDeleteByMessageIdResult(BaseModel):
 
 class GameEndResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    winner: 'GameEndResultWinner | None'
-    quizz: 'GameEndResultQuizz'
-    status: 'QuizzStatus'
-    started_at: datetime
     ended_at: datetime | None
-    message_id: str
     id: UUID
+    message_id: str
+    quizz: 'GameEndResultQuizz'
+    started_at: datetime
+    status: 'QuizzStatus'
+    winner: 'GameEndResultWinner | None'
 
 
 class GameEndResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    author: 'GameEndResultQuizzAuthor'
-    id: UUID
-    channel_id: str
     answer: str | None
     attachment_url: str | None
+    author: 'GameEndResultQuizzAuthor'
+    channel_id: str
     hints: list[str] | None
+    id: UUID
     question: str | None
     submitted_at: datetime
 
@@ -578,23 +578,23 @@ class GameEndResultWinner(BaseModel):
 
 class GameGetByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    winner: 'GameGetByIdResultWinner | None'
-    quizz: 'GameGetByIdResultQuizz'
+    ended_at: datetime | None
     id: UUID
     message_id: str
-    ended_at: datetime | None
+    quizz: 'GameGetByIdResultQuizz'
     started_at: datetime
     status: 'QuizzStatus'
+    winner: 'GameGetByIdResultWinner | None'
 
 
 class GameGetByIdResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    author: 'GameGetByIdResultQuizzAuthor'
-    id: UUID
-    channel_id: str
     answer: str | None
     attachment_url: str | None
+    author: 'GameGetByIdResultQuizzAuthor'
+    channel_id: str
     hints: list[str] | None
+    id: UUID
     question: str | None
     submitted_at: datetime
 
@@ -611,23 +611,23 @@ class GameGetByIdResultWinner(BaseModel):
 
 class GameGetCurrentResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    winner: 'GameGetCurrentResultWinner | None'
-    quizz: 'GameGetCurrentResultQuizz'
+    ended_at: datetime | None
     id: UUID
     message_id: str
-    ended_at: datetime | None
+    quizz: 'GameGetCurrentResultQuizz'
     started_at: datetime
     status: 'QuizzStatus'
+    winner: 'GameGetCurrentResultWinner | None'
 
 
 class GameGetCurrentResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    author: 'GameGetCurrentResultQuizzAuthor'
-    id: UUID
-    channel_id: str
     answer: str | None
     attachment_url: str | None
+    author: 'GameGetCurrentResultQuizzAuthor'
+    channel_id: str
     hints: list[str] | None
+    id: UUID
     question: str | None
     submitted_at: datetime
 
@@ -644,23 +644,23 @@ class GameGetCurrentResultWinner(BaseModel):
 
 class GameGetLastResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    winner: 'GameGetLastResultWinner | None'
-    quizz: 'GameGetLastResultQuizz'
+    ended_at: datetime | None
     id: UUID
     message_id: str
-    ended_at: datetime | None
+    quizz: 'GameGetLastResultQuizz'
     started_at: datetime
     status: 'QuizzStatus'
+    winner: 'GameGetLastResultWinner | None'
 
 
 class GameGetLastResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    author: 'GameGetLastResultQuizzAuthor'
-    id: UUID
-    channel_id: str
     answer: str | None
     attachment_url: str | None
+    author: 'GameGetLastResultQuizzAuthor'
+    channel_id: str
     hints: list[str] | None
+    id: UUID
     question: str | None
     submitted_at: datetime
 
@@ -682,23 +682,23 @@ class GameNewResult(BaseModel):
 
 class GameSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    winner: 'GameSelectResultWinner | None'
-    quizz: 'GameSelectResultQuizz'
+    ended_at: datetime | None
     id: UUID
     message_id: str
-    ended_at: datetime | None
+    quizz: 'GameSelectResultQuizz'
     started_at: datetime
     status: 'QuizzStatus'
+    winner: 'GameSelectResultWinner | None'
 
 
 class GameSelectResultQuizz(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    author: 'GameSelectResultQuizzAuthor'
-    id: UUID
-    channel_id: str
     answer: str | None
     attachment_url: str | None
+    author: 'GameSelectResultQuizzAuthor'
+    channel_id: str
     hints: list[str] | None
+    id: UUID
     question: str | None
     submitted_at: datetime
 
@@ -715,19 +715,19 @@ class GameSelectResultWinner(BaseModel):
 
 class GuildEventDeleteResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    url: str | None
-    start_time: datetime
-    name: str
-    location: str | None
-    image: str | None
-    end_time: datetime
+    client: 'GuildEventDeleteResultClient'
     description: str | None
     discord_id: str
+    end_time: datetime
     id: UUID
+    image: str | None
+    location: str | None
+    name: str
     organizer: 'GuildEventDeleteResultOrganizer'
     participants: list['GuildEventDeleteResultParticipants']
     projection: 'GuildEventDeleteResultProjection | None'
-    client: 'GuildEventDeleteResultClient'
+    start_time: datetime
+    url: str | None
 
 
 class GuildEventDeleteResultClient(BaseModel):
@@ -739,22 +739,24 @@ class GuildEventDeleteResultClient(BaseModel):
 
 class GuildEventDeleteResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class GuildEventDeleteResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class GuildEventDeleteResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
     channel_id: str
+    id: UUID
     message_id: str | None
     name: str
     status: 'ProjectionStatus'
@@ -762,19 +764,19 @@ class GuildEventDeleteResultProjection(BaseModel):
 
 class GuildEventMergeResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    discord_id: str
+    client: 'GuildEventMergeResultClient'
     description: str | None
+    discord_id: str
     end_time: datetime
+    id: UUID
     image: str | None
     location: str | None
     name: str
+    organizer: 'GuildEventMergeResultOrganizer'
+    participants: list['GuildEventMergeResultParticipants']
+    projection: 'GuildEventMergeResultProjection | None'
     start_time: datetime
     url: str | None
-    client: 'GuildEventMergeResultClient'
-    projection: 'GuildEventMergeResultProjection | None'
-    participants: list['GuildEventMergeResultParticipants']
-    organizer: 'GuildEventMergeResultOrganizer'
 
 
 class GuildEventMergeResultClient(BaseModel):
@@ -786,22 +788,24 @@ class GuildEventMergeResultClient(BaseModel):
 
 class GuildEventMergeResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class GuildEventMergeResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class GuildEventMergeResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
     channel_id: str
+    id: UUID
     message_id: str | None
     name: str
     status: 'ProjectionStatus'
@@ -819,19 +823,19 @@ class GuildEventParticipantRemoveResult(BaseModel):
 
 class GuildEventSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    discord_id: str
+    client: 'GuildEventSelectResultClient'
     description: str | None
+    discord_id: str
     end_time: datetime
+    id: UUID
     image: str | None
     location: str | None
     name: str
+    organizer: 'GuildEventSelectResultOrganizer'
+    participants: list['GuildEventSelectResultParticipants']
+    projection: 'GuildEventSelectResultProjection | None'
     start_time: datetime
     url: str | None
-    client: 'GuildEventSelectResultClient'
-    projection: 'GuildEventSelectResultProjection | None'
-    participants: list['GuildEventSelectResultParticipants']
-    organizer: 'GuildEventSelectResultOrganizer'
 
 
 class GuildEventSelectResultClient(BaseModel):
@@ -843,22 +847,24 @@ class GuildEventSelectResultClient(BaseModel):
 
 class GuildEventSelectResultOrganizer(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class GuildEventSelectResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class GuildEventSelectResultProjection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
     channel_id: str
+    id: UUID
     message_id: str | None
     name: str
     status: 'ProjectionStatus'
@@ -881,10 +887,10 @@ class HistoireDeleteByIdResult(BaseModel):
 
 class HistoireGetByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    title: str
-    text: str
     formatted: bool
+    id: UUID
+    text: str
+    title: str
 
 
 class HistoireInsertResult(BaseModel):
@@ -921,27 +927,27 @@ class MediaAlbumResult(BaseModel):
 
 class MediaSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
-    favourites: int
-    site_url: str
-    type: 'AnilistMediaType'
-    id_mal: int | None
-    title_user_preferred: str
-    title_native: str | None
-    title_english: str | None
-    synonyms: list[str]
+    chapters: int | None
+    cover_image_color: str | None
+    cover_image_extra_large: str
     description: str | None
-    status: 'AnilistMediaStatus | None'
+    duration: int | None
+    episodes: int | None
+    favourites: int
+    genres: list[str]
+    id_al: int
+    id_mal: int | None
+    is_adult: bool
+    popularity: int
     season: 'AnilistMediaSeason | None'
     season_year: int | None
-    episodes: int | None
-    duration: int | None
-    chapters: int | None
-    cover_image_extra_large: str
-    cover_image_color: str | None
-    popularity: int
-    is_adult: bool
-    genres: list[str]
+    site_url: str
+    status: 'AnilistMediaStatus | None'
+    synonyms: list[str]
+    title_english: str | None
+    title_native: str | None
+    title_user_preferred: str
+    type: 'AnilistMediaType'
 
 
 class MediaTitleAutocompleteResult(BaseModel):
@@ -953,9 +959,9 @@ class MediaTitleAutocompleteResult(BaseModel):
 
 class MediasPoolExportResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    favourites: int
     id_al: int
     image: str
-    favourites: int
 
 
 class MessageBulkDeleteResult(BaseModel):
@@ -1085,12 +1091,12 @@ class ParticipantAddBody(BaseModel):
 
 class PlayerAddCoinsResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'PlayerAddCoinsResultUser'
-    moecoins: int
-    game_mode: 'WaicolleGameMode'
     blood_shards: int
     frozen_at: datetime | None
+    game_mode: 'WaicolleGameMode'
     id: UUID
+    moecoins: int
+    user: 'PlayerAddCoinsResultUser'
 
 
 class PlayerAddCoinsResultUser(BaseModel):
@@ -1100,8 +1106,8 @@ class PlayerAddCoinsResultUser(BaseModel):
 
 class PlayerAddCollectionResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    player: 'PlayerAddCollectionResultPlayer'
     collection: 'PlayerAddCollectionResultCollection'
+    player: 'PlayerAddCollectionResultPlayer'
 
 
 class PlayerAddCollectionResultCollection(BaseModel):
@@ -1117,15 +1123,15 @@ class PlayerAddCollectionResultPlayer(BaseModel):
 
 class PlayerAddMediaResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    player: 'PlayerAddMediaResultPlayer'
     media: 'PlayerAddMediaResultMedia'
+    player: 'PlayerAddMediaResultPlayer'
 
 
 class PlayerAddMediaResultMedia(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
-    type: 'AnilistMediaType'
     title_user_preferred: str
+    type: 'AnilistMediaType'
 
 
 class PlayerAddMediaResultPlayer(BaseModel):
@@ -1147,8 +1153,8 @@ class PlayerAddStaffResultPlayer(BaseModel):
 class PlayerAddStaffResultStaff(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
-    name_user_preferred: str
     name_native: str | None
+    name_user_preferred: str
 
 
 class PlayerCollectionStatsResult(BaseModel):
@@ -1160,10 +1166,10 @@ class PlayerCollectionStatsResult(BaseModel):
 
 class PlayerCollectionStatsResultCollection(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    name: str
     author: 'PlayerCollectionStatsResultCollectionAuthor'
+    id: UUID
     medias: list['PlayerCollectionStatsResultCollectionMedias']
+    name: str
     staffs: list['PlayerCollectionStatsResultCollectionStaffs']
 
 
@@ -1179,16 +1185,16 @@ class PlayerCollectionStatsResultCollectionAuthorUser(BaseModel):
 
 class PlayerCollectionStatsResultCollectionMedias(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    type: 'AnilistMediaType'
     id_al: int
     title_user_preferred: str
+    type: 'AnilistMediaType'
 
 
 class PlayerCollectionStatsResultCollectionStaffs(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
-    name_user_preferred: str
     name_native: str | None
+    name_user_preferred: str
 
 
 class PlayerFreezeResult(BaseModel):
@@ -1198,16 +1204,17 @@ class PlayerFreezeResult(BaseModel):
 
 class PlayerGetByUserResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'PlayerGetByUserResultUser'
-    id: UUID
-    frozen_at: datetime | None
     blood_shards: int
+    frozen_at: datetime | None
     game_mode: 'WaicolleGameMode'
+    id: UUID
     moecoins: int
+    user: 'PlayerGetByUserResultUser'
 
 
 class PlayerGetByUserResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    age_verified: bool
     discord_id: str
 
 
@@ -1220,9 +1227,9 @@ class PlayerMediaStatsResult(BaseModel):
 
 class PlayerMediaStatsResultMedia(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    type: 'AnilistMediaType'
     id_al: int
     title_user_preferred: str
+    type: 'AnilistMediaType'
 
 
 class PlayerMergeResult(BaseModel):
@@ -1252,26 +1259,26 @@ class PlayerSelectAllResultUser(BaseModel):
 
 class PlayerSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    user: 'PlayerSelectAllResultUser'
-    id: UUID
-    frozen_at: datetime | None
     blood_shards: int
+    frozen_at: datetime | None
     game_mode: 'WaicolleGameMode'
+    id: UUID
     moecoins: int
+    user: 'PlayerSelectAllResultUser'
 
 
 class PlayerStaffStatsResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    staff: 'PlayerStaffStatsResultStaff'
     nb_charas: int
     nb_owned: int
+    staff: 'PlayerStaffStatsResultStaff'
 
 
 class PlayerStaffStatsResultStaff(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
-    name_user_preferred: str
     name_native: str | None
+    name_user_preferred: str
 
 
 class PlayerTrackReversedResult(BaseModel):
@@ -1283,9 +1290,9 @@ class PlayerTrackReversedResult(BaseModel):
 
 class PlayerTrackedItemsResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    tracked_collections: list['PlayerTrackedItemsResultTrackedCollections']
     tracked_medias: list['PlayerTrackedItemsResultTrackedMedias']
     tracked_staffs: list['PlayerTrackedItemsResultTrackedStaffs']
-    tracked_collections: list['PlayerTrackedItemsResultTrackedCollections']
 
 
 class PlayerTrackedItemsResultTrackedCollections(BaseModel):
@@ -1328,8 +1335,8 @@ class PresenceInsertResult(BaseModel):
 class PresenceSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    type: 'PresencePresenceType'
     name: str
+    type: 'PresencePresenceType'
 
 
 class ProfileGetByDiscordIdResultUser(BaseModel):
@@ -1342,9 +1349,9 @@ class ProfileSearchResult(BaseModel):
     birthday: datetime | None
     full_name: str | None
     graduation_year: int | None
+    n7_major: str | None
     photo: str | None
     pronouns: str | None
-    n7_major: str | None
     telephone: str | None
     user: 'ProfileGetByDiscordIdResultUser'
 
@@ -1406,31 +1413,31 @@ class ProjoRemoveMediaResult(BaseModel):
 
 class ProjoSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    medias: list['ProjoSelectResultMedias']
-    external_medias: list['ProjoSelectResultExternalMedias']
-    participants: list['ProjoSelectResultParticipants']
-    guild_events: list['ProjoSelectResultGuildEvents']
-    legacy_events: list['ProjoSelectResultLegacyEvents']
-    status: 'ProjectionStatus'
-    name: str
-    message_id: str | None
     channel_id: str
+    external_medias: list['ProjoSelectResultExternalMedias']
+    guild_events: list['ProjoSelectResultGuildEvents']
     id: UUID
+    legacy_events: list['ProjoSelectResultLegacyEvents']
+    medias: list['ProjoSelectResultMedias']
+    message_id: str | None
+    name: str
+    participants: list['ProjoSelectResultParticipants']
+    status: 'ProjectionStatus'
 
 
 class ProjoSelectResultExternalMedias(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
-    title: str
     added_alias: datetime | None = Field(validation_alias='@added', serialization_alias='@added')
+    title: str
 
 
 class ProjoSelectResultGuildEvents(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    discord_id: str
     description: str | None
+    discord_id: str
     end_time: datetime
+    id: UUID
     image: str | None
     location: str | None
     name: str
@@ -1440,23 +1447,24 @@ class ProjoSelectResultGuildEvents(BaseModel):
 
 class ProjoSelectResultLegacyEvents(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
     date: datetime
     description: str
+    id: UUID
 
 
 class ProjoSelectResultMedias(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_al: int
-    title_user_preferred: str
     added_alias: datetime | None = Field(validation_alias='@added', serialization_alias='@added')
+    title_user_preferred: str
 
 
 class ProjoSelectResultParticipants(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class ProjoUpdateMessageIdResult(BaseModel):
@@ -1481,12 +1489,12 @@ class QuizzDeleteByIdResult(BaseModel):
 
 class QuizzGetByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    author: 'QuizzGetByIdResultAuthor'
-    id: UUID
-    channel_id: str
     answer: str | None
     attachment_url: str | None
+    author: 'QuizzGetByIdResultAuthor'
+    channel_id: str
     hints: list[str] | None
+    id: UUID
     question: str | None
     submitted_at: datetime
 
@@ -1498,12 +1506,12 @@ class QuizzGetByIdResultAuthor(BaseModel):
 
 class QuizzGetOldestResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    author: 'QuizzGetOldestResultAuthor'
-    id: UUID
-    channel_id: str
     answer: str | None
     attachment_url: str | None
+    author: 'QuizzGetOldestResultAuthor'
+    channel_id: str
     hints: list[str] | None
+    id: UUID
     question: str | None
     submitted_at: datetime
 
@@ -1570,8 +1578,8 @@ class ReminderDeleteByIdResult(BaseModel):
 
 class ReminderInsertSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
     channel_id: str
+    id: UUID
     message: str
     timestamp: datetime
     user: 'ReminderInsertSelectResultUser'
@@ -1584,8 +1592,8 @@ class ReminderInsertSelectResultUser(BaseModel):
 
 class ReminderSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
     channel_id: str
+    id: UUID
     message: str
     timestamp: datetime
     user: 'ReminderSelectAllResultUser'
@@ -1622,14 +1630,14 @@ class RoleDeleteByRoleIdResult(BaseModel):
 
 class RoleInsertSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    role_id: str
     emoji: str
+    role_id: str
 
 
 class RoleSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    role_id: str
     emoji: str
+    role_id: str
 
 
 class RollData(BaseModel):
@@ -1683,10 +1691,10 @@ class SkillInsertResult(BaseModel):
 
 class SkillSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-    name: str
     content: str
     description: str
+    id: UUID
+    name: str
 
 
 class StaffAlbumResult(BaseModel):
@@ -1706,22 +1714,22 @@ class StaffNameAutocompleteResult(BaseModel):
 
 class StaffSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_al: int
-    favourites: int
-    site_url: str
-    name_user_preferred: str
-    name_native: str | None
-    name_alternative: list[str]
-    description: str | None
-    image_large: str
-    gender: str | None
     age: int | None
-    date_of_birth_year: int | None
-    date_of_birth_month: int | None
     date_of_birth_day: int | None
-    date_of_death_year: int | None
-    date_of_death_month: int | None
+    date_of_birth_month: int | None
+    date_of_birth_year: int | None
     date_of_death_day: int | None
+    date_of_death_month: int | None
+    date_of_death_year: int | None
+    description: str | None
+    favourites: int
+    gender: str | None
+    id_al: int
+    image_large: str
+    name_alternative: list[str]
+    name_native: str | None
+    name_user_preferred: str
+    site_url: str
 
 
 class TradeDeleteResult(BaseModel):
@@ -1732,13 +1740,13 @@ class TradeDeleteResult(BaseModel):
 class TradeSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     author: 'TradeSelectResultAuthor'
-    received: list['TradeSelectResultReceived']
-    offeree: 'TradeSelectResultOfferee'
-    offered: list['TradeSelectResultOffered']
-    id: UUID
-    created_at: datetime
-    completed_at: datetime | None
     blood_shards: int
+    completed_at: datetime | None
+    created_at: datetime
+    id: UUID
+    offered: list['TradeSelectResultOffered']
+    offeree: 'TradeSelectResultOfferee'
+    received: list['TradeSelectResultReceived']
 
 
 class TradeSelectResultAuthor(BaseModel):
@@ -1753,21 +1761,21 @@ class TradeSelectResultAuthorUser(BaseModel):
 
 class TradeSelectResultOffered(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    character: 'TradeSelectResultOfferedCharacter'
-    owner: 'TradeSelectResultOfferedOwner'
-    original_owner: 'TradeSelectResultOfferedOriginalOwner | None'
-    custom_position_waifu: 'TradeSelectResultOfferedCustomPositionWaifu | None'
-    id: UUID
-    frozen: bool
-    disabled: bool
     blooded: bool
+    character: 'TradeSelectResultOfferedCharacter'
     custom_collage: bool
     custom_image: str | None
     custom_name: str | None
     custom_position: 'WaicolleCollagePosition'
+    custom_position_waifu: 'TradeSelectResultOfferedCustomPositionWaifu | None'
+    disabled: bool
+    frozen: bool
+    id: UUID
     level: int
     locked: bool
     nanaed: bool
+    original_owner: 'TradeSelectResultOfferedOriginalOwner | None'
+    owner: 'TradeSelectResultOfferedOwner'
     timestamp: datetime
     trade_locked: bool
 
@@ -1814,21 +1822,21 @@ class TradeSelectResultOffereeUser(BaseModel):
 
 class TradeSelectResultReceived(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    character: 'TradeSelectResultReceivedCharacter'
-    owner: 'TradeSelectResultReceivedOwner'
-    original_owner: 'TradeSelectResultReceivedOriginalOwner | None'
-    custom_position_waifu: 'TradeSelectResultReceivedCustomPositionWaifu | None'
-    id: UUID
-    frozen: bool
-    disabled: bool
     blooded: bool
+    character: 'TradeSelectResultReceivedCharacter'
     custom_collage: bool
     custom_image: str | None
     custom_name: str | None
     custom_position: 'WaicolleCollagePosition'
+    custom_position_waifu: 'TradeSelectResultReceivedCustomPositionWaifu | None'
+    disabled: bool
+    frozen: bool
+    id: UUID
     level: int
     locked: bool
     nanaed: bool
+    original_owner: 'TradeSelectResultReceivedOriginalOwner | None'
+    owner: 'TradeSelectResultReceivedOwner'
     timestamp: datetime
     trade_locked: bool
 
@@ -1918,6 +1926,13 @@ class UpsertProfileBody(BaseModel):
     telephone: str | None = None
 
 
+class UpsertUser(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    discord_id: str
+    discord_username: str
+    age_verified: bool
+
+
 class UpsertUserCalendarBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_username: str
@@ -1941,36 +1956,43 @@ class UserCalendarMergeResult(BaseModel):
 
 class UserCalendarSelectAllResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
     ics: str
+    id: UUID
     user: 'UserCalendarSelectAllResultUser'
 
 
 class UserCalendarSelectAllResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class UserCalendarSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
     ics: str
+    id: UUID
     user: 'UserCalendarSelectResultUser'
 
 
 class UserCalendarSelectResultUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    age_verified: bool
     discord_id: str
     discord_username: str
+    id: UUID
 
 
 class UserSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_id: str
     discord_username: str
+
+
+class UserUpsertResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: UUID
 
 
 class ValidationError(BaseModel):
@@ -1984,23 +2006,23 @@ class ValidationError(BaseModel):
 
 class WaifuBulkUpdateResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    character: 'WaifuBulkUpdateResultCharacter'
-    owner: 'WaifuBulkUpdateResultOwner'
-    original_owner: 'WaifuBulkUpdateResultOriginalOwner | None'
-    custom_position_waifu: 'WaifuBulkUpdateResultCustomPositionWaifu | None'
-    trade_locked: bool
-    timestamp: datetime
-    nanaed: bool
-    locked: bool
-    level: int
-    custom_position: 'WaicolleCollagePosition'
-    custom_name: str | None
-    custom_image: str | None
-    custom_collage: bool
     blooded: bool
+    character: 'WaifuBulkUpdateResultCharacter'
+    custom_collage: bool
+    custom_image: str | None
+    custom_name: str | None
+    custom_position: 'WaicolleCollagePosition'
+    custom_position_waifu: 'WaifuBulkUpdateResultCustomPositionWaifu | None'
     disabled: bool
     frozen: bool
     id: UUID
+    level: int
+    locked: bool
+    nanaed: bool
+    original_owner: 'WaifuBulkUpdateResultOriginalOwner | None'
+    owner: 'WaifuBulkUpdateResultOwner'
+    timestamp: datetime
+    trade_locked: bool
 
 
 class WaifuBulkUpdateResultCharacter(BaseModel):
@@ -2035,16 +2057,16 @@ class WaifuBulkUpdateResultOwnerUser(BaseModel):
 
 class WaifuExportResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    charas: list['WaifuExportResultCharas']
     players: list['WaifuExportResultPlayers']
     waifus: list['WaifuExportResultWaifus']
-    charas: list['WaifuExportResultCharas']
 
 
 class WaifuExportResultCharas(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    favourites: int
     id_al: int
     image: str
-    favourites: int
 
 
 class WaifuExportResultPlayers(BaseModel):
@@ -2056,15 +2078,15 @@ class WaifuExportResultPlayers(BaseModel):
 
 class WaifuExportResultWaifus(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id: UUID
+    blooded: bool
     character_id: int
-    owner_discord_id: str
-    original_owner_discord_id: str | None
-    timestamp: datetime
+    id: UUID
     level: int
     locked: bool
     nanaed: bool
-    blooded: bool
+    original_owner_discord_id: str | None
+    owner_discord_id: str
+    timestamp: datetime
     trade_locked: bool
 
 
@@ -2075,21 +2097,21 @@ class WaifuReplaceCustomPositionResult(BaseModel):
 
 class WaifuSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    character: 'WaifuSelectResultCharacter'
-    owner: 'WaifuSelectResultOwner'
-    original_owner: 'WaifuSelectResultOriginalOwner | None'
-    custom_position_waifu: 'WaifuSelectResultCustomPositionWaifu | None'
-    id: UUID
-    frozen: bool
-    disabled: bool
     blooded: bool
+    character: 'WaifuSelectResultCharacter'
     custom_collage: bool
     custom_image: str | None
     custom_name: str | None
     custom_position: 'WaicolleCollagePosition'
+    custom_position_waifu: 'WaifuSelectResultCustomPositionWaifu | None'
+    disabled: bool
+    frozen: bool
+    id: UUID
     level: int
     locked: bool
     nanaed: bool
+    original_owner: 'WaifuSelectResultOriginalOwner | None'
+    owner: 'WaifuSelectResultOwner'
     timestamp: datetime
     trade_locked: bool
 
