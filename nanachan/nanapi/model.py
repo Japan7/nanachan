@@ -1986,6 +1986,7 @@ class UserCalendarSelectResultUser(BaseModel):
 
 class UserSelectResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    age_verified: bool
     discord_id: str
     discord_username: str
 
