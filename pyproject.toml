@@ -31,7 +31,7 @@ dependencies = [
     "backoff==2.2.1",
     "yappi==1.7.3",
     "valkey[libvalkey]==6.1.1",
-    "yt-dlp[default]==2026.2.4",
+    "yt-dlp[default]==2026.2.21",
     "aiojobs==1.4.0",
     "tzdata==2025.3",
     "python-dateutil==2.9.0.post0",
