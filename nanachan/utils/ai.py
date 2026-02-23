@@ -139,48 +139,46 @@ async def chat_stream[AgentDepsT](
                 ...
 
 
-def nanapi_tools() -> Iterable[Tool[None]]:
+def nanapi_tools() -> Sequence[Tool[None]]:
     nanapi = get_nanapi()
-    endpoints = [
-        nanapi.ai.ai_insert_skill,
-        nanapi.amq.amq_get_accounts,
-        nanapi.anilist.anilist_get_accounts,
-        nanapi.anilist.anilist_get_account_entries,
-        nanapi.anilist.anilist_get_medias,
-        nanapi.anilist.anilist_media_search,
-        nanapi.anilist.anilist_get_media_list_entries,
-        nanapi.anilist.anilist_get_media_chara_edges,
-        nanapi.anilist.anilist_get_charas,
-        nanapi.anilist.anilist_chara_search,
-        nanapi.anilist.anilist_get_chara_chara_edges,
-        nanapi.anilist.anilist_get_staffs,
-        nanapi.anilist.anilist_staff_search,
-        nanapi.anilist.anilist_get_staff_chara_edges,
-        nanapi.calendar.calendar_get_user_calendar,
-        nanapi.calendar.calendar_get_guild_events,
-        nanapi.histoire.histoire_histoire_index,
-        nanapi.histoire.histoire_get_histoire,
-        nanapi.projection.projection_get_projections,
-        nanapi.reminder.reminder_get_reminders,
-        nanapi.user.user_profile_search,
-        nanapi.user.user_get_profile,
-        nanapi.waicolle.waicolle_get_players,
-        nanapi.waicolle.waicolle_get_player,
-        nanapi.waicolle.waicolle_get_player_tracked_items,
-        nanapi.waicolle.waicolle_get_player_track_unlocked,
-        nanapi.waicolle.waicolle_get_player_media_stats,
-        nanapi.waicolle.waicolle_get_player_staff_stats,
-        nanapi.waicolle.waicolle_get_player_collection_stats,
-        nanapi.waicolle.waicolle_get_waifus,
-        nanapi.waicolle.waicolle_trade_index,
-        nanapi.waicolle.waicolle_get_collection,
-    ]
-    for endpoint in endpoints:
-        yield Tool(endpoint, takes_ctx=None)
+    return (
+        Tool(nanapi.ai.ai_insert_skill),
+        Tool(nanapi.amq.amq_get_accounts),
+        Tool(nanapi.anilist.anilist_get_accounts),
+        Tool(nanapi.anilist.anilist_get_account_entries),
+        Tool(nanapi.anilist.anilist_get_medias),
+        Tool(nanapi.anilist.anilist_media_search),
+        Tool(nanapi.anilist.anilist_get_media_list_entries),
+        Tool(nanapi.anilist.anilist_get_media_chara_edges),
+        Tool(nanapi.anilist.anilist_get_charas),
+        Tool(nanapi.anilist.anilist_chara_search),
+        Tool(nanapi.anilist.anilist_get_chara_chara_edges),
+        Tool(nanapi.anilist.anilist_get_staffs),
+        Tool(nanapi.anilist.anilist_staff_search),
+        Tool(nanapi.anilist.anilist_get_staff_chara_edges),
+        Tool(nanapi.calendar.calendar_get_user_calendar),
+        Tool(nanapi.calendar.calendar_get_guild_events),
+        Tool(nanapi.histoire.histoire_histoire_index),
+        Tool(nanapi.histoire.histoire_get_histoire),
+        Tool(nanapi.projection.projection_get_projections),
+        Tool(nanapi.reminder.reminder_get_reminders),
+        Tool(nanapi.user.user_profile_search),
+        Tool(nanapi.user.user_get_profile),
+        Tool(nanapi.waicolle.waicolle_get_players),
+        Tool(nanapi.waicolle.waicolle_get_player),
+        Tool(nanapi.waicolle.waicolle_get_player_tracked_items),
+        Tool(nanapi.waicolle.waicolle_get_player_track_unlocked),
+        Tool(nanapi.waicolle.waicolle_get_player_media_stats),
+        Tool(nanapi.waicolle.waicolle_get_player_staff_stats),
+        Tool(nanapi.waicolle.waicolle_get_player_collection_stats),
+        Tool(nanapi.waicolle.waicolle_get_waifus),
+        Tool(nanapi.waicolle.waicolle_trade_index),
+        Tool(nanapi.waicolle.waicolle_get_collection),
+    )
 
 
 def get_nanapi_toolset():
-    return FunctionToolset[Any](tools=[*nanapi_tools()])
+    return FunctionToolset[Any](tools=nanapi_tools())
 
 
 @dataclass
