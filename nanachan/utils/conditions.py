@@ -47,7 +47,9 @@ class Conditions:
         self.ready = asyncio.Event()
 
     async def matching_conditions(self, ctx: MultiplexingContext):
-        await self.ready.wait()
+        async with asyncio.timeout(1):
+            await self.ready.wait()
+
         for condition in self.active_conditions:
             try:
                 cond_status = await condition.check(ctx)
@@ -59,7 +61,9 @@ class Conditions:
                 logger.exception(e)
 
     async def __call__(self, ctx: MultiplexingContext, waifu_cog: WaifuCollection):
-        await self.ready.wait()
+        async with asyncio.timeout(1):
+            await self.ready.wait()
+
         async for cond_status, condition in self.matching_conditions(ctx):
             try:
                 async with condition:

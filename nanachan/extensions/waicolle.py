@@ -2484,8 +2484,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             spam = False
 
         if spam:
-            async for _ in conditional_drop.matching_conditions(ctx):
-                spam = False
+            try:
+                async for _ in conditional_drop.matching_conditions(ctx):
+                    spam = False
+            except Exception:
+                logger.info('condition check failed horribly')
+                print_exc()
 
         if spam:
             self.ignored_messages[ctx.author.id] += 1
@@ -2538,7 +2542,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             else:
                 return
 
-            await conditional_drop(ctx, self)
+            try:
+                await conditional_drop(ctx, self)
+            except Exception:
+                logger.info('condition drop check failed horribly')
+                print_exc()
 
             if ctx.channel.id == BOT_ROOM_ID:
                 return
