@@ -100,7 +100,7 @@ class Conditions:
                 logger.exception(e)
 
     async def load_conditions(self, waifu_cog: WaifuCollection):
-        while True:
+        while len(self.active_conditions) == 0:
             try:
                 async with asyncio.timeout(30):
                     redis = await get_valkey()
