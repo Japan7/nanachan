@@ -100,25 +100,28 @@ class Conditions:
                 logger.exception(e)
 
     async def load_conditions(self, waifu_cog: WaifuCollection):
-        try:
-            redis = await get_redis()
-            if redis is None:
-                return
+        while True:
+            try:
+                async with asyncio.timeout(30):
+                    redis = await get_redis()
+                    if redis is None:
+                        return
 
-            coro = redis.smembers(REDIS_KEY)
-            assert asyncio.iscoroutine(coro)
-            for condition_arguments in await coro:
-                try:
-                    args = json.loads(condition_arguments)
-                    cond_cls = self.condition_classes[args['condition_name']]
-                    condition = await cond_cls.deserialize(waifu_cog=waifu_cog, **args)
-                    self.active_conditions.append(condition)
-                except Exception as e:
-                    logger.exception(e)
+                    coro = redis.smembers(REDIS_KEY)
+                    assert asyncio.iscoroutine(coro)
+                    for condition_arguments in await coro:
+                        try:
+                            args = json.loads(condition_arguments)
+                            cond_cls = self.condition_classes[args['condition_name']]
+                            condition = await cond_cls.deserialize(waifu_cog=waifu_cog, **args)
+                            self.active_conditions.append(condition)
+                        except Exception as e:
+                            logger.exception(e)
 
-            self.ready.set()
-        except Exception:
-            await waifu_cog.bot.on_error('load_conditions')
+                    self.ready.set()
+            except Exception:
+                await waifu_cog.bot.on_error('load_conditions')
+                await asyncio.sleep(30)
 
     def condition(self, condition_class: Type[Condition]):
         name = condition_class.condition_name
