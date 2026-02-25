@@ -123,6 +123,7 @@ class Conditions:
                 self.active_conditions.clear()
                 await waifu_cog.bot.on_error('load_conditions')
                 await asyncio.sleep(30)
+                continue
 
             break
 
