@@ -5,32 +5,35 @@ import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 import backoff
-import valkey.asyncio as aioredis
+import valkey.asyncio as aiovalkey
 
 from nanachan.settings import REDIS_HOST, REDIS_KWARGS, REDIS_PORT, TOKEN
 from nanachan.utils.misc import json_dumps, print_exc
 
 logger = logging.getLogger(__name__)
 
-_redis: aioredis.Redis | bool | None = False
+_valkey: aiovalkey.Valkey | None = None
 
 
 @backoff.on_exception(backoff.expo, Exception, max_time=3600 * 12)
-async def get_redis() -> aioredis.Redis | None:
-    global _redis
+async def get_valkey() -> aiovalkey.Valkey | None:
+    global _valkey
 
-    if _redis is False:
+    if _valkey is None or (_valkey.connection is not None and not _valkey.connection.is_connected):
         if REDIS_HOST is not None:
-            pool = aioredis.BlockingConnectionPool(host=REDIS_HOST, port=REDIS_PORT)
-            _redis = await aioredis.Redis(connection_pool=pool, **REDIS_KWARGS)
+            pool = aiovalkey.BlockingConnectionPool(host=REDIS_HOST, port=REDIS_PORT)
+            _valkey = await aiovalkey.Valkey(connection_pool=pool, **REDIS_KWARGS)
         else:
-            logger.info("Redis is not set up, cache won't persist between restarts")
-            _redis = None
+            logger.info("Valkey is not set up, cache won't persist between restarts")
+            _valkey = None
 
-    return cast(aioredis.Redis | None, _redis)
+    return _valkey
+
+
+get_redis = get_valkey
 
 
 token_hash = hashlib.sha256(TOKEN.encode()).hexdigest()
@@ -65,7 +68,7 @@ async def redis_loop():
 SubKeyType = str | int | None
 
 
-class BaseRedis[T](ABC):
+class BaseValkey[T](ABC):
     key: str
     values: dict[SubKeyType, bytes | None]
 
@@ -156,11 +159,11 @@ class _StringValueMixin:
         return value.decode()
 
 
-class StringValue(_StringValueMixin, BaseRedis[str]):
+class StringValue(_StringValueMixin, BaseValkey[str]):
     pass
 
 
-class _IntegerLikeValue(BaseRedis[int]):
+class _IntegerLikeValue(BaseValkey[int]):
     BYTEORDER = 'big'
 
     def __init__(self, key: str, int_bytes: int = 4, signed: bool = True, **kwargs):
@@ -184,7 +187,7 @@ class TruncatedFloatValue(_IntegerLikeValue):
         return super().encode(int(value))
 
 
-class FloatValue(BaseRedis[float]):
+class FloatValue(BaseValkey[float]):
     def encode(self, value: float) -> bytes:
         return str(value).encode()
 
@@ -192,7 +195,7 @@ class FloatValue(BaseRedis[float]):
         return float(value.decode())
 
 
-class BooleanValue(BaseRedis[bool]):
+class BooleanValue(BaseValkey[bool]):
     def __init__(self, key: str, default: bool = False, **kwargs):
         super().__init__(key, **kwargs)
         self.default = default
@@ -210,7 +213,7 @@ class BooleanValue(BaseRedis[bool]):
         return super()._decode(value)
 
 
-class JSONValue(BaseRedis[Any]):
+class JSONValue(BaseValkey[Any]):
     def encode(self, value: Any) -> bytes:
         return json_dumps(value).encode()
 

@@ -16,7 +16,7 @@ from discord.abc import Messageable
 from discord.member import Member
 from discord.user import User
 
-from nanachan.redis.base import get_redis, make_redis_key
+from nanachan.redis.base import get_valkey, make_redis_key
 from nanachan.utils.misc import json_dumps
 
 if TYPE_CHECKING:
@@ -73,7 +73,7 @@ class Conditions:
                         await condition.fail(ctx)
 
                 member = json_dumps(condition.serialize()).encode()
-                redis = await get_redis()
+                redis = await get_valkey()
                 if redis is not None:
                     coro = redis.srem(REDIS_KEY, member)
                     assert asyncio.iscoroutine(coro)
@@ -89,7 +89,7 @@ class Conditions:
                     self.active_conditions.append(cond)
 
                     member = json_dumps(cond.serialize()).encode()
-                    redis = await get_redis()
+                    redis = await get_valkey()
                     if redis is not None:
                         coro = redis.sadd(REDIS_KEY, member)
                         assert asyncio.iscoroutine(coro)
@@ -103,7 +103,7 @@ class Conditions:
         while True:
             try:
                 async with asyncio.timeout(30):
-                    redis = await get_redis()
+                    redis = await get_valkey()
                     if redis is None:
                         return
 

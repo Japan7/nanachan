@@ -50,7 +50,7 @@ from nanachan.discord.helpers import (
 )
 from nanachan.discord.reactions import ReactionListener, UnregisterListener
 from nanachan.extensions import load_extensions
-from nanachan.redis.base import get_redis
+from nanachan.redis.base import get_valkey
 from nanachan.settings import (
     ANAS_ID,
     BOT_ROOM_ID,
@@ -172,7 +172,7 @@ class Bot(commands.AutoShardedBot):
             bot_room = self.get_bot_room()
             await bot_room.send('アップデイトがあるから、ちょっと待ってね :wink:')
 
-        redis = await get_redis()
+        redis = await get_valkey()
         if redis:
             await redis.close()
 
