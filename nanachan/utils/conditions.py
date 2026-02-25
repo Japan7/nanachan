@@ -120,8 +120,11 @@ class Conditions:
 
                     self.ready.set()
             except Exception:
+                self.active_conditions.clear()
                 await waifu_cog.bot.on_error('load_conditions')
                 await asyncio.sleep(30)
+
+            break
 
     def condition(self, condition_class: Type[Condition]):
         name = condition_class.condition_name
