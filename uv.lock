@@ -633,8 +633,8 @@ wheels = [
 
 [[package]]
 name = "discord-py"
-version = "2.8.0a5392+gdd5d3d37"
-source = { git = "https://github.com/Japan7/discord.py.git?rev=dd5d3d37021516927433f9c8315c7967a5bc0662#dd5d3d37021516927433f9c8315c7967a5bc0662" }
+version = "2.8.0a5401+gcb570341"
+source = { git = "https://github.com/Japan7/discord.py.git?rev=cb57034123f0473a09ca45faea39856211bc403f#cb57034123f0473a09ca45faea39856211bc403f" }
 dependencies = [
     { name = "aiohttp" },
     { name = "audioop-lts" },
@@ -1480,7 +1480,7 @@ requires-dist = [
     { name = "backoff", specifier = "==2.2.1" },
     { name = "dateparser", specifier = ">=1.2.2" },
     { name = "discord-ext-voice-recv", specifier = "==0.5.2a179" },
-    { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=dd5d3d37021516927433f9c8315c7967a5bc0662" },
+    { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=cb57034123f0473a09ca45faea39856211bc403f" },
     { name = "faust-cchardet", specifier = "==2.1.19" },
     { name = "html2text", specifier = "==2025.4.15" },
     { name = "matplotlib", specifier = "==3.10.8" },
