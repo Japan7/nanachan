@@ -3,7 +3,6 @@
 
 # from zoneinfo import ZoneInfo
 
-from aiohttp import BasicAuth
 # from pydantic_ai.common_tools.tavily import tavily_search_tool
 # from pydantic_ai.mcp import MCPServerStdio, MCPServerStreamableHTTP
 
@@ -34,7 +33,6 @@ BOT_VOICE_ID = 0000
 ## nanapi
 # NANAPI_URL = 'https://nanapi.japan7.bde.enseeiht.fr/prod'
 # NANAPI_PUBLIC_URL = NANAPI_URL
-JAPAN7_AUTH = BasicAuth('username', 'password')
 NANAPI_CLIENT_USERNAME = ''
 NANAPI_CLIENT_PASSWORD = ''
 

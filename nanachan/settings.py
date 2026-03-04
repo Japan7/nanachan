@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, Sequence
 from zoneinfo import ZoneInfo
 
-from aiohttp import BasicAuth
 from discord.utils import utcnow
 from pydantic_ai import AbstractToolset
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
@@ -35,7 +34,6 @@ ENABLE_MESSAGE_EXPORT = False
 ## nanapi
 NANAPI_URL = 'https://nanapi.japan7.bde.enseeiht.fr/prod'
 NANAPI_PUBLIC_URL = NANAPI_URL
-JAPAN7_AUTH: BasicAuth | None = None
 # NANAPI_CLIENT_USERNAME = ''
 # NANAPI_CLIENT_PASSWORD = ''
 
