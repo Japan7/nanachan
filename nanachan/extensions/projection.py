@@ -91,7 +91,7 @@ class ProjectionCog(
     async def cog_unload(self):
         self.remind_projo.cancel()
 
-    @tasks.loop(time=time(hour=9, minute=0, tzinfo=TZ))
+    @tasks.loop(time=time(hour=14, minute=0, tzinfo=TZ))
     async def remind_projo(self):
         now = datetime.now(tz=TZ)
         resp = await get_nanapi().projection.projection_get_projections(status='ONGOING')
@@ -103,8 +103,10 @@ class ProjectionCog(
                 if event.start_time > now and event.start_time <= now + timedelta(hours=24):
                     thread = self.bot.get_thread(int(projo.channel_id))
                     event_url = f'https://discord.com/events/{thread.guild.id}/{event.discord_id}'
+                    mentions = ' '.join(f'<@{p.discord_id}>' for p in projo.participants)
                     await thread.send(
-                        f'[Event]({event_url}) starts <t:{event.start_time.timestamp():.0f}:R>.'
+                        f'[Event]({event_url}) starts <t:{event.start_time.timestamp():.0f}:R>.\n'
+                        f'{mentions}'
                     )
                     break
 
