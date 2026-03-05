@@ -555,7 +555,7 @@ async def timestamp_autocomplete(
     ]
 
 
-h_re = re.compile(r'\d\d?h')
+h_re = re.compile(r'\d\d?h\b')
 
 
 def h_repl(m: re.Match) -> str:
