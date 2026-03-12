@@ -181,6 +181,7 @@ async def create_issue(
       $title: String!
       $body: String!
       $assigneeIds: [ID!]
+      $model: String!
     ) {
       createIssue(
         input: {
