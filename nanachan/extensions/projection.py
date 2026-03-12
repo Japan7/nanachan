@@ -102,10 +102,11 @@ class ProjectionCog(
             for event in projo.guild_events:
                 if event.start_time > now and event.start_time <= now + timedelta(hours=24):
                     thread = self.bot.get_thread(int(projo.channel_id))
-                    event_url = f'https://discord.com/events/{thread.guild.id}/{event.discord_id}'
-                    mentions = ' '.join(f'<@{p.discord_id}>' for p in projo.participants)
+                    discord_event = await thread.guild.fetch_scheduled_event(int(event.discord_id))
+                    mentions = ' '.join([p.mention async for p in discord_event.users()])
                     await thread.send(
-                        f'[Event]({event_url}) starts <t:{event.start_time.timestamp():.0f}:R>.\n'
+                        f'[Event]({discord_event.url}) starts '
+                        '<t:{event.start_time.timestamp():.0f}:R>.\n'
                         f'{mentions}'
                     )
                     break
