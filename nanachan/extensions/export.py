@@ -7,7 +7,7 @@ from discord import Thread
 
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import ReactionAddBody
 from nanachan.settings import RequiresMessageExport
 
