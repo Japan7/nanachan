@@ -41,8 +41,7 @@ class MessageExport(Cog, required_settings=RequiresMessageExport):
             emoji=format_partial_emoji(payload.emoji),
             body=ReactionAddBody(animated=payload.emoji.animated, burst=payload.burst),
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp.raise_exc()
 
     @Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
