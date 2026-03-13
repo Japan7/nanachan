@@ -9,7 +9,7 @@ from discord.ui import Button
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import Embed
 from nanachan.discord.views import BaseView
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import MediaSelectResult, ProjectionStatus, ProjoSelectResultMedias
 from nanachan.settings import NANAPI_PUBLIC_URL, TZ
 from nanachan.utils.anilist import MediaNavigator
@@ -19,16 +19,14 @@ async def get_active_projo(channel_id: int):
     resp = await get_nanapi().projection.projection_get_projections(
         channel_id=str(channel_id), status=ProjectionStatus.ONGOING.value
     )
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
     projos = resp.result
     return projos[0] if len(projos) > 0 else None
 
 
 async def get_projo_embed_view(bot: Bot, projo_id: UUID):
     resp = await get_nanapi().projection.projection_get_projection(projo_id)
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
     projection = resp.result
 
     thread = await bot.fetch_thread(int(projection.channel_id))
@@ -43,8 +41,7 @@ async def get_projo_embed_view(bot: Bot, projo_id: UUID):
         ids_al = [media.id_al for media in projection.medias]
         ids_al_str = ','.join(map(str, ids_al))
         resp = await get_nanapi().anilist.anilist_get_medias(ids_al_str)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
 
         al_medias = resp.result
         al_medias_dict = {media.id_al: media for media in al_medias}
@@ -120,15 +117,13 @@ class ProjectionInfosButton(Button):
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
         resp = await get_nanapi().projection.projection_get_projection(self.projo_id)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         projo = resp.result
 
         ids_al = [media.id_al for media in projo.medias]
         ids_al_str = ','.join(map(str, ids_al))
         resp = await get_nanapi().anilist.anilist_get_medias(ids_al_str)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         al_medias = resp.result
         al_medias_dict = {media.id_al: media for media in al_medias}
 
@@ -158,8 +153,7 @@ class ProjectionView(BaseView):
 
     async def join(self, interaction: discord.Interaction):
         resp = await get_nanapi().projection.projection_get_projection(self.projo_id)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         projo = resp.result
 
         thread = self.bot.get_thread(int(projo.channel_id))

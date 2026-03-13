@@ -16,7 +16,7 @@ from yarl import URL
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import Embed, EmbedField
 from nanachan.discord.views import BaseView, NavigatorView
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import MediaSelectResult, MediaType, StaffSelectResult
 from nanachan.settings import NANAPI_PUBLIC_URL
 from nanachan.utils.misc import autocomplete_truncate
@@ -152,8 +152,7 @@ async def get_score_fields(bot: Bot, media: MediaSelectResult):
     resp = await get_nanapi().anilist.anilist_get_media_list_entries(
         media.id_al,
     )
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
     entries = resp.result
 
     total = (media.episodes if media.type == MediaType.ANIME else media.chapters) or '?'
@@ -195,8 +194,7 @@ def media_autocomplete(media_type: MediaType | None = None, id_al_as_value: bool
         resp = await get_nanapi().anilist.anilist_media_title_autocomplete(
             current, media_type.value if media_type is not None else None
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         results = resp.result
 
         choices: list[Choice[str]] = []
@@ -258,8 +256,7 @@ async def staff_embed(staff: StaffSelectResult):
         embed.add_field(name='Death', value=death)
 
     resp = await get_nanapi().anilist.anilist_get_staff_chara_edges(staff.id_al)
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
     edges = resp.result
 
     if edges:
@@ -286,8 +283,7 @@ async def staff_page(staff: StaffSelectResult) -> dict[str, Any]:
 def staff_autocomplete(id_al_as_value: bool = False):
     async def autocomplete(interaction: discord.Interaction, current: str):
         resp = await get_nanapi().anilist.anilist_staff_name_autocomplete(current)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         results = resp.result
         choices: list[Choice[str]] = []
         for r in results:

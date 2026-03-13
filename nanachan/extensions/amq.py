@@ -27,7 +27,7 @@ from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import AMQWebhook, Colour, Embed, EmbedField, MultiplexingContext
 from nanachan.discord.views import AutoNavigatorView
 from nanachan.extensions.waicolle import WaifuCollection
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import UpsertAMQAccountBody
 from nanachan.settings import (
     AMQ_DEFAULT_SETTINGS,
@@ -880,16 +880,14 @@ SETTINGS_KEY = 'settings'
 
 async def load_settings():
     resp = await get_nanapi().amq.amq_get_settings()
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
     settings = resp.result
     return {s.key: Settings(json.loads(s.value)) for s in settings}
 
 
 async def save(settings: dict):
     resp = await get_nanapi().amq.amq_update_settings(json.dumps(settings))
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
 
 
 #############################
@@ -1060,8 +1058,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
             str(interaction.user.id),
             UpsertAMQAccountBody(discord_username=str(interaction.user), username=username),
         )
-        if not success(resp1):
-            raise RuntimeError(resp1.result)
+        resp1 = resp1.raise_exc()
         await interaction.followup.send(content=self.bot.get_emoji_str('FubukiGO'))
 
     @amq_group.command()
@@ -1069,8 +1066,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
     async def players(self, ctx: LegacyCommandContext):
         """List AMQ registered players"""
         resp = await get_nanapi().amq.amq_get_accounts()
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         players = resp.result
         fields = [
             EmbedField(str(self.bot.get_user(int(row.user.discord_id))), row.username)
@@ -1224,8 +1220,7 @@ class AMQ(Cog, required_settings=RequiresAMQ):
 
     async def _amq_to_discord(self, username: str) -> discord.User | None:
         resp = await get_nanapi().amq.amq_get_accounts(username=username)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         players = resp.result
         if len(players) == 0:
             return None

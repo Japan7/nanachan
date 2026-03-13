@@ -17,7 +17,7 @@ from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import Embed, MultiplexingContext
 from nanachan.discord.views import AutoNavigatorView, BaseView, LockedView, NavigatorView
 from nanachan.nanapi._client import Error, Success
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import (
     ProfileSearchResult,
     UpsertDiscordAccountBodyItem,
@@ -109,8 +109,8 @@ class Profiles(Cog):
         resp = await get_nanapi().user.user_profile_search(
             ','.join(str(m.id) for m in guild.members)
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
+
         profiles = resp.result
         birthdays = [
             (
@@ -144,8 +144,7 @@ class Profiles(Cog):
         resp = await get_nanapi().user.user_profile_search(
             ','.join(str(m.id) for m in guild.members)
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         profiles = resp.result
         now = datetime.now()
         last_promo = now.year if now.month >= 7 else now.year - 1
@@ -196,8 +195,7 @@ class Profiles(Cog):
     @staticmethod
     async def create_or_update_profile(member: Member | discord.User, payload: UpsertProfileBody):
         resp = await get_nanapi().user.user_upsert_profile(str(member.id), payload)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         profile = resp.result
         return profile
 
@@ -264,7 +262,7 @@ class Profiles(Cog):
             case Error(code=404):
                 profile = UpsertProfileBody(discord_username=interaction.user.name)
             case _:
-                raise RuntimeError(profile_resp.result)
+                profile_resp = profile_resp.raise_exc()
 
         embed = self.create_embed(interaction.user, profile)
         await interaction.followup.send(
@@ -282,7 +280,7 @@ class Profiles(Cog):
                 await interaction.followup.send('User has no registered profile.')
                 return
             case _:
-                raise RuntimeError(profile_resp.result)
+                profile_resp = profile_resp.raise_exc()
 
         profile = profile_resp.result
         _ = await interaction.followup.send(embed=self.create_embed(other, profile))
@@ -307,20 +305,19 @@ class Profiles(Cog):
             )
             if re.search(re.escape(search_tags), magic_string, re.IGNORECASE):
                 resp = await get_nanapi().user.user_get_profile(str(member.id))
-                if not success(resp):
-                    match resp.code:
-                        case 404:
-                            continue
-                        case _:
-                            raise RuntimeError(resp.result)
+                match resp:
+                    case Error(code=404):
+                        continue
+                    case _:
+                        resp = resp.raise_exc()
+
                 profile = resp.result
                 members_and_profiles[member.id] = (member, profile)
 
         # search in the cards information
         search = f'%{search_tags}%'
         resp = await get_nanapi().user.user_profile_search(pattern=search)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         profiles = resp.result
 
         for profile in profiles:
@@ -555,7 +552,7 @@ async def user_who_is(interaction: Interaction, member: Member):
             )
             return
         case _:
-            raise RuntimeError(resp.result)
+            resp = resp.raise_exc()
 
     profile = resp.result
     send = partial(interaction.response.send_message, ephemeral=True)

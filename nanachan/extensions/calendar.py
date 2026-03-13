@@ -22,7 +22,7 @@ from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import Members, MultiplexingContext
 from nanachan.extensions.projection import ProjectionCog
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import ParticipantAddBody, UpsertUserCalendarBody
 from nanachan.settings import NANALOOK_URL, NANAPI_CLIENT_USERNAME, NANAPI_PUBLIC_URL, TZ
 from nanachan.utils.calendar import reconcile_participants, upsert_event
@@ -64,8 +64,7 @@ class Calendar_Generator(Cog, name='Calendar'):
             str(interaction.user.id),
             UpsertUserCalendarBody(discord_username=str(interaction.user), ics=ics),
         )
-        if not success(resp1):
-            raise RuntimeError(resp1.result)
+        resp1 = resp1.raise_exc()
 
         await interaction.followup.send(content=self.bot.get_emoji_str('FubukiGO'))
 
@@ -74,8 +73,8 @@ class Calendar_Generator(Cog, name='Calendar'):
         resp = await get_nanapi().calendar.calendar_get_guild_events(
             start_after=datetime.now(TZ).isoformat()  # type: ignore - FIXME: fix mahou.py
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
+
         db_events = {int(e.discord_id): e for e in resp.result}
         all_events = {e.id: e for guild in self.bot.guilds for e in guild.scheduled_events}
         for discord_id, event in db_events.items():
@@ -136,8 +135,7 @@ class Calendar_Generator(Cog, name='Calendar'):
     async def on_scheduled_event_delete(self, event: ScheduledEvent):
         logger.debug(f'Deleting event {event.name} ({event.id})')
         resp = await get_nanapi().calendar.calendar_delete_guild_event(str(event.id))
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         db_event = resp.result
         if db_event.projection:
             projo_cog = ProjectionCog.get_cog(self.bot)
@@ -159,16 +157,14 @@ class Calendar_Generator(Cog, name='Calendar'):
         resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
             str(event.id), str(user.id), body
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
 
     @Cog.listener()
     async def on_scheduled_event_user_remove(self, event: ScheduledEvent, user: User):
         resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
             str(event.id), str(user.id)
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
 
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):

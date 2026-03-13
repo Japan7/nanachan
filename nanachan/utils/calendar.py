@@ -4,7 +4,7 @@ from datetime import timedelta
 from discord import ScheduledEvent
 
 from nanachan.discord.bot import Bot
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import (
     GuildEventMergeResult,
     GuildEventSelectResult,
@@ -42,8 +42,7 @@ async def upsert_event(bot: Bot, event: ScheduledEvent) -> GuildEventMergeResult
         organizer_username=str(event.creator),
     )
     resp = await get_nanapi().calendar.calendar_upsert_guild_event(str(event.id), body)
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
 
     return resp.result
 
@@ -60,13 +59,11 @@ async def reconcile_participants(
             resp = await get_nanapi().calendar.calendar_add_guild_event_participant(
                 str(event.id), str(participant.id), body
             )
-            if not success(resp):
-                raise RuntimeError(resp.result)
+            resp = resp.raise_exc()
         else:
             db_participants.remove(participant.id)
     for discord_id in db_participants:
         resp = await get_nanapi().calendar.calendar_remove_guild_event_participant(
             str(event.id), str(discord_id)
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()

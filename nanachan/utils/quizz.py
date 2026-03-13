@@ -21,7 +21,7 @@ import nanachan.resources
 from nanachan.discord.bot import Bot
 from nanachan.discord.helpers import Embed, MultiplexingMessage, UserType
 from nanachan.extensions.waicolle import WaifuCollection
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
 from nanachan.settings import GLOBAL_COIN_MULTIPLIER, PREFIX, SAUCENAO_API_KEY, RequiresAI
 from nanachan.utils.ai import Agent, get_model, to_binary_content, web_toolset
@@ -130,8 +130,7 @@ class QuizzBase(ABC):
 
     async def get_embed(self, game_id: UUID) -> Embed:
         resp = await get_nanapi().quizz.quizz_get_game(game_id)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         game = resp.result
         channel = self.bot.get_channel(self.channel_id)
         assert isinstance(channel, discord.TextChannel)
@@ -172,8 +171,7 @@ class QuizzBase(ABC):
 
     async def post_end(self, game_id: UUID, message: discord.Message | MultiplexingMessage):
         resp = await get_nanapi().quizz.quizz_get_game(game_id)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         game = resp.result
         game_msg = await message.channel.fetch_message(int(game.message_id))
 
@@ -240,8 +238,7 @@ class AnimeMangaQuizz(QuizzBase):
             author_discord_username=str(author),
         )
         resp = await get_nanapi().quizz.quizz_new_quizz(body)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         quizz = resp.result
         return quizz.id
 
@@ -373,8 +370,7 @@ class LouisQuizz(QuizzBase):
             author_discord_username=str(author),
         )
         resp = await get_nanapi().quizz.quizz_new_quizz(body)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         quizz = resp.result
         return quizz.id
 

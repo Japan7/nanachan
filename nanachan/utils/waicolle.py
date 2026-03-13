@@ -34,8 +34,7 @@ from nanachan.discord.views import (
     RefreshableButton,
     RefreshableSelect,
 )
-from nanachan.nanapi._client import Success
-from nanachan.nanapi.client import Error, get_nanapi, success
+from nanachan.nanapi.client import Error, get_nanapi
 from nanachan.nanapi.model import (
     BulkUpdateWaifusBody,
     CEdgeSelectFilterCharaResult,
@@ -133,8 +132,7 @@ class WaifuSelectorView(CompositeNavigatorView):
             edge_tasks = [(cid, tg.create_task(WaifuHelper.get_edges(cid))) for cid in chara_ids]
 
         resp = await resp_task
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
 
         charas = {c.id_al: c for c in resp.result}
         edges = {cid: await task for cid, task in edge_tasks}
@@ -275,8 +273,7 @@ class RollResultsView(CompositeNavigatorView):
 
         waifu_id = self.waifus[self.displayed_page - 1].id
         resp = await get_nanapi().waicolle.waicolle_get_waifus(str(waifu_id))
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         waifu = resp.result[0]
 
         if any(
@@ -305,8 +302,7 @@ class RollResultsView(CompositeNavigatorView):
                 locked=True,
             )
             resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
-            if not success(resp):
-                raise RuntimeError(resp.result)
+            resp = resp.raise_exc()
 
             await interaction.followup.send(
                 f'Locked {self.bot.get_emoji_str("FubukiGO")}', ephemeral=True
@@ -321,8 +317,7 @@ class RollResultsView(CompositeNavigatorView):
                 resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
                     ','.join(str(w.id) for w in self.waifus)
                 )
-                if not success(resp1):
-                    raise RuntimeError(resp1.result)
+                resp1 = resp1.raise_exc()
                 available = [
                     w
                     for w in resp1.result
@@ -340,15 +335,15 @@ class RollResultsView(CompositeNavigatorView):
                 resp2 = await get_nanapi().waicolle.waicolle_get_waifus(
                     discord_id=str(interaction.user.id), locked=0, trade_locked=0, blooded=0
                 )
-                if not success(resp2):
-                    match resp2.code:
-                        case 404:
-                            raise commands.CommandError(
-                                f'**{interaction.user}** is not a player '
-                                f'{self.bot.get_emoji_str("saladedefruits")}'
-                            )
-                        case _:
-                            raise RuntimeError(resp2.result)
+                match resp2:
+                    case Error(code=404):
+                        raise commands.CommandError(
+                            f'**{interaction.user}** is not a player '
+                            f'{self.bot.get_emoji_str("saladedefruits")}'
+                        )
+                    case _:
+                        resp2 = resp2.raise_exc()
+
                 player_waifus = resp2.result
 
                 chousen_player_coro = self._waifus_selector(
@@ -520,8 +515,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         embed.add_field(name='Gender', value=gender, inline=False)
 
     resp1 = await get_nanapi().anilist.anilist_get_chara_chara_edges(chara.id_al)
-    if not success(resp1):
-        raise RuntimeError(resp1.result)
+    resp1 = resp1.raise_exc()
     edges = resp1.result
     edges.sort(key=lambda edge: edge.character_role == 'BACKGROUND')
 
@@ -550,8 +544,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         embed.add_field(name='Mangaography Top 5', value=' • '.join(mangas[:5]), inline=False)
 
     resp2 = await get_nanapi().waicolle.waicolle_get_waifus(chara_id_al=chara.id_al)
-    if not success(resp2):
-        raise RuntimeError(resp2.result)
+    resp2 = resp2.raise_exc()
     waifus = resp2.result
 
     players_waifus = filter(
@@ -647,8 +640,7 @@ async def chara_embed(bot: Bot, chara: CharaSelectResult) -> Embed:
         )
 
     resp3 = await get_nanapi().waicolle.waicolle_get_players(chara_id_al=chara.id_al)
-    if not success(resp3):
-        raise RuntimeError(resp3.result)
+    resp3 = resp3.raise_exc()
     trackers = resp3.result
 
     members = set(
@@ -679,8 +671,7 @@ async def chara_page(bot: Bot, chara: CharaSelectResult) -> dict[str, Embed]:
 def chara_autocomplete(id_al_as_value: bool = False):
     async def autocomplete(interaction: discord.Interaction, current: str):
         resp = await get_nanapi().anilist.anilist_chara_name_autocomplete(current)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         results = resp.result
         choices: list[Choice[str]] = []
         for r in results:
@@ -704,8 +695,7 @@ def collection_autocomplete():
     async def autocomplete(interaction: discord.Interaction, current: str):
         bot = interaction.client
         resp = await get_nanapi().waicolle.waicolle_collection_name_autocomplete(current)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         results = resp.result
         return [
             Choice(
@@ -750,8 +740,7 @@ class WaifuHelper:
     @staticmethod
     async def get_edges(chara_id: int):
         resp = await get_nanapi().anilist.anilist_get_chara_chara_edges(chara_id)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         edges = resp.result
         edges.sort(key=lambda edge: edge.character_role == 'BACKGROUND')
         return edges
@@ -833,8 +822,7 @@ class RankHelper:
     async def get(cls, wc_rank: WaicolleRank):
         if cls.ranks is None:
             resp = await get_nanapi().waicolle.waicolle_get_ranks()
-            if not success(resp):
-                raise RuntimeError(resp.result)
+            resp = resp.raise_exc()
             cls.ranks = {r.wc_rank: r for r in resp.result}
         return cls.ranks[wc_rank]
 
@@ -915,8 +903,7 @@ class TradeHelper:
                     ]
 
                 resp3 = await resp_task
-                if not success(resp3):
-                    raise RuntimeError(resp3.result)
+                resp3 = resp3.raise_exc()
 
                 charas = {c.id_al: c for c in resp3.result}
                 edges = {cid: await task for cid, task in edge_tasks}
@@ -998,32 +985,31 @@ class TradeHelper:
                     'Trade aborted: resources unavailable'
                 )
                 return
-            case Error():
-                raise RuntimeError(str(resp))
-            case Success():
-                result = resp.result
+            case _:
+                resp = resp.raise_exc()
 
-                await self.cog.drop_alert(
-                    self.author,
-                    result.received,
-                    'Trade',
-                    interaction.followup,
-                    spoiler=False,
-                    silent=self.author_silent,
-                )
-                await self.cog.drop_alert(
-                    self.offeree,
-                    result.offered,
-                    'Trade',
-                    interaction.followup,
-                    spoiler=False,
-                    silent=self.offeree_silent,
-                )
+        result = resp.result
+
+        await self.cog.drop_alert(
+            self.author,
+            result.received,
+            'Trade',
+            interaction.followup,
+            spoiler=False,
+            silent=self.author_silent,
+        )
+        await self.cog.drop_alert(
+            self.offeree,
+            result.offered,
+            'Trade',
+            interaction.followup,
+            spoiler=False,
+            silent=self.offeree_silent,
+        )
 
     async def release(self):
         resp = await get_nanapi().waicolle.waicolle_cancel_trade(self.id)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
 
     @classmethod
     async def create(cls, cog: 'WaifuCollection', trade_waifus: OrderedDict[int, list[UUID]]):
@@ -1035,8 +1021,7 @@ class TradeHelper:
             offered_ids=list(map(str, author_waifus)),
         )
         resp = await get_nanapi().waicolle.waicolle_new_trade(body)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         trade_data = resp.result
         helper = cls(cog, trade_data)
         return helper

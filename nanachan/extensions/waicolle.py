@@ -41,7 +41,7 @@ from nanachan.discord.helpers import (
     get_option,
 )
 from nanachan.discord.views import AutoNavigatorView, LockedView, NavigatorView, StringSelectorView
-from nanachan.nanapi.client import Error, Success, get_nanapi, success
+from nanachan.nanapi.client import Error, Success, get_nanapi
 from nanachan.nanapi.model import (
     AddPlayerCoinsBody,
     BulkUpdateWaifusBody,
@@ -171,8 +171,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             str(self.bot.user.id),
             UpsertPlayerBody(discord_username=str(self.bot.user), game_mode='ALL'),
         )
-        if not success(resp1):
-            raise RuntimeError(resp1.result)
+        resp1 = resp1.raise_exc()
 
         profile_cog = cast('Profiles | None', self.bot.get_cog('Profiles'))
         assert profile_cog is not None
@@ -181,8 +180,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         asyncio.create_task(conditional_drop.load_conditions(self))
 
         resp2 = await get_nanapi().waicolle.waicolle_trade_index()
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
         trades = resp2.result
         for trade in trades:
             # TODO: should be a TradeOfferView
@@ -232,8 +230,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def _register_mode(self, mode: PLAYER_MERGE_GAME_MODE, interaction: discord.Interaction):
         body = UpsertPlayerBody(discord_username=str(interaction.user), game_mode=mode)
         resp1 = await get_nanapi().waicolle.waicolle_upsert_player(str(interaction.user.id), body)
-        if not success(resp1):
-            raise RuntimeError(resp1.result)
+        resp1 = resp1.raise_exc()
 
         assert isinstance(interaction.user, discord.Member)
         assert interaction.guild is not None
@@ -249,8 +246,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp2 = await get_nanapi().waicolle.waicolle_get_waifus(
             discord_id=str(interaction.user.id), as_og=1
         )
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
         waifus = resp2.result
         if len(waifus) == 0:
             assert isinstance(interaction.channel, discord.TextChannel)
@@ -277,14 +273,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def freeze(self, ctx: LegacyCommandContext, member: discord.User):
         """Freeze player"""
         resp = await get_nanapi().waicolle.waicolle_freeze_player(str(member.id))
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp = resp.raise_exc()
+
         await ctx.reply(
             f'Player {member.mention} frozen',
             allowed_mentions=discord.AllowedMentions(users=False),
@@ -304,14 +300,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             member = ctx.author
 
         resp = await get_nanapi().waicolle.waicolle_get_player(str(member.id))
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp = resp.raise_exc()
+
         player = resp.result
 
         moecoin = self.bot.get_emoji_str('moecoin')
@@ -329,14 +325,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp = await get_nanapi().waicolle.waicolle_donate_player_coins(
             str(ctx.author.id), str(other_member.id), body
         )
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError('One of the players does not exist')
-                case 409:
-                    raise commands.CommandError('Not enough moecoins')
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError('One of the players does not exist')
+            case Error(code=409):
+                raise commands.CommandError('Not enough moecoins')
+            case _:
+                resp = resp.raise_exc()
 
         await ctx.reply(
             f'{other_member.mention} '
@@ -352,14 +347,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Reward (or punish) any player wallet"""
         body = AddPlayerCoinsBody(moecoins=nb)
         resp = await get_nanapi().waicolle.waicolle_add_player_coins(str(member.id), body)
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError('Player does not exist')
-                case 409:
-                    raise commands.CommandError('Not enough moecoins')
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError('Player does not exist')
+            case Error(code=409):
+                raise commands.CommandError('Not enough moecoins')
+            case _:
+                resp = resp.raise_exc()
 
         if nb >= 0:
             await ctx.reply(
@@ -384,8 +378,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def search(self, ctx: LegacyCommandContext, search: str):
         """Search a character on AniList"""
         resp = await get_nanapi().anilist.anilist_chara_search(search)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         results = resp.result
 
         if len(results) == 0:
@@ -399,8 +392,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def birthdays(self, ctx: LegacyCommandContext):
         """Characters Birthdays"""
         resp = await get_nanapi().anilist.anilist_chara_birthdays()
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         results = resp.result
 
         if len(results) == 0:
@@ -508,8 +500,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp = await get_nanapi().anilist.anilist_get_charas(
             ids_al=','.join(str(w.character.id_al) for w in waifus)
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         charas = {c.id_al: c for c in resp.result}
 
         for waifu in waifus:
@@ -594,14 +585,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp = await get_nanapi().waicolle.waicolle_get_waifus(
             discord_id=str(member.id), client_id=None, ids=None, **kwargs
         )
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp = resp.raise_exc()
+
         waifus = resp.result
 
         if len(waifus) == 0:
@@ -674,8 +665,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 ]
 
             resp = await resp_task
-            if not success(resp):
-                raise RuntimeError(resp.result)
+            resp = resp.raise_exc()
             charas = {c.id_al: c for c in resp.result}
             edges = {cid: await task for cid, task in edge_tasks}
 
@@ -799,23 +789,22 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             owned_waifus_resp = await get_nanapi().waicolle.waicolle_get_waifus(
                 discord_id=str(ctx.author.id), locked=0, trade_locked=0, blooded=0
             )
-            if not success(owned_waifus_resp):
-                match owned_waifus_resp.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{ctx.author}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(owned_waifus_resp.result)
+            match owned_waifus_resp:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    owned_waifus_resp = owned_waifus_resp.raise_exc()
+
             waifus = owned_waifus_resp.result
 
             tracked_waifus_resp = await get_nanapi().waicolle.waicolle_get_player_track_unlocked(
                 discord_id=str(ctx.author.id),
                 hide_singles=0 if prioritize_singles else 1,
             )
-            if not success(tracked_waifus_resp):
-                raise RuntimeError(tracked_waifus_resp.result)
+            tracked_waifus_resp = tracked_waifus_resp.raise_exc()
             tracked_waifus_ids = [w.id for w in tracked_waifus_resp.result]
 
             waifus = sorted(
@@ -830,8 +819,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             if nb > 0:
                 body = BulkUpdateWaifusBody(ids=[str(w.id) for w in selected], locked=True)
                 update_resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
-                if not success(update_resp):
-                    raise RuntimeError(update_resp.result)
+                update_resp = update_resp.raise_exc()
 
             await notice.edit(content=f'**{nb}** character{"s" if nb > 1 else ""} locked.')
 
@@ -848,15 +836,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_get_waifus(
                 discord_id=str(ctx.author.id), locked=1, trade_locked=0, blooded=0
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{ctx.author}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    resp = resp.raise_exc()
+
             waifus = resp.result
             if character_id is not None:
                 waifus = [w for w in waifus if w.character.id_al == character_id]
@@ -869,8 +857,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             if nb > 0:
                 body = BulkUpdateWaifusBody(ids=[str(w.id) for w in selected], locked=False)
                 resp = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
-                if not success(resp):
-                    raise RuntimeError(resp.result)
+                resp = resp.raise_exc()
 
             await notice.edit(content=f'**{nb}** character{"s" if nb > 1 else ""} unlocked.')
 
@@ -893,15 +880,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
                 discord_id=str(ctx.author.id), ascendable=1
             )
-            if not success(resp1):
-                match resp1.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{ctx.author}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(resp1.result)
+            match resp1:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    resp1 = resp1.raise_exc()
+
             waifus = resp1.result
 
             selected = await self.waifus_selector(ctx, waifus, 'ascend', ctx.author)
@@ -913,8 +900,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             for waifu in selected:
                 resp2 = await get_nanapi().waicolle.waicolle_ascend_waifu(waifu.id)
-                if not success(resp2):
-                    raise RuntimeError(resp2.result)
+                resp2 = resp2.raise_exc()
                 ascended = resp2.result
 
                 await self._ascend_alert(ctx, ascended)
@@ -926,8 +912,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             user = ctx.author
 
         resp3 = await get_nanapi().anilist.anilist_get_charas(str(ascended.character.id_al))
-        if not success(resp3):
-            raise RuntimeError(resp3.result)
+        resp3 = resp3.raise_exc()
         chara = resp3.result[0]
 
         embed = Embed(title=f'{chara.name_user_preferred} ascended!', color=WC_COLOR)
@@ -956,15 +941,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_get_waifus(
                 discord_id=str(ctx.author.id), locked=0, trade_locked=0, blooded=0
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{ctx.author}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    resp = resp.raise_exc()
+
             waifus = resp.result
 
             selected = await self.waifus_selector(ctx, waifus, 'blood', ctx.author)
@@ -976,8 +961,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             for waifu in selected:
                 wid = waifu.id
                 resp = await get_nanapi().waicolle.waicolle_blood_waifu(wid)
-                if not success(resp):
-                    raise RuntimeError(resp.result)
+                resp = resp.raise_exc()
                 chara = resp.result
 
                 rank = await RankHelper.get(chara.rank)
@@ -1017,14 +1001,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 bot_discord_id=str(self.bot.user.id),
             )
             resp = await get_nanapi().waicolle.waicolle_new_offering(body)
-            if not success(resp):
-                match resp:
-                    case Error(code=404):
-                        raise commands.CommandError(
-                            'This character is not available for offering.'
-                        )
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    raise commands.CommandError('This character is not available for offering.')
+                case _:
+                    resp = resp.raise_exc()
+
             data = resp.result
 
             trade = TradeHelper(self, data, can_author_accept=True)
@@ -1043,12 +1025,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Loot unlocked frozen waifu"""
         body = NewLootBody(player_discord_id=str(ctx.author.id), chara_id_al=character_id)
         resp = await get_nanapi().waicolle.waicolle_new_loot(body)
-        if not success(resp):
-            match resp:
-                case Error(code=404):
-                    raise commands.CommandError('No frozen waifu found.')
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError('No frozen waifu found.')
+            case _:
+                resp = resp.raise_exc()
+
         data = resp.result
 
         trade = TradeHelper(self, data, can_author_accept=True, offeree_silent=True)
@@ -1170,32 +1152,31 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 )
 
             player_waifus_resp = await player_waifus_task
-            if not success(player_waifus_resp):
-                match player_waifus_resp.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{ctx.author}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(player_waifus_resp.result)
+            match player_waifus_resp:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{ctx.author}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    player_waifus_resp = player_waifus_resp.raise_exc()
+
             player_waifus = player_waifus_resp.result
 
             other_waifus_resp = await other_waifus_task
-            if not success(other_waifus_resp):
-                match other_waifus_resp.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{other_member}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(other_waifus_resp.result)
+            match other_waifus_resp:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{other_member}** is not a player '
+                        f'{self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    other_waifus_resp = other_waifus_resp.raise_exc()
+
             other_waifus = other_waifus_resp.result
 
             player_track_unlocked_resp = await player_track_unlocked_task
-            if not success(player_track_unlocked_resp):
-                raise RuntimeError(player_track_unlocked_resp.result)
+            player_track_unlocked_resp = player_track_unlocked_resp.raise_exc()
             tracked_waifus = player_track_unlocked_resp.result
 
             tracked_waifus_ids = [w.id for w in tracked_waifus]
@@ -1205,8 +1186,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             )
 
             other_track_unlocked_resp = await other_track_unlocked_task
-            if not success(other_track_unlocked_resp):
-                raise RuntimeError(other_track_unlocked_resp.result)
+            other_track_unlocked_resp = other_track_unlocked_resp.raise_exc()
             other_track_unlocked_waifus = other_track_unlocked_resp.result
 
             other_track_unlocked_waifus_ids = [w.id for w in other_track_unlocked_waifus]
@@ -1247,11 +1227,8 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Find out if you have trades from last year"""
         await interaction.response.defer()
         trades_resp = await get_nanapi().waicolle.waicolle_trade_index()
-        match trades_resp:
-            case Error():
-                raise RuntimeError(trades_resp.result)
-            case Success():
-                trades = trades_resp.result
+        trades_resp = trades_resp.raise_exc()
+        trades = trades_resp.result
 
         if member is None:
             member = interaction.user
@@ -1307,15 +1284,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def roll(self, ctx: LegacyCommandContext):
         """such moecoins, very waifus"""
         resp1 = await get_nanapi().waicolle.waicolle_get_player(str(ctx.author.id))
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{ctx.author}** is not a player '
-                        f'{self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{ctx.author}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp1 = resp1.raise_exc()
+
         player = resp1.result
 
         notice = await ctx.reply('Rolling characters...')
@@ -1331,8 +1307,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
 
         resp2 = await get_nanapi().waicolle.waicolle_get_rolls(str(ctx.author.id))
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
         rolls = resp2.result
 
         view = RollSelectorView(self.bot, ctx.author, rolls, timeout=300)
@@ -1356,14 +1331,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def daily(self, ctx: LegacyCommandContext):
         """Daily tag informations"""
         resp1 = await get_nanapi().waicolle.waicolle_get_rolls(str(ctx.author.id))
-        if not success(resp1):
-            raise RuntimeError(resp1.result)
+        resp1 = resp1.raise_exc()
         rolls = {roll.id: roll for roll in resp1.result}
         daily = rolls['daily']
 
         resp2 = await get_nanapi().client.client_whoami()
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
         client = resp2.result
 
         await ctx.reply(
@@ -1385,15 +1358,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
             discord_id=str(ctx.author.id), ascended=1, blooded=0
         )
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{ctx.author}** is not a player '
-                        f'{self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{ctx.author}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp1 = resp1.raise_exc()
+
         waifus = resp1.result
 
         notice = await ctx.reply('Customizing characters...')
@@ -1402,8 +1374,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         ids_al = ','.join([str(w.character.id_al) for w in selected])
         resp2 = await get_nanapi().anilist.anilist_get_charas(ids_al)
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
         charas_map = {c.id_al: c for c in resp2.result}
 
         for waifu in selected:
@@ -1470,8 +1441,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             body = CustomizeWaifuBody(custom_image=custom_image, custom_name=custom_name)
             resp3 = await get_nanapi().waicolle.waicolle_customize_waifu(waifu.id, body)
-            if not success(resp3):
-                raise RuntimeError(resp3.result)
+            resp3 = resp3.raise_exc()
 
         s = 's' if len(selected) > 1 else ''
         await notice.edit(content=f'**{len(selected)}** character{s} customized.')
@@ -1489,23 +1459,21 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
             discord_id=str(ctx.author.id), ascended=1, blooded=0
         )
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{ctx.author}** is not a player '
-                        f'{self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{ctx.author}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp1 = resp1.raise_exc()
+
         waifus = resp1.result
 
         selected = await self.waifus_selector(ctx, waifus, 'reorder', ctx.author)
 
         ids_al = ','.join([str(w.character.id_al) for w in selected])
         resp2 = await get_nanapi().anilist.anilist_get_charas(ids_al)
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
         charas_map = {c.id_al: c for c in resp2.result}
 
         COLLAGE_POSITIONS: dict[str, Literal['DEFAULT', 'LEFT_OF', 'RIGHT_OF']] = {
@@ -1554,8 +1522,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                     other_waifu_id=waifu_relative.id if waifu_relative else None,
                 )
                 resp3 = await get_nanapi().waicolle.waicolle_reorder_waifu(waifu.id, body)
-                if not success(resp3):
-                    raise RuntimeError(resp3.result)
+                resp3 = resp3.raise_exc()
 
         s = 's' if len(selected) > 1 else ''
         await notice.edit(content=f'**{len(selected)}** character{s} reordered.')
@@ -1593,10 +1560,10 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 raise commands.CommandError(
                     f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
                 )
-            case Error():
-                raise RuntimeError(resp.result)
-            case Success():
-                collage = resp.result
+            case _:
+                resp = resp.raise_exc()
+
+        collage = resp.result
 
         if collage.url is None:
             raise commands.CommandError(
@@ -1627,15 +1594,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
             discord_id=str(ctx.author.id), custom_collage=0, blooded=0
         )
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{ctx.author}** is not a player '
-                        f'{self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{ctx.author}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp1 = resp1.raise_exc()
+
         waifus = resp1.result
 
         selected = await self.waifus_selector(ctx, waifus, 'display in custom collage', ctx.author)
@@ -1643,8 +1609,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if selected:
             body = BulkUpdateWaifusBody(ids=[str(w.id) for w in selected], custom_collage=True)
             resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
-            if not success(resp2):
-                raise RuntimeError(resp2.result)
+            resp2 = resp2.raise_exc()
 
         await notice.edit(
             content=f'**{len(selected)}** character{"s" if len(selected) > 1 else ""} '
@@ -1660,15 +1625,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp1 = await get_nanapi().waicolle.waicolle_get_waifus(
             discord_id=str(ctx.author.id), custom_collage=1, blooded=0
         )
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{ctx.author}** is not a player '
-                        f'{self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{ctx.author}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp1 = resp1.raise_exc()
+
         waifus = resp1.result
 
         selected = await self.waifus_selector(ctx, waifus, 'hide in custom collage', ctx.author)
@@ -1676,8 +1640,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if selected:
             body = BulkUpdateWaifusBody(ids=[str(w.id) for w in selected], custom_collage=False)
             resp2 = await get_nanapi().waicolle.waicolle_bulk_update_waifus(body)
-            if not success(resp2):
-                raise RuntimeError(resp2.result)
+            resp2 = resp2.raise_exc()
 
         await notice.edit(
             content=f'**{len(selected)}** character{"s" if len(selected) > 1 else ""} '
@@ -1732,15 +1695,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_get_player_media_album(
                 str(member.id), media_id, owned_only=1 if owned_only else 0
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{member}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    resp = resp.raise_exc()
+
             collage = resp.result
 
             collage_type = collage.media.type
@@ -1753,15 +1715,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_get_player_staff_album(
                 str(member.id), staff_id, owned_only=1 if owned_only else 0
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{member}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    resp = resp.raise_exc()
+
             collage = resp.result
 
             collage_type = 'Staff'
@@ -1777,21 +1738,19 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_get_player_collection_album(
                 str(member.id), collec_id, owned_only=1 if owned_only else 0
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        raise commands.CommandError(
-                            f'**{member}** is not a player '
-                            f'{self.bot.get_emoji_str("saladedefruits")}'
-                        )
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    raise commands.CommandError(
+                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                    )
+                case _:
+                    resp = resp.raise_exc()
+
             collage = resp.result
 
             medias_ids_str = ','.join(map(str, collage.collection.medias_ids_al))
             resp2 = await get_nanapi().anilist.anilist_get_medias(medias_ids_str)
-            if not success(resp2):
-                raise RuntimeError(resp2.result)
+            resp2 = resp2.raise_exc()
             media_map = {m.id_al: m for m in resp2.result}
 
             media_str = []
@@ -1804,8 +1763,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
             staff_ids_str = ','.join(map(str, collage.collection.staffs_ids_al))
             resp3 = await get_nanapi().anilist.anilist_get_staffs(staff_ids_str)
-            if not success(resp3):
-                raise RuntimeError(resp3.result)
+            resp3 = resp3.raise_exc()
             staff_map = {m.id_al: m for m in resp3.result}
 
             staff_str = []
@@ -1862,14 +1820,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             member = ctx.author
 
         resp = await get_nanapi().waicolle.waicolle_get_player_tracked_items(str(member.id))
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp = resp.raise_exc()
+
         tracks = resp.result
 
         stats_tasks: list[
@@ -1949,7 +1907,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
                     desc = f'`[C]` **{stat.collection.name}**'
                 case Error():
-                    raise RuntimeError(resp.result)
+                    resp = resp.raise_exc()
 
             desc, percent = self._format_line(stat.nb_owned, stat.nb_charas, desc)
 
@@ -1994,13 +1952,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_player_track_media(
                 str(interaction.user.id), media_id
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        await interaction.followup.send('Not a player or media not found')
-                        return
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    await interaction.followup.send('Not a player or media not found')
+                    return
+                case _:
+                    resp = resp.raise_exc()
             track = resp.result
             await interaction.followup.send(
                 f'**{track.media.title_user_preferred}** ({track.media.type.casefold()}) '
@@ -2012,13 +1969,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_player_track_staff(
                 str(interaction.user.id), staff_id
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        await interaction.followup.send('Not a player or staff not found')
-                        return
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    await interaction.followup.send('Not a player or staff not found')
+                    return
+                case _:
+                    resp = resp.raise_exc()
+
             track = resp.result
             name_native = f' ({track.staff.name_native})' if track.staff.name_native else ''
             await interaction.followup.send(
@@ -2030,13 +1987,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_player_track_collection(
                 str(interaction.user.id), collec_id
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        await interaction.followup.send('Not a player or collection not found')
-                        return
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    await interaction.followup.send('Not a player or collection not found')
+                    return
+                case _:
+                    resp = resp.raise_exc()
+
             track = resp.result
             await interaction.followup.send(
                 f'Collection **{track.collection.name}** added to track list'
@@ -2069,8 +2026,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         else:
             raise RuntimeError('How did you get there?')
 
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
 
         await interaction.followup.send(self.bot.get_emoji_str('FubukiGO'))
 
@@ -2096,14 +2052,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp1 = await get_nanapi().waicolle.waicolle_get_player_track_unlocked(
             str(member.id), 1 if hide_singles else 0
         )
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp1 = resp1.raise_exc()
+
         waifus = resp1.result
 
         if len(waifus) == 0:
@@ -2114,8 +2070,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         chara_ids = ','.join(str(w.character.id_al) for w in waifus)
         resp2 = await get_nanapi().anilist.anilist_get_charas(chara_ids)
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
         chara_map = {c.id_al: c for c in resp2.result}
 
         title = 'Unlocked tracklisted character list'
@@ -2150,14 +2105,14 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         resp1 = await get_nanapi().waicolle.waicolle_get_player_track_reversed(
             str(member.id), 1 if hide_singles else 0
         )
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    raise commands.CommandError(
-                        f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
-                    )
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                raise commands.CommandError(
+                    f'**{member}** is not a player {self.bot.get_emoji_str("saladedefruits")}'
+                )
+            case _:
+                resp1 = resp1.raise_exc()
+
         results = resp1.result
 
         if len(results) == 0:
@@ -2167,8 +2122,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         chara_ids = ','.join(str(r.waifu.character.id_al) for r in results)
         resp2 = await get_nanapi().anilist.anilist_get_charas(chara_ids)
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
 
         title = 'Reversed unlocked tracklisted character list'
 
@@ -2222,12 +2176,11 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         """Create a new collection"""
         body = NewCollectionBody(discord_id=str(ctx.author.id), name=name)
         resp = await get_nanapi().waicolle.waicolle_new_collection(body)
-        if not success(resp):
-            match resp.code:
-                case 409:
-                    raise commands.CommandError('You already have a collection with this name.')
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=409):
+                raise commands.CommandError('You already have a collection with this name.')
+            case _:
+                resp = resp.raise_exc()
 
         collec = resp.result
         await ctx.reply(f'Created collection **{collec.name}**')
@@ -2241,13 +2194,13 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         cid = await autocomplete_cast(interaction, collection_autocomplete(), UUID, coll)
 
         resp1 = await get_nanapi().waicolle.waicolle_get_collection(cid)
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    await interaction.followup.send('Collection not found.')
-                    return
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                await interaction.followup.send('Collection not found.')
+                return
+            case _:
+                resp1 = resp1.raise_exc()
+
         collec = resp1.result
 
         if int(collec.author.user.discord_id) != interaction.user.id:
@@ -2255,8 +2208,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             return
 
         resp2 = await get_nanapi().waicolle.waicolle_delete_collection(cid)
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
         await interaction.followup.send(self.bot.get_emoji_str('FubukiGO'))
 
     class CollecTrackChoice(Enum):
@@ -2275,12 +2227,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         id_al = await autocomplete_cast(interaction, self.track_autocomplete, int, item)
 
         resp1 = await get_nanapi().waicolle.waicolle_get_collection(cid)
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    raise commands.CommandError('Collection not found.')
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                raise commands.CommandError('Collection not found.')
+            case _:
+                resp1 = resp1.raise_exc()
+
         collec = resp1.result
         if int(collec.author.user.discord_id) != interaction.user.id:
             await interaction.followup.send('You can only edit your own collections')
@@ -2288,13 +2240,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
 
         if track_type is self.CollecTrackChoice.media:
             resp2 = await get_nanapi().waicolle.waicolle_collection_track_media(cid, id_al)
-            if not success(resp2):
-                match resp2.code:
-                    case 404:
-                        await interaction.followup.send('Media not found.')
-                        return
-                    case _:
-                        raise RuntimeError(resp2.result)
+            match resp2:
+                case Error(code=404):
+                    await interaction.followup.send('Media not found.')
+                    return
+                case _:
+                    resp2 = resp2.raise_exc()
 
             updated = resp2.result
             await interaction.followup.send(
@@ -2303,13 +2254,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             )
         elif track_type is self.CollecTrackChoice.staff:
             resp2 = await get_nanapi().waicolle.waicolle_collection_track_staff(cid, id_al)
-            if not success(resp2):
-                match resp2.code:
-                    case 404:
-                        await interaction.followup.send('Staff not found.')
-                        return
-                    case _:
-                        raise RuntimeError(resp2.result)
+            match resp2:
+                case Error(code=404):
+                    await interaction.followup.send('Staff not found.')
+                    return
+                case _:
+                    resp2 = resp2.raise_exc()
 
             updated = resp2.result
             name_native = f' ({updated.staff.name_native})' if updated.staff.name_native else ''
@@ -2332,13 +2282,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         id_al = await autocomplete_cast(interaction, self.track_autocomplete, int, item)
 
         resp1 = await get_nanapi().waicolle.waicolle_get_collection(cid)
-        if not success(resp1):
-            match resp1.code:
-                case 404:
-                    await interaction.followup.send('Collection not found.')
-                    return
-                case _:
-                    raise RuntimeError(resp1.result)
+        match resp1:
+            case Error(code=404):
+                await interaction.followup.send('Collection not found.')
+                return
+            case _:
+                resp1 = resp1.raise_exc()
         collec = resp1.result
 
         if int(collec.author.user.discord_id) != interaction.user.id:
@@ -2350,8 +2299,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         else:
             raise RuntimeError('How did you get there?')
 
-        if not success(resp2):
-            raise RuntimeError(resp2.result)
+        resp2 = resp2.raise_exc()
 
         await interaction.followup.send(self.bot.get_emoji_str('FubukiGO'))
 
@@ -2368,8 +2316,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def coupon_list(self, ctx: LegacyCommandContext):
         """List coupons"""
         resp = await get_nanapi().waicolle.waicolle_get_coupons()
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         coupons = resp.result
         fields = [
             EmbedField(
@@ -2388,12 +2335,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def coupon_create(self, ctx: LegacyCommandContext, custom_code: str | None = None):
         """Create a new coupon"""
         resp = await get_nanapi().waicolle.waicolle_new_coupon(NewCouponBody(code=custom_code))
-        if not success(resp):
-            match resp.code:
-                case 409:
-                    raise commands.CommandError('Code already exists.')
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=409):
+                raise commands.CommandError('Code already exists.')
+            case _:
+                resp = resp.raise_exc()
+
         coupon = resp.result
         await ctx.reply(f'New coupon created: {coupon.code}')
 
@@ -2403,8 +2350,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
     async def coupon_delete(self, ctx: LegacyCommandContext, code: str):
         """Delete a coupon"""
         resp = await get_nanapi().waicolle.waicolle_delete_coupon(code)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         await ctx.reply(f'Coupon {code} deleted')
 
     @slash_waifu_coupon.command(name='claim')
@@ -2434,12 +2380,12 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
         if nb > 0:
             body = AddPlayerCoinsBody(moecoins=nb)
             resp = await get_nanapi().waicolle.waicolle_add_player_coins(str(user.id), body)
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        return
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    return
+                case _:
+                    resp = resp.raise_exc()
+
             await room.send(
                 f'{user} [**{reason}**] '
                 f'You received **{nb}** {self.bot.get_emoji_str("moecoin")}! '
@@ -2514,23 +2460,21 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             resp = await get_nanapi().waicolle.waicolle_add_player_coins(
                 str(ctx.author.id), AddPlayerCoinsBody(moecoins=-moecoin_gain)
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        return
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    return
+                case _:
+                    resp = resp.raise_exc()
         else:
             self.next_drop[ctx.guild.id] -= self.speed
             resp = await get_nanapi().waicolle.waicolle_add_player_coins(
                 str(ctx.author.id), AddPlayerCoinsBody(moecoins=moecoin_gain)
             )
-            if not success(resp):
-                match resp.code:
-                    case 404:
-                        return
-                    case _:
-                        raise RuntimeError(resp.result)
+            match resp:
+                case Error(code=404):
+                    return
+                case _:
+                    resp = resp.raise_exc()
 
         try:
             for role_id in (WC_ROLE,):

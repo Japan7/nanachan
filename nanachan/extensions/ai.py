@@ -16,7 +16,7 @@ from nanachan.discord.application_commands import LegacyCommandContext, NanaGrou
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog, NanaGroupCog
 from nanachan.discord.helpers import Embed
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import SkillSelectAllResult
 from nanachan.settings import (
     AI_ADDITIONAL_TOOLSETS,
@@ -49,8 +49,7 @@ class ChatContext:
 
 async def fetch_skills():
     resp = await get_nanapi().ai.ai_skill_index()
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
     return resp.result
 
 

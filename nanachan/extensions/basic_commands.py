@@ -51,7 +51,7 @@ from nanachan.discord.helpers import (
     timestamp_autocomplete,
 )
 from nanachan.discord.views import AutoNavigatorView
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import (
     NewReminderBody,
     ReminderInsertSelectResult,
@@ -88,8 +88,7 @@ class BasicCommands(Cog, name='Basic Commands'):
     @Cog.listener()
     async def on_ready(self):
         resp = await get_nanapi().reminder.reminder_get_reminders()
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         reminders = resp.result
         logger.info(f'reminders:{len(reminders)} reminders enqueued')
         self.reminders = sorted(reminders, key=attrgetter('timestamp'))
@@ -121,8 +120,7 @@ class BasicCommands(Cog, name='Basic Commands'):
                 reminder_message += f' {past_reminder.message}!'
             await channel.send(reminder_message)
             resp = await get_nanapi().reminder.reminder_delete_reminder(past_reminder.id)
-            if not success(resp):
-                raise RuntimeError(resp.result)
+            resp = resp.raise_exc()
             sleep_time = 0
 
         else:
@@ -386,8 +384,7 @@ class BasicCommands(Cog, name='Basic Commands'):
                 timestamp=dt,
             )
         )
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         reminder = resp.result
         bisect.insort(self.reminders, reminder, key=attrgetter('timestamp'))
         if self.reminders_processor_task_sleep:

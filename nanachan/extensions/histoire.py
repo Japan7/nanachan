@@ -10,7 +10,7 @@ from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import MultiplexingContext, UserType
 from nanachan.discord.views import AutoNavigatorView
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import Error, get_nanapi
 from nanachan.nanapi.model import NewHistoireBody
 
 if TYPE_CHECKING:
@@ -83,8 +83,7 @@ class Histoire(Cog):
 
         # Check if database contains at least one story
         resp = await get_nanapi().histoire.histoire_histoire_index()
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         stories = resp.result
         story_ids = [story.id for story in stories]
         if len(story_ids) == 0:
@@ -96,12 +95,12 @@ class Histoire(Cog):
 
         # Fetch the story
         resp = await get_nanapi().histoire.histoire_get_histoire(_story_id)
-        if not success(resp):
-            match resp.code:
-                case 404:
-                    raise commands.CommandError(f'Story with id {_story_id} does not exist')
-                case _:
-                    raise RuntimeError(resp.result)
+        match resp:
+            case Error(code=404):
+                raise commands.CommandError(f'Story with id {_story_id} does not exist')
+            case _:
+                resp = resp.raise_exc()
+
         story = resp.result
 
         await AutoNavigatorView.create(
@@ -162,8 +161,7 @@ class Histoire(Cog):
         # Create the new story in database
         story = builder.to_story()
         resp = await get_nanapi().histoire.histoire_new_histoire(NewHistoireBody(**story))
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
 
         # Stop recording
         del self.story_builders_by_channel_user[(channel.id, user.id)]
@@ -194,8 +192,7 @@ class Histoire(Cog):
             raise commands.BadArgument(f'Invalid story id `{story_id}`')
 
         resp = await get_nanapi().histoire.histoire_delete_histoire(uuid)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         deleted = resp.result
 
         if deleted is None:
@@ -206,8 +203,7 @@ class Histoire(Cog):
     @histoire.command(help='List available stories')
     async def list(self, ctx: commands.Context) -> None:
         resp = await get_nanapi().histoire.histoire_histoire_index()
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         stories_resp = resp.result
         # Fetch all stories from database
         stories = [f'{story.id}: {story.title}' for story in stories_resp]

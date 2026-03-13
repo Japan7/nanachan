@@ -13,7 +13,7 @@ from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog
 from nanachan.discord.helpers import EmbedField, MultiplexingContext
 from nanachan.discord.views import AutoNavigatorView, LockedView, NavigatorView
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import AnilistService, MediaType, UpsertAnilistAccountBody
 from nanachan.utils.anilist import (
     AL_COLOR,
@@ -60,8 +60,7 @@ class Anilist(Cog):
                 discord_username=str(interaction.user), service=service.value, username=username
             ),
         )
-        if not success(resp1):
-            raise RuntimeError(resp1.result)
+        resp1 = resp1.raise_exc()
 
         await interaction.followup.send(content=self.bot.get_emoji_str('FubukiGO'))
 
@@ -99,8 +98,7 @@ class Anilist(Cog):
         services = {}
 
         resp = await get_nanapi().anilist.anilist_get_accounts()
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         anilists = resp.result
         for anilist in anilists:
             member = self.bot.get_user(int(anilist.user.discord_id))
@@ -130,8 +128,7 @@ class Anilist(Cog):
 
     async def media_search(self, search: str, media_type: MediaType):
         resp = await get_nanapi().anilist.anilist_media_search(search, media_type.value)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         results = resp.result
         if len(results) == 0:
             raise commands.CommandError('No results found')
@@ -139,8 +136,7 @@ class Anilist(Cog):
 
     async def staff_search(self, search: str):
         resp = await get_nanapi().anilist.anilist_staff_search(search)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
         results = resp.result
         if len(results) == 0:
             raise commands.CommandError('No results found')

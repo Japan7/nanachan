@@ -36,7 +36,7 @@ from pydantic_ai.models.openrouter import (
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.toolsets import FunctionToolset
 
-from nanachan.nanapi.client import get_nanapi, success
+from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import SkillSelectAllResult
 from nanachan.settings import (
     AI_DEFAULT_MODEL,
@@ -302,8 +302,8 @@ async def retrieve_rag_context(run_ctx: RunContext[ChatDeps], search_query: str)
     ctx = run_ctx.deps.ctx
     assert isinstance(ctx.author, discord.Member)
     resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=10)
-    if not success(resp):
-        raise RuntimeError(resp.result)
+    resp = resp.raise_exc()
+
     messages = [
         [
             m.data

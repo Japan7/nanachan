@@ -40,8 +40,7 @@ async def load_bearer_token():
             grant_type='password', username=NANAPI_CLIENT_USERNAME, password=NANAPI_CLIENT_PASSWORD
         )
         resp = await session.client.client_login(body)
-        if not success(resp):
-            raise RuntimeError(resp.result)
+        resp = resp.raise_exc()
 
         bearer_token = resp.result.access_token
         bearer_ready.set()
