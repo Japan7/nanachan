@@ -104,7 +104,7 @@ class ProjectionCog(
                     mentions = ' '.join([p.mention async for p in discord_event.users()])
                     await thread.send(
                         f'[Event]({discord_event.url}) starts '
-                        '<t:{event.start_time.timestamp():.0f}:R>.\n'
+                        f'<t:{event.start_time.timestamp():.0f}:R>.\n'
                         f'{mentions}'
                     )
                     break
