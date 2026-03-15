@@ -12,6 +12,9 @@ from enum import Enum, auto
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Type, cast
 
+from valkey.exceptions import ConnectionError as ValkeyConnectionError
+from valkey.exceptions import TimeoutError as ValkeyTimeoutError
+
 from discord.abc import Messageable
 from discord.member import Member
 from discord.user import User
@@ -105,6 +108,7 @@ class Conditions:
                 async with asyncio.timeout(30):
                     redis = await get_valkey()
                     if redis is None:
+                        self.ready.set()
                         return
 
                     coro = redis.smembers(REDIS_KEY)
@@ -119,6 +123,14 @@ class Conditions:
                             logger.exception(e)
 
                     self.ready.set()
+            except (OSError, TimeoutError, ValkeyConnectionError, ValkeyTimeoutError):
+                self.active_conditions.clear()
+                self.ready.set()
+                logger.warning(
+                    'Could not load persisted drop conditions from Valkey, continuing without them',
+                    exc_info=True,
+                )
+                return
             except Exception:
                 self.active_conditions.clear()
                 await waifu_cog.bot.on_error('load_conditions')
