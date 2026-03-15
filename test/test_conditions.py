@@ -3,11 +3,17 @@ import json
 import sys
 import types
 import unittest
+from itertools import count
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / 'nanachan' / 'utils' / 'conditions.py'
+PROJECT_ROOT = next(
+    (parent for parent in Path(__file__).resolve().parents if (parent / 'pyproject.toml').exists()),
+    Path(__file__).resolve().parents[1],
+)
+CONDITIONS_MODULE_PATH = PROJECT_ROOT / 'nanachan' / 'utils' / 'conditions.py'
+MODULE_COUNTER = count()
 
 
 def load_conditions_module():
@@ -26,8 +32,8 @@ def load_conditions_module():
     discord_user.User = type('User', (), {})
 
     valkey_exceptions = types.ModuleType('valkey.exceptions')
-    valkey_exceptions.ConnectionError = type('ConnectionError', (Exception,), {})
-    valkey_exceptions.TimeoutError = type('TimeoutError', (Exception,), {})
+    valkey_exceptions.ConnectionError = type('ValkeyConnectionError', (Exception,), {})
+    valkey_exceptions.TimeoutError = type('ValkeyTimeoutError', (Exception,), {})
 
     redis_base = types.ModuleType('nanachan.redis.base')
 
@@ -62,14 +68,16 @@ def load_conditions_module():
     stubbed_modules['nanachan.redis'].base = redis_base
     stubbed_modules['nanachan.utils'].misc = misc
 
-    module_name = f'test_conditions_under_test_{len(sys.modules)}'
-    spec = importlib.util.spec_from_file_location(module_name, MODULE_PATH)
+    dynamically_loaded_module_name = f'test_conditions_module_{next(MODULE_COUNTER)}'
+    spec = importlib.util.spec_from_file_location(
+        dynamically_loaded_module_name, CONDITIONS_MODULE_PATH
+    )
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
 
     with patch.dict(sys.modules, stubbed_modules):
-        sys.modules[module_name] = module
+        sys.modules[dynamically_loaded_module_name] = module
         spec.loader.exec_module(module)
 
     return module
@@ -102,6 +110,28 @@ class LoadConditionsTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(conditions.ready.is_set())
         waifu_cog.bot.on_error.assert_not_awaited()
         self.assertIn('Could not load persisted drop conditions from Valkey', logs.output[0])
+
+    async def test_load_conditions_gracefully_handles_timeouts(self):
+        for error_factory in (
+            lambda module: TimeoutError('timed out'),
+            lambda module: module.ValkeyTimeoutError('timed out'),
+        ):
+            module = load_conditions_module()
+            error = error_factory(module)
+
+            with self.subTest(error_type=type(error).__name__):
+                async def get_valkey():
+                    raise error
+
+                module.get_valkey = get_valkey
+                conditions = module.Conditions()
+                waifu_cog = types.SimpleNamespace(bot=types.SimpleNamespace(on_error=AsyncMock()))
+
+                with self.assertLogs(module.logger.name, level='WARNING'):
+                    await conditions.load_conditions(waifu_cog)
+
+                self.assertTrue(conditions.ready.is_set())
+                waifu_cog.bot.on_error.assert_not_awaited()
 
 
 if __name__ == '__main__':

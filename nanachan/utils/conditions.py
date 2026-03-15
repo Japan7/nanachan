@@ -123,7 +123,11 @@ class Conditions:
                             logger.exception(e)
 
                     self.ready.set()
-            except (OSError, TimeoutError, ValkeyConnectionError, ValkeyTimeoutError):
+            except (
+                TimeoutError,  # raised when asyncio.timeout() above expires
+                ValkeyConnectionError,
+                ValkeyTimeoutError,
+            ):
                 self.active_conditions.clear()
                 self.ready.set()
                 logger.warning(
