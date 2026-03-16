@@ -12,12 +12,6 @@ DEBUG = True
 ERROR_WEBHOOK = None
 TADAIMA = False
 
-## GitHub Issues
-GITHUB_ISSUE_ENABLE = not DEBUG
-GITHUB_REPO_SLUG = 'Japan7/nanachan'
-GITHUB_TOKEN: str | None = None
-GITHUB_AGENT_MODEL = 'claude-opus-4.6'
-
 ## Bot
 # TOKEN = ''
 PREFIX = '7'
@@ -158,5 +152,4 @@ RequiresWaicolle = RequiredSettings(WC_ROLE)
 RequiresAI = RequiredSettings(
     AI_OPENROUTER_API_KEY, AI_DEFAULT_MODEL, AI_GROK_MODEL, AI_IMAGE_MODEL
 )
-RequiresGitHub = RequiredSettings(GITHUB_REPO_SLUG, GITHUB_TOKEN)
 RequiresMessageExport = RequiredSettings(ENABLE_MESSAGE_EXPORT)
