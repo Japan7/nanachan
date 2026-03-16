@@ -22,7 +22,6 @@ from nanachan.settings import (
     AI_ADDITIONAL_TOOLSETS,
     AI_DEFAULT_MODEL,
     AI_GROK_MODEL,
-    GITHUB_REPO_SLUG,
     SLASH_PREFIX,
     TZ,
     RequiresAI,
@@ -114,7 +113,7 @@ class AI(Cog, required_settings=RequiresAI):
 
         # Codebase Information
 
-        - Discord bot repository: https://github.com/{GITHUB_REPO_SLUG}
+        - Discord bot repository: https://github.com/Japan7/nanachan
         - Backend API repository: https://github.com/Japan7/nanapi
         - Use these when discussing bot functionality or code-related questions.
         - Context7 and Deepwiki tools are available for contextual information retrieval.
