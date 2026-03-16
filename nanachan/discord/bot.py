@@ -3,7 +3,6 @@ import logging
 import random
 import re
 import signal
-import sys
 from collections.abc import Coroutine, Sequence
 from contextlib import suppress
 from functools import partial, wraps
