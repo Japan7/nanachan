@@ -1,11 +1,14 @@
 # pyright: reportConstantRedefinition=false
 from pathlib import Path
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 from discord.utils import utcnow
 from pydantic_ai import AbstractToolset
 from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
+
+if TYPE_CHECKING:
+    from nanachan.utils.ai import ModelConfig
 
 LOG_LEVEL = 'INFO'
 DEBUG = True
@@ -104,6 +107,7 @@ AI_OPENROUTER_API_KEY: str | None = None
 AI_DEFAULT_MODEL = 'openai/gpt-5-mini'
 AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
+AI_CUSTOM_MODELS: Mapping[str, 'ModelConfig'] = {}
 AI_SKIP_PERMISSIONS_CHECK = False
 AI_SEARCH_TOOL = duckduckgo_search_tool()
 AI_ADDITIONAL_TOOLSETS: Sequence[AbstractToolset[Any]] = ()

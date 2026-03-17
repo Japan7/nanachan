@@ -30,7 +30,7 @@ from nanachan.utils.ai import (
     ChatDeps,
     chat_stream,
     chat_toolset,
-    get_model,
+    get_model_config,
     get_nanapi_toolset,
     to_binary_content,
     web_toolset,
@@ -58,6 +58,12 @@ class AI(Cog, required_settings=RequiresAI):
 
     @staticmethod
     def system_prompt(run_ctx: RunContext[ChatDeps]):
+        if (system_prompt := run_ctx.deps.config.get('system_prompt')) is not None:
+            return system_prompt
+        return AI.default_system_prompt(run_ctx)
+
+    @staticmethod
+    def default_system_prompt(run_ctx: RunContext[ChatDeps]):
         ctx = run_ctx.deps.ctx
         assert ctx.bot.user and ctx.guild
         skills_list = '\n'.join(
@@ -123,10 +129,7 @@ class AI(Cog, required_settings=RequiresAI):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-        self.agent = Agent(
-            deps_type=ChatDeps,
-            toolsets=[get_nanapi_toolset(), chat_toolset, web_toolset, *AI_ADDITIONAL_TOOLSETS],
-        )
+        self.agent = Agent(deps_type=ChatDeps)
         self.agent.system_prompt(self.system_prompt)
         self.agent_lock = asyncio.Lock()
 
@@ -178,17 +181,22 @@ class AI(Cog, required_settings=RequiresAI):
     ):
         async with self.agent_lock, thread.typing():
             chat_ctx = self.contexts[thread.id]
-            model = get_model(model_name or chat_ctx.model_name)
+            model, config = get_model_config(model_name or chat_ctx.model_name)
 
-            message = await ctx._state.http.get_message(ctx.channel.id, ctx.message.id)  # pyright: ignore[reportPrivateUsage]
+            bot_user = ctx.bot.user
+            assert bot_user
             content: list[UserContent] = [
-                ctx.message.content,
-                'This is the raw user message data:',
-                json.dumps(message),
+                (ctx.message.content)
+                .removeprefix(bot_user.mention)
+                .removeprefix(f'@{SLASH_PREFIX}grok')
+                .strip()
             ]
-            for attachment in ctx.message.attachments:
-                if bin_content := await to_binary_content(attachment):
-                    content.extend([f'This is attachment {attachment.filename}:', bin_content])
+            if not config.get('content_only'):
+                message = await ctx._state.http.get_message(ctx.channel.id, ctx.message.id)  # pyright: ignore[reportPrivateUsage]
+                content.extend(['This is the raw user message data:', json.dumps(message)])
+                for attachment in ctx.message.attachments:
+                    if bin_content := await to_binary_content(attachment):
+                        content.extend([f'This is attachment {attachment.filename}:', bin_content])
 
             send = (
                 ctx.message.reply
@@ -198,6 +206,12 @@ class AI(Cog, required_settings=RequiresAI):
             allowed_mentions = AllowedMentions.none()
             allowed_mentions.replied_user = True
 
+            toolsets = (
+                [get_nanapi_toolset(), chat_toolset, web_toolset, *AI_ADDITIONAL_TOOLSETS]
+                if not config.get('content_only')
+                else None
+            )
+
             try:
                 async with self.agent:
                     async for part in chat_stream(
@@ -205,7 +219,8 @@ class AI(Cog, required_settings=RequiresAI):
                         user_prompt=content,
                         message_history=chat_ctx.history,
                         model=model,
-                        deps=ChatDeps(ctx, thread, chat_ctx.skills),
+                        deps=ChatDeps(config, ctx, thread, chat_ctx.skills),
+                        toolsets=toolsets,
                     ):
                         resp = await send(part, allowed_mentions=allowed_mentions)
                         send = resp.reply

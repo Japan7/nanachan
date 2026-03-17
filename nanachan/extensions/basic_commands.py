@@ -58,7 +58,7 @@ from nanachan.nanapi.model import (
     ReminderSelectAllResult,
 )
 from nanachan.settings import SLASH_PREFIX, TZ, RequiresAI
-from nanachan.utils.ai import get_model
+from nanachan.utils.ai import get_model_config
 from nanachan.utils.misc import get_session, saucenao_lookup, tldr_get_page
 
 logger = logging.getLogger(__name__)
@@ -477,6 +477,7 @@ class BasicCommands(Cog, name='Basic Commands'):
             return thread, ''
         channel = await thread._state.http.get_channel(thread.id)  # pyright: ignore[reportPrivateUsage]
         messages = await thread._state.http.logs_from(thread.id, limit=20)  # pyright: ignore[reportPrivateUsage]
+        model, _ = get_model_config()
         resp = await self.agent.run(
             [
                 'Given this channel informations and the last 20 messages, '
@@ -484,7 +485,7 @@ class BasicCommands(Cog, name='Basic Commands'):
                 json.dumps(channel, default=str),
                 json.dumps(messages, default=str),
             ],
-            model=get_model(),
+            model=model,
         )
         return thread, resp.output.replace('\n', ' ').strip()
 

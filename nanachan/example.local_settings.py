@@ -100,6 +100,7 @@ REDIS_HOST = None
 # AI_DEFAULT_MODEL = 'openai/gpt-5-mini'
 # AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
 # AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
+# AI_CUSTOM_MODELS = {}
 # AI_SKIP_PERMISSIONS_CHECK = False
 # AI_SEARCH_TOOL = tavily_search_tool('API_KEY')
 AI_ADDITIONAL_TOOLSETS = [

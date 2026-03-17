@@ -3,12 +3,13 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Iterable, Sequence, cast
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Iterable, Sequence, TypedDict, cast
 
 import discord
 from discord.ext import commands
 from discord.utils import time_snowflake
 from pydantic_ai import (
+    AbstractToolset,
     Agent,
     AgentRunResultEvent,
     BinaryContent,
@@ -39,6 +40,7 @@ from pydantic_ai.toolsets import FunctionToolset
 from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import SkillSelectAllResult
 from nanachan.settings import (
+    AI_CUSTOM_MODELS,
     AI_DEFAULT_MODEL,
     AI_IMAGE_MODEL,
     AI_OPENROUTER_API_KEY,
@@ -54,15 +56,29 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def get_model(model_name: str = AI_DEFAULT_MODEL) -> Model:
-    assert AI_OPENROUTER_API_KEY
-    return OpenRouterModel(
-        model_name,
-        provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY),
-        settings=OpenRouterModelSettings(
-            openrouter_provider=OpenRouterProviderConfig(zdr=not model_name.startswith('x-ai/'))
-        ),
-    )
+class ModelConfig(TypedDict, total=False):
+    model: Model
+    system_prompt: str
+    content_only: bool
+
+
+def get_model_config(model_name: str = AI_DEFAULT_MODEL) -> tuple[Model, ModelConfig]:
+    if config := AI_CUSTOM_MODELS.get(model_name):
+        model = config.get('model')
+        assert model
+    else:
+        assert AI_OPENROUTER_API_KEY
+        model = OpenRouterModel(
+            model_name,
+            provider=OpenRouterProvider(api_key=AI_OPENROUTER_API_KEY),
+            settings=OpenRouterModelSettings(
+                openrouter_provider=OpenRouterProviderConfig(
+                    zdr=not model_name.startswith('x-ai/')
+                )
+            ),
+        )
+        config = ModelConfig(model=model)
+    return model, config
 
 
 class StreamBuffer:
@@ -103,6 +119,7 @@ async def chat_stream[AgentDepsT](
     message_history: list[ModelMessage],
     model: Model,
     deps: AgentDepsT,
+    toolsets: Sequence[AbstractToolset[AgentDepsT]] | None = None,
 ) -> AsyncGenerator[str]:
     """https://ai.pydantic.dev/agents/#streaming"""
     thinking = StreamBuffer(prefix='>>> ')
@@ -112,6 +129,7 @@ async def chat_stream[AgentDepsT](
         message_history=message_history,
         model=model,
         deps=deps,
+        toolsets=toolsets,
     ):
         match event:
             case PartStartEvent(part=ThinkingPart(content=content)):
@@ -183,6 +201,7 @@ def get_nanapi_toolset():
 
 @dataclass
 class ChatDeps:
+    config: ModelConfig
     ctx: commands.Context['Bot']
     thread: discord.Thread
     skills: list[SkillSelectAllResult]

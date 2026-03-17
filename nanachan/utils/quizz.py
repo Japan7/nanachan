@@ -24,7 +24,7 @@ from nanachan.extensions.waicolle import WaifuCollection
 from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import NewQuizzBody, QuizzStatus
 from nanachan.settings import GLOBAL_COIN_MULTIPLIER, PREFIX, SAUCENAO_API_KEY, RequiresAI
-from nanachan.utils.ai import Agent, get_model, to_binary_content, web_toolset
+from nanachan.utils.ai import Agent, get_model_config, to_binary_content, web_toolset
 from nanachan.utils.misc import saucenao_lookup, to_producer
 
 if TYPE_CHECKING:
@@ -108,7 +108,8 @@ class QuizzBase(ABC):
         if bin_content:
             content.extend(['This is the attachment for the quiz question:', bin_content])
 
-        run = await cls.agent.run(content, output_type=list[str], model=get_model())
+        model, _ = get_model_config()
+        run = await cls.agent.run(content, output_type=list[str], model=model)
         hints = run.output
         if len(hints) == cls.HINTS_COUNT:
             return hints
