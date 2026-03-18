@@ -60,6 +60,7 @@ class ModelConfig(TypedDict, total=False):
     model: Model
     system_prompt: str
     content_only: bool
+    impersonate: int
 
 
 def get_model_config(model_name: str = AI_DEFAULT_MODEL) -> tuple[Model, ModelConfig]:

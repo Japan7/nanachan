@@ -245,14 +245,20 @@ class MultiplexingContext(commands.Context['Bot']):
         tuple[Callable[[MultiplexingContext], bool], asyncio.Future[MultiplexingContext]]
     ] = []
 
-    async def get_user_webhook(self, app_cmd_context: bool = False) -> 'WebhookProxy':
+    async def get_user_webhook(
+        self,
+        app_cmd_context: bool = False,
+        user: User | None = None,
+    ) -> 'WebhookProxy':
+        if user is None:
+            user = cast(User, self.author)
+
         if self.guild is None:
             raise RuntimeError('Webhook cannot be created outside of a guild')
-
         assert isinstance(self.channel, (TextChannel, ForumChannel, Thread))
         webhook = await self.bot.get_webhook(self.channel)
         webhook = CheckEmptyWebhook(webhook)
-        webhook = UserWebhook(webhook, cast(User, self.author))
+        webhook = UserWebhook(webhook, user)
 
         if not app_cmd_context:
             webhook = ReplyWebhook(webhook, self.message)

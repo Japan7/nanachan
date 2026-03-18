@@ -8,14 +8,13 @@ from datetime import datetime
 import discord
 from discord import AllowedMentions, app_commands
 from discord.app_commands.tree import ALL_GUILDS
-from discord.ext import commands
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.messages import ModelMessage, UserContent
 
 from nanachan.discord.application_commands import LegacyCommandContext, NanaGroup, legacy_command
 from nanachan.discord.bot import Bot
 from nanachan.discord.cog import Cog, NanaGroupCog
-from nanachan.discord.helpers import Embed
+from nanachan.discord.helpers import Embed, MultiplexingContext
 from nanachan.nanapi.client import get_nanapi
 from nanachan.nanapi.model import SkillSelectAllResult
 from nanachan.settings import (
@@ -175,7 +174,7 @@ class AI(Cog, required_settings=RequiresAI):
 
     async def chat(
         self,
-        ctx: commands.Context[Bot],
+        ctx: MultiplexingContext,
         thread: discord.Thread,
         model_name: str | None = None,
     ):
@@ -198,11 +197,17 @@ class AI(Cog, required_settings=RequiresAI):
                     if bin_content := await to_binary_content(attachment):
                         content.extend([f'This is attachment {attachment.filename}:', bin_content])
 
-            send = (
-                ctx.message.reply
-                if isinstance(ctx.message.channel, discord.Thread)
-                else thread.send
-            )
+            if user_id := config.get('impersonate'):
+                impersonated_user = ctx.bot.get_user(user_id)
+                assert impersonated_user
+                webhook = await ctx.get_user_webhook(user=impersonated_user)
+                send = webhook.send
+            else:
+                send = (
+                    ctx.message.reply
+                    if isinstance(ctx.message.channel, discord.Thread)
+                    else thread.send
+                )
             allowed_mentions = AllowedMentions.none()
             allowed_mentions.replied_user = True
 
@@ -222,10 +227,10 @@ class AI(Cog, required_settings=RequiresAI):
                         deps=ChatDeps(config, ctx, thread, chat_ctx.skills),
                         toolsets=toolsets,
                     ):
-                        resp = await send(part, allowed_mentions=allowed_mentions)
+                        resp = await send(content=part, allowed_mentions=allowed_mentions)
                         send = resp.reply
             except Exception as e:
-                await send(f'An error occured while running the agent:\n```\n{e}\n```')
+                await send(content=f'An error occured while running the agent:\n```\n{e}\n```')
                 logger.exception(e)
 
     @NanaGroupCog.listener()
@@ -242,7 +247,7 @@ class AI(Cog, required_settings=RequiresAI):
             return
 
     async def on_chat_message(self, message: discord.Message, model_name: str | None = None):
-        ctx = await self.bot.get_context(message, cls=commands.Context[Bot])
+        ctx = await self.bot.get_context(message)
         thread = await self.get_chat_thread(
             message, name_prefix=model_name or AI_DEFAULT_MODEL, user_to_add=message.author
         )
