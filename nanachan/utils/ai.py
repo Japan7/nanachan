@@ -410,7 +410,7 @@ async def openrouter_generate_image(
 web_toolset = FunctionToolset[Any](tools=[AI_SEARCH_TOOL])
 
 
-@web_toolset.tool
+@web_toolset.tool_plain
 async def fetch_url(url: str):
     """Fetch the content of a URL. It can be either text or binary data."""
     validate_discord_url(url)
