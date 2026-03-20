@@ -559,13 +559,17 @@ def h_repl(m: re.Match) -> str:
     return m.group(0) + '00'
 
 
+iso8601_re = re.compile(r'\d{4}-\d{2}-\d{2}')
+
+
 def parse_timestamp(time_str: str) -> datetime.datetime:
     if parsed_ts := timestamp_re.search(time_str):
         return datetime.datetime.fromtimestamp(float(parsed_ts.group(1)), tz=datetime.UTC)
     else:
         # fallback for text
+        iso8601_match = iso8601_re.search(time_str)
         settings: 'dateparser._Settings' = {  # type: ignore[reportPrivateUsage]
-            'DATE_ORDER': 'DMY',
+            'DATE_ORDER': 'DMY' if iso8601_match is None else 'YMD',
             'TIMEZONE': TZ.key,
             'RETURN_AS_TIMEZONE_AWARE': True,
             'PREFER_DATES_FROM': 'future',
