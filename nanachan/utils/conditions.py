@@ -105,6 +105,12 @@ class Conditions:
                 async with asyncio.timeout(30):
                     redis = await get_valkey()
                     if redis is None:
+                        # redis is not set up, so values are kept in memory
+                        # which is fine in a dev setup. There’s already an
+                        # obvious warning in the console when that happens
+                        # so here we just set it to be ready so it doesn’t
+                        # break everything
+                        self.ready.set()
                         return
 
                     coro = redis.smembers(REDIS_KEY)
