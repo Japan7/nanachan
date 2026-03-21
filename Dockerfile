@@ -2,10 +2,9 @@ FROM ghcr.io/astral-sh/uv:python3.14-trixie
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt update && apt upgrade -y && \
-    apt install -y --no-install-recommends ffmpeg && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    ln -s /usr/lib/x86_64-linux-gnu/libopus.so.0 /usr/lib/
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy

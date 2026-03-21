@@ -288,6 +288,8 @@ class Audio(NanaGroupCog, group_name='audio'):
 
 
 async def setup(bot: Bot):
+    if not discord.opus.is_loaded():
+        discord.opus._load_default()  # pyright: ignore[reportPrivateUsage]
     if OPUS_LIB_LOCATION is not None and not discord.opus.is_loaded():
         discord.opus.load_opus(OPUS_LIB_LOCATION)
     if discord.opus.is_loaded():
