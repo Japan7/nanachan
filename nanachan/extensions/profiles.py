@@ -500,7 +500,7 @@ class ProfileCreateOrChangeView(BaseView):
                 hikari = await to_producer(attachment.url)
                 self.profile.photo = hikari['url']
             else:
-                await resp.reply('Not a valid PNG file!')
+                await resp.reply(f'Not a valid PNG file! ({attachment.content_type})')
                 return
 
         await resp.delete()

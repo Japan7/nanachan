@@ -1406,7 +1406,7 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
                 if attachment.content_type == 'image/png':
                     custom_image = base64.b64encode(await attachment.read()).decode()
                 else:
-                    await resp.reply('Not a valid PNG file!')
+                    await resp.reply(f'Not a valid PNG file! ({attachment.content_type})')
 
             await resp.delete()
 
