@@ -1402,11 +1402,15 @@ class WaifuCollection(Cog, name='WaiColle ~Waifu Collection~', required_settings
             if resp.content == 'None':
                 custom_image = ''
             elif len(resp.attachments) > 0:
-                attachment = resp.attachments[0]
-                if attachment.content_type == 'image/png':
-                    custom_image = base64.b64encode(await attachment.read()).decode()
+                attachment: discord.Attachment = resp.attachments[0]
+                ctype = attachment.content_type
+                # type says it can be None (?)
+                if ctype is None or not ctype.startswith('image/'):
+                    await resp.reply(f'Not a valid image file! ({attachment.content_type})')
+                elif attachment.size > 1024 * 1024:
+                    await resp.reply('Image file is too big (over 1MB)')
                 else:
-                    await resp.reply(f'Not a valid PNG file! ({attachment.content_type})')
+                    custom_image = base64.b64encode(await attachment.read()).decode()
 
             await resp.delete()
 
