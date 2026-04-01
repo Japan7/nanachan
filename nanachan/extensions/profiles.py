@@ -496,12 +496,12 @@ class ProfileCreateOrChangeView(BaseView):
         resp = resp.message
         if len(resp.attachments) > 0:
             attachment = resp.attachments[0]
-            if attachment.content_type == 'image/png':
-                hikari = await to_producer(attachment.url)
-                self.profile.photo = hikari['url']
-            else:
-                await resp.reply(f'Not a valid PNG file! ({attachment.content_type})')
+            if not attachment.content_type.startswith('image/'):
+                await resp.reply(f'Not a valid image file! ({attachment.content_type})')
                 return
+
+            hikari = await to_producer(attachment.url)
+            self.profile.photo = hikari['url']
 
         await resp.delete()
         await self._edit_embed(self.profile, interaction)
