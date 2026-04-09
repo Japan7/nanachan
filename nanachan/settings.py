@@ -26,7 +26,6 @@ TZ = ZoneInfo('Europe/Paris')
 ALT_TZ = [ZoneInfo('America/Montreal'), ZoneInfo('Asia/Tokyo')]
 DEFAULT_COLOUR = 0xE91E63
 DISABLED_EXTENSIONS = set('snowflake')
-ENABLE_MESSAGE_EXPORT = False
 
 ## nanapi
 NANAPI_URL = 'https://nanapi.japan7.bde.enseeiht.fr/prod'
@@ -156,4 +155,3 @@ RequiresWaicolle = RequiredSettings(WC_ROLE)
 RequiresAI = RequiredSettings(
     AI_OPENROUTER_API_KEY, AI_DEFAULT_MODEL, AI_GROK_MODEL, AI_IMAGE_MODEL
 )
-RequiresMessageExport = RequiredSettings(ENABLE_MESSAGE_EXPORT)
