@@ -33,7 +33,7 @@ dependencies = [
     "valkey[libvalkey]==6.1.1",
     "yt-dlp[default]==2026.3.17",
     "aiojobs==1.4.0",
-    "tzdata==2025.3",
+    "tzdata==2026.1",
     "python-dateutil==2.9.0.post0",
     "pydantic-ai-slim[openrouter,mcp,duckduckgo,tavily]==1.77.0",
     "dateparser>=1.2.2",
