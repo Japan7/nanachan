@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@v8.1.0
       - run: cp nanachan/example.local_settings.py nanachan/local_settings.py
       - run: HOOKS_KEEP_GOING=1 HOOKS_PYRIGHT_CHECK=1 hooks/pre-commit
       - uses: sarisia/actions-status-discord@v1
