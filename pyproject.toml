@@ -24,7 +24,7 @@ dependencies = [
     "faust-cchardet==2.1.19",
     "yarl==1.23.0",
     "rich==15.0.0",
-    "pydantic==2.13.1",
+    "pydantic==2.13.2",
     "numpy==2.4.4",
     "tldr==3.4.4",
     "watchfiles==1.1.1",
