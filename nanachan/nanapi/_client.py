@@ -75,7 +75,6 @@ from .model import (
     MessageBulkUpdateNoindexResult,
     MessageMergeResult,
     MessagesRagResult,
-    MessageUpdateNoindexResult,
     NewClientBody,
     NewCollectionBody,
     NewCouponBody,
@@ -133,9 +132,6 @@ from .model import (
     QuizzInsertResult,
     QuizzSetAnswerResult,
     Rank,
-    ReactionAddBody,
-    ReactionDeleteResult,
-    ReactionInsertResult,
     ReminderDeleteByIdResult,
     ReminderInsertSelectResult,
     ReminderSelectAllResult,
@@ -160,7 +156,6 @@ from .model import (
     StaffSelectResult,
     TradeDeleteResult,
     TradeSelectResult,
-    UpdateMessageNoindexBody,
     UpsertAMQAccountBody,
     UpsertAnilistAccountBody,
     UpsertDiscordAccountBodyItem,
@@ -2017,209 +2012,6 @@ class DiscordModule:
                 return Success[Literal[200], list[MessageBulkUpdateNoindexResult]](
                     code=200,
                     result=[MessageBulkUpdateNoindexResult(**e) for e in (await resp.json())],
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def discord_update_message_noindex(
-        self, message_id: str, body: UpdateMessageNoindexBody, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], MessageUpdateNoindexResult]
-        | Error[Literal[404], HTTPExceptionModel]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        """Update indexation instructions of a Discord message."""
-        url = f'{self.server_url}/discord/messages/{message_id}/noindex'
-        params = {
-            'client_id': client_id,
-        }
-        params = prep_serialization(params)
-
-        async with self.session.put(
-            url,
-            params=params,
-            json=body,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], MessageUpdateNoindexResult](
-                    code=200, result=MessageUpdateNoindexResult(**(await resp.json()))
-                )
-            if resp.status == 404:
-                return Error[Literal[404], HTTPExceptionModel](
-                    code=404, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def discord_add_message_reaction(
-        self,
-        message_id: str,
-        user_id: str,
-        emoji: str,
-        body: ReactionAddBody,
-        client_id: UUID | None = None,
-    ) -> (
-        Success[Literal[200], ReactionInsertResult]
-        | Error[Literal[400], HTTPExceptionModel]
-        | Error[Literal[404], None]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        """Add a reaction to a Discord message."""
-        url = f'{self.server_url}/discord/messages/{message_id}/reactions/{emoji}/{user_id}'
-        params = {
-            'client_id': client_id,
-        }
-        params = prep_serialization(params)
-
-        async with self.session.put(
-            url,
-            params=params,
-            json=body,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], ReactionInsertResult](
-                    code=200, result=ReactionInsertResult(**(await resp.json()))
-                )
-            if resp.status == 400:
-                return Error[Literal[400], HTTPExceptionModel](
-                    code=400, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 404:
-                return Error[Literal[404], None](code=404, result=None)
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def discord_remove_message_reaction(
-        self, message_id: str, user_id: str, emoji: str, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], list[ReactionDeleteResult]]
-        | Error[Literal[400], HTTPExceptionModel]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        """Remove a reaction from a Discord message."""
-        url = f'{self.server_url}/discord/messages/{message_id}/reactions/{emoji}/{user_id}'
-        params = {
-            'client_id': client_id,
-        }
-        params = prep_serialization(params)
-
-        async with self.session.delete(
-            url,
-            params=params,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], list[ReactionDeleteResult]](
-                    code=200, result=[ReactionDeleteResult(**e) for e in (await resp.json())]
-                )
-            if resp.status == 400:
-                return Error[Literal[400], HTTPExceptionModel](
-                    code=400, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 401:
-                return Error[Literal[401], HTTPExceptionModel](
-                    code=401, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 403:
-                return Error[Literal[403], HTTPExceptionModel](
-                    code=403, result=HTTPExceptionModel(**(await resp.json()))
-                )
-            if resp.status == 422:
-                return Error[Literal[422], HTTPValidationError](
-                    code=422, result=HTTPValidationError(**(await resp.json()))
-                )
-            raise aiohttp.ClientResponseError(
-                resp.request_info,
-                resp.history,
-                status=resp.status,
-                message=str(resp.reason),
-                headers=resp.headers,
-            )
-
-    async def discord_clear_message_reactions(
-        self, message_id: str, emoji: str | None = None, client_id: UUID | None = None
-    ) -> (
-        Success[Literal[200], list[ReactionDeleteResult]]
-        | Error[Literal[400], HTTPExceptionModel]
-        | Error[Literal[401], HTTPExceptionModel]
-        | Error[Literal[403], HTTPExceptionModel]
-        | Error[Literal[422], HTTPValidationError]
-    ):
-        """Clear all reactions or a specific emoji from a Discord message."""
-        url = f'{self.server_url}/discord/messages/{message_id}/reactions'
-        params = {
-            'emoji': emoji,
-            'client_id': client_id,
-        }
-        params = prep_serialization(params)
-
-        async with self.session.delete(
-            url,
-            params=params,
-        ) as resp:
-            if resp.status == 200:
-                return Success[Literal[200], list[ReactionDeleteResult]](
-                    code=200, result=[ReactionDeleteResult(**e) for e in (await resp.json())]
-                )
-            if resp.status == 400:
-                return Error[Literal[400], HTTPExceptionModel](
-                    code=400, result=HTTPExceptionModel(**(await resp.json()))
                 )
             if resp.status == 401:
                 return Error[Literal[401], HTTPExceptionModel](
@@ -5521,6 +5313,7 @@ class WaicolleModule:
         custom_collage: int | None = None,
         as_og: int | None = None,
         ascended: int | None = None,
+        exclude_custom_image: int | None = None,
         edged: int | None = None,
         ascendable: int | None = None,
         chara_id_al: int | None = None,
@@ -5543,6 +5336,7 @@ class WaicolleModule:
         custom_collage: Whether waifu is part of a custom collage (0: no, 1: yes, None: ignore filter)
         as_og: Use discord_id as original owner (0 or None: no, 1: yes)
         ascended: Filter waifus with level >= 1 (0 or None: ignore filter, 1: yes)
+        exclude_custom_image: Exclude custom_images from the response (0 or None: no, 1: yes)
         edged: Whether waifu is close to a level upgrade (0 or None: ignore filter, 1: yes)
         ascendable: Whether waifu can level up (0 or None: ignore filter, 1: yes)
         chara_id_al: Waifus matching a specific character ID.
@@ -5559,6 +5353,7 @@ class WaicolleModule:
             'custom_collage': custom_collage,
             'as_og': as_og,
             'ascended': ascended,
+            'exclude_custom_image': exclude_custom_image,
             'edged': edged,
             'ascendable': ascendable,
             'chara_id_al': chara_id_al,

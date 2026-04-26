@@ -44,6 +44,7 @@ from nanachan.settings import (
     AI_DEFAULT_MODEL,
     AI_IMAGE_MODEL,
     AI_OPENROUTER_API_KEY,
+    AI_RERANK_MODEL,
     AI_SEARCH_TOOL,
     AI_SKIP_PERMISSIONS_CHECK,
 )
@@ -318,22 +319,26 @@ async def channel_history(
 
 @chat_toolset.tool(retries=5)
 async def retrieve_rag_context(run_ctx: RunContext[ChatDeps], search_query: str):
-    """Find relevant past discussion sections using a simple French keyword search."""
+    """Find relevant past discussion sections using a simple French keyword search (RAG)."""
     ctx = run_ctx.deps.ctx
     assert isinstance(ctx.author, discord.Member)
-    resp = await get_nanapi().discord.discord_messages_rag(search_query, limit=10)
+    resp = await get_nanapi().discord.discord_messages_rag(search_query)
     resp = resp.raise_exc()
-
+    reranked = await openrouter_rerank(search_query, [r.object.context for r in resp.result])
     messages = [
         [
             m.data
-            for m in r.object.messages
-            if AI_SKIP_PERMISSIONS_CHECK
-            or (channel := ctx.bot.get_channel(int(m.channel_id)))
-            and not isinstance(channel, discord.abc.PrivateChannel)
-            and channel.permissions_for(ctx.author).read_message_history
+            for m in resp.result[idx].object.messages
+            if (
+                AI_SKIP_PERMISSIONS_CHECK
+                or (
+                    (channel := ctx.bot.get_channel(int(m.channel_id)))
+                    and not isinstance(channel, discord.abc.PrivateChannel)
+                    and channel.permissions_for(ctx.author).read_message_history
+                )
+            )
         ]
-        for r in resp.result
+        for idx, _ in reranked[:10]
     ]
     messages = [b for b in messages if b]
     if not messages:
@@ -425,6 +430,31 @@ async def openrouter_generate_image(
     content = cast(str, message['content'])
     images = [BinaryImage.from_data_uri(image['image_url']['url']) for image in message['images']]
     return reasoning, content, images
+
+
+async def openrouter_rerank(
+    query: str,
+    documents: list[str],
+    model: str = AI_RERANK_MODEL,
+) -> list[tuple[int, str]]:
+    headers = {
+        'Authorization': f'Bearer {AI_OPENROUTER_API_KEY}',
+        'Content-Type': 'application/json',
+    }
+    payload = {
+        'model': model,
+        'query': query,
+        'documents': documents,
+    }
+    async with get_session().post(
+        'https://openrouter.ai/api/v1/rerank',
+        headers=headers,
+        json=payload,
+        timeout=None,
+    ) as resp:
+        resp.raise_for_status()
+        data = await resp.json()
+    return [(result['index'], result['document']['text']) for result in data['results']]
 
 
 web_toolset = FunctionToolset[Any](tools=[AI_SEARCH_TOOL])

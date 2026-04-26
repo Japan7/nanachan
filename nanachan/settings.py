@@ -104,9 +104,10 @@ NANALOOK_URL = 'https://nanalook.japan7.bde.enseeiht.fr'
 
 ## AI
 AI_OPENROUTER_API_KEY: str | None = None
-AI_DEFAULT_MODEL = 'openai/gpt-5-mini'
+AI_DEFAULT_MODEL = 'google/gemini-3.1-flash-lite-preview'
 AI_GROK_MODEL = 'x-ai/grok-4.1-fast'
-AI_IMAGE_MODEL = 'google/gemini-3-pro-image-preview'
+AI_IMAGE_MODEL = 'google/gemini-3.1-flash-image-preview'
+AI_RERANK_MODEL = 'cohere/rerank-4-fast'
 AI_CUSTOM_MODELS: Mapping[str, 'ModelConfig'] = {}
 AI_SKIP_PERMISSIONS_CHECK = False
 AI_SEARCH_TOOL = duckduckgo_search_tool()

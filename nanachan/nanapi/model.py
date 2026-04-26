@@ -984,11 +984,6 @@ class MessageMergeResult(BaseModel):
     id: UUID
 
 
-class MessageUpdateNoindexResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-
-
 class MessagesRagResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     object: 'RagQueryResultObject'
@@ -1555,22 +1550,6 @@ class Rank(BaseModel):
     emoji: str
 
 
-class ReactionAddBody(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    animated: bool | None = None
-    burst: bool | None = None
-
-
-class ReactionDeleteResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-
-
-class ReactionInsertResult(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    id: UUID
-
-
 class ReminderDeleteByIdResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: UUID
@@ -1869,11 +1848,6 @@ class TradeSelectResultReceivedOwner(BaseModel):
 class TradeSelectResultReceivedOwnerUser(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     discord_id: str
-
-
-class UpdateMessageNoindexBody(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    noindex: str
 
 
 class UpsertAMQAccountBody(BaseModel):

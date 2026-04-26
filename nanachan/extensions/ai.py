@@ -190,7 +190,11 @@ class AI(Cog, required_settings=RequiresAI):
                 .removeprefix(f'@{SLASH_PREFIX}grok')
                 .strip()
             ]
-            if not config.get('content_only'):
+            if config.get('content_only'):
+                for attachment in ctx.message.attachments:
+                    if bin_content := await to_binary_content(attachment):
+                        content.append(bin_content)
+            else:
                 message = await ctx._state.http.get_message(ctx.channel.id, ctx.message.id)  # pyright: ignore[reportPrivateUsage]
                 content.extend(['This is the raw user message data:', json.dumps(message)])
                 for attachment in ctx.message.attachments:
