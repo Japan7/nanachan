@@ -574,7 +574,7 @@ def parse_timestamp(time_str: str) -> datetime.datetime:
     else:
         # fallback for text
         iso8601_match = iso8601_re.search(time_str)
-        settings: 'dateparser._Settings' = {  # type: ignore[reportPrivateUsage]
+        settings = {
             'DATE_ORDER': 'DMY' if iso8601_match is None else 'YMD',
             'TIMEZONE': TZ.key,
             'RETURN_AS_TIMEZONE_AWARE': True,
