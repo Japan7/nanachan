@@ -6,7 +6,7 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import suppress
 from functools import cache, lru_cache, singledispatch, update_wrapper
-from typing import Any, AsyncIterable, Coroutine, NotRequired, Optional, Type, TypedDict
+from typing import Any, AsyncIterable, Callable, Coroutine, NotRequired, Optional, Type, TypedDict
 
 import aiohttp
 import backoff
@@ -87,8 +87,8 @@ async def run_coro(coro: Coroutine[Any, Any, Any] | Any):
         return coro
 
 
-class FakeMethod:
-    def __init__(self, instance, func):
+class FakeMethod[T: Callable]:
+    def __init__(self, instance, func: T):
         self.instance = instance
         self.func = func
         update_wrapper(self, func)
@@ -100,7 +100,7 @@ class FakeMethod:
         return self.func(self.instance, *args, **kwargs)
 
 
-def fake_method(instance, func):
+def fake_method[T: Callable](instance, func: T) -> T | FakeMethod[T]:
     if func is not None and not hasattr(func, '__self__'):
         return FakeMethod(instance, func)
 
