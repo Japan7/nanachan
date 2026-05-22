@@ -25,7 +25,7 @@ dependencies = [
     "yarl==1.23.0",
     "rich==15.0.0",
     "pydantic==2.13.4",
-    "numpy==2.4.4",
+    "numpy==2.4.5",
     "tldr==3.4.4",
     "watchfiles==1.1.1",
     "backoff==2.2.1",
