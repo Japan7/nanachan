@@ -27,7 +27,7 @@ dependencies = [
     "pydantic==2.13.4",
     "numpy==2.4.6",
     "tldr==3.4.4",
-    "watchfiles==1.1.1",
+    "watchfiles==1.2.0",
     "backoff==2.2.1",
     "yappi==1.7.6",
     "valkey[libvalkey]==6.1.1",
