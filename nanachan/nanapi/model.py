@@ -1339,6 +1339,12 @@ class ProfileGetByDiscordIdResultUser(BaseModel):
     discord_id: str
 
 
+class ProfileSearchBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    discord_ids: list[str] | None = None
+    pattern: str | None = None
+
+
 class ProfileSearchResult(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     birthday: datetime | None
@@ -1624,6 +1630,29 @@ class RollData(BaseModel):
     id: str
     name: str
     price: int
+
+
+class SearchIdsALBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    ids_al: list[int]
+
+
+class SearchWaifusBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    ids: list[str] | None = None
+    discord_id: str | None = None
+    level: int | None = None
+    locked: bool | None = None
+    trade_locked: bool | None = None
+    blooded: bool | None = None
+    nanaed: bool | None = None
+    custom_collage: bool | None = None
+    as_og: bool | None = None
+    ascended: bool | None = None
+    exclude_custom_image: bool | None = None
+    edged: bool | None = None
+    ascendable: bool | None = None
+    chara_id_al: int | None = None
 
 
 class SetProjectionMessageIdBody(BaseModel):

@@ -110,6 +110,7 @@ from .model import (
     PresenceDeleteByIdResult,
     PresenceInsertResult,
     PresenceSelectAllResult,
+    ProfileSearchBody,
     ProfileSearchResult,
     ProjoAddEventResult,
     ProjoAddExternalMediaBody,
@@ -142,6 +143,8 @@ from .model import (
     RoleInsertSelectResult,
     RoleSelectAllResult,
     RollData,
+    SearchIdsALBody,
+    SearchWaifusBody,
     SetProjectionMessageIdBody,
     SetProjectionNameBody,
     SetProjectionStatusBody,
@@ -730,6 +733,40 @@ class AnilistModule:
                 headers=resp.headers,
             )
 
+    async def anilist_get_medias_post(
+        self, body: SearchIdsALBody
+    ) -> (
+        Success[Literal[200], list[MediaSelectResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Get AniList media objects by IDs in request body."""
+        url = f'{self.server_url}/anilist/medias/search'
+
+        async with self.session.post(
+            url,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[MediaSelectResult]](
+                    code=200, result=[MediaSelectResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
     async def anilist_media_search(
         self, search: str, type: Literal['ANIME', 'MANGA'] | None = None
     ) -> (
@@ -951,6 +988,40 @@ class AnilistModule:
                 headers=resp.headers,
             )
 
+    async def anilist_get_charas_post(
+        self, body: SearchIdsALBody
+    ) -> (
+        Success[Literal[200], list[CharaSelectResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Get AniList characters by IDs in request body."""
+        url = f'{self.server_url}/anilist/charas/search'
+
+        async with self.session.post(
+            url,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[CharaSelectResult]](
+                    code=200, result=[CharaSelectResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
     async def anilist_chara_search(
         self, search: str
     ) -> (
@@ -1147,6 +1218,40 @@ class AnilistModule:
         async with self.session.get(
             url,
             params=params,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[StaffSelectResult]](
+                    code=200, result=[StaffSelectResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def anilist_get_staffs_post(
+        self, body: SearchIdsALBody
+    ) -> (
+        Success[Literal[200], list[StaffSelectResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Get AniList staff by IDs in request body."""
+        url = f'{self.server_url}/anilist/staffs/search'
+
+        async with self.session.post(
+            url,
+            json=body,
         ) as resp:
             if resp.status == 200:
                 return Success[Literal[200], list[StaffSelectResult]](
@@ -4114,6 +4219,40 @@ class UserModule:
                 headers=resp.headers,
             )
 
+    async def user_profile_search_post(
+        self, body: ProfileSearchBody
+    ) -> (
+        Success[Literal[200], list[ProfileSearchResult]]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Search user profiles by Discord IDs or pattern in request body."""
+        url = f'{self.server_url}/user/profiles/search'
+
+        async with self.session.post(
+            url,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[ProfileSearchResult]](
+                    code=200, result=[ProfileSearchResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
     async def user_get_profile(
         self, discord_id: str
     ) -> (
@@ -5437,6 +5576,55 @@ class WaicolleModule:
                 headers=resp.headers,
             )
 
+    async def waicolle_search_waifus_post(
+        self, body: SearchWaifusBody, client_id: UUID | None = None
+    ) -> (
+        Success[Literal[200], list[WaifuSelectResult]]
+        | Error[Literal[400], HTTPExceptionModel]
+        | Error[Literal[404], HTTPExceptionModel]
+        | Error[Literal[401], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Search waifus with filters from request body."""
+        url = f'{self.server_url}/waicolle/waifus/search'
+        params = {
+            'client_id': client_id,
+        }
+        params = prep_serialization(params)
+
+        async with self.session.post(
+            url,
+            params=params,
+            json=body,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], list[WaifuSelectResult]](
+                    code=200, result=[WaifuSelectResult(**e) for e in (await resp.json())]
+                )
+            if resp.status == 400:
+                return Error[Literal[400], HTTPExceptionModel](
+                    code=400, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 404:
+                return Error[Literal[404], HTTPExceptionModel](
+                    code=404, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 401:
+                return Error[Literal[401], HTTPExceptionModel](
+                    code=401, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
     async def waicolle_reroll(
         self, body: RerollBody, client_id: UUID | None = None
     ) -> (
@@ -5512,6 +5700,37 @@ class WaicolleModule:
             if resp.status == 403:
                 return Error[Literal[403], HTTPExceptionModel](
                     code=403, result=HTTPExceptionModel(**(await resp.json()))
+                )
+            if resp.status == 422:
+                return Error[Literal[422], HTTPValidationError](
+                    code=422, result=HTTPValidationError(**(await resp.json()))
+                )
+            raise aiohttp.ClientResponseError(
+                resp.request_info,
+                resp.history,
+                status=resp.status,
+                message=str(resp.reason),
+                headers=resp.headers,
+            )
+
+    async def waicolle_get_waifu_image(
+        self, id: UUID
+    ) -> (
+        Success[Literal[200], None]
+        | Error[Literal[404], HTTPExceptionModel]
+        | Error[Literal[422], HTTPValidationError]
+    ):
+        """Get Waifu Image"""
+        url = f'{self.server_url}/waicolle/waifus/{id}/image'
+
+        async with self.session.get(
+            url,
+        ) as resp:
+            if resp.status == 200:
+                return Success[Literal[200], None](code=200, result=None)
+            if resp.status == 404:
+                return Error[Literal[404], HTTPExceptionModel](
+                    code=404, result=HTTPExceptionModel(**(await resp.json()))
                 )
             if resp.status == 422:
                 return Error[Literal[422], HTTPValidationError](
