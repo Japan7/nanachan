@@ -4,7 +4,7 @@
 # from zoneinfo import ZoneInfo
 
 # from pydantic_ai.common_tools.tavily import tavily_search_tool
-# from pydantic_ai.mcp import MCPServerStdio, MCPServerStreamableHTTP
+# from pydantic_ai.mcp import MCPToolset, StdioTransport
 
 # LOG_LEVEL = 'INFO'
 # DEBUG = True
@@ -105,10 +105,10 @@ REDIS_HOST = None
 # AI_SKIP_PERMISSIONS_CHECK = False
 # AI_SEARCH_TOOL = tavily_search_tool('API_KEY')
 AI_ADDITIONAL_TOOLSETS = [
-    # MCPServerStdio('uvx', args=['mcp-run-python@latest', 'stdio'], timeout=10),
-    # MCPServerStdio('npx', args=['@playwright/mcp@latest', '--headless', '--isolated']),
-    # MCPServerStreamableHTTP('https://mcp.context7.com/mcp'),
-    # MCPServerStreamableHTTP('https://mcp.deepwiki.com/mcp'),
+    # MCPToolset(StdioTransport('uvx', args=['mcp-run-python@latest', 'stdio'])),
+    # MCPToolset(StdioTransport('npx', args=['@playwright/mcp@latest', '--headless', '--isolated'])),
+    # MCPToolset('https://mcp.context7.com/mcp'),
+    # MCPToolset('https://mcp.deepwiki.com/mcp'),
 ]
 
 ## SauceNAO

@@ -126,37 +126,38 @@ async def chat_stream[AgentDepsT](
     """https://ai.pydantic.dev/agents/#streaming"""
     thinking = StreamBuffer(prefix='>>> ')
     text = StreamBuffer()
-    async for event in agent.run_stream_events(
+    async with agent.run_stream_events(
         user_prompt,
         message_history=message_history,
         model=model,
         deps=deps,
         toolsets=toolsets,
-    ):
-        match event:
-            case PartStartEvent(part=ThinkingPart(content=content)):
-                for chunk in thinking.begin(content):
-                    yield chunk
-            case PartStartEvent(part=TextPart(content=content)):
-                for chunk in text.begin(content):
-                    yield chunk
-            case PartDeltaEvent(delta=ThinkingPartDelta(content_delta=delta)) if delta:
-                for chunk in thinking.append(delta):
-                    yield chunk
-            case PartDeltaEvent(delta=TextPartDelta(content_delta=delta)):
-                for chunk in text.append(delta):
-                    yield chunk
-            case FunctionToolCallEvent(part=part):
-                yield f'```\n[TOOL] {part.tool_name} {part.args}\n```'
-            case PartEndEvent(part=ThinkingPart()):
-                for chunk in thinking.flush():
-                    yield chunk
-            case AgentRunResultEvent(result=result):
-                for chunk in text.flush():
-                    yield chunk
-                message_history.extend(result.new_messages())
-            case _:
-                ...
+    ) as events:
+        async for event in events:
+            match event:
+                case PartStartEvent(part=ThinkingPart(content=content)):
+                    for chunk in thinking.begin(content):
+                        yield chunk
+                case PartStartEvent(part=TextPart(content=content)):
+                    for chunk in text.begin(content):
+                        yield chunk
+                case PartDeltaEvent(delta=ThinkingPartDelta(content_delta=delta)) if delta:
+                    for chunk in thinking.append(delta):
+                        yield chunk
+                case PartDeltaEvent(delta=TextPartDelta(content_delta=delta)):
+                    for chunk in text.append(delta):
+                        yield chunk
+                case FunctionToolCallEvent(part=part):
+                    yield f'```\n[TOOL] {part.tool_name} {part.args}\n```'
+                case PartEndEvent(part=ThinkingPart()):
+                    for chunk in thinking.flush():
+                        yield chunk
+                case AgentRunResultEvent(result=result):
+                    for chunk in text.flush():
+                        yield chunk
+                    message_history.extend(result.new_messages())
+                case _:
+                    ...
 
 
 def nanapi_tools() -> Sequence[Tool[None]]:
