@@ -8,6 +8,7 @@
 
 # LOG_LEVEL = 'INFO'
 # DEBUG = True
+# WATCH_FILES = True
 # ERROR_WEBHOOK = None
 # TADAIMA = False
 

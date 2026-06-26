@@ -11,7 +11,11 @@ if TYPE_CHECKING:
     from nanachan.utils.ai import ModelConfig
 
 LOG_LEVEL = 'INFO'
+# Enable code paths that should not be used in production
 DEBUG = True
+# Reload bot cogs on file change
+WATCH_FILES = True
+# Webhook for error messages
 ERROR_WEBHOOK = None
 TADAIMA = False
 

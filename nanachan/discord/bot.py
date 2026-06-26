@@ -59,6 +59,7 @@ from nanachan.settings import (
     FAREWELL_MSG,
     PREFIX,
     TADAIMA,
+    WATCH_FILES,
     WELCOME_BOT,
     WELCOME_MSG,
 )
@@ -301,7 +302,7 @@ class Bot(commands.AutoShardedBot):
             await report_error
 
         # Cog hot reload
-        if DEBUG:
+        if WATCH_FILES:
             ext_path = Path(nanachan.extensions.__file__).parent
             async for changes in awatch(ext_path, watch_filter=PythonFilter()):
                 for change in changes:
