@@ -18,7 +18,7 @@ dependencies = [
     "python-socketio[asyncio_client]==5.16.3",
     "aiohttp[speedups]==3.14.1",
     "aiofiles==25.1.0",
-    "Pillow==12.2.0",
+    "Pillow==12.3.0",
     "html2text==2025.4.15",
     # https://github.com/PyYoshi/cChardet/issues/81
     "faust-cchardet==2.1.19",
