@@ -815,9 +815,9 @@ client = [
 
 [[package]]
 name = "faust-cchardet"
-version = "2.1.19"
+version = "2.1.20"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e9/53/2125d17d7c2a14b76303bf5c3c5db35ea8e4b8a14817bb191c601d67e288/faust-cchardet-2.1.19.tar.gz", hash = "sha256:f89386297cde0c8e0f5e21464bc2d6d0e4a4fc1b1d77cdb238ca24d740d872e0", size = 678871, upload-time = "2023-08-09T16:34:28.643Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/26/1760a66ba3740a86ca4ce741bd1c2eccbcd3db601b6c15da4ab4a85d106e/faust_cchardet-2.1.20.tar.gz", hash = "sha256:11c2f8a95ac1bc2fd0d58f475ee17bfa6a633b53775f444fabf3b044bbbb9f16", size = 695215, upload-time = "2026-07-17T06:22:53.645Z" }
 
 [[package]]
 name = "fawltydeps"
@@ -1746,7 +1746,7 @@ requires-dist = [
     { name = "dateparser", specifier = ">=1.2.2" },
     { name = "discord-ext-voice-recv", specifier = "==0.5.2a179" },
     { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=cb57034123f0473a09ca45faea39856211bc403f" },
-    { name = "faust-cchardet", specifier = "==2.1.19" },
+    { name = "faust-cchardet", specifier = "==2.1.20" },
     { name = "html2text", specifier = "==2025.4.15" },
     { name = "matplotlib", specifier = "==3.11.0" },
     { name = "numpy", specifier = "==2.5.1" },
