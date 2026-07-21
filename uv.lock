@@ -815,9 +815,32 @@ client = [
 
 [[package]]
 name = "faust-cchardet"
-version = "2.1.20"
+version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3f/26/1760a66ba3740a86ca4ce741bd1c2eccbcd3db601b6c15da4ab4a85d106e/faust_cchardet-2.1.20.tar.gz", hash = "sha256:11c2f8a95ac1bc2fd0d58f475ee17bfa6a633b53775f444fabf3b044bbbb9f16", size = 695215, upload-time = "2026-07-17T06:22:53.645Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/98/11698786c27f04d1c4195bec174a4a77ccb32c65fbc84a19a4b7cebe9ee1/faust_cchardet-2.2.1.tar.gz", hash = "sha256:324f886eeeb4b8dff4639f4f5e60a82481227c344ee0bfb490de017fbfe5f1b0", size = 642133, upload-time = "2026-07-19T18:14:49.185Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/02/82/03bd3da796d73a515cf2954a94be074d3973bf948aa1d4c1d65f4775388a/faust_cchardet-2.2.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:52019e61b5adee4385e0d575b4a4f95f98c6ba00274d09180107c32e3c637a65", size = 105906, upload-time = "2026-07-19T18:14:23.769Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/8b/3584a1b6f9e3a371e1cae523101b17e8147baaadafe11ae2fccc4bb3d4c1/faust_cchardet-2.2.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:049896bf47903615122020272c9b15e26f4c27f62ee13a679ca351f7fa45f461", size = 107197, upload-time = "2026-07-19T18:14:24.734Z" },
+    { url = "https://files.pythonhosted.org/packages/66/2a/7ed56354513121276979b8bc0d8652a397697239628af0b5783b5a6de8c4/faust_cchardet-2.2.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:2858314bdad4135f361a104daf784ec1d1b0a8a5a92c2fef52ecd2dc5b2486f2", size = 120647, upload-time = "2026-07-19T18:14:25.818Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/e7/df17085683a058fb98d37c06719235a1af3e56788683848e4935b3aa43de/faust_cchardet-2.2.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2163365292ddf700c99bca877841d8fb1869dec00a730bb5941d18c6bf3712c7", size = 119091, upload-time = "2026-07-19T18:14:26.874Z" },
+    { url = "https://files.pythonhosted.org/packages/52/5d/eb97ba930e5b381fba02468777fa4188f213515282c2098656d33f2e8ae2/faust_cchardet-2.2.1-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:c9600ed1f9ed5128c6aa5be8dc1e1f015918b694e806680a753f628f23c0b1b6", size = 1101958, upload-time = "2026-07-19T18:14:28.304Z" },
+    { url = "https://files.pythonhosted.org/packages/84/f8/722abc53bb7702417026cec44ba07b2df1b87acc0d62f50c1d665ba3cad9/faust_cchardet-2.2.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:fd537680647c4e53e8c690d153c5042628fc1600a0e548e07b78e3114460ce73", size = 1151302, upload-time = "2026-07-19T18:14:29.545Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/24/c5dda339201ef3a8497ae80070d479a9de1c66a4d37ca23c80cb5565e1a4/faust_cchardet-2.2.1-cp313-cp313-win_amd64.whl", hash = "sha256:97824ebe0f153a0265d27bc69d03afe0cea5f5a8c2fb4e472d69f80694ff6b38", size = 104037, upload-time = "2026-07-19T18:14:30.558Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/84/404a4b53dd7c64dbdd76b9b715ea83d334553cf1ff2143b2b9a1fca0b08a/faust_cchardet-2.2.1-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:61bf69fcc11c431e3a00b02ae835490ccac21b27f585617113d1d38769bac11b", size = 106076, upload-time = "2026-07-19T18:14:31.565Z" },
+    { url = "https://files.pythonhosted.org/packages/31/6b/82dfc2cdda3f247d44c101d34d82d00f5fda15b25acbb8ba1cd1f4ce1a3e/faust_cchardet-2.2.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:bf52bac07ffb3d977aec94e6c6d5bf23d33032d0411094811f9e0144baac085b", size = 107608, upload-time = "2026-07-19T18:14:32.598Z" },
+    { url = "https://files.pythonhosted.org/packages/41/36/d146faceeb769c9aedc8a17e422b590d52bfcfb849a51b4e99690e1658bb/faust_cchardet-2.2.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b4a76f617d07fa2dffdfc09783e9eeb31ab730e159e43b4a4e58ebb903c9eab5", size = 120995, upload-time = "2026-07-19T18:14:33.64Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/dd/e5eff5c4315aa1caebfd09bed64e6a02100f952d1fb39382deb61c300a37/faust_cchardet-2.2.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4109c15ea5770182746c37f85c36c433937eb81b4dc5d1c2f5bc189f70be8bf5", size = 119299, upload-time = "2026-07-19T18:14:34.708Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/32/4729f100a98386a6ae3894fcdb9011d0818a11f8fbb24c99dfd3b92856ee/faust_cchardet-2.2.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:785a65b80983ca8039a46732479f55da958bcc88d7e124ee9faa8538dc35f5ad", size = 1102200, upload-time = "2026-07-19T18:14:36.35Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/73/b719654992332d01966838fb9b7bcc850ebbe8dc3d73d9e3dc7c82ce87fc/faust_cchardet-2.2.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:5f1d488164c3d41d067e40d80f632e8bfb91121480cd8d435b00abbc2979b78d", size = 1151435, upload-time = "2026-07-19T18:14:38.21Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/a1/6c7879439ad0186e889b4c66810ea8a6645a452846ea1f734dc1db4fa7b0/faust_cchardet-2.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:e162bc74028d890b9d1144d646e9127dc510efbc6f7daf83a706af4ed99f1801", size = 104984, upload-time = "2026-07-19T18:14:39.556Z" },
+    { url = "https://files.pythonhosted.org/packages/10/43/cb2813e5e5b3aa6d0b5b844309f60be7df14640cd23ea37609d8ae34b89a/faust_cchardet-2.2.1-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:fd95b366f03df7e59dfeaa32817f41f01df3ec0102db600639181d9823987408", size = 107551, upload-time = "2026-07-19T18:14:40.547Z" },
+    { url = "https://files.pythonhosted.org/packages/99/0b/2c60d38bddf87e465ba26937f389e9da67653fc78ad646b5167e6d8f7574/faust_cchardet-2.2.1-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:e77d3b50f6b3ab14af760fd34eae5d210ddac39bced9bbc3a13ee2a74bfb40d9", size = 109571, upload-time = "2026-07-19T18:14:41.589Z" },
+    { url = "https://files.pythonhosted.org/packages/55/0c/75c2f482b37f8abbecada308712f2a98924e5e58cdde227cb8ca77514f75/faust_cchardet-2.2.1-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:66a594f1932d9018f5a5417db7b9a2df4a881af57eaaadb3c3a135c883ebab03", size = 123495, upload-time = "2026-07-19T18:14:42.681Z" },
+    { url = "https://files.pythonhosted.org/packages/03/e5/b69ade923328b588038fca0ee14dadd5f922580b50312c77c57084a030d9/faust_cchardet-2.2.1-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3f6e12a293d146c515c5e1328d52b2e804dcb82735ced51143f34aa2e40af47f", size = 121193, upload-time = "2026-07-19T18:14:43.756Z" },
+    { url = "https://files.pythonhosted.org/packages/10/17/26640879dd4bca3c307eb2425921f6aa323a7c9b891e3a1deb37569b3e29/faust_cchardet-2.2.1-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:657ed90b8a149dc8e0277c7d03030e7d3d52feb42027ceb4fd9a1f49d847575f", size = 1104915, upload-time = "2026-07-19T18:14:44.962Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/76/e7cf3837873f0223bea608b5bfde5ef6e969e5b2782dfbe09a435037cab6/faust_cchardet-2.2.1-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:77e5e5b19d85388ab40d0d3208ad31d6113407f3bd1f9095ac02e9ee47604c0f", size = 1153475, upload-time = "2026-07-19T18:14:46.749Z" },
+    { url = "https://files.pythonhosted.org/packages/83/41/43a189cce10b585f8dbdeadb1abfccc4c426df3b25e990b4bbfe77c35e0c/faust_cchardet-2.2.1-cp314-cp314t-win_amd64.whl", hash = "sha256:938e01d7af6e995760b71e5d0cd3ff2b957c5bb5823a158a95727c9265b53766", size = 108709, upload-time = "2026-07-19T18:14:48.017Z" },
+]
 
 [[package]]
 name = "fawltydeps"
@@ -1746,7 +1769,7 @@ requires-dist = [
     { name = "dateparser", specifier = ">=1.2.2" },
     { name = "discord-ext-voice-recv", specifier = "==0.5.2a179" },
     { name = "discord-py", extras = ["voice"], git = "https://github.com/Japan7/discord.py.git?rev=cb57034123f0473a09ca45faea39856211bc403f" },
-    { name = "faust-cchardet", specifier = "==2.1.20" },
+    { name = "faust-cchardet", specifier = "==2.2.1" },
     { name = "html2text", specifier = "==2025.4.15" },
     { name = "matplotlib", specifier = "==3.11.1" },
     { name = "numpy", specifier = "==2.5.1" },
