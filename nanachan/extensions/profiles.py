@@ -153,6 +153,7 @@ class Profiles(Cog):
         ]
         new_roles = []
         members = []
+        valid_profiles = []
         for profile in profiles:
             if profile.graduation_year is None:
                 continue
@@ -160,6 +161,7 @@ class Profiles(Cog):
             if member is None:
                 continue
             role_index = max(profile.graduation_year - last_promo, 0)
+            valid_profiles.append(profile)
             new_roles.append(year_roles[role_index])
             members.append(member)
 
@@ -167,7 +169,7 @@ class Profiles(Cog):
             asyncio.create_task(self._update_year_roles(members, year_roles, new_roles))
             text = [
                 f'**{member}** • *({profile.graduation_year})* [**{role}**] {profile.full_name}'
-                for member, profile, role in zip(members, profiles, new_roles)
+                for member, profile, role in zip(members, valid_profiles, new_roles)
             ]
             text.sort(key=str.casefold)
 
