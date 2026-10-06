@@ -106,10 +106,8 @@ REDIS_HOST = None
 # AI_SKIP_PERMISSIONS_CHECK = False
 # AI_SEARCH_TOOL = tavily_search_tool('API_KEY')
 AI_ADDITIONAL_TOOLSETS = [
-    # MCPToolset(StdioTransport('uvx', args=['mcp-run-python@latest', 'stdio'])),
-    # MCPToolset(StdioTransport('npx', args=['@playwright/mcp@latest', '--headless', '--isolated'])),
     # MCPToolset('https://mcp.context7.com/mcp'),
-    # MCPToolset('https://mcp.deepwiki.com/mcp'),
+    # MCPToolset(StdioTransport('npx', args=['@playwright/mcp@latest', '--headless', '--isolated'])),
 ]
 
 ## SauceNAO

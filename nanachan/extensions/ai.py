@@ -121,7 +121,7 @@ class AI(Cog, required_settings=RequiresAI):
         - Discord bot repository: https://github.com/Japan7/nanachan
         - Backend API repository: https://github.com/Japan7/nanapi
         - Use these when discussing bot functionality or code-related questions.
-        - Context7 and Deepwiki tools are available for contextual information retrieval.
+        - Context7 tools may be available for contextual information retrieval.
         """  # noqa: E501
         return textwrap.dedent(prompt).strip()
 
