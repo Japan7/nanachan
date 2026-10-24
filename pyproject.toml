@@ -34,7 +34,7 @@ dependencies = [
     "yt-dlp[default]==2026.8.19",
     "aiojobs==1.4.0",
     "tzdata==2026.5",
-    "python-dateutil==2.9.0.post0",
+    "python-dateutil==3.0.0",
     "pydantic-ai-slim[openrouter,mcp,duckduckgo,tavily]==2.59.0",
     "dateparser>=1.2.2",
 ]
